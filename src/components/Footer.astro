@@ -54,15 +54,10 @@ const year = new Date().getFullYear();
       <p class="text-sm text-[color:var(--color-text-on-dark-soft)] leading-relaxed mb-4">
         One Sunday email. Cigar news, deep dives, and the rare smokes worth tracking down.
       </p>
-      <form class="flex gap-2" id="footer-newsletter">
-        <input
-          type="email"
-          required
-          placeholder="your@email.com"
-          class="flex-1 bg-[color:var(--color-dark-surface)] border border-[color:var(--color-dark-border)] rounded-full px-4 py-2 text-sm text-white placeholder:text-[color:var(--color-text-on-dark-mute)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors min-w-0"
-        />
-        <button type="submit" class="btn btn-accent !py-2 !px-4 text-xs">Subscribe</button>
-      </form>
+      <a href="/subscribe/" class="btn btn-accent">Join the newsletter →</a>
+      <p class="text-xs text-[color:var(--color-text-on-dark-mute)] mt-3">
+        Free. Unsubscribe with a click.
+      </p>
     </div>
   </div>
 
@@ -79,18 +74,3 @@ const year = new Date().getFullYear();
   </div>
 </footer>
 
-<script>
-  function setupFooterNewsletter() {
-    const form = document.getElementById("footer-newsletter") as HTMLFormElement | null;
-    if (!form || (form as any).dataset?.bound === "1") return;
-    (form as any).dataset.bound = "1";
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const input = form.querySelector("input[type=email]") as HTMLInputElement;
-      if (!input?.value) return;
-      form.innerHTML = `<p class="text-[color:var(--color-accent)] py-2 text-sm">Thanks. Check ${input.value} for confirmation.</p>`;
-    });
-  }
-  document.addEventListener("astro:page-load", setupFooterNewsletter);
-  setupFooterNewsletter();
-</script>

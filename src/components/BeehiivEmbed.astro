@@ -1,0 +1,45 @@
+---
+/**
+ * BeehiivEmbed — drops in the Beehiiv subscribe form via their v3 loader.
+ * The script tag is replaced in place with the rendered form once the
+ * loader fetches the form definition from Beehiiv.
+ *
+ * To swap to a different Beehiiv form, change FORM_ID once here and
+ * every signup spot on the site updates together.
+ */
+
+interface Props {
+  /** Optional max width for the wrapper. Default 480px (Beehiiv's natural width). */
+  maxWidth?: string;
+  /** Center the form horizontally inside its parent */
+  center?: boolean;
+}
+
+const { maxWidth = "480px", center = false } = Astro.props;
+
+const FORM_ID = "8d78f521-7cc8-49f1-8315-1e9da6629415";
+---
+
+<div
+  class:list={["beehiiv-embed", center && "beehiiv-embed--center"]}
+  style={`max-width: ${maxWidth};`}
+>
+  <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form={FORM_ID}></script>
+</div>
+
+<style>
+  .beehiiv-embed {
+    width: 100%;
+  }
+  .beehiiv-embed--center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* Beehiiv's form ships with light styling. Make sure it sits nicely on
+     dark sections by giving it a subtle backing */
+  :global(.section-dark) .beehiiv-embed {
+    background: var(--color-bg);
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+</style>
