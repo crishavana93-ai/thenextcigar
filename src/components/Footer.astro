@@ -2,44 +2,81 @@
 const year = new Date().getFullYear();
 ---
 
-<footer class="section-dark mt-32">
-  <div class="container-wide pt-20 pb-12 grid grid-cols-1 md:grid-cols-4 gap-12">
-    <div class="md:col-span-2 max-w-md">
+<footer class="mt-12 bg-[color:var(--color-bg)] border-t border-[color:var(--color-border)]">
+  <div class="container-wide pt-20 pb-12 grid grid-cols-1 md:grid-cols-12 gap-12">
+    <div class="md:col-span-5 max-w-md">
       <a href="/" class="inline-block mb-6">
-        <img src="/logo.svg" alt="TNext Cigar" class="h-14 w-auto" style="color: var(--color-text-inverse); filter: brightness(0) invert(1);" />
+        <img
+          src="/logo.svg"
+          alt="TNext Cigar"
+          class="h-14 w-auto"
+          style="filter: brightness(0) invert(1);"
+        />
       </a>
-      <p class="text-[color:var(--color-text-inverse-soft)] leading-relaxed">
-        Modern stories for the cigar aficionado. Culture, craft, and the news that shapes the leaf — written for people who actually smoke them.
+      <p class="text-[color:var(--color-text-muted)] leading-relaxed">
+        Modern editorial for the cigar aficionado. Culture, craft, and the news that shapes the leaf — written for people who actually smoke them.
       </p>
-      <a href="/subscribe" class="btn btn-primary mt-6">Join the newsletter</a>
+      <a href="/subscribe" class="btn btn-accent mt-6">Join the newsletter</a>
     </div>
 
-    <div>
-      <h3 class="eyebrow mb-4">Read</h3>
-      <ul class="space-y-2 text-[color:var(--color-text-inverse-soft)]">
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/blog">All stories</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/cigar-101">Cigar 101</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/cubans">Cubans</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/cigar-culture">Culture</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/latest-news">News</a></li>
+    <div class="md:col-span-2">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[color:var(--color-text-muted)] mb-4">Read</h3>
+      <ul class="space-y-3 text-[color:var(--color-text-soft)] text-sm">
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/blog">All stories</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/cigar-101">Cigar 101</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/cubans">Cubans</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/cigar-culture">Culture</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/latest-news">News</a></li>
       </ul>
     </div>
 
-    <div>
-      <h3 class="eyebrow mb-4">More</h3>
-      <ul class="space-y-2 text-[color:var(--color-text-inverse-soft)]">
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/about">About</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/shop">Shop</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/subscribe">Newsletter</a></li>
-        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/rss.xml">RSS feed</a></li>
+    <div class="md:col-span-2">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[color:var(--color-text-muted)] mb-4">More</h3>
+      <ul class="space-y-3 text-[color:var(--color-text-soft)] text-sm">
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/about">About</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/shop">Shop</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/subscribe">Newsletter</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/rss.xml">RSS feed</a></li>
       </ul>
+    </div>
+
+    <div class="md:col-span-3">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[color:var(--color-text-muted)] mb-4">Stay close</h3>
+      <p class="text-sm text-[color:var(--color-text-soft)] leading-relaxed mb-4">
+        One Sunday email. Cigar news, deep dives, and the rare smokes worth tracking down.
+      </p>
+      <form class="flex gap-2" id="footer-newsletter">
+        <input
+          type="email"
+          required
+          placeholder="your@email.com"
+          class="flex-1 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-full px-4 py-2 text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-mute-2)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors min-w-0"
+        />
+        <button type="submit" class="btn btn-accent !py-2 !px-4 text-xs">Subscribe</button>
+      </form>
     </div>
   </div>
 
-  <div class="border-t border-[color:var(--color-dark-border)]">
-    <div class="container-wide py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-[color:var(--color-text-inverse-mute)]">
+  <div class="border-t border-[color:var(--color-border)]">
+    <div class="container-wide py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-[color:var(--color-text-mute-2)]">
       <p>© {year} The Next Cigar. Independent editorial.</p>
       <p>For 21+ adults. Tobacco is a regulated product. We are not a retailer.</p>
     </div>
   </div>
 </footer>
+
+<script>
+  function setupFooterNewsletter() {
+    const form = document.getElementById("footer-newsletter") as HTMLFormElement | null;
+    if (!form || (form as any).dataset?.bound === "1") return;
+    (form as any).dataset.bound = "1";
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = form.querySelector("input[type=email]") as HTMLInputElement;
+      if (!input?.value) return;
+      form.innerHTML = `<p class="text-[color:var(--color-accent)] py-2 text-sm">Thanks. Check ${input.value} for confirmation.</p>`;
+    });
+  }
+  document.addEventListener("astro:page-load", setupFooterNewsletter);
+  setupFooterNewsletter();
+</script>

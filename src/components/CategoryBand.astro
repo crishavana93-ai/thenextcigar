@@ -1,0 +1,100 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  categoryName: string;
+  categorySlug: string;
+  posts: CollectionEntry<"blog">[];
+  /** Visual variant — controls bg color */
+  variant?: "default" | "dark" | "warm";
+}
+
+const { categoryName, categorySlug, posts, variant = "default" } = Astro.props;
+if (posts.length === 0) return null;
+
+const featured = posts[0];
+const rest = posts.slice(1, 4);
+
+const fmtDate = (d: Date | string) =>
+  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+---
+
+<section class:list={[
+  "py-20",
+  variant === "dark" && "bg-[color:var(--color-bg-soft)]",
+  variant === "warm" && "bg-[color:var(--color-surface)]",
+]}>
+  <div class="container-wide">
+    <div class="flex items-end justify-between mb-10 reveal flex-wrap gap-4">
+      <div>
+        <p class="text-[0.78rem] font-bold tracking-[0.18em] uppercase text-[color:var(--color-text-muted)] mb-2">
+          What's hot in
+        </p>
+        <h2 class="section-eyebrow text-[color:var(--color-accent)]">{categoryName}</h2>
+      </div>
+      <a href={`/category/${categorySlug}`} class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
+        See all in {categoryName} →
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      {/* Featured of category */}
+      <a href={`/blog/${featured.data.slug}`} class="reveal group block">
+        <div class="relative overflow-hidden rounded aspect-[16/10] bg-[color:var(--color-surface)] mb-6">
+          {featured.data.cover && (
+            <Image
+              src={featured.data.cover}
+              alt={featured.data.title}
+              widths={[600, 1200]}
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
+            />
+          )}
+        </div>
+        <p class="category-tag mb-3">{categoryName}</p>
+        <h3 class="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.1] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+          {featured.data.title}
+        </h3>
+        {featured.data.excerpt && (
+          <p class="mt-4 text-[color:var(--color-text-muted)] line-clamp-2 text-sm md:text-base">
+            {featured.data.excerpt}
+          </p>
+        )}
+        <p class="mt-4 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+          {fmtDate(featured.data.publishedAt)}
+        </p>
+      </a>
+
+      {/* List of 3 secondary stories */}
+      <div class="flex flex-col divide-y divide-[color:var(--color-border)]">
+        {rest.map((p, i) => (
+          <a href={`/blog/${p.data.slug}`} class="reveal group flex gap-4 py-5 first:pt-0" data-reveal-delay={(i + 1) as 1 | 2 | 3}>
+            <div class="relative overflow-hidden rounded w-32 h-24 lg:w-40 lg:h-28 flex-shrink-0 bg-[color:var(--color-surface)]">
+              {p.data.cover && (
+                <Image
+                  src={p.data.cover}
+                  alt={p.data.title}
+                  widths={[200, 400]}
+                  sizes="160px"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+              )}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="category-tag mb-2 text-[0.65rem]">{categoryName}</p>
+              <h4 class="font-display text-base lg:text-lg leading-snug text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors line-clamp-3">
+                {p.data.title}
+              </h4>
+              <p class="mt-2 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+                {fmtDate(p.data.publishedAt)}
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

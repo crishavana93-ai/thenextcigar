@@ -1,0 +1,43 @@
+---
+interface Props {
+  heading?: string;
+  blurb?: string;
+  price?: string;
+  cta?: string;
+  href?: string;
+}
+
+const {
+  heading = "Unlock the full editorial.",
+  blurb = "Premium subscribers get exclusive cigar reviews, founder's-cut features, and the weekly Sunday dispatch — for the cost of a single cigar.",
+  price = "$5/month",
+  cta = "Become a member",
+  href = "/subscribe",
+} = Astro.props;
+---
+
+<section class="py-24 md:py-32 relative overflow-hidden bg-[color:var(--color-bg-soft)] border-y border-[color:var(--color-border)]">
+  {/* Decorative red glow */}
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[140%] pointer-events-none">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,46,46,0.08),transparent_55%)]"></div>
+  </div>
+
+  <div class="container-narrow relative text-center reveal">
+    <p class="eyebrow justify-center mb-4">Premium</p>
+    <h2 class="font-display text-4xl md:text-6xl leading-[1.05] max-w-3xl mx-auto">
+      {heading}
+    </h2>
+    <p class="lead mt-6 max-w-xl mx-auto">{blurb}</p>
+
+    <div class="mt-10 flex flex-col sm:flex-row gap-4 items-center justify-center">
+      <span class="magnetic-area inline-block" data-magnetic-area>
+        <a href={href} class="btn btn-accent magnetic-target !px-8 !py-4" data-magnetic>
+          {cta}
+        </a>
+      </span>
+      <p class="text-sm text-[color:var(--color-text-muted)]">
+        From <span class="font-bold text-[color:var(--color-text)]">{price}</span> · cancel anytime
+      </p>
+    </div>
+  </div>
+</section>

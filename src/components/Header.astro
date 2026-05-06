@@ -3,31 +3,54 @@ import Logo from "./Logo.astro";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/blog", label: "Stories" },
+  { href: "/blog", label: "News" },
   { href: "/category/cigar-101", label: "Cigar 101" },
-  { href: "/shop", label: "Shop" },
+  { href: "/category/cubans", label: "Cubans" },
+  { href: "/category/cigar-culture", label: "Culture" },
   { href: "/about", label: "About" },
 ];
 
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+
+const today = new Date().toLocaleDateString("en-US", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
+});
 ---
 
-<header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/90 backdrop-blur-md border-b border-[color:var(--color-border)]">
-  <div class="container-wide flex items-center justify-between h-20">
-    <a href="/" class="flex items-center gap-3 group" aria-label="TNext Cigar — home">
-      {/* Wordmark on desktop, mark on mobile */}
-      <img src="/logo.svg" alt="TNext Cigar" class="hidden sm:block h-12 w-auto text-[color:var(--color-text)]" style="color: currentColor;" />
+{/* Thin date + ticker bar */}
+<div class="bg-[color:var(--color-bg-soft)] border-b border-[color:var(--color-border-soft)]">
+  <div class="container-wide flex items-center justify-between py-2 text-[0.7rem] tracking-widest uppercase text-[color:var(--color-text-muted)]">
+    <span>{today}</span>
+    <span class="hidden sm:flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+      Live editorial · 21+ readers only
+    </span>
+    <a href="/subscribe" class="hidden md:inline hover:text-[color:var(--color-accent)] transition-colors">Get the newsletter →</a>
+  </div>
+</div>
+
+<header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/95 backdrop-blur-md border-b border-[color:var(--color-border)]">
+  <div class="container-wide flex items-center justify-between h-20 gap-6">
+    {/* Left: Logo */}
+    <a href="/" class="flex items-center group flex-shrink-0" aria-label="TNext Cigar — home">
+      <img
+        src="/logo.svg"
+        alt="TNext Cigar"
+        class="hidden sm:block h-12 w-auto"
+        style="filter: brightness(0) invert(1);"
+      />
       <Logo variant="mark" class="sm:hidden w-9 h-9 text-[color:var(--color-text)]" />
     </a>
 
-    <nav class="hidden md:flex items-center gap-8" aria-label="Primary">
+    {/* Center: Nav */}
+    <nav class="hidden lg:flex items-center gap-8" aria-label="Primary">
       {navLinks.map((link) => {
         const active = link.href === "/" ? path === "/" : path.startsWith(link.href);
         return (
           <a
             href={link.href}
             class:list={[
-              "text-sm tracking-wide transition-colors",
+              "text-sm font-semibold tracking-wide transition-colors uppercase",
               active ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]",
             ]}
           >
@@ -37,10 +60,16 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
       })}
     </nav>
 
-    <div class="flex items-center gap-2">
-      <a href="/subscribe" class="btn btn-primary !py-2 !px-4 hidden sm:inline-flex">Subscribe</a>
-      <button id="mobile-menu-button" class="md:hidden text-[color:var(--color-text)] p-2" aria-label="Open menu" aria-expanded="false">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    {/* Right: Search + Subscribe */}
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button class="hidden sm:inline-flex w-10 h-10 items-center justify-center rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:border-[color:var(--color-accent)] transition-colors" aria-label="Search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <a href="/subscribe" class="btn btn-accent !py-2.5 !px-5 hidden sm:inline-flex">
+        Subscribe
+      </a>
+      <button id="mobile-menu-button" class="lg:hidden text-[color:var(--color-text)] p-2" aria-label="Open menu" aria-expanded="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="3" y1="6" x2="21" y2="6" />
           <line x1="3" y1="12" x2="21" y2="12" />
           <line x1="3" y1="18" x2="21" y2="18" />
@@ -49,15 +78,15 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     </div>
   </div>
 
-  <!-- Mobile menu -->
-  <div id="mobile-menu" class="md:hidden hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
+  {/* Mobile menu */}
+  <div id="mobile-menu" class="lg:hidden hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
     <nav class="container-wide flex flex-col py-4 gap-1" aria-label="Mobile">
       {navLinks.map((link) => (
-        <a href={link.href} class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors">
+        <a href={link.href} class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide">
           {link.label}
         </a>
       ))}
-      <a href="/subscribe" class="btn btn-primary mt-3 self-start">Subscribe</a>
+      <a href="/subscribe" class="btn btn-accent mt-3 self-start">Subscribe</a>
     </nav>
   </div>
 </header>

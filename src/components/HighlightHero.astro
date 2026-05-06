@@ -1,0 +1,88 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  featured: CollectionEntry<"blog">;
+  side: CollectionEntry<"blog">[];
+  categoryByslug: Map<string, { name: string; slug: string }>;
+}
+
+const { featured, side, categoryByslug } = Astro.props;
+const fc = featured.data.category ? categoryByslug.get(featured.data.category) : null;
+
+const fmtDate = (d: Date | string) =>
+  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+---
+
+<section class="container-wide pt-10 pb-20">
+  <div class="flex items-center justify-between mb-8 reveal">
+    <p class="section-eyebrow">Highlight News</p>
+    <a href="/blog" class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
+      View all →
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+    {/* FEATURED — large left, spans 2 cols */}
+    <a href={`/blog/${featured.data.slug}`} class="lg:col-span-2 group reveal" aria-label={featured.data.title}>
+      <div class="relative overflow-hidden rounded aspect-[16/10] bg-[color:var(--color-surface)]">
+        {featured.data.cover && (
+          <Image
+            src={featured.data.cover}
+            alt={featured.data.title}
+            widths={[800, 1200, 1800]}
+            sizes="(min-width: 1024px) 66vw, 100vw"
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 animate-drift"
+            loading="eager"
+          />
+        )}
+        <div class="absolute inset-0 bg-gradient-to-t from-[color:var(--color-bg)] via-[color:var(--color-bg)]/50 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+          {fc && <p class="category-tag mb-3">{fc.name}</p>}
+          <h2 class="font-display text-2xl md:text-4xl lg:text-5xl leading-[1.05] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+            {featured.data.title}
+          </h2>
+          {featured.data.excerpt && (
+            <p class="mt-4 text-[color:var(--color-text-soft)] line-clamp-2 max-w-2xl text-sm md:text-base">
+              {featured.data.excerpt}
+            </p>
+          )}
+          <p class="mt-4 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+            {fmtDate(featured.data.publishedAt)}
+          </p>
+        </div>
+      </div>
+    </a>
+
+    {/* SIDE — 2 stacked stories */}
+    <div class="flex flex-col gap-6 lg:gap-8">
+      {side.slice(0, 2).map((p, i) => {
+        const c = p.data.category ? categoryByslug.get(p.data.category) : null;
+        return (
+          <a href={`/blog/${p.data.slug}`} class="reveal group flex-1" data-reveal-delay={(i + 1) as 1 | 2}>
+            <div class="relative overflow-hidden rounded aspect-[16/10] lg:aspect-[16/9] mb-4 bg-[color:var(--color-surface)]">
+              {p.data.cover && (
+                <Image
+                  src={p.data.cover}
+                  alt={p.data.title}
+                  widths={[400, 800]}
+                  sizes="(min-width: 1024px) 33vw, 100vw"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="eager"
+                />
+              )}
+            </div>
+            {c && <p class="category-tag mb-2">{c.name}</p>}
+            <h3 class="font-display text-lg md:text-xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+              {p.data.title}
+            </h3>
+            <p class="mt-2 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+              {fmtDate(p.data.publishedAt)}
+            </p>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</section>

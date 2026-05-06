@@ -5,62 +5,67 @@ import type { CollectionEntry } from "astro:content";
 interface Props {
   post: CollectionEntry<"blog">;
   categoryName?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   delay?: 1 | 2 | 3 | 4;
+  /** Horizontal layout (image left, text right) — used in side-rail lists */
+  horizontal?: boolean;
+  /** Hide the image entirely (text-only entry) */
+  noImage?: boolean;
 }
 
-const { post, categoryName, size = "md", delay } = Astro.props;
+const { post, categoryName, size = "md", delay, horizontal = false, noImage = false } = Astro.props;
 const data = post.data;
 
 const date = new Date(data.publishedAt).toLocaleDateString("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
+  year: "numeric", month: "short", day: "numeric",
 });
 
-const titleClass = size === "lg"
-  ? "text-3xl md:text-4xl"
-  : size === "sm"
-  ? "text-base"
-  : "text-xl md:text-2xl";
+const titleSize =
+  size === "xl" ? "text-3xl md:text-5xl" :
+  size === "lg" ? "text-2xl md:text-3xl" :
+  size === "sm" ? "text-base md:text-lg" :
+  "text-xl md:text-2xl";
 
 const cover = data.cover ?? data.thumbnail;
 ---
 
 <a
   href={`/blog/${data.slug}`}
-  class="card reveal block group"
+  class:list={[
+    "card reveal block group",
+    horizontal && "flex flex-row gap-4 items-start",
+  ]}
   data-reveal-delay={delay}
   aria-label={data.title}
 >
-  {cover && (
-    <div class="card-image">
+  {!noImage && cover && (
+    <div class:list={["card-image", horizontal && "w-32 h-24 flex-shrink-0 aspect-square"]}>
       <Image
         src={cover}
         alt={data.title}
         widths={[400, 800, 1200]}
-        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        sizes={horizontal ? "120px" : "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"}
         loading="lazy"
       />
       {data.isPremium && (
-        <span class="absolute top-3 left-3 px-2 py-1 text-[0.65rem] font-semibold tracking-widest uppercase bg-[color:var(--color-accent)] text-[color:var(--color-bg)] rounded-sm">
+        <span class="absolute top-3 left-3 px-2 py-1 text-[0.6rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-[color:var(--color-text)] rounded-sm">
           Premium
         </span>
       )}
     </div>
   )}
-  <div class="p-6">
+  <div class:list={["card-body", horizontal && "flex-1 min-w-0 !pt-0"]}>
     {categoryName && (
-      <p class="eyebrow mb-3">{categoryName}</p>
+      <p class="category-tag mb-2">{categoryName}</p>
     )}
-    <h3 class:list={["font-display leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors", titleClass]}>
+    <h3 class:list={["card-title", titleSize]}>
       {data.title}
     </h3>
-    {size !== "sm" && data.excerpt && (
-      <p class="mt-3 text-[color:var(--color-muted)] line-clamp-3 text-sm leading-relaxed">
+    {size !== "sm" && !horizontal && data.excerpt && (
+      <p class="mt-3 text-[color:var(--color-text-muted)] line-clamp-2 text-sm leading-relaxed">
         {data.excerpt}
       </p>
     )}
-    <p class="mt-4 text-xs text-[color:var(--color-muted-2)] tracking-wider uppercase">{date}</p>
+    <p class="card-meta uppercase">{date}</p>
   </div>
 </a>
