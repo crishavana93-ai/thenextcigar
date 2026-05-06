@@ -22,13 +22,14 @@ const side = allPosts.filter((p) => p.id !== featuredId).slice(0, 2);
 const usedIds = new Set([featuredId, ...side.map((p) => p.id)]);
 const latest = allPosts.filter((p) => !usedIds.has(p.id)).slice(0, 6);
 
-// Helper — pull posts in a category, skipping ones already used in highlight
+// Helper — pull posts in a category. We allow re-use of posts that appeared in
+// the highlight section so categories with few stories still render fully.
 function postsByCategory(slug: string, limit = 4) {
-  return allPosts.filter((p) => p.data.category === slug && !usedIds.has(p.id)).slice(0, limit);
+  return allPosts.filter((p) => p.data.category === slug).slice(0, limit);
 }
 
 const cigar101 = postsByCategory("cigar-101");
-const cubans = postsByCategory("cubans");
+const havana = postsByCategory("havana-cigar-life");
 const culture = postsByCategory("cigar-culture");
 const news = postsByCategory("latest-news");
 ---
@@ -68,9 +69,9 @@ const news = postsByCategory("latest-news");
     <CategoryBand categoryName="Cigar 101" categorySlug="cigar-101" posts={cigar101} variant="dark" />
   )}
 
-  {/* WHAT'S HOT IN — Cubans */}
-  {cubans.length > 0 && (
-    <CategoryBand categoryName="Cubans" categorySlug="cubans" posts={cubans} />
+  {/* WHAT'S HOT IN — Havana Cigar Life (the Cuban content) */}
+  {havana.length > 0 && (
+    <CategoryBand categoryName="Havana Cigar Life" categorySlug="havana-cigar-life" posts={havana} />
   )}
 
   {/* AD: billboard */}

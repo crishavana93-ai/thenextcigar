@@ -15,7 +15,7 @@ interface Props {
 const {
   title = "The Next Cigar — Modern stories for the cigar aficionado",
   description = "A modern editorial home for cigar culture, history, gear, and the smoke that ties them together. Reviews, deep dives, and the news that matters.",
-  image = "/og-default.jpg",
+  image = "/og-default.svg",
   canonicalURL = new URL(Astro.url.pathname, Astro.site).toString(),
   noIndex = false,
 } = Astro.props as Props;
@@ -51,9 +51,10 @@ const siteName = "The Next Cigar";
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Inter only (Cormorant Garamond removed in v4 Newsplate redesign) -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
