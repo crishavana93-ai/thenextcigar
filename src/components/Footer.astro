@@ -1,16 +1,14 @@
 ---
-import Logo from "./Logo.astro";
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-32 border-t border-[color:var(--color-border-soft)]">
-  <div class="container-wide py-16 grid grid-cols-1 md:grid-cols-4 gap-12">
+<footer class="section-dark mt-32">
+  <div class="container-wide pt-20 pb-12 grid grid-cols-1 md:grid-cols-4 gap-12">
     <div class="md:col-span-2 max-w-md">
-      <a href="/" class="flex items-center gap-3 mb-6">
-        <Logo class="w-9 h-9" />
-        <span class="font-display text-xl tracking-tight">The Next Cigar</span>
+      <a href="/" class="inline-block mb-6">
+        <img src="/logo.svg" alt="TNext Cigars" class="h-14 w-auto" style="color: var(--color-text-inverse); filter: brightness(0) invert(1);" />
       </a>
-      <p class="text-[color:var(--color-muted)] leading-relaxed">
+      <p class="text-[color:var(--color-text-inverse-soft)] leading-relaxed">
         Modern stories for the cigar aficionado. Culture, craft, and the news that shapes the leaf — written for people who actually smoke them.
       </p>
       <a href="/subscribe" class="btn btn-primary mt-6">Join the newsletter</a>
@@ -18,29 +16,29 @@ const year = new Date().getFullYear();
 
     <div>
       <h3 class="eyebrow mb-4">Read</h3>
-      <ul class="space-y-2 text-[color:var(--color-text-soft)]">
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/blog">All stories</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/cigar-101">Cigar 101</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/cubans">Cubans</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/cigar-culture">Culture</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/category/latest-news">News</a></li>
+      <ul class="space-y-2 text-[color:var(--color-text-inverse-soft)]">
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/blog">All stories</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/cigar-101">Cigar 101</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/cubans">Cubans</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/cigar-culture">Culture</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/category/latest-news">News</a></li>
       </ul>
     </div>
 
     <div>
       <h3 class="eyebrow mb-4">More</h3>
-      <ul class="space-y-2 text-[color:var(--color-text-soft)]">
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/about">About</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/shop">Shop</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/subscribe">Newsletter</a></li>
-        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/rss.xml">RSS feed</a></li>
+      <ul class="space-y-2 text-[color:var(--color-text-inverse-soft)]">
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/about">About</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/shop">Shop</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/subscribe">Newsletter</a></li>
+        <li><a class="hover:text-[color:var(--color-accent-soft)] transition-colors" href="/rss.xml">RSS feed</a></li>
       </ul>
     </div>
   </div>
 
-  <div class="border-t border-[color:var(--color-border-soft)]">
-    <div class="container-wide py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-[color:var(--color-muted-2)]">
-      <p>© {year} The Next Cigar. Independent editorial.</p>
+  <div class="border-t border-[color:var(--color-dark-border)]">
+    <div class="container-wide py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-[color:var(--color-text-inverse-mute)]">
+      <p>© {year} TNext Cigars. Independent editorial.</p>
       <p>For 21+ adults. Tobacco is a regulated product. We are not a retailer.</p>
     </div>
   </div>

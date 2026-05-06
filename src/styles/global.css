@@ -1,44 +1,51 @@
 @import "tailwindcss";
 
 /* ============================================================================
- * thenextcigar.com — design tokens & base styles
- * Concept: warm tobacco midnight × cream paper. Editorial magazine, lounge mood.
- * Palette built on three temperatures:
- *   - Deep tobacco for primary surface (warmer than pure black)
- *   - Aged cream for inverted sections (single-post body, ad backdrops)
- *   - Aged gold + burgundy as accents (cigar band gold, ember red)
+ * thenextcigar.com — design tokens (v3, logo-aligned)
+ * Concept: cream-paper editorial × charcoal wordmark × aged-gold accent.
+ * Default surfaces are warm cream (matching the TNext Cigars logo background).
+ * Dark surfaces are reserved for hero image overlays + the footer for contrast.
  * ========================================================================== */
 
 @theme {
-  /* === Dark surfaces (default theme) === */
-  --color-bg: #14100a;             /* warm tobacco midnight */
-  --color-bg-soft: #1a1510;
-  --color-surface: #1f1810;        /* slightly raised */
-  --color-surface-2: #2a2118;
-  --color-surface-warm: #2e2317;   /* for ad backdrops, sponsored areas */
-  --color-border: #3a2d1e;
-  --color-border-soft: #261c12;
+  /* === Default cream/paper surfaces === */
+  --color-bg: #f3e8d5;             /* warm cream paper — matches logo bg */
+  --color-bg-soft: #ede1cb;        /* slight depth */
+  --color-surface: #faf3e6;        /* lightest paper — cards on cream */
+  --color-surface-2: #e8dcc4;      /* deeper paper — alternating sections */
+  --color-surface-warm: #ddd0b4;   /* even deeper, for sponsor/ad backdrops */
 
-  /* === Light/cream surfaces (inverted sections) === */
-  --color-cream: #f3e8d5;
-  --color-cream-soft: #ede1cb;
-  --color-cream-deep: #d8c8ad;
-  --color-paper: #faf3e6;          /* lightest — for "paper" cards */
+  /* === Dark surfaces (used selectively: hero overlay, footer) === */
+  --color-dark: #1a1410;
+  --color-dark-soft: #221a12;
+  --color-dark-surface: #2a1f15;
+  --color-dark-border: #3a2d1e;
 
   /* === Text === */
-  --color-text: #f5ebe0;           /* on dark */
-  --color-text-soft: #e0d2bf;
-  --color-text-on-cream: #2a1d10;
-  --color-text-on-cream-soft: #4a3522;
-  --color-muted: #a89986;
-  --color-muted-2: #786857;
+  --color-text: #2a1d10;           /* warm dark charcoal — close to logo */
+  --color-text-soft: #4a3522;
+  --color-text-muted: #786857;
+  --color-text-mute-2: #a0907c;
+  --color-text-inverse: #f5ebe0;   /* on dark sections */
+  --color-text-inverse-soft: #d8cab9;
+  --color-text-inverse-mute: #a89986;
+
+  /* keep the old `--color-muted*` names mapping to cream variants so existing
+     components don't break — they'll resolve to the cream-side muted tones */
+  --color-muted: #786857;
+  --color-muted-2: #a0907c;
   --color-muted-cream: #6e5a3f;
 
+  /* === Border === */
+  --color-border: #d8c8ad;         /* on cream */
+  --color-border-soft: #e8dcc4;
+
   /* === Accents === */
-  --color-accent: #c9a961;         /* aged cigar-band gold */
-  --color-accent-hover: #e0bf7a;
-  --color-accent-deep: #a87144;    /* aged copper */
-  --color-burgundy: #6e2620;       /* ember red, used sparingly */
+  --color-accent: #b08243;         /* aged copper — slightly deeper than before so it reads on cream */
+  --color-accent-hover: #8a6231;
+  --color-accent-soft: #c9a961;    /* aged gold — for hover/highlight */
+  --color-accent-deep: #6e4f2a;
+  --color-burgundy: #6e2620;       /* ember — used sparingly for premium tags */
   --color-burgundy-soft: #8a3530;
 
   /* === Typography === */
@@ -74,35 +81,16 @@ body {
   position: relative;
 }
 
-/* Subtle film grain over the whole page — gives the dark a "paper" feel */
+/* Subtle paper grain — gives the cream a textured magazine feel */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  mix-blend-mode: overlay;
-}
-
-/* Warm radial glow at top of every page — like ambient lounge lighting */
-body::after {
-  content: "";
-  position: fixed;
-  top: -20%;
-  left: 50%;
-  width: 120%;
-  height: 60vh;
-  transform: translateX(-50%);
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    ellipse at center,
-    color-mix(in oklab, var(--color-accent) 12%, transparent) 0%,
-    transparent 60%
-  );
-  opacity: 0.7;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.16  0 0 0 0 0.11  0 0 0 0 0.06  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
 }
 
 main { position: relative; z-index: 2; }
@@ -113,17 +101,35 @@ header, footer { position: relative; z-index: 10; }
   color: var(--color-bg);
 }
 
-/* Scrollbar */
+/* Scrollbar — adapt to cream */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--color-bg); }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-muted-2); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
 
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 4px;
   border-radius: 2px;
 }
+
+/* ----------------------------------------------------------------------------
+ * Dark sections — apply this class to opt into the dark palette (hero, footer)
+ * -------------------------------------------------------------------------- */
+
+.section-dark {
+  background: var(--color-dark);
+  color: var(--color-text-inverse);
+  --color-bg: var(--color-dark);
+  --color-bg-soft: var(--color-dark-soft);
+  --color-surface: var(--color-dark-surface);
+  --color-text: var(--color-text-inverse);
+  --color-text-soft: var(--color-text-inverse-soft);
+  --color-muted: var(--color-text-inverse-mute);
+  --color-border: var(--color-dark-border);
+}
+.section-dark a:not(.btn) { color: var(--color-accent-soft); }
+.section-dark .eyebrow    { color: var(--color-accent-soft); }
 
 /* ----------------------------------------------------------------------------
  * Typography helpers
@@ -192,15 +198,15 @@ header, footer { position: relative; z-index: 10; }
   color: var(--color-text);
 }
 .prose code {
-  background: var(--color-surface);
+  background: var(--color-surface-2);
   padding: 0.15em 0.4em;
   border-radius: 3px;
   font-size: 0.9em;
   font-family: var(--font-mono);
-  color: var(--color-accent);
+  color: var(--color-accent-deep);
 }
 .prose pre {
-  background: var(--color-surface);
+  background: var(--color-surface-2);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 1em 1.25em;
@@ -238,22 +244,12 @@ header, footer { position: relative; z-index: 10; }
  * Animations
  * -------------------------------------------------------------------------- */
 
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(28px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+@keyframes fade-up { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes drift-slow {
   0%   { transform: scale(1.08) translate(0, 0); }
   50%  { transform: scale(1.1) translate(-1.5%, -2%); }
   100% { transform: scale(1.08) translate(1%, 1.5%); }
-}
-@keyframes shimmer {
-  from { background-position: -200% 0; }
-  to   { background-position: 200% 0; }
 }
 @keyframes ember-pulse {
   0%, 100% { opacity: 0.55; }
@@ -267,22 +263,17 @@ header, footer { position: relative; z-index: 10; }
     opacity 900ms var(--ease-out-expo),
     transform 900ms var(--ease-out-expo);
 }
-.reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.reveal.is-visible { opacity: 1; transform: translateY(0); }
 .reveal[data-reveal-delay="1"] { transition-delay: 80ms; }
 .reveal[data-reveal-delay="2"] { transition-delay: 160ms; }
 .reveal[data-reveal-delay="3"] { transition-delay: 240ms; }
 .reveal[data-reveal-delay="4"] { transition-delay: 320ms; }
 
-/* Hero image slow drift — gentle parallax-like motion on a hero background */
 .animate-drift {
   animation: drift-slow 30s ease-in-out infinite alternate;
   will-change: transform;
 }
 
-/* Scroll-driven parallax on cover images (modern browsers) */
 @supports (animation-timeline: scroll()) {
   .parallax-cover {
     animation: parallax-rise linear both;
@@ -297,34 +288,33 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ----------------------------------------------------------------------------
- * Card
+ * Card — paper-style on cream
  * -------------------------------------------------------------------------- */
 
 .card {
   position: relative;
   display: block;
   background: var(--color-surface);
-  border: 1px solid var(--color-border-soft);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   overflow: hidden;
   transition:
     transform 600ms var(--ease-out-expo),
     border-color 300ms,
-    background 300ms,
     box-shadow 600ms var(--ease-out-expo);
 }
 .card:hover {
   transform: translateY(-4px);
   border-color: var(--color-accent);
-  background: var(--color-surface-2);
-  box-shadow: 0 14px 40px -16px color-mix(in oklab, var(--color-accent) 35%, transparent),
-              0 4px 12px -4px rgb(0 0 0 / 0.5);
+  box-shadow:
+    0 18px 38px -16px color-mix(in oklab, var(--color-text) 22%, transparent),
+    0 4px 10px -3px color-mix(in oklab, var(--color-text) 12%, transparent);
 }
 .card-image {
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 10;
-  background: var(--color-bg-soft);
+  background: var(--color-surface-2);
 }
 .card-image > img,
 .card-image > picture > img {
@@ -337,16 +327,6 @@ header, footer { position: relative; z-index: 10; }
 .card:hover .card-image > picture > img {
   transform: scale(1.06);
 }
-/* Subtle gradient lift on the image when hovered */
-.card-image::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgb(20 16 10 / 0.4) 100%);
-  pointer-events: none;
-  transition: opacity 400ms;
-}
-.card:hover .card-image::after { opacity: 0.7; }
 
 /* ----------------------------------------------------------------------------
  * Buttons
@@ -368,7 +348,7 @@ header, footer { position: relative; z-index: 10; }
   border: 1px solid transparent;
 }
 .btn-primary {
-  background: var(--color-accent);
+  background: var(--color-text);
   color: var(--color-bg);
   position: relative;
   overflow: hidden;
@@ -377,13 +357,14 @@ header, footer { position: relative; z-index: 10; }
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.18), transparent);
   transform: translateX(-100%);
   transition: transform 800ms var(--ease-out-expo);
 }
 .btn-primary:hover::before { transform: translateX(100%); }
 .btn-primary:hover {
-  background: var(--color-accent-hover);
+  background: var(--color-accent);
+  color: var(--color-bg);
   transform: translateY(-1px);
 }
 .btn-ghost {
@@ -394,6 +375,23 @@ header, footer { position: relative; z-index: 10; }
 .btn-ghost:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+/* On dark sections, invert button styling */
+.section-dark .btn-primary {
+  background: var(--color-accent);
+  color: var(--color-dark);
+}
+.section-dark .btn-primary:hover {
+  background: var(--color-accent-soft);
+}
+.section-dark .btn-ghost {
+  color: var(--color-text-inverse);
+  border-color: var(--color-text-inverse-mute);
+}
+.section-dark .btn-ghost:hover {
+  border-color: var(--color-accent-soft);
+  color: var(--color-accent-soft);
 }
 
 /* ----------------------------------------------------------------------------
@@ -424,26 +422,13 @@ header, footer { position: relative; z-index: 10; }
  * -------------------------------------------------------------------------- */
 
 .section-warm {
+  background: var(--color-surface-2);
+  position: relative;
+}
+.section-cream {
   background: var(--color-surface);
   position: relative;
 }
-.section-warm::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 20% 20%, color-mix(in oklab, var(--color-accent) 5%, transparent) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, color-mix(in oklab, var(--color-burgundy) 4%, transparent) 0%, transparent 50%);
-  pointer-events: none;
-}
-.section-warm > * { position: relative; }
-
-.section-cream {
-  background: var(--color-cream);
-  color: var(--color-text-on-cream);
-  position: relative;
-}
-.section-cream .eyebrow { color: var(--color-burgundy); }
 
 /* ----------------------------------------------------------------------------
  * View transitions
@@ -473,12 +458,12 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ----------------------------------------------------------------------------
- * Magnetic button — base styles for the JS-enhanced effect
+ * Magnetic button
  * -------------------------------------------------------------------------- */
 
 .magnetic-area {
   display: inline-block;
-  padding: 1rem;          /* enlarged hover area */
+  padding: 1rem;
   margin: -1rem;
 }
 .magnetic-target {
@@ -488,7 +473,7 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ----------------------------------------------------------------------------
- * Ad slot (placeholder shell, replace inner with Mediavine/Raptive/AdSense)
+ * Ad slot (placeholder shell)
  * -------------------------------------------------------------------------- */
 
 .ad-slot {
@@ -508,11 +493,11 @@ header, footer { position: relative; z-index: 10; }
   font-size: 0.62rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: var(--color-text-muted);
   font-weight: 600;
 }
 .ad-slot__inner {
-  color: var(--color-muted);
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -520,27 +505,24 @@ header, footer { position: relative; z-index: 10; }
   padding: 1rem 2rem;
 }
 .ad-slot--leaderboard { width: 100%; max-width: 970px; height: 90px; margin: 0 auto; }
-@media (min-width: 768px) {
-  .ad-slot--leaderboard { height: 90px; }
-}
 .ad-slot--billboard   { width: 100%; max-width: 970px; min-height: 250px; margin: 0 auto; }
 .ad-slot--medium      { width: 300px; height: 250px; margin: 0 auto; }
 .ad-slot--in-article  { width: 100%; max-width: 600px; min-height: 250px; margin: 2.5rem auto; }
 .ad-slot--halfpage    { width: 300px; height: 600px; }
 
 /* ----------------------------------------------------------------------------
- * Smoke / atmospheric SVG decorations
+ * Smoke decoration
  * -------------------------------------------------------------------------- */
 
 .smoke-decor {
   position: absolute;
   pointer-events: none;
-  opacity: 0.12;
+  opacity: 0.08;
   filter: blur(2px);
   animation: smoke-drift 18s ease-in-out infinite alternate;
 }
 @keyframes smoke-drift {
-  0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.12; }
-  50%  { transform: translate(2vw, -1vw) scale(1.05) rotate(2deg); opacity: 0.18; }
-  100% { transform: translate(-1vw, 1vw) scale(0.98) rotate(-1deg); opacity: 0.10; }
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.08; }
+  50%  { transform: translate(2vw, -1vw) scale(1.05) rotate(2deg); opacity: 0.13; }
+  100% { transform: translate(-1vw, 1vw) scale(0.98) rotate(-1deg); opacity: 0.06; }
 }

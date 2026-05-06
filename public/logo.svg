@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" fill="none" role="img" aria-label="TNext Cigars">
+  <defs>
+    <style>
+      .ln-word { font-family: "Inter", "Helvetica Neue", system-ui, -apple-system, sans-serif; font-weight: 800; letter-spacing: -0.04em; }
+      .ln-tag  { font-family: "Inter", "Helvetica Neue", system-ui, -apple-system, sans-serif; font-weight: 500; letter-spacing: 0.32em; }
+    </style>
+  </defs>
+
+  <!-- TNext wordmark -->
+  <text x="400" y="172" class="ln-word" font-size="180" text-anchor="middle" fill="currentColor">TNext</text>
+
+  <!-- Hairline left -->
+  <line x1="180" y1="220" x2="370" y2="220" stroke="currentColor" stroke-width="2.5"/>
+
+  <!-- Smoke wisp glyph -->
+  <path d="M395 198
+           c -10 12, 14 22, 2 38
+           c -12 16, 14 22, 2 38"
+        stroke="currentColor" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+  <!-- Hairline right -->
+  <line x1="430" y1="220" x2="620" y2="220" stroke="currentColor" stroke-width="2.5"/>
+
+  <!-- CIGARS tag -->
+  <text x="400" y="288" class="ln-tag" font-size="62" text-anchor="middle" fill="currentColor">CIGARS</text>
+</svg>

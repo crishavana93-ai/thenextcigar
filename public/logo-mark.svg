@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="TNext Cigars mark">
+  <!-- Compact brand mark — used at small sizes (header on mobile, app icon, etc.) -->
+  <!-- Hairline left -->
+  <line x1="6" y1="32" x2="22" y2="32" stroke="currentColor" stroke-width="1.5"/>
+  <!-- Smoke wisp -->
+  <path d="M27 18
+           c -3 5, 5 8, 0 14
+           c -5 6, 5 8, 0 14"
+        stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Hairline right -->
+  <line x1="42" y1="32" x2="58" y2="32" stroke="currentColor" stroke-width="1.5"/>
+</svg>

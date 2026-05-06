@@ -93,15 +93,16 @@ const { slides, intervalMs = 2000 } = Astro.props;
     object-fit: cover;
     opacity: 0.95;
   }
-  /* Lighter overlay — ~25% darken at the top, fading to bg only at the very bottom for text readability */
+  /* Hero overlay always fades to dark (since hero text sits on imagery and needs legibility),
+     even when the rest of the site is on the cream palette. */
   .hero-carousel__overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(
       to bottom,
-      color-mix(in oklab, var(--color-bg) 18%, transparent) 0%,
-      color-mix(in oklab, var(--color-bg) 25%, transparent) 50%,
-      color-mix(in oklab, var(--color-bg) 70%, transparent) 85%,
+      color-mix(in oklab, var(--color-dark) 12%, transparent) 0%,
+      color-mix(in oklab, var(--color-dark) 30%, transparent) 50%,
+      color-mix(in oklab, var(--color-dark) 80%, transparent) 88%,
       var(--color-bg) 100%
     );
   }

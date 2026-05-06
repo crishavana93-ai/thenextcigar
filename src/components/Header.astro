@@ -12,11 +12,12 @@ const navLinks = [
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 ---
 
-<header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/85 backdrop-blur-md border-b border-[color:var(--color-border-soft)]">
-  <div class="container-wide flex items-center justify-between h-16">
-    <a href="/" class="flex items-center gap-3 group" aria-label="The Next Cigar — home">
-      <Logo class="w-8 h-8 transition-transform group-hover:rotate-3" />
-      <span class="font-display text-lg tracking-tight text-[color:var(--color-text)]">The Next Cigar</span>
+<header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/90 backdrop-blur-md border-b border-[color:var(--color-border)]">
+  <div class="container-wide flex items-center justify-between h-20">
+    <a href="/" class="flex items-center gap-3 group" aria-label="TNext Cigars — home">
+      {/* Wordmark on desktop, mark on mobile */}
+      <img src="/logo.svg" alt="TNext Cigars" class="hidden sm:block h-12 w-auto text-[color:var(--color-text)]" style="color: currentColor;" />
+      <Logo variant="mark" class="sm:hidden w-9 h-9 text-[color:var(--color-text)]" />
     </a>
 
     <nav class="hidden md:flex items-center gap-8" aria-label="Primary">
@@ -49,7 +50,7 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
   </div>
 
   <!-- Mobile menu -->
-  <div id="mobile-menu" class="md:hidden hidden border-t border-[color:var(--color-border-soft)] bg-[color:var(--color-bg)]">
+  <div id="mobile-menu" class="md:hidden hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
     <nav class="container-wide flex flex-col py-4 gap-1" aria-label="Mobile">
       {navLinks.map((link) => (
         <a href={link.href} class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors">

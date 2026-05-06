@@ -45,8 +45,8 @@ const readMinutes = Math.max(1, Math.round(words / 220));
   image={data.cover?.src ?? "/og-default.jpg"}
 >
   <article>
-    {/* Hero with parallax cover */}
-    <header class="relative">
+    {/* Hero with parallax cover (always dark for legibility on imagery) */}
+    <header class="section-dark relative">
       {data.cover && (
         <div class="absolute inset-0 -z-10 overflow-hidden">
           <Image
@@ -54,12 +54,12 @@ const readMinutes = Math.max(1, Math.round(words / 220));
             alt=""
             widths={[800, 1600, 2400]}
             sizes="100vw"
-            class="parallax-cover w-full h-full object-cover opacity-45"
+            class="parallax-cover w-full h-full object-cover opacity-55"
             data-parallax
             data-parallax-speed="0.12"
             loading="eager"
           />
-          <div class="absolute inset-0 bg-gradient-to-b from-[color:var(--color-bg)]/40 via-[color:var(--color-bg)]/85 to-[color:var(--color-bg)]"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-[color:var(--color-dark)]/30 via-[color:var(--color-dark)]/85 to-[color:var(--color-bg)]"></div>
         </div>
       )}
       <div class="container-prose pt-20 md:pt-32 pb-16">
