@@ -1,42 +1,59 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import ProductCard from "../components/ProductCard.astro";
 import Newsletter from "../components/Newsletter.astro";
+
+const products = (await getCollection("products"))
+  .filter((p) => !p.data.isArchived)
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+
+const featured = products.filter((p) => p.data.featured);
+const rest = products.filter((p) => !p.data.featured);
 ---
 
 <BaseLayout
-  title="Shop — The Next Cigar"
-  description="A curated home for cigar accessories, branded goods, and editorial picks. Coming soon."
+  title="Shop — TNext Cigar"
+  description="Curated accessories, branded merch, and digital guides for the cigar aficionado. We do not sell tobacco."
 >
-  <section class="container-narrow pt-32 pb-24 text-center">
+  <section class="container-wide pt-20 md:pt-32 pb-12">
     <p class="eyebrow mb-4 reveal">Shop</p>
-    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">Coming soon.</h1>
-    <p class="lead mt-8 max-w-xl mx-auto reveal">
-      A curated home for the kit that makes the smoke better — cutters, lighters, humidors, ashtrays, leather goods, and editorial picks. Nothing that requires a tobacco license. Everything chosen because we'd own it ourselves.
-    </p>
-    <p class="mt-6 text-sm text-[color:var(--color-muted)] reveal">
-      For cigars themselves, we'll always link you to licensed retailers. We do not sell tobacco.
+    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">The kit, not the leaf.</h1>
+    <p class="lead mt-6 max-w-2xl reveal">
+      Cutters, lighters, branded merch, and digital guides — chosen because we'd own them ourselves. <strong>We don't sell tobacco.</strong> For cigars, we always link you to licensed retailers.
     </p>
   </section>
 
-  <section class="container-wide pb-24">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="card p-8 reveal" data-reveal-delay="1">
-        <p class="eyebrow mb-3">Phase 1</p>
-        <h3 class="font-display text-2xl mb-3">Accessories</h3>
-        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">Cutters, torches, soft flames, ashtrays, humidors, Boveda packs. Drop-shipped from a US wholesaler.</p>
+  {featured.length > 0 && (
+    <section class="container-wide pb-16">
+      <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2 reveal">Featured</p>
+      <h2 class="section-eyebrow mb-12 reveal">Editor's picks</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        {featured.map((p, i) => (
+          <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
+        ))}
       </div>
-      <div class="card p-8 reveal" data-reveal-delay="2">
-        <p class="eyebrow mb-3">Phase 2</p>
-        <h3 class="font-display text-2xl mb-3">Editorial merch</h3>
-        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">Print issues, posters, leather notebooks, the kind of branded gear cigar lovers actually want to wear.</p>
-      </div>
-      <div class="card p-8 reveal" data-reveal-delay="3">
-        <p class="eyebrow mb-3">Phase 3</p>
-        <h3 class="font-display text-2xl mb-3">Digital library</h3>
-        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">A Cigar 101 masterclass, an authentication guide, an annual ratings PDF. Buy once, keep forever.</p>
-      </div>
-    </div>
-  </section>
+    </section>
+  )}
 
-  <Newsletter heading="Be the first when it opens" blurb="Subscribers get early access and a launch discount when the shop goes live." />
+  {rest.length > 0 && (
+    <section class="container-wide pb-24">
+      <div class="hairline mb-16"></div>
+      <h2 class="section-eyebrow mb-12 reveal">Everything else</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        {rest.map((p, i) => (
+          <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {products.length === 0 && (
+    <section class="container-narrow pb-24 text-center reveal">
+      <p class="font-display text-3xl mb-4">Coming soon.</p>
+      <p class="text-[color:var(--color-text-muted)]">The shop is being stocked. Check back next week.</p>
+    </section>
+  )}
+
+  <Newsletter heading="Be first to new drops" blurb="Subscribers see new products before they're listed publicly. No drops, no FOMO." />
 </BaseLayout>

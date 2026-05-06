@@ -63,4 +63,62 @@ const authors = defineCollection({
   }),
 });
 
-export const collections = { blog, categories, authors };
+// ─────────────────────────────────────────────────────────────────────
+// PRODUCTS — non-tobacco only (accessories, branded merch, digital goods).
+// Snipcart reads these via their HTML JSON crawler, so the schema must
+// include Snipcart's required attributes when rendered.
+// ─────────────────────────────────────────────────────────────────────
+const products = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/products" }),
+  schema: ({ image }) =>
+    z.object({
+      // Identity
+      name: z.string(),
+      slug: z.string(),
+      sku: z.string(),                    // Snipcart's data-item-id
+      excerpt: z.string().optional().nullable(),
+      // Pricing
+      price: z.number(),                  // USD
+      compareAtPrice: z.number().optional().nullable(),
+      currency: z.string().default("USD"),
+      // Type — drives fulfillment / shipping
+      type: z.enum(["digital", "merch", "accessory"]).default("accessory"),
+      // Imagery
+      cover: z.union([image(), z.string()]),
+      gallery: z.array(z.union([image(), z.string()])).optional(),
+      // Categorization
+      category: z.string().optional().nullable(),
+      featured: z.boolean().default(false),
+      // Inventory / shipping
+      inStock: z.boolean().default(true),
+      requiresShipping: z.boolean().default(true),
+      weight: z.number().optional(),       // grams (for shipping calc)
+      // Variants (e.g. tee size — Snipcart custom field)
+      variants: z
+        .array(
+          z.object({
+            name: z.string(),
+            options: z.array(z.string()),
+            priceModifiers: z.record(z.number()).optional(),
+          })
+        )
+        .optional(),
+      // Digital download (for type: digital)
+      downloadUrl: z.string().optional().nullable(),
+      // Affiliate / drop-ship metadata (internal — never shown publicly)
+      supplier: z.string().optional().nullable(),
+      supplierUrl: z.string().optional().nullable(),
+      // Publication state
+      publishedAt: z.coerce.date(),
+      isArchived: z.boolean().default(false),
+      // SEO
+      seo: z
+        .object({
+          metaTitle: z.string().optional().nullable(),
+          metaDescription: z.string().optional().nullable(),
+        })
+        .optional(),
+    }),
+});
+
+export const collections = { blog, categories, authors, products };

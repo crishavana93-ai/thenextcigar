@@ -1,0 +1,54 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  product: CollectionEntry<"products">;
+  delay?: 1 | 2 | 3 | 4;
+}
+
+const { product, delay } = Astro.props;
+const data = product.data;
+
+const fmtPrice = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: data.currency }).format(n);
+
+const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
+---
+
+<a href={`/shop/${data.slug}/`} class="card reveal block group" data-reveal-delay={delay} aria-label={data.name}>
+  <div class="card-image relative">
+    <Image
+      src={data.cover}
+      alt={data.name}
+      widths={[400, 800, 1200]}
+      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+      loading="lazy"
+    />
+    {isOnSale && (
+      <span class="absolute top-3 left-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-white rounded-sm">
+        Sale
+      </span>
+    )}
+    {data.type === "digital" && (
+      <span class="absolute top-3 right-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-dark)] text-white rounded-sm flex items-center gap-1.5">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Digital
+      </span>
+    )}
+  </div>
+  <div class="card-body">
+    <h3 class="card-title text-lg md:text-xl">{data.name}</h3>
+    {data.excerpt && (
+      <p class="mt-3 text-[color:var(--color-text-muted)] line-clamp-2 text-sm leading-relaxed">
+        {data.excerpt}
+      </p>
+    )}
+    <div class="mt-4 flex items-baseline gap-3">
+      <span class="font-semibold text-[color:var(--color-text)]">{fmtPrice(data.price)}</span>
+      {isOnSale && (
+        <span class="text-sm text-[color:var(--color-text-mute-2)] line-through">{fmtPrice(data.compareAtPrice!)}</span>
+      )}
+    </div>
+  </div>
+</a>

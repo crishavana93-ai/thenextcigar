@@ -111,6 +111,10 @@ const today = new Date().toLocaleDateString("en-US", {
       <button id="search-btn" class="hidden sm:inline-flex w-10 h-10 items-center justify-center rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:border-[color:var(--color-accent)] transition-colors" aria-label="Search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </button>
+      <button class="snipcart-checkout hidden sm:inline-flex w-10 h-10 items-center justify-center rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:border-[color:var(--color-accent)] transition-colors relative" aria-label="View cart">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="snipcart-items-count absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold flex items-center justify-center bg-[color:var(--color-accent)] text-white rounded-full"></span>
+      </button>
       <a href="/subscribe" class="btn btn-accent !py-2.5 !px-5 hidden sm:inline-flex">Subscribe</a>
       <button id="mobile-menu-button" class="lg:hidden text-[color:var(--color-text)] p-2" aria-label="Open menu" aria-expanded="false">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
