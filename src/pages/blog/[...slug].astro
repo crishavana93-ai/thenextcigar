@@ -3,7 +3,6 @@ import { getCollection, getEntry, render } from "astro:content";
 import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostCard from "../../components/PostCard.astro";
-import Newsletter from "../../components/Newsletter.astro";
 import AdSlot from "../../components/AdSlot.astro";
 
 export async function getStaticPaths() {
@@ -26,130 +25,174 @@ const related = allPosts
   .filter((p) => p.id !== post.id && p.data.category === data.category)
   .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
   .slice(0, 3);
+const moreFromArchive = allPosts
+  .filter((p) => p.id !== post.id && p.data.category !== data.category)
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
+  .slice(0, 3);
 
 const categoryByslug = new Map((await getCollection("categories")).map((c) => [c.data.slug, c.data]));
 
-const date = new Date(data.publishedAt).toLocaleDateString("en-US", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
+const longDate = new Date(data.publishedAt).toLocaleDateString("en-US", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
 });
 
 const words = post.body?.split(/\s+/).length ?? 0;
 const readMinutes = Math.max(1, Math.round(words / 220));
+
+const shareUrl = `https://thenextcigar.com/blog/${data.slug}`;
 ---
 
 <BaseLayout
-  title={`${data.title} — The Next Cigar`}
+  title={`${data.title} — TNext Cigar`}
   description={data.excerpt || data.title}
-  image={data.cover?.src ?? "/og-default.jpg"}
+  image={data.cover?.src ?? "/og-default.svg"}
 >
   <article>
-    {/* Hero with parallax cover (always dark for legibility on imagery) */}
-    <header class="section-dark relative">
-      {data.cover && (
-        <div class="absolute inset-0 -z-10 overflow-hidden">
-          <Image
-            src={data.cover}
-            alt=""
-            widths={[800, 1600, 2400]}
-            sizes="100vw"
-            class="parallax-cover w-full h-full object-cover opacity-55"
-            data-parallax
-            data-parallax-speed="0.12"
-            loading="eager"
-          />
-          <div class="absolute inset-0 bg-gradient-to-b from-[color:var(--color-dark)]/30 via-[color:var(--color-dark)]/85 to-[color:var(--color-bg)]"></div>
-        </div>
-      )}
-      <div class="container-prose pt-20 md:pt-32 pb-16">
-        <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-muted)]" aria-label="Breadcrumb">
-          <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
+    {/* ─── HEADLINE BLOCK ─── */}
+    <header class="container-narrow pt-12 md:pt-20 pb-10">
+      <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-text-muted)]" aria-label="Breadcrumb">
+        <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
+        <span class="mx-2">/</span>
+        <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">News</a>
+        {category && (<>
           <span class="mx-2">/</span>
-          <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">Stories</a>
-          {category && (<>
-            <span class="mx-2">/</span>
-            <a href={`/category/${category.data.slug}`} class="hover:text-[color:var(--color-accent)] transition-colors">{category.data.name}</a>
-          </>)}
-        </nav>
+          <a href={`/category/${category.data.slug}`} class="hover:text-[color:var(--color-accent)] transition-colors">{category.data.name}</a>
+        </>)}
+      </nav>
 
-        {data.isPremium && (<p class="eyebrow mb-3">Premium</p>)}
+      <div class="flex items-center gap-3 mb-6">
+        {data.isPremium && (
+          <span class="px-2.5 py-1 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-[color:var(--color-text)] rounded-sm">
+            Premium
+          </span>
+        )}
         {category && (
-          <a href={`/category/${category.data.slug}`} class="eyebrow inline-block mb-4 hover:underline">{category.data.name}</a>
+          <a href={`/category/${category.data.slug}`} class="category-tag hover:opacity-80 transition-opacity">
+            {category.data.name}
+          </a>
         )}
-        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight">
-          {data.title}
-        </h1>
-        {data.excerpt && (
-          <p class="lead mt-6">{data.excerpt}</p>
-        )}
+      </div>
 
-        <div class="mt-8 flex items-center gap-4 text-sm text-[color:var(--color-muted)]">
-          {author && (
+      <h1 class="font-display text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-[color:var(--color-text)]">
+        {data.title}
+      </h1>
+
+      {data.excerpt && (
+        <p class="lead mt-8 max-w-3xl">{data.excerpt}</p>
+      )}
+
+      <div class="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--color-text-muted)] uppercase tracking-wider">
+        {author && (
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)]"></span>
             <span>By <span class="text-[color:var(--color-text)]">{author.data.name}</span></span>
-          )}
-          <span class="w-1 h-1 rounded-full bg-[color:var(--color-muted-2)]"></span>
-          <time datetime={new Date(data.publishedAt).toISOString()}>{date}</time>
-          <span class="w-1 h-1 rounded-full bg-[color:var(--color-muted-2)]"></span>
-          <span>{readMinutes} min read</span>
-        </div>
+          </span>
+        )}
+        <time datetime={new Date(data.publishedAt).toISOString()}>{longDate}</time>
+        <span>{readMinutes} min read</span>
       </div>
     </header>
 
-    {/* Cover image standalone */}
+    {/* ─── HERO IMAGE BELOW THE HEADLINE (Newsplate pattern) ─── */}
     {data.cover && (
-      <div class="container-narrow -mt-8 mb-16 reveal">
-        <Image
-          src={data.cover}
-          alt={data.title}
-          widths={[800, 1200, 1600]}
-          sizes="(min-width: 1024px) 1100px, 100vw"
-          class="w-full rounded-sm shadow-2xl"
-          loading="eager"
-        />
+      <div class="container-wide mb-16 reveal">
+        <div class="relative overflow-hidden rounded-sm aspect-[16/9] md:aspect-[16/8]">
+          <Image
+            src={data.cover}
+            alt={data.title}
+            widths={[800, 1200, 1800, 2400]}
+            sizes="(min-width: 1280px) 1280px, 100vw"
+            class="parallax-cover w-full h-full object-cover"
+            data-parallax
+            data-parallax-speed="0.08"
+            loading="eager"
+          />
+        </div>
       </div>
     )}
 
-    {/* Body */}
-    <div class="container-prose pb-24">
-      <div class="prose prose-dropcap mx-auto">
-        <Content />
+    {/* ─── BODY + SHARE RAIL ─── */}
+    <div class="container-wide grid grid-cols-1 lg:grid-cols-12 gap-12 pb-24">
+      {/* Sticky share rail (desktop) */}
+      <aside class="hidden lg:flex lg:col-span-1 flex-col gap-3 sticky top-32 self-start text-[color:var(--color-text-muted)]" aria-label="Share">
+        <span class="text-[0.62rem] uppercase tracking-widest font-bold">Share</span>
+        <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(data.title)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on Twitter / X">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on LinkedIn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
+        </a>
+        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <button id="copy-link-btn" data-url={shareUrl} class="hover:text-[color:var(--color-accent)] transition-colors text-left" aria-label="Copy link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </button>
+      </aside>
 
-        {/* In-article ad */}
-        <AdSlot variant="in-article" />
-      </div>
+      {/* Article body */}
+      <div class="lg:col-span-8 lg:col-start-3">
+        <div class="prose prose-dropcap mx-auto">
+          <Content />
 
-      <div class="hairline my-16"></div>
-
-      <div class="flex flex-wrap items-center justify-between gap-6">
-        <div>
-          <p class="eyebrow mb-2">Filed under</p>
-          {category ? (
-            <a href={`/category/${category.data.slug}`} class="font-display text-2xl hover:text-[color:var(--color-accent)] transition-colors">
-              {category.data.name}
-            </a>
-          ) : (
-            <p class="font-display text-2xl text-[color:var(--color-muted)]">Uncategorized</p>
-          )}
+          {/* In-article ad */}
+          <AdSlot variant="in-article" />
         </div>
-        <span class="magnetic-area inline-block" data-magnetic-area>
-          <a href="/subscribe" class="btn btn-primary magnetic-target" data-magnetic>Subscribe to the newsletter</a>
-        </span>
-      </div>
 
-      {/* End-of-article ad */}
-      <div class="mt-16">
-        <AdSlot variant="billboard" />
+        {/* Footer of article */}
+        <div class="hairline my-12"></div>
+
+        <div class="flex flex-wrap items-center justify-between gap-6">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Filed under</p>
+            {category ? (
+              <a href={`/category/${category.data.slug}`} class="font-display text-2xl md:text-3xl font-bold hover:text-[color:var(--color-accent)] transition-colors">
+                {category.data.name}
+              </a>
+            ) : (
+              <p class="font-display text-2xl text-[color:var(--color-text-muted)]">Uncategorized</p>
+            )}
+          </div>
+          <span class="magnetic-area inline-block" data-magnetic-area>
+            <a href="/subscribe" class="btn btn-accent magnetic-target" data-magnetic>Subscribe to the newsletter</a>
+          </span>
+        </div>
+
+        {/* Mobile share row */}
+        <div class="lg:hidden mt-10 pt-6 border-t border-[color:var(--color-border)] flex items-center gap-4">
+          <span class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)]">Share</span>
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(data.title)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on Twitter / X">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on LinkedIn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
+          </a>
+        </div>
+
+        {/* End-of-article ad */}
+        <div class="mt-16">
+          <AdSlot variant="billboard" />
+        </div>
       </div>
     </div>
   </article>
 
+  {/* ─── KEEP READING (related posts in same category) ─── */}
   {related.length > 0 && (
-    <section class="py-24 section-warm border-t border-[color:var(--color-border-soft)]">
-      <div class="container-wide relative">
-        <p class="eyebrow mb-3 reveal">Keep reading</p>
-        <h2 class="font-display text-3xl md:text-4xl mb-12 reveal">More from {category?.data.name ?? "this archive"}</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+    <section class="py-20 bg-[color:var(--color-bg-soft)] border-t border-[color:var(--color-border)]">
+      <div class="container-wide">
+        <div class="flex items-end justify-between mb-12 reveal flex-wrap gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Keep reading</p>
+            <h2 class="section-eyebrow">More from {category?.data.name ?? "the archive"}</h2>
+          </div>
+          {category && (
+            <a href={`/category/${category.data.slug}`} class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
+              See all in {category.data.name} →
+            </a>
+          )}
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
           {related.map((p, i) => {
             const c = p.data.category ? categoryByslug.get(p.data.category) : null;
             return <PostCard post={p} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
@@ -159,5 +202,44 @@ const readMinutes = Math.max(1, Math.round(words / 220));
     </section>
   )}
 
-  <Newsletter />
+  {/* ─── BROWSE THE REST ─── */}
+  {moreFromArchive.length > 0 && (
+    <section class="py-20">
+      <div class="container-wide">
+        <div class="flex items-end justify-between mb-12 reveal flex-wrap gap-4">
+          <p class="section-eyebrow">From the archive</p>
+          <a href="/blog" class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
+            All stories →
+          </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          {moreFromArchive.map((p, i) => {
+            const c = p.data.category ? categoryByslug.get(p.data.category) : null;
+            return <PostCard post={p} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
+          })}
+        </div>
+      </div>
+    </section>
+  )}
 </BaseLayout>
+
+<script>
+  // Copy-link button (desktop share rail)
+  function setupCopyLink() {
+    const btn = document.getElementById("copy-link-btn") as HTMLButtonElement | null;
+    if (!btn || (btn as any).dataset.bound === "1") return;
+    (btn as any).dataset.bound = "1";
+    btn.addEventListener("click", async () => {
+      const url = btn.dataset.url;
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+        const original = btn.innerHTML;
+        btn.innerHTML = `<span class="text-xs">Copied!</span>`;
+        setTimeout(() => { btn.innerHTML = original; }, 1500);
+      } catch {}
+    });
+  }
+  document.addEventListener("astro:page-load", setupCopyLink);
+  setupCopyLink();
+</script>
