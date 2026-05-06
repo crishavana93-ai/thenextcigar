@@ -33,3 +33,6 @@ The Next Cigar photos/
 *.avi
 *.zip
 *.dmg
+
+# CMS uploads stay tracked (they're how the editor saves images)
+!public/uploads/

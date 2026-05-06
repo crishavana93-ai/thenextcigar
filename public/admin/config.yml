@@ -1,0 +1,168 @@
+# Decap CMS configuration — TNext Cigar
+# Web-based admin for writing/editing blog posts. Edits commit to GitHub,
+# Cloudflare Pages auto-rebuilds, changes go live in ~2 minutes.
+
+backend:
+  name: github
+  repo: crishavana93-ai/thenextcigar          # YOUR_GITHUB_USERNAME/repo
+  branch: main
+  base_url: https://thenextcigar.com          # OAuth proxy lives at this site
+  auth_endpoint: /api/auth                     # Cloudflare Pages Function
+  commit_messages:
+    create: 'CMS: create {{collection}} "{{slug}}"'
+    update: 'CMS: update {{collection}} "{{slug}}"'
+    delete: 'CMS: delete {{collection}} "{{slug}}"'
+    uploadMedia: 'CMS: upload {{path}}'
+    deleteMedia: 'CMS: delete media {{path}}'
+
+# Open the editor in dual-pane (form on left, live preview on right)
+display_url: https://thenextcigar.com
+site_url: https://thenextcigar.com
+locale: en
+show_preview_links: true
+
+# Where uploaded images go in the repo. They land at /uploads/<filename>
+# and are referenced from MDX as /uploads/<filename>.
+media_folder: public/uploads
+public_folder: /uploads
+
+# Editor styling — Newsplate dark accent
+logo_url: /logo.svg
+
+collections:
+  # ─────────────────────────────────────────────────────────────────────
+  # BLOG POSTS — main content collection
+  # ─────────────────────────────────────────────────────────────────────
+  - name: blog
+    label: Articles
+    label_singular: Article
+    folder: src/content/blog
+    create: true
+    delete: true
+    extension: mdx
+    format: frontmatter
+    slug: '{{slug}}'
+    summary: '{{title}} — {{publishedAt | date(''YYYY-MM-DD'')}}'
+    sortable_fields: [publishedAt, title, category]
+    view_filters:
+      - label: Featured
+        field: featured
+        pattern: true
+      - label: Premium / Members only
+        field: isPremium
+        pattern: true
+      - label: Published this year
+        field: publishedAt
+        pattern: '2026'
+    view_groups:
+      - label: By Category
+        field: category
+    fields:
+      # ── Core ─────────────────────────────────────────────────────────
+      - { name: title,       label: 'Title',           widget: string,  required: true,  hint: 'The headline. Aim for 50–70 characters for SEO.' }
+      - { name: slug,        label: 'URL slug',        widget: string,  required: true,  hint: 'Lowercase, hyphens, no spaces. Becomes /blog/<slug>/.' }
+      - { name: excerpt,     label: 'Excerpt',         widget: text,    required: false, hint: '1–2 sentence summary. Used as default meta description and on cards.' }
+      - { name: publishedAt, label: 'Publish date',    widget: datetime, required: true, default: '', date_format: 'YYYY-MM-DD', time_format: 'HH:mm' }
+      - { name: updatedAt,   label: 'Last updated',    widget: datetime, required: false, date_format: 'YYYY-MM-DD', time_format: 'HH:mm' }
+
+      # ── Categorization ───────────────────────────────────────────────
+      - name: category
+        label: 'Category'
+        widget: relation
+        collection: categories
+        search_fields: [name, slug]
+        value_field: '{{slug}}'
+        display_fields: [name]
+        required: false
+        hint: 'Pick from the categories collection. Empty = uncategorized.'
+
+      - name: author
+        label: 'Author'
+        widget: relation
+        collection: authors
+        search_fields: [name, slug]
+        value_field: '{{slug}}'
+        display_fields: [name]
+        required: false
+
+      # ── Imagery ──────────────────────────────────────────────────────
+      - { name: cover,     label: 'Cover image',     widget: image, required: false, hint: 'Wide hero image — appears at the top of the article and as the main card image. Aim for 1600×900.' }
+      - { name: thumbnail, label: 'Thumbnail',       widget: image, required: false, hint: 'Optional — used in compact lists. Defaults to cover if blank.' }
+
+      # ── Flags ────────────────────────────────────────────────────────
+      - { name: featured,        label: 'Featured (homepage hero)', widget: boolean, default: false, required: false }
+      - { name: sidebarFeatured, label: 'Sidebar featured',         widget: boolean, default: false, required: false }
+      - { name: isPremium,       label: 'Members-only (premium)',   widget: boolean, default: false, required: false }
+
+      # ── SEO ──────────────────────────────────────────────────────────
+      - name: seo
+        label: 'SEO (optional — fills from above if blank)'
+        widget: object
+        required: false
+        collapsed: true
+        fields:
+          - { name: metaTitle,       label: 'Meta title',       widget: string, required: false, hint: '50–60 chars. Defaults to article title if blank.' }
+          - { name: metaDescription, label: 'Meta description', widget: text,   required: false, hint: '150–160 chars. Defaults to excerpt if blank.' }
+          - { name: focusKeyword,    label: 'Focus keyword',    widget: string, required: false, hint: 'The phrase you''re ranking for. Used for editorial QA, not exposed publicly.' }
+          - { name: ogImage,         label: 'OG image',         widget: image,  required: false, hint: '1200×630 social-share image. Defaults to cover if blank.' }
+          - { name: canonicalUrl,    label: 'Canonical URL',    widget: string, required: false, hint: 'Only set if this article was originally published elsewhere.' }
+          - { name: noIndex,         label: 'Hide from search',  widget: boolean, default: false, required: false }
+
+      # ── Body ─────────────────────────────────────────────────────────
+      - name: body
+        label: 'Article body'
+        widget: markdown
+        required: true
+        hint: 'Full article. Supports Markdown + headings, bold/italic, lists, quotes, links, images, and embeds.'
+        buttons: [bold, italic, code, link, heading-one, heading-two, heading-three, quote, bulleted-list, numbered-list]
+        editor_components: [image, code-block]
+
+      # ── Source / system ──────────────────────────────────────────────
+      - { name: sourceId, label: 'Source ID', widget: hidden, default: '', required: false }
+
+  # ─────────────────────────────────────────────────────────────────────
+  # CATEGORIES
+  # ─────────────────────────────────────────────────────────────────────
+  - name: categories
+    label: Categories
+    label_singular: Category
+    folder: src/content/categories
+    create: true
+    delete: false
+    extension: json
+    format: json
+    slug: '{{slug}}'
+    identifier_field: slug
+    fields:
+      - { name: slug,        label: 'Slug',        widget: string, required: true,  hint: 'Lowercase, hyphens. Used in URL: /category/<slug>/' }
+      - { name: name,        label: 'Display name', widget: string, required: true }
+      - { name: description, label: 'Description',  widget: text,   required: false, hint: 'Shown on the category page header.' }
+      - { name: thumbnail,   label: 'Thumbnail',    widget: string, required: false, hint: 'Optional thumbnail filename.' }
+
+  # ─────────────────────────────────────────────────────────────────────
+  # AUTHORS
+  # ─────────────────────────────────────────────────────────────────────
+  - name: authors
+    label: Authors
+    label_singular: Author
+    folder: src/content/authors
+    create: true
+    delete: false
+    extension: json
+    format: json
+    slug: '{{slug}}'
+    identifier_field: slug
+    fields:
+      - { name: slug,      label: 'Slug',       widget: string, required: true }
+      - { name: name,      label: 'Full name',  widget: string, required: true }
+      - { name: jobTitle,  label: 'Job title',  widget: string, required: false }
+      - { name: excerpt,   label: 'Short bio',  widget: text,   required: false }
+      - { name: bio,       label: 'Long bio',   widget: markdown, required: false }
+      - { name: email,     label: 'Email',      widget: string, required: false }
+      - { name: website,   label: 'Website',    widget: string, required: false }
+      - { name: twitter,   label: 'X / Twitter', widget: string, required: false }
+      - { name: instagram, label: 'Instagram',  widget: string, required: false }
+      - { name: linkedin,  label: 'LinkedIn',   widget: string, required: false }
+      - { name: facebook,  label: 'Facebook',   widget: string, required: false }
+      - { name: avatar,    label: 'Avatar (filename)',   widget: string, required: false }
+      - { name: portrait,  label: 'Portrait (filename)', widget: string, required: false }
