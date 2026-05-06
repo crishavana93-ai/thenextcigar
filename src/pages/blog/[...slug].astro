@@ -1,0 +1,163 @@
+---
+import { getCollection, getEntry, render } from "astro:content";
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import Newsletter from "../../components/Newsletter.astro";
+import AdSlot from "../../components/AdSlot.astro";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.data.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const data = post.data;
+
+const category = data.category ? await getEntry("categories", data.category) : null;
+const author = data.author ? await getEntry("authors", data.author) : null;
+
+const allPosts = await getCollection("blog");
+const related = allPosts
+  .filter((p) => p.id !== post.id && p.data.category === data.category)
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
+  .slice(0, 3);
+
+const categoryByslug = new Map((await getCollection("categories")).map((c) => [c.data.slug, c.data]));
+
+const date = new Date(data.publishedAt).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const words = post.body?.split(/\s+/).length ?? 0;
+const readMinutes = Math.max(1, Math.round(words / 220));
+---
+
+<BaseLayout
+  title={`${data.title} — The Next Cigar`}
+  description={data.excerpt || data.title}
+  image={data.cover?.src ?? "/og-default.jpg"}
+>
+  <article>
+    {/* Hero with parallax cover */}
+    <header class="relative">
+      {data.cover && (
+        <div class="absolute inset-0 -z-10 overflow-hidden">
+          <Image
+            src={data.cover}
+            alt=""
+            widths={[800, 1600, 2400]}
+            sizes="100vw"
+            class="parallax-cover w-full h-full object-cover opacity-45"
+            data-parallax
+            data-parallax-speed="0.12"
+            loading="eager"
+          />
+          <div class="absolute inset-0 bg-gradient-to-b from-[color:var(--color-bg)]/40 via-[color:var(--color-bg)]/85 to-[color:var(--color-bg)]"></div>
+        </div>
+      )}
+      <div class="container-prose pt-20 md:pt-32 pb-16">
+        <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-muted)]" aria-label="Breadcrumb">
+          <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
+          <span class="mx-2">/</span>
+          <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">Stories</a>
+          {category && (<>
+            <span class="mx-2">/</span>
+            <a href={`/category/${category.data.slug}`} class="hover:text-[color:var(--color-accent)] transition-colors">{category.data.name}</a>
+          </>)}
+        </nav>
+
+        {data.isPremium && (<p class="eyebrow mb-3">Premium</p>)}
+        {category && (
+          <a href={`/category/${category.data.slug}`} class="eyebrow inline-block mb-4 hover:underline">{category.data.name}</a>
+        )}
+        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight">
+          {data.title}
+        </h1>
+        {data.excerpt && (
+          <p class="lead mt-6">{data.excerpt}</p>
+        )}
+
+        <div class="mt-8 flex items-center gap-4 text-sm text-[color:var(--color-muted)]">
+          {author && (
+            <span>By <span class="text-[color:var(--color-text)]">{author.data.name}</span></span>
+          )}
+          <span class="w-1 h-1 rounded-full bg-[color:var(--color-muted-2)]"></span>
+          <time datetime={new Date(data.publishedAt).toISOString()}>{date}</time>
+          <span class="w-1 h-1 rounded-full bg-[color:var(--color-muted-2)]"></span>
+          <span>{readMinutes} min read</span>
+        </div>
+      </div>
+    </header>
+
+    {/* Cover image standalone */}
+    {data.cover && (
+      <div class="container-narrow -mt-8 mb-16 reveal">
+        <Image
+          src={data.cover}
+          alt={data.title}
+          widths={[800, 1200, 1600]}
+          sizes="(min-width: 1024px) 1100px, 100vw"
+          class="w-full rounded-sm shadow-2xl"
+          loading="eager"
+        />
+      </div>
+    )}
+
+    {/* Body */}
+    <div class="container-prose pb-24">
+      <div class="prose prose-dropcap mx-auto">
+        <Content />
+
+        {/* In-article ad */}
+        <AdSlot variant="in-article" />
+      </div>
+
+      <div class="hairline my-16"></div>
+
+      <div class="flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <p class="eyebrow mb-2">Filed under</p>
+          {category ? (
+            <a href={`/category/${category.data.slug}`} class="font-display text-2xl hover:text-[color:var(--color-accent)] transition-colors">
+              {category.data.name}
+            </a>
+          ) : (
+            <p class="font-display text-2xl text-[color:var(--color-muted)]">Uncategorized</p>
+          )}
+        </div>
+        <span class="magnetic-area inline-block" data-magnetic-area>
+          <a href="/subscribe" class="btn btn-primary magnetic-target" data-magnetic>Subscribe to the newsletter</a>
+        </span>
+      </div>
+
+      {/* End-of-article ad */}
+      <div class="mt-16">
+        <AdSlot variant="billboard" />
+      </div>
+    </div>
+  </article>
+
+  {related.length > 0 && (
+    <section class="py-24 section-warm border-t border-[color:var(--color-border-soft)]">
+      <div class="container-wide relative">
+        <p class="eyebrow mb-3 reveal">Keep reading</p>
+        <h2 class="font-display text-3xl md:text-4xl mb-12 reveal">More from {category?.data.name ?? "this archive"}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {related.map((p, i) => {
+            const c = p.data.category ? categoryByslug.get(p.data.category) : null;
+            return <PostCard post={p} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
+          })}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <Newsletter />
+</BaseLayout>

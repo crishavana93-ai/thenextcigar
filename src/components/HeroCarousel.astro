@@ -1,0 +1,198 @@
+---
+/**
+ * HeroCarousel — full-bleed background carousel for the home hero.
+ * Crossfades between slides every 7s, slow ken-burns drift on each, pauses on hover.
+ * Foreground (text/CTAs) is rendered as children — slot.
+ */
+
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Slide {
+  /** Either an ImageMetadata (from a local import / content collection) OR a public path string like "/hero/slide-2.jpg" */
+  src: ImageMetadata | string;
+  alt?: string;
+}
+
+interface Props {
+  slides: Slide[];
+  /** Crossfade interval in milliseconds. Default 7000. */
+  intervalMs?: number;
+}
+
+const { slides, intervalMs = 7000 } = Astro.props;
+---
+
+<div class="hero-carousel" data-interval={intervalMs}>
+  <div class="hero-carousel__track" aria-hidden="true">
+    {slides.map((slide, i) => (
+      <div class:list={["hero-carousel__slide", i === 0 && "is-active"]} data-slide-index={i}>
+        {typeof slide.src === "string" ? (
+          <img
+            src={slide.src}
+            alt={slide.alt ?? ""}
+            class="hero-carousel__img animate-drift"
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding={i === 0 ? "sync" : "async"}
+          />
+        ) : (
+          <Image
+            src={slide.src}
+            alt={slide.alt ?? ""}
+            widths={[800, 1600, 2400]}
+            sizes="100vw"
+            class="hero-carousel__img animate-drift"
+            loading={i === 0 ? "eager" : "lazy"}
+          />
+        )}
+      </div>
+    ))}
+    <div class="hero-carousel__overlay"></div>
+  </div>
+
+  {slides.length > 1 && (
+    <div class="hero-carousel__dots" role="tablist" aria-label="Hero slides">
+      {slides.map((_, i) => (
+        <button
+          type="button"
+          class:list={["hero-carousel__dot", i === 0 && "is-active"]}
+          data-go-to={i}
+          aria-label={`Slide ${i + 1}`}
+          role="tab"
+          aria-selected={i === 0 ? "true" : "false"}
+        />
+      ))}
+    </div>
+  )}
+</div>
+
+<style>
+  .hero-carousel {
+    position: absolute;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .hero-carousel__track {
+    position: absolute;
+    inset: 0;
+  }
+  .hero-carousel__slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1600ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hero-carousel__slide.is-active {
+    opacity: 1;
+  }
+  .hero-carousel__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
+  .hero-carousel__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-bg) 30%, transparent) 0%,
+      color-mix(in oklab, var(--color-bg) 85%, transparent) 65%,
+      var(--color-bg) 100%
+    );
+  }
+  .hero-carousel__dots {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    z-index: 5;
+    pointer-events: auto;
+  }
+  .hero-carousel__dot {
+    width: 32px;
+    height: 2px;
+    border-radius: 0;
+    border: none;
+    background: color-mix(in oklab, var(--color-text) 25%, transparent);
+    cursor: pointer;
+    transition: background 300ms, width 600ms cubic-bezier(0.19, 1, 0.22, 1);
+    padding: 0;
+  }
+  .hero-carousel__dot.is-active {
+    background: var(--color-accent);
+    width: 56px;
+  }
+  .hero-carousel__dot:hover {
+    background: var(--color-accent);
+  }
+</style>
+
+<script>
+  function setupCarousels() {
+    document.querySelectorAll<HTMLElement>(".hero-carousel").forEach((root) => {
+      if (root.dataset.bound === "1") return;
+      root.dataset.bound = "1";
+
+      const slides = Array.from(root.querySelectorAll<HTMLElement>(".hero-carousel__slide"));
+      const dots = Array.from(root.querySelectorAll<HTMLButtonElement>(".hero-carousel__dot"));
+      if (slides.length <= 1) return;
+
+      const interval = parseInt(root.dataset.interval || "7000", 10);
+      let current = 0;
+      let timer: number | undefined;
+      let paused = false;
+
+      const goTo = (idx: number) => {
+        slides[current]?.classList.remove("is-active");
+        dots[current]?.classList.remove("is-active");
+        dots[current]?.setAttribute("aria-selected", "false");
+        current = ((idx % slides.length) + slides.length) % slides.length;
+        slides[current]?.classList.add("is-active");
+        dots[current]?.classList.add("is-active");
+        dots[current]?.setAttribute("aria-selected", "true");
+      };
+
+      const next = () => goTo(current + 1);
+
+      const start = () => {
+        stop();
+        if (paused) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        timer = window.setInterval(next, interval);
+      };
+      const stop = () => {
+        if (timer) {
+          window.clearInterval(timer);
+          timer = undefined;
+        }
+      };
+
+      root.addEventListener("mouseenter", () => { paused = true; stop(); });
+      root.addEventListener("mouseleave", () => { paused = false; start(); });
+
+      dots.forEach((dot, i) => {
+        dot.addEventListener("click", (e) => {
+          e.preventDefault();
+          goTo(i);
+          start(); // reset timer
+        });
+      });
+
+      // Pause when tab is hidden
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stop();
+        else start();
+      });
+
+      start();
+    });
+  }
+
+  document.addEventListener("astro:page-load", setupCarousels);
+  setupCarousels();
+</script>

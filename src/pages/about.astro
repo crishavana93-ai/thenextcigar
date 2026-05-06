@@ -1,0 +1,70 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Newsletter from "../components/Newsletter.astro";
+
+const authors = await getCollection("authors");
+const author = authors[0]; // Cris
+---
+
+<BaseLayout
+  title="About — The Next Cigar"
+  description="Why this site exists, who writes it, and what we believe about good cigars."
+>
+  <section class="container-prose pt-20 md:pt-32 pb-16">
+    <p class="eyebrow mb-4 reveal">About</p>
+    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">A modern home for the cigar aficionado.</h1>
+    <p class="lead mt-8 reveal">
+      The cigar world is older than most magazines. The way it gets covered is not. The Next Cigar exists because people who actually smoke deserve writing that respects them — and a place that treats the leaf, the makers, and the rituals around them with the same seriousness as the cigar itself.
+    </p>
+  </section>
+
+  <section class="container-prose pb-24">
+    <div class="hairline mb-16"></div>
+
+    <p class="eyebrow mb-3 reveal">What you'll find here</p>
+    <h2 class="font-display text-3xl md:text-4xl mb-8 reveal">Editorial. Independent. Practical.</h2>
+
+    <div class="prose">
+      <p>
+        News on the brands, regulators, and factories that move the industry. Long reads on the history and culture of cigars and the people who make them. Practical writing for people who want to smoke better — not louder. Coverage of events worth your travel and shops worth your visit.
+      </p>
+      <p>
+        We do not sell cigars. We are not a retailer, not a wholesaler, and not a distributor. When you read about a great cigar here, the link will take you to a licensed retailer who will ship it to you legally. We may earn a small affiliate commission. We disclose this on every relevant page.
+      </p>
+      <p>
+        We accept sponsored placements when they make editorial sense. We never accept payment for a positive verdict. The brands worth covering know the difference, and so do you.
+      </p>
+    </div>
+
+    <div class="hairline my-16"></div>
+
+    {author && (
+      <div class="reveal">
+        <p class="eyebrow mb-3">Editor</p>
+        <h2 class="font-display text-3xl md:text-4xl mb-6">{author.data.name}</h2>
+        <div class="prose">
+          {author.data.excerpt && (<p>{author.data.excerpt}</p>)}
+          {author.data.bio ? (
+            <div set:html={author.data.bio} />
+          ) : (
+            <p>
+              More on the editor's story coming soon. In the meantime, the writing speaks for itself.
+            </p>
+          )}
+        </div>
+
+        {(author.data.email || author.data.linkedin || author.data.instagram) && (
+          <div class="mt-8 flex flex-wrap gap-4 text-sm">
+            {author.data.email && <a href={`mailto:${author.data.email}`} class="text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)] transition-colors">Email</a>}
+            {author.data.linkedin && <a href={author.data.linkedin} class="text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)] transition-colors">LinkedIn</a>}
+            {author.data.instagram && <a href={author.data.instagram} class="text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)] transition-colors">Instagram</a>}
+            {author.data.twitter && <a href={author.data.twitter} class="text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)] transition-colors">Twitter / X</a>}
+          </div>
+        )}
+      </div>
+    )}
+  </section>
+
+  <Newsletter />
+</BaseLayout>

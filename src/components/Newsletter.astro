@@ -1,0 +1,59 @@
+---
+interface Props {
+  variant?: "inline" | "hero";
+  heading?: string;
+  blurb?: string;
+}
+const {
+  variant = "inline",
+  heading = "Stories worth lighting up",
+  blurb = "A weekly dispatch on cigar culture, news, and the rare smokes worth tracking down. Two minutes, one good cigar to add to your list.",
+} = Astro.props;
+
+// Beehiiv form embed URL — replace with your actual publication slug once it's set up
+const beehiivUrl = "https://embeds.beehiiv.com/PLACEHOLDER";
+---
+
+<section class:list={[
+  variant === "hero" ? "py-24" : "py-20",
+  "border-y border-[color:var(--color-border-soft)] bg-[color:var(--color-surface)]/40",
+]}>
+  <div class="container-narrow text-center reveal">
+    <p class="eyebrow mb-3">Newsletter</p>
+    <h2 class="font-display text-3xl md:text-5xl leading-tight max-w-2xl mx-auto">
+      {heading}
+    </h2>
+    <p class="lead mt-5 max-w-xl mx-auto">{blurb}</p>
+
+    <form class="mt-8 flex flex-col sm:flex-row gap-3 max-w-lg mx-auto" id="newsletter-form" data-action={beehiivUrl}>
+      <label class="sr-only" for="newsletter-email">Email</label>
+      <input
+        id="newsletter-email"
+        type="email"
+        required
+        placeholder="your@email.com"
+        class="flex-1 bg-[color:var(--color-bg)] border border-[color:var(--color-border)] rounded-sm px-4 py-3 text-[color:var(--color-text)] placeholder:text-[color:var(--color-muted-2)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors"
+      />
+      <button type="submit" class="btn btn-primary">Subscribe</button>
+    </form>
+    <p class="mt-4 text-xs text-[color:var(--color-muted-2)]">No spam. Unsubscribe with a click. We don't sell your data.</p>
+  </div>
+</section>
+
+<script>
+  // Until Beehiiv is wired, just collect the email locally and confirm visually.
+  // When the publication exists, replace this with the official Beehiiv embed.
+  function setup() {
+    const form = document.getElementById("newsletter-form") as HTMLFormElement | null;
+    if (!form) return;
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = form.querySelector("input[type=email]") as HTMLInputElement;
+      if (!input?.value) return;
+      // TODO: POST to Beehiiv subscribe endpoint or render their iframe embed
+      form.innerHTML = `<p class="text-[color:var(--color-accent)] py-3 font-medium">Thank you. Confirmation sent to ${input.value}.</p>`;
+    });
+  }
+  document.addEventListener("astro:page-load", setup);
+  setup();
+</script>

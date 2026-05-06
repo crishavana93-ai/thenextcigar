@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Subscribe — The Next Cigar"
+  description="Join the weekly dispatch. One good email, every Sunday."
+>
+  <section class="container-narrow pt-32 pb-32 text-center">
+    <p class="eyebrow mb-4 reveal">Newsletter</p>
+    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">One good email,<br/>every Sunday.</h1>
+    <p class="lead mt-8 max-w-xl mx-auto reveal">
+      Cigar news, deep dives, and the rare smokes worth tracking down — written by people who actually light them. Two minutes to read. No spam, ever. Free.
+    </p>
+
+    <form class="mt-12 flex flex-col sm:flex-row gap-3 max-w-lg mx-auto reveal" id="subscribe-form">
+      <label class="sr-only" for="subscribe-email">Email</label>
+      <input
+        id="subscribe-email"
+        type="email"
+        required
+        placeholder="your@email.com"
+        class="flex-1 bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded-sm px-5 py-4 text-[color:var(--color-text)] placeholder:text-[color:var(--color-muted-2)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors text-base"
+      />
+      <button type="submit" class="btn btn-primary !py-4 !px-6">Subscribe</button>
+    </form>
+    <p class="mt-4 text-xs text-[color:var(--color-muted-2)]">For 21+ adults. We never sell or share your email.</p>
+
+    <div class="hairline my-20"></div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
+      <div class="reveal" data-reveal-delay="1">
+        <p class="eyebrow mb-2">Weekly</p>
+        <h3 class="font-display text-xl mb-3">Sunday only</h3>
+        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">One email per week. Sundays. Nothing else hits your inbox.</p>
+      </div>
+      <div class="reveal" data-reveal-delay="2">
+        <p class="eyebrow mb-2">Curated</p>
+        <h3 class="font-display text-xl mb-3">5 things</h3>
+        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">A featured story, two news beats, one cigar to try, and one thing worth your travel.</p>
+      </div>
+      <div class="reveal" data-reveal-delay="3">
+        <p class="eyebrow mb-2">Free</p>
+        <h3 class="font-display text-xl mb-3">No paywall</h3>
+        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">A premium tier is on the way. The free dispatch will always stay free.</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  function setup() {
+    const form = document.getElementById("subscribe-form") as HTMLFormElement | null;
+    if (!form) return;
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = form.querySelector("input[type=email]") as HTMLInputElement;
+      if (!input?.value) return;
+      // TODO: wire to Beehiiv subscribe endpoint
+      form.innerHTML = `<p class="text-[color:var(--color-accent)] py-6 text-lg">Thank you. Confirmation sent to ${input.value}.</p>`;
+    });
+  }
+  document.addEventListener("astro:page-load", setup);
+  setup();
+</script>

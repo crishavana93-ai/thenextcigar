@@ -1,0 +1,65 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import Newsletter from "../../components/Newsletter.astro";
+import AdSlot from "../../components/AdSlot.astro";
+
+const allPosts = (await getCollection("blog")).sort(
+  (a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
+);
+const categories = await getCollection("categories");
+const categoryByslug = new Map(categories.map((c) => [c.data.slug, c.data]));
+---
+
+<BaseLayout
+  title="All stories — The Next Cigar"
+  description={`Every story we've published — ${allPosts.length} pieces on cigars, culture, gear, and the news that matters.`}
+>
+  <section class="container-wide py-20 md:py-28">
+    <div class="max-w-2xl reveal">
+      <p class="eyebrow mb-4">Archive</p>
+      <h1 class="font-display text-5xl md:text-7xl leading-tight">All stories</h1>
+      <p class="lead mt-6">Every piece published on The Next Cigar — newest first.</p>
+    </div>
+
+    <nav class="mt-12 flex flex-wrap gap-2" aria-label="Filter by category">
+      <a href="/blog" class="px-4 py-2 text-sm rounded-sm bg-[color:var(--color-accent)] text-[color:var(--color-bg)] tracking-wide">All</a>
+      {categories.map((c) => (
+        <a
+          href={`/category/${c.data.slug}`}
+          class="px-4 py-2 text-sm rounded-sm border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] tracking-wide transition-colors"
+        >
+          {c.data.name}
+        </a>
+      ))}
+    </nav>
+  </section>
+
+  {/* Top-of-archive ad */}
+  <div class="container-wide pb-12">
+    <AdSlot variant="leaderboard" />
+  </div>
+
+  <section class="container-wide pb-24">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {allPosts.map((post, i) => {
+        const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
+        // Inject an in-feed ad after the 6th post
+        const card = (
+          <PostCard post={post} categoryName={cat?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />
+        );
+        return card;
+      })}
+    </div>
+
+    {/* Mid-archive ad */}
+    {allPosts.length > 9 && (
+      <div class="my-12 reveal">
+        <AdSlot variant="billboard" />
+      </div>
+    )}
+  </section>
+
+  <Newsletter />
+</BaseLayout>

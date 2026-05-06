@@ -1,0 +1,87 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import Newsletter from "../../components/Newsletter.astro";
+import AdSlot from "../../components/AdSlot.astro";
+
+export async function getStaticPaths() {
+  const categories = await getCollection("categories");
+  const allPosts = await getCollection("blog");
+  return categories.map((cat) => {
+    const posts = allPosts
+      .filter((p) => p.data.category === cat.data.slug)
+      .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
+    return {
+      params: { category: cat.data.slug },
+      props: { category: cat, posts },
+    };
+  });
+}
+
+const { category, posts } = Astro.props;
+const allCategories = await getCollection("categories");
+const categoryByslug = new Map(allCategories.map((c) => [c.data.slug, c.data]));
+---
+
+<BaseLayout
+  title={`${category.data.name} — The Next Cigar`}
+  description={category.data.description || `${posts.length} stories on ${category.data.name}.`}
+>
+  <section class="container-wide pt-20 md:pt-32 pb-12">
+    <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-muted)]" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
+      <span class="mx-2">/</span>
+      <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">Stories</a>
+      <span class="mx-2">/</span>
+      <span class="text-[color:var(--color-text)]">{category.data.name}</span>
+    </nav>
+
+    <div class="max-w-2xl reveal">
+      <p class="eyebrow mb-4">Category</p>
+      <h1 class="font-display text-5xl md:text-7xl leading-tight">{category.data.name}</h1>
+      {category.data.description && (
+        <p class="lead mt-6">{category.data.description}</p>
+      )}
+      <p class="mt-4 text-[color:var(--color-muted)] text-sm tracking-wide">
+        {posts.length} {posts.length === 1 ? "story" : "stories"}
+      </p>
+    </div>
+  </section>
+
+  <section class="container-wide pb-24">
+    <nav class="mb-12 flex flex-wrap gap-2" aria-label="Other categories">
+      <a href="/blog" class="px-4 py-2 text-sm rounded-sm border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] tracking-wide transition-colors">All stories</a>
+      {allCategories.map((c) => (
+        <a
+          href={`/category/${c.data.slug}`}
+          class:list={[
+            "px-4 py-2 text-sm rounded-sm tracking-wide transition-colors",
+            c.data.slug === category.data.slug
+              ? "bg-[color:var(--color-accent)] text-[color:var(--color-bg)]"
+              : "border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
+          ]}
+        >
+          {c.data.name}
+        </a>
+      ))}
+    </nav>
+
+    <div class="mb-10">
+      <AdSlot variant="leaderboard" />
+    </div>
+
+    {posts.length === 0 ? (
+      <p class="text-[color:var(--color-muted)]">No stories in this category yet.</p>
+    ) : (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {posts.map((post, i) => {
+          const c = post.data.category ? categoryByslug.get(post.data.category) : null;
+          return <PostCard post={post} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
+        })}
+      </div>
+    )}
+  </section>
+
+  <Newsletter />
+</BaseLayout>

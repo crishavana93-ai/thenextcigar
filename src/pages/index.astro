@@ -1,0 +1,178 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import { Image } from "astro:assets";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
+import Newsletter from "../components/Newsletter.astro";
+import AdSlot from "../components/AdSlot.astro";
+import SmokeAccent from "../components/SmokeAccent.astro";
+import HeroCarousel from "../components/HeroCarousel.astro";
+
+const allPosts = (await getCollection("blog")).sort(
+  (a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
+);
+const categories = await getCollection("categories");
+const categoryByslug = new Map(categories.map((c) => [c.data.slug, c.data]));
+
+const hero = allPosts.find((p) => p.data.featured) ?? allPosts[0];
+const heroCategory = hero?.data.category ? categoryByslug.get(hero.data.category) : null;
+
+const latest = allPosts.filter((p) => p.id !== hero?.id).slice(0, 9);
+
+const featuredCategoryNames = ["cubans", "cigar-101", "cigar-culture", "cigar-events"];
+const featuredCategories = featuredCategoryNames
+  .map((s) => categoryByslug.get(s))
+  .filter(Boolean);
+---
+
+<BaseLayout
+  title="The Next Cigar — Modern stories for the cigar aficionado"
+  description="A modern editorial home for cigar culture, history, gear, and the smoke that ties them together."
+>
+
+  {/* ─── HERO ───────────────────────────────────────────── */}
+  {hero && (
+    <section class="relative overflow-hidden">
+      <HeroCarousel
+        intervalMs={7000}
+        slides={[
+          // Slide 1: the current featured post cover (live, auto-updating)
+          ...(hero.data.cover ? [{ src: hero.data.cover, alt: "" }] : []),
+          // Slides 2–4: editorial cigar lifestyle photos.
+          // Drop your 3 JPGs into public/hero/ named exactly as below.
+          { src: "/hero/slide-1.jpg", alt: "" },
+          { src: "/hero/slide-2.jpg", alt: "" },
+          { src: "/hero/slide-3.jpg", alt: "" },
+        ]}
+      />
+      <SmokeAccent position="top-right" size={700} />
+      <SmokeAccent position="bottom-left" size={500} />
+
+      <div class="container-wide pt-16 pb-24 md:pt-32 md:pb-40 min-h-[80vh] flex flex-col justify-end relative">
+        <div class="max-w-3xl reveal">
+          {heroCategory && (
+            <a href={`/category/${heroCategory.slug}`} class="eyebrow inline-block mb-4 hover:underline">
+              {heroCategory.name}
+            </a>
+          )}
+          <h1 class="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight">
+            <a href={`/blog/${hero.data.slug}`} class="hover:text-[color:var(--color-accent)] transition-colors">
+              {hero.data.title}
+            </a>
+          </h1>
+          {hero.data.excerpt && (
+            <p class="lead mt-8 max-w-2xl">{hero.data.excerpt}</p>
+          )}
+          <span class="magnetic-area inline-block mt-10" data-magnetic-area>
+            <a href={`/blog/${hero.data.slug}`} class="btn btn-primary magnetic-target" data-magnetic>
+              Read the story
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </span>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ─── CATEGORY STRIP ────────────────────────────────── */}
+  <section class="py-12 border-y border-[color:var(--color-border-soft)] section-warm">
+    <div class="container-wide relative">
+      <div class="flex items-center gap-6 overflow-x-auto pb-2" role="navigation" aria-label="Browse by topic">
+        <span class="eyebrow whitespace-nowrap">Browse —</span>
+        {categories.map((c) => (
+          <a
+            href={`/category/${c.data.slug}`}
+            class="text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors whitespace-nowrap text-sm tracking-wide"
+          >
+            {c.data.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ─── AD: leaderboard above latest ─── */}
+  <div class="container-wide pt-12">
+    <AdSlot variant="leaderboard" />
+  </div>
+
+  {/* ─── LATEST POSTS ──────────────────────────────────── */}
+  <section class="py-20">
+    <div class="container-wide">
+      <div class="flex items-end justify-between mb-12 reveal">
+        <div>
+          <p class="eyebrow mb-3">Latest</p>
+          <h2 class="font-display text-4xl md:text-5xl">New stories</h2>
+        </div>
+        <a href="/blog" class="hidden sm:inline-block text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)] transition-colors text-sm tracking-wide">
+          All stories →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {latest.slice(0, 6).map((post, i) => {
+          const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
+          return (
+            <PostCard post={post} categoryName={cat?.name} delay={(i % 3) + 1 as 1 | 2 | 3} />
+          );
+        })}
+      </div>
+
+      {/* Mid-grid ad */}
+      <div class="my-12 reveal">
+        <AdSlot variant="billboard" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {latest.slice(6, 9).map((post, i) => {
+          const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
+          return (
+            <PostCard post={post} categoryName={cat?.name} delay={(i % 3) + 1 as 1 | 2 | 3} />
+          );
+        })}
+      </div>
+
+      <div class="text-center mt-16 reveal">
+        <a href="/blog" class="btn btn-ghost">See all {allPosts.length} stories</a>
+      </div>
+    </div>
+  </section>
+
+  {/* ─── FEATURED CATEGORIES ─────────────────────────── */}
+  <section class="py-24 section-warm">
+    <div class="container-wide relative">
+      <div class="text-center mb-16 reveal">
+        <p class="eyebrow mb-3">Worlds</p>
+        <h2 class="font-display text-4xl md:text-5xl">Pick your path</h2>
+        <p class="lead mt-4 max-w-xl mx-auto">
+          Four corners of the cigar world. Start where you stand; come back for the rest.
+        </p>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {featuredCategories.map((c, i) => c && (
+          <a
+            href={`/category/${c.slug}`}
+            class="reveal card aspect-[3/4] flex items-end p-6 group relative overflow-hidden"
+            data-reveal-delay={(i + 1) as 1 | 2 | 3 | 4}
+          >
+            <div class="absolute inset-0 bg-gradient-to-br from-[color:var(--color-accent-deep)]/20 to-[color:var(--color-burgundy)]/15 z-0"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-[color:var(--color-bg)] via-[color:var(--color-bg)]/60 to-transparent z-10"></div>
+            <div class="absolute inset-0 bg-[color:var(--color-accent)]/0 group-hover:bg-[color:var(--color-accent)]/10 transition-colors z-20"></div>
+            <div class="relative z-30">
+              <h3 class="font-display text-2xl md:text-3xl group-hover:text-[color:var(--color-accent)] transition-colors">
+                {c.name}
+              </h3>
+              {c.description && (
+                <p class="text-sm text-[color:var(--color-muted)] mt-2 hidden md:block">
+                  {c.description}
+                </p>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Newsletter variant="hero" />
+</BaseLayout>

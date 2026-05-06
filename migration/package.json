@@ -1,0 +1,14 @@
+{
+  "name": "thenextcigar-migration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "One-shot migration tooling: pulls Webflow CMS content into JSON, then converts to Astro MDX content collections.",
+  "scripts": {
+    "export": "node --env-file=.env export.js",
+    "convert": "node --env-file=.env to-mdx.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,17 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Lost in the smoke — The Next Cigar" description="404 — page not found" noIndex={true}>
+  <section class="container-narrow py-32 text-center min-h-[60vh] flex flex-col justify-center">
+    <p class="eyebrow mb-4 reveal">404</p>
+    <h1 class="font-display text-6xl md:text-8xl leading-tight reveal">Lost in the smoke.</h1>
+    <p class="lead mt-8 max-w-md mx-auto reveal">
+      The page you're looking for has burned down. Try the home page, or browse the archive.
+    </p>
+    <div class="mt-10 flex gap-3 justify-center reveal">
+      <a href="/" class="btn btn-primary">Home</a>
+      <a href="/blog" class="btn btn-ghost">All stories</a>
+    </div>
+  </section>
+</BaseLayout>

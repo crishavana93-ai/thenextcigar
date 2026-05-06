@@ -1,0 +1,41 @@
+---
+interface Props {
+  position?: "top-right" | "top-left" | "bottom-right" | "bottom-left" | "center";
+  size?: number;
+  className?: string;
+}
+
+const { position = "top-right", size = 600, className } = Astro.props;
+
+const positionStyles: Record<string, string> = {
+  "top-right": "top: -10%; right: -10%;",
+  "top-left": "top: -10%; left: -10%;",
+  "bottom-right": "bottom: -10%; right: -10%;",
+  "bottom-left": "bottom: -10%; left: -10%;",
+  center: "top: 50%; left: 50%; transform: translate(-50%, -50%);",
+};
+---
+
+<svg
+  class:list={["smoke-decor", className]}
+  width={size}
+  height={size}
+  viewBox="0 0 600 600"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  style={positionStyles[position]}
+  aria-hidden="true"
+>
+  <defs>
+    <radialGradient id="smoke-grad" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#c9a961" stop-opacity="0.6" />
+      <stop offset="60%" stop-color="#a87144" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#14100a" stop-opacity="0" />
+    </radialGradient>
+    <filter id="smoke-blur">
+      <feGaussianBlur stdDeviation="20" />
+    </filter>
+  </defs>
+  <ellipse cx="300" cy="300" rx="220" ry="180" fill="url(#smoke-grad)" filter="url(#smoke-blur)" />
+  <ellipse cx="350" cy="260" rx="140" ry="110" fill="url(#smoke-grad)" filter="url(#smoke-blur)" opacity="0.6" />
+</svg>

@@ -1,0 +1,51 @@
+---
+/**
+ * AdSlot — placeholder for display ad networks.
+ *
+ * Drop this anywhere you want to reserve space for a banner. By default it
+ * renders a labeled "Sponsored" placeholder, so you can see placement during
+ * design. When you sign up with a network (Ezoic / Mediavine / Raptive /
+ * AdSense), replace the inner block with their ad code.
+ *
+ * Variants: leaderboard (728/970x90), billboard (970x250), medium (300x250),
+ * in-article (responsive 600x250+), halfpage (300x600).
+ *
+ * Pass `network="ezoic"` (etc.) once wired so the same component can branch.
+ */
+
+interface Props {
+  variant?: "leaderboard" | "billboard" | "medium" | "in-article" | "halfpage";
+  label?: string;
+  className?: string;
+  /** Set to true to hide the slot in production until a network is wired. */
+  hidden?: boolean;
+}
+
+const { variant = "leaderboard", label, className, hidden = false } = Astro.props;
+const sizeMap: Record<string, string> = {
+  leaderboard: "728 × 90 / 970 × 90",
+  billboard: "970 × 250",
+  medium: "300 × 250",
+  "in-article": "responsive — In-Article",
+  halfpage: "300 × 600",
+};
+---
+
+{!hidden && (
+  <aside
+    class:list={["ad-slot", `ad-slot--${variant}`, className]}
+    role="complementary"
+    aria-label="Sponsored content"
+  >
+    <div class="ad-slot__inner">
+      {label ?? `Ad slot · ${sizeMap[variant]}`}
+    </div>
+    {/*
+      To wire this up:
+      1. Sign up with Ezoic (low traffic threshold) or AdSense (instant approval).
+      2. Replace this content with their <script> + <ins> code.
+      3. For Mediavine / Raptive (50k+ sessions/month), they place ads automatically
+         once their site-wide script tag is in BaseLayout.astro.
+    */}
+  </aside>
+)}

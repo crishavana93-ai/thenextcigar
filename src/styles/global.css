@@ -1,0 +1,546 @@
+@import "tailwindcss";
+
+/* ============================================================================
+ * thenextcigar.com — design tokens & base styles
+ * Concept: warm tobacco midnight × cream paper. Editorial magazine, lounge mood.
+ * Palette built on three temperatures:
+ *   - Deep tobacco for primary surface (warmer than pure black)
+ *   - Aged cream for inverted sections (single-post body, ad backdrops)
+ *   - Aged gold + burgundy as accents (cigar band gold, ember red)
+ * ========================================================================== */
+
+@theme {
+  /* === Dark surfaces (default theme) === */
+  --color-bg: #14100a;             /* warm tobacco midnight */
+  --color-bg-soft: #1a1510;
+  --color-surface: #1f1810;        /* slightly raised */
+  --color-surface-2: #2a2118;
+  --color-surface-warm: #2e2317;   /* for ad backdrops, sponsored areas */
+  --color-border: #3a2d1e;
+  --color-border-soft: #261c12;
+
+  /* === Light/cream surfaces (inverted sections) === */
+  --color-cream: #f3e8d5;
+  --color-cream-soft: #ede1cb;
+  --color-cream-deep: #d8c8ad;
+  --color-paper: #faf3e6;          /* lightest — for "paper" cards */
+
+  /* === Text === */
+  --color-text: #f5ebe0;           /* on dark */
+  --color-text-soft: #e0d2bf;
+  --color-text-on-cream: #2a1d10;
+  --color-text-on-cream-soft: #4a3522;
+  --color-muted: #a89986;
+  --color-muted-2: #786857;
+  --color-muted-cream: #6e5a3f;
+
+  /* === Accents === */
+  --color-accent: #c9a961;         /* aged cigar-band gold */
+  --color-accent-hover: #e0bf7a;
+  --color-accent-deep: #a87144;    /* aged copper */
+  --color-burgundy: #6e2620;       /* ember red, used sparingly */
+  --color-burgundy-soft: #8a3530;
+
+  /* === Typography === */
+  --font-display: "Cormorant Garamond", "Cormorant", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+
+  /* === Animation timing === */
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+}
+
+/* ----------------------------------------------------------------------------
+ * Base
+ * -------------------------------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-feature-settings: "ss01", "cv01", "cv11";
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Subtle film grain over the whole page — gives the dark a "paper" feel */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay;
+}
+
+/* Warm radial glow at top of every page — like ambient lounge lighting */
+body::after {
+  content: "";
+  position: fixed;
+  top: -20%;
+  left: 50%;
+  width: 120%;
+  height: 60vh;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, var(--color-accent) 12%, transparent) 0%,
+    transparent 60%
+  );
+  opacity: 0.7;
+}
+
+main { position: relative; z-index: 2; }
+header, footer { position: relative; z-index: 10; }
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted-2); }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ----------------------------------------------------------------------------
+ * Typography helpers
+ * -------------------------------------------------------------------------- */
+
+.font-display { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; }
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.lead {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--color-text-soft);
+  font-weight: 300;
+}
+
+/* ----------------------------------------------------------------------------
+ * Prose (article body)
+ * -------------------------------------------------------------------------- */
+
+.prose {
+  max-width: 72ch;
+  font-family: var(--font-body);
+  font-size: 1.075rem;
+  line-height: 1.78;
+  color: var(--color-text-soft);
+}
+.prose > * + * { margin-top: 1.4em; }
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-family: var(--font-display);
+  color: var(--color-text);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-top: 2.4em;
+  margin-bottom: 0.6em;
+}
+.prose h2 { font-size: 2rem; }
+.prose h3 { font-size: 1.5rem; }
+.prose h4 { font-size: 1.25rem; }
+.prose p { margin: 0; }
+.prose strong { color: var(--color-text); font-weight: 600; }
+.prose a {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-accent) 35%, transparent);
+  transition: border-color 200ms;
+}
+.prose a:hover { border-color: var(--color-accent); }
+.prose ul, .prose ol { padding-left: 1.5em; }
+.prose ul li::marker { color: var(--color-accent); }
+.prose ol li::marker { color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.prose blockquote {
+  border-left: 2px solid var(--color-accent);
+  padding-left: 1.5em;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.35rem;
+  color: var(--color-text);
+}
+.prose code {
+  background: var(--color-surface);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+}
+.prose pre {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1em 1.25em;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+.prose pre code { background: transparent; padding: 0; color: inherit; }
+.prose img {
+  border-radius: 6px;
+  margin: 2em 0;
+  width: 100%;
+  height: auto;
+}
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 3em auto;
+  width: 30%;
+}
+
+/* Drop cap on first paragraph */
+.prose-dropcap > p:first-of-type::first-letter {
+  font-family: var(--font-display);
+  float: left;
+  font-size: 4.2em;
+  line-height: 0.85;
+  font-weight: 600;
+  margin-right: 0.08em;
+  margin-top: 0.08em;
+  color: var(--color-accent);
+}
+
+/* ----------------------------------------------------------------------------
+ * Animations
+ * -------------------------------------------------------------------------- */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes drift-slow {
+  0%   { transform: scale(1.08) translate(0, 0); }
+  50%  { transform: scale(1.1) translate(-1.5%, -2%); }
+  100% { transform: scale(1.08) translate(1%, 1.5%); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+@keyframes ember-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.85; }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 900ms var(--ease-out-expo),
+    transform 900ms var(--ease-out-expo);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal[data-reveal-delay="1"] { transition-delay: 80ms; }
+.reveal[data-reveal-delay="2"] { transition-delay: 160ms; }
+.reveal[data-reveal-delay="3"] { transition-delay: 240ms; }
+.reveal[data-reveal-delay="4"] { transition-delay: 320ms; }
+
+/* Hero image slow drift — gentle parallax-like motion on a hero background */
+.animate-drift {
+  animation: drift-slow 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Scroll-driven parallax on cover images (modern browsers) */
+@supports (animation-timeline: scroll()) {
+  .parallax-cover {
+    animation: parallax-rise linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 70vh;
+    will-change: transform;
+  }
+  @keyframes parallax-rise {
+    from { transform: translateY(0) scale(1.05); }
+    to   { transform: translateY(-12%) scale(1.12); }
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Card
+ * -------------------------------------------------------------------------- */
+
+.card {
+  position: relative;
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 4px;
+  overflow: hidden;
+  transition:
+    transform 600ms var(--ease-out-expo),
+    border-color 300ms,
+    background 300ms,
+    box-shadow 600ms var(--ease-out-expo);
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-accent);
+  background: var(--color-surface-2);
+  box-shadow: 0 14px 40px -16px color-mix(in oklab, var(--color-accent) 35%, transparent),
+              0 4px 12px -4px rgb(0 0 0 / 0.5);
+}
+.card-image {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: var(--color-bg-soft);
+}
+.card-image > img,
+.card-image > picture > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1200ms var(--ease-out-expo);
+}
+.card:hover .card-image > img,
+.card:hover .card-image > picture > img {
+  transform: scale(1.06);
+}
+/* Subtle gradient lift on the image when hovered */
+.card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgb(20 16 10 / 0.4) 100%);
+  pointer-events: none;
+  transition: opacity 400ms;
+}
+.card:hover .card-image::after { opacity: 0.7; }
+
+/* ----------------------------------------------------------------------------
+ * Buttons
+ * -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 200ms;
+  border: 1px solid transparent;
+}
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.25), transparent);
+  transform: translateX(-100%);
+  transition: transform 800ms var(--ease-out-expo);
+}
+.btn-primary:hover::before { transform: translateX(100%); }
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn-ghost:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ----------------------------------------------------------------------------
+ * Decorative
+ * -------------------------------------------------------------------------- */
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border) 20%,
+    var(--color-border) 80%,
+    transparent
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Containers
+ * -------------------------------------------------------------------------- */
+
+.container-narrow { max-width: 1100px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+.container-prose  { max-width: 760px;  margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+.container-wide   { max-width: 1400px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+
+/* ----------------------------------------------------------------------------
+ * Section variants
+ * -------------------------------------------------------------------------- */
+
+.section-warm {
+  background: var(--color-surface);
+  position: relative;
+}
+.section-warm::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, color-mix(in oklab, var(--color-accent) 5%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, color-mix(in oklab, var(--color-burgundy) 4%, transparent) 0%, transparent 50%);
+  pointer-events: none;
+}
+.section-warm > * { position: relative; }
+
+.section-cream {
+  background: var(--color-cream);
+  color: var(--color-text-on-cream);
+  position: relative;
+}
+.section-cream .eyebrow { color: var(--color-burgundy); }
+
+/* ----------------------------------------------------------------------------
+ * View transitions
+ * -------------------------------------------------------------------------- */
+
+@view-transition { navigation: auto; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+::view-transition-old(root) { animation-name: vt-fade-out; }
+::view-transition-new(root) { animation-name: vt-fade-in; }
+
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .animate-drift { animation: none; }
+}
+
+/* ----------------------------------------------------------------------------
+ * Magnetic button — base styles for the JS-enhanced effect
+ * -------------------------------------------------------------------------- */
+
+.magnetic-area {
+  display: inline-block;
+  padding: 1rem;          /* enlarged hover area */
+  margin: -1rem;
+}
+.magnetic-target {
+  display: inline-block;
+  transition: transform 200ms var(--ease-out-expo);
+  will-change: transform;
+}
+
+/* ----------------------------------------------------------------------------
+ * Ad slot (placeholder shell, replace inner with Mediavine/Raptive/AdSense)
+ * -------------------------------------------------------------------------- */
+
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface-warm);
+  position: relative;
+  overflow: hidden;
+}
+.ad-slot::before {
+  content: "Sponsored";
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+.ad-slot__inner {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 1rem 2rem;
+}
+.ad-slot--leaderboard { width: 100%; max-width: 970px; height: 90px; margin: 0 auto; }
+@media (min-width: 768px) {
+  .ad-slot--leaderboard { height: 90px; }
+}
+.ad-slot--billboard   { width: 100%; max-width: 970px; min-height: 250px; margin: 0 auto; }
+.ad-slot--medium      { width: 300px; height: 250px; margin: 0 auto; }
+.ad-slot--in-article  { width: 100%; max-width: 600px; min-height: 250px; margin: 2.5rem auto; }
+.ad-slot--halfpage    { width: 300px; height: 600px; }
+
+/* ----------------------------------------------------------------------------
+ * Smoke / atmospheric SVG decorations
+ * -------------------------------------------------------------------------- */
+
+.smoke-decor {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.12;
+  filter: blur(2px);
+  animation: smoke-drift 18s ease-in-out infinite alternate;
+}
+@keyframes smoke-drift {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.12; }
+  50%  { transform: translate(2vw, -1vw) scale(1.05) rotate(2deg); opacity: 0.18; }
+  100% { transform: translate(-1vw, 1vw) scale(0.98) rotate(-1deg); opacity: 0.10; }
+}

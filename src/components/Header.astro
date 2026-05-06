@@ -1,0 +1,76 @@
+---
+import Logo from "./Logo.astro";
+
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/blog", label: "Stories" },
+  { href: "/category/cigar-101", label: "Cigar 101" },
+  { href: "/shop", label: "Shop" },
+  { href: "/about", label: "About" },
+];
+
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+---
+
+<header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/85 backdrop-blur-md border-b border-[color:var(--color-border-soft)]">
+  <div class="container-wide flex items-center justify-between h-16">
+    <a href="/" class="flex items-center gap-3 group" aria-label="The Next Cigar — home">
+      <Logo class="w-8 h-8 transition-transform group-hover:rotate-3" />
+      <span class="font-display text-lg tracking-tight text-[color:var(--color-text)]">The Next Cigar</span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-8" aria-label="Primary">
+      {navLinks.map((link) => {
+        const active = link.href === "/" ? path === "/" : path.startsWith(link.href);
+        return (
+          <a
+            href={link.href}
+            class:list={[
+              "text-sm tracking-wide transition-colors",
+              active ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]",
+            ]}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <a href="/subscribe" class="btn btn-primary !py-2 !px-4 hidden sm:inline-flex">Subscribe</a>
+      <button id="mobile-menu-button" class="md:hidden text-[color:var(--color-text)] p-2" aria-label="Open menu" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="md:hidden hidden border-t border-[color:var(--color-border-soft)] bg-[color:var(--color-bg)]">
+    <nav class="container-wide flex flex-col py-4 gap-1" aria-label="Mobile">
+      {navLinks.map((link) => (
+        <a href={link.href} class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors">
+          {link.label}
+        </a>
+      ))}
+      <a href="/subscribe" class="btn btn-primary mt-3 self-start">Subscribe</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  function setupMenu() {
+    const btn = document.getElementById("mobile-menu-button");
+    const menu = document.getElementById("mobile-menu");
+    if (!btn || !menu) return;
+    btn.addEventListener("click", () => {
+      const open = menu.classList.toggle("hidden") === false;
+      btn.setAttribute("aria-expanded", String(open));
+    });
+  }
+  document.addEventListener("astro:page-load", setupMenu);
+  setupMenu();
+</script>

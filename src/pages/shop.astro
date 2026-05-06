@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Newsletter from "../components/Newsletter.astro";
+---
+
+<BaseLayout
+  title="Shop — The Next Cigar"
+  description="A curated home for cigar accessories, branded goods, and editorial picks. Coming soon."
+>
+  <section class="container-narrow pt-32 pb-24 text-center">
+    <p class="eyebrow mb-4 reveal">Shop</p>
+    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">Coming soon.</h1>
+    <p class="lead mt-8 max-w-xl mx-auto reveal">
+      A curated home for the kit that makes the smoke better — cutters, lighters, humidors, ashtrays, leather goods, and editorial picks. Nothing that requires a tobacco license. Everything chosen because we'd own it ourselves.
+    </p>
+    <p class="mt-6 text-sm text-[color:var(--color-muted)] reveal">
+      For cigars themselves, we'll always link you to licensed retailers. We do not sell tobacco.
+    </p>
+  </section>
+
+  <section class="container-wide pb-24">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="card p-8 reveal" data-reveal-delay="1">
+        <p class="eyebrow mb-3">Phase 1</p>
+        <h3 class="font-display text-2xl mb-3">Accessories</h3>
+        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">Cutters, torches, soft flames, ashtrays, humidors, Boveda packs. Drop-shipped from a US wholesaler.</p>
+      </div>
+      <div class="card p-8 reveal" data-reveal-delay="2">
+        <p class="eyebrow mb-3">Phase 2</p>
+        <h3 class="font-display text-2xl mb-3">Editorial merch</h3>
+        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">Print issues, posters, leather notebooks, the kind of branded gear cigar lovers actually want to wear.</p>
+      </div>
+      <div class="card p-8 reveal" data-reveal-delay="3">
+        <p class="eyebrow mb-3">Phase 3</p>
+        <h3 class="font-display text-2xl mb-3">Digital library</h3>
+        <p class="text-[color:var(--color-muted)] text-sm leading-relaxed">A Cigar 101 masterclass, an authentication guide, an annual ratings PDF. Buy once, keep forever.</p>
+      </div>
+    </div>
+  </section>
+
+  <Newsletter heading="Be the first when it opens" blurb="Subscribers get early access and a launch discount when the shop goes live." />
+</BaseLayout>
