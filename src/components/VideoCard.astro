@@ -1,0 +1,64 @@
+---
+/**
+ * VideoCard — link-out card for videos we don't have legal embed rights to.
+ *
+ * Use this when a video is hosted on an external publisher's own player
+ * (Cigar Aficionado's site player, Halfwheel's video page, etc.) and we
+ * want to link to it editorially without embedding.
+ *
+ * Usage in MDX:
+ *   <VideoCard
+ *     href="https://www.cigaraficionado.com/article/punch-princesas-launch-2025"
+ *     thumbnail="https://www.cigaraficionado.com/path-to-thumb.jpg"
+ *     title="Inside the Habanos Festival 2025"
+ *     source="Cigar Aficionado"
+ *   />
+ */
+
+interface Props {
+  href: string;
+  thumbnail?: string;
+  title: string;
+  source?: string;
+  duration?: string;
+}
+
+const { href, thumbnail, title, source, duration } = Astro.props;
+---
+
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="my-8 block group no-underline border border-[color:var(--color-border)] rounded overflow-hidden hover:border-[color:var(--color-accent)] transition-colors"
+>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
+    {thumbnail && (
+      <div class="relative aspect-video md:aspect-auto md:col-span-1 bg-[color:var(--color-surface)]">
+        <img src={thumbnail} alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+        <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/15 transition-colors">
+          <div class="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="text-[color:var(--color-accent)] ml-1"><path d="M5 4l14 8-14 8z"/></svg>
+          </div>
+        </div>
+        {duration && (
+          <span class="absolute bottom-2 right-2 px-2 py-0.5 text-[0.65rem] font-bold text-white bg-black/70 rounded">
+            {duration}
+          </span>
+        )}
+      </div>
+    )}
+    <div class:list={["p-5 md:p-6 flex flex-col justify-center", thumbnail ? "md:col-span-2" : ""]}>
+      <p class="text-[0.7rem] uppercase tracking-widest text-[color:var(--color-text-muted)] font-semibold mb-2 flex items-center gap-2">
+        <span class="inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)]"></span>
+        Watch{source ? ` · ${source}` : ""}
+      </p>
+      <h4 class="font-display text-xl md:text-2xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+        {title}
+      </h4>
+      <p class="mt-3 text-sm text-[color:var(--color-text-muted)]">
+        Watch on {source || "the publisher's site"} →
+      </p>
+    </div>
+  </div>
+</a>

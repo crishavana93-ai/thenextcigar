@@ -1,0 +1,94 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Contact — TNext Cigar"
+  description="Get in touch with the editorial team."
+>
+  <section class="container-prose pt-20 md:pt-32 pb-24">
+    <p class="eyebrow mb-4 reveal">Contact</p>
+    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">Reach out.</h1>
+    <p class="lead mt-8 reveal">
+      Story tips, brand pitches, sponsorship inquiries, partnership ideas, corrections, or just to say hello — the inbox is open.
+    </p>
+
+    <div class="hairline my-16"></div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div class="reveal">
+        <p class="eyebrow mb-3">Editorial</p>
+        <h3 class="font-display text-2xl mb-3">Story tips & corrections</h3>
+        <p class="text-[color:var(--color-text-muted)] leading-relaxed mb-4">
+          Got a tip on an upcoming release, a factory you want covered, an event we should send someone to? We read every tip.
+        </p>
+        <a href="mailto:contact@thenextcigar.com" class="text-[color:var(--color-accent)] hover:underline font-semibold">
+          contact@thenextcigar.com
+        </a>
+      </div>
+      <div class="reveal" data-reveal-delay="1">
+        <p class="eyebrow mb-3">Business</p>
+        <h3 class="font-display text-2xl mb-3">Sponsorships & partnerships</h3>
+        <p class="text-[color:var(--color-text-muted)] leading-relaxed mb-4">
+          Brand collaborations, newsletter sponsorships, sponsored review slots, retail partnerships, and direct ad placements.
+        </p>
+        <a href="mailto:contact@thenextcigar.com" class="text-[color:var(--color-accent)] hover:underline font-semibold">
+          contact@thenextcigar.com
+        </a>
+      </div>
+    </div>
+
+    <div class="hairline my-16"></div>
+
+    <form id="contact-form" class="reveal" novalidate>
+      <p class="eyebrow mb-3">Or send us a note</p>
+      <h3 class="font-display text-2xl mb-6">General inquiries</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label for="contact-name" class="block text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Name</label>
+          <input id="contact-name" name="name" type="text" required class="w-full bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded px-4 py-3 text-[color:var(--color-text)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors" />
+        </div>
+        <div>
+          <label for="contact-email" class="block text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Email</label>
+          <input id="contact-email" name="email" type="email" required class="w-full bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded px-4 py-3 text-[color:var(--color-text)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors" />
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="contact-subject" class="block text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Subject</label>
+        <input id="contact-subject" name="subject" type="text" required class="w-full bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded px-4 py-3 text-[color:var(--color-text)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors" />
+      </div>
+
+      <div class="mb-6">
+        <label for="contact-message" class="block text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Message</label>
+        <textarea id="contact-message" name="message" rows="5" required class="w-full bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded px-4 py-3 text-[color:var(--color-text)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors resize-y"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Send message</button>
+      <p class="mt-3 text-xs text-[color:var(--color-text-muted)]">
+        We read every message. Expect a reply within 2 business days.
+      </p>
+    </form>
+  </section>
+</BaseLayout>
+
+<script>
+  function setup() {
+    const form = document.getElementById("contact-form") as HTMLFormElement | null;
+    if (!form || (form as any).dataset.bound === "1") return;
+    (form as any).dataset.bound = "1";
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      // Until we wire up Formspree / Cloudflare Pages function, fall back to mailto
+      const data = new FormData(form);
+      const subject = encodeURIComponent(`[Site] ${data.get("subject") || "Inquiry"}`);
+      const body = encodeURIComponent(
+        `Name: ${data.get("name")}\nEmail: ${data.get("email")}\n\n${data.get("message")}`
+      );
+      window.location.href = `mailto:contact@thenextcigar.com?subject=${subject}&body=${body}`;
+    });
+  }
+  document.addEventListener("astro:page-load", setup);
+  setup();
+</script>

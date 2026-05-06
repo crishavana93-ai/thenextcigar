@@ -1,0 +1,45 @@
+---
+/**
+ * YouTubeEmbed — privacy-first YouTube embed for MDX content.
+ *
+ * Uses youtube-nocookie.com so the player doesn't set tracking cookies until
+ * the visitor actually clicks play. This means we can use it without violating
+ * our cookie banner / GDPR policy.
+ *
+ * Usage in MDX:
+ *   import YouTubeEmbed from "../../components/YouTubeEmbed.astro";
+ *   <YouTubeEmbed videoId="dQw4w9WgXcQ" title="Optional title for accessibility" />
+ *
+ * Legality: YouTube's Terms of Service explicitly allow embedding via the
+ * official player. Embedding any public YouTube video on our site is fine.
+ * For videos hosted on other platforms (Cigar Aficionado's own player, etc.),
+ * use <VideoCard> instead — it links out rather than embedding.
+ */
+
+interface Props {
+  videoId: string;
+  title?: string;
+  startAt?: number; // seconds
+}
+
+const { videoId, title = "YouTube video player", startAt } = Astro.props;
+const params = startAt ? `?start=${startAt}` : "";
+const src = `https://www.youtube-nocookie.com/embed/${videoId}${params}`;
+---
+
+<figure class="my-8">
+  <div class="relative w-full overflow-hidden rounded" style="aspect-ratio: 16/9; background: var(--color-surface);">
+    <iframe
+      src={src}
+      title={title}
+      loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+      class="absolute inset-0 w-full h-full border-0"
+    ></iframe>
+  </div>
+  {title && title !== "YouTube video player" && (
+    <figcaption class="mt-3 text-sm text-[color:var(--color-text-muted)] italic">{title}</figcaption>
+  )}
+</figure>

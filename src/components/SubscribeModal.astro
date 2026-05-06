@@ -1,0 +1,101 @@
+---
+import Logo from "./Logo.astro";
+---
+
+<div id="subscribe-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="subscribe-modal-title" hidden>
+  <div class="modal">
+    <button class="modal-close" id="subscribe-modal-close" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <Logo variant="mark" class="w-12 h-12 mb-6 text-[color:var(--color-accent)]" />
+
+    <h2 id="subscribe-modal-title" class="font-display text-3xl md:text-4xl leading-tight">
+      One Sunday email.<br/>Free, forever.
+    </h2>
+
+    <p class="mt-4 text-[color:var(--color-text-soft)] leading-relaxed">
+      Cigar news, deep dives, and the rare smokes worth tracking down — written for people who actually light them. Two minutes to read. No spam.
+    </p>
+
+    <form id="subscribe-modal-form" class="mt-6 flex flex-col sm:flex-row gap-2" novalidate>
+      <label class="sr-only" for="subscribe-modal-email">Email</label>
+      <input
+        id="subscribe-modal-email"
+        type="email"
+        required
+        placeholder="your@email.com"
+        class="flex-1 bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded-full px-5 py-3 text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-mute-2)] focus:outline-none focus:border-[color:var(--color-accent)] transition-colors text-sm"
+      />
+      <button type="submit" class="btn btn-accent">Subscribe</button>
+    </form>
+
+    <button id="subscribe-modal-dismiss" class="mt-4 text-xs text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-colors">
+      No thanks, keep reading.
+    </button>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "tnc_subscribe_modal_seen";
+  const TIME_DELAY_MS = 30000;
+
+  function setupSubscribeModal() {
+    const modal = document.getElementById("subscribe-modal");
+    if (!modal || (modal as any).dataset.bound === "1") return;
+    (modal as any).dataset.bound = "1";
+
+    const dismiss = () => {
+      modal.classList.remove("is-open");
+      try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
+      setTimeout(() => modal.setAttribute("hidden", ""), 400);
+    };
+
+    const open = () => {
+      // Don't show if already seen, on /subscribe page, or reduced motion preference
+      try { if (localStorage.getItem(STORAGE_KEY)) return; } catch {}
+      if (window.location.pathname.startsWith("/subscribe")) return;
+      modal.removeAttribute("hidden");
+      requestAnimationFrame(() => modal.classList.add("is-open"));
+    };
+
+    // Close handlers
+    document.getElementById("subscribe-modal-close")?.addEventListener("click", dismiss);
+    document.getElementById("subscribe-modal-dismiss")?.addEventListener("click", dismiss);
+    modal.addEventListener("click", (e) => { if (e.target === modal) dismiss(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") dismiss(); });
+
+    // Form submit handler — placeholder, wire to Beehiiv when account exists
+    const form = document.getElementById("subscribe-modal-form") as HTMLFormElement | null;
+    if (form) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = form.querySelector("input[type=email]") as HTMLInputElement;
+        if (!input?.value) return;
+        // TODO: POST to Beehiiv subscribe endpoint
+        const inner = form.parentElement?.querySelector("h2");
+        if (inner) inner.textContent = "Thank you. Confirmation sent.";
+        const blurb = form.parentElement?.querySelector("p");
+        if (blurb) blurb.textContent = `We've sent a confirmation link to ${input.value}. Click it and you're in.`;
+        form.remove();
+        try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
+      });
+    }
+
+    // Trigger 1: time delay (30s after page load)
+    let timer = window.setTimeout(open, TIME_DELAY_MS);
+
+    // Trigger 2: exit-intent (mouse moves toward top of viewport)
+    const onMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0 && e.relatedTarget === null) {
+        clearTimeout(timer);
+        open();
+        document.removeEventListener("mouseleave", onMouseLeave);
+      }
+    };
+    document.addEventListener("mouseleave", onMouseLeave);
+  }
+
+  document.addEventListener("astro:page-load", setupSubscribeModal);
+  setupSubscribeModal();
+</script>

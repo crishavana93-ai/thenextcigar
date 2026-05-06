@@ -11,6 +11,7 @@ const year = new Date().getFullYear();
           alt="TNext Cigar"
           class="h-14 w-auto"
           style="filter: brightness(0) invert(1);"
+          loading="lazy"
         />
       </a>
       <p class="text-[color:var(--color-text-muted)] leading-relaxed">
@@ -34,6 +35,7 @@ const year = new Date().getFullYear();
       <h3 class="text-xs font-bold uppercase tracking-widest text-[color:var(--color-text-muted)] mb-4">More</h3>
       <ul class="space-y-3 text-[color:var(--color-text-soft)] text-sm">
         <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/about">About</a></li>
+        <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/contact">Contact</a></li>
         <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/shop">Shop</a></li>
         <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/subscribe">Newsletter</a></li>
         <li><a class="hover:text-[color:var(--color-accent)] transition-colors" href="/rss.xml">RSS feed</a></li>
@@ -57,10 +59,15 @@ const year = new Date().getFullYear();
     </div>
   </div>
 
-  <div class="border-t border-[color:var(--color-border)]">
-    <div class="container-wide py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-xs text-[color:var(--color-text-mute-2)]">
+  <div class="border-t border-[color:var(--color-dark-border)]">
+    <div class="container-wide py-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-xs text-[color:var(--color-text-on-dark-mute)]">
       <p>© {year} The Next Cigar. Independent editorial.</p>
-      <p>For 21+ adults. Tobacco is a regulated product. We are not a retailer.</p>
+      <div class="flex flex-wrap gap-x-5 gap-y-1">
+        <a href="/privacy" class="hover:text-[color:var(--color-accent)] transition-colors">Privacy</a>
+        <a href="/terms" class="hover:text-[color:var(--color-accent)] transition-colors">Terms</a>
+        <a href="/contact" class="hover:text-[color:var(--color-accent)] transition-colors">Contact</a>
+        <span>For 21+ adults · We are not a retailer</span>
+      </div>
     </div>
   </div>
 </footer>

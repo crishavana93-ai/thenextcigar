@@ -5,7 +5,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/blog", label: "News" },
   { href: "/category/cigar-101", label: "Cigar 101" },
-  { href: "/category/cubans", label: "Cubans" },
+  { href: "/category/havana-cigar-life", label: "Havana" },
   { href: "/category/cigar-culture", label: "Culture" },
   { href: "/about", label: "About" },
 ];
@@ -17,9 +17,9 @@ const today = new Date().toLocaleDateString("en-US", {
 });
 ---
 
-{/* Thin date + ticker bar */}
-<div class="bg-[color:var(--color-bg-soft)] border-b border-[color:var(--color-border-soft)]">
-  <div class="container-wide flex items-center justify-between py-2 text-[0.7rem] tracking-widest uppercase text-[color:var(--color-text-muted)]">
+{/* Thin dark date + ticker bar */}
+<div class="section-dark border-b border-[color:var(--color-dark-border)]">
+  <div class="container-wide flex items-center justify-between py-2 text-[0.7rem] tracking-widest uppercase text-[color:var(--color-text-on-dark-mute)]">
     <span>{today}</span>
     <span class="hidden sm:flex items-center gap-2">
       <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
@@ -31,18 +31,11 @@ const today = new Date().toLocaleDateString("en-US", {
 
 <header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/95 backdrop-blur-md border-b border-[color:var(--color-border)]">
   <div class="container-wide flex items-center justify-between h-20 gap-6">
-    {/* Left: Logo */}
     <a href="/" class="flex items-center group flex-shrink-0" aria-label="TNext Cigar — home">
-      <img
-        src="/logo.svg"
-        alt="TNext Cigar"
-        class="hidden sm:block h-12 w-auto"
-        style="filter: brightness(0) invert(1);"
-      />
+      <img src="/logo.svg" alt="TNext Cigar" class="hidden sm:block h-12 w-auto text-[color:var(--color-text)]" style="color: currentColor;" />
       <Logo variant="mark" class="sm:hidden w-9 h-9 text-[color:var(--color-text)]" />
     </a>
 
-    {/* Center: Nav */}
     <nav class="hidden lg:flex items-center gap-8" aria-label="Primary">
       {navLinks.map((link) => {
         const active = link.href === "/" ? path === "/" : path.startsWith(link.href);
@@ -60,9 +53,8 @@ const today = new Date().toLocaleDateString("en-US", {
       })}
     </nav>
 
-    {/* Right: Search + Subscribe */}
     <div class="flex items-center gap-3 flex-shrink-0">
-      <button class="hidden sm:inline-flex w-10 h-10 items-center justify-center rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:border-[color:var(--color-accent)] transition-colors" aria-label="Search">
+      <button id="search-btn" class="hidden sm:inline-flex w-10 h-10 items-center justify-center rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:border-[color:var(--color-accent)] transition-colors" aria-label="Search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </button>
       <a href="/subscribe" class="btn btn-accent !py-2.5 !px-5 hidden sm:inline-flex">
@@ -78,7 +70,6 @@ const today = new Date().toLocaleDateString("en-US", {
     </div>
   </div>
 
-  {/* Mobile menu */}
   <div id="mobile-menu" class="lg:hidden hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
     <nav class="container-wide flex flex-col py-4 gap-1" aria-label="Mobile">
       {navLinks.map((link) => (
@@ -92,15 +83,21 @@ const today = new Date().toLocaleDateString("en-US", {
 </header>
 
 <script>
-  function setupMenu() {
+  function setupHeader() {
     const btn = document.getElementById("mobile-menu-button");
     const menu = document.getElementById("mobile-menu");
-    if (!btn || !menu) return;
-    btn.addEventListener("click", () => {
-      const open = menu.classList.toggle("hidden") === false;
-      btn.setAttribute("aria-expanded", String(open));
-    });
+    if (btn && menu) {
+      btn.addEventListener("click", () => {
+        const open = menu.classList.toggle("hidden") === false;
+        btn.setAttribute("aria-expanded", String(open));
+      });
+    }
+    // Search button — for now points at /blog (acts as archive). Replace with modal trigger when Pagefind ships.
+    const searchBtn = document.getElementById("search-btn");
+    if (searchBtn) {
+      searchBtn.addEventListener("click", () => { window.location.href = "/blog"; });
+    }
   }
-  document.addEventListener("astro:page-load", setupMenu);
-  setupMenu();
+  document.addEventListener("astro:page-load", setupHeader);
+  setupHeader();
 </script>

@@ -1,0 +1,61 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const lastUpdated = "May 6, 2026";
+---
+
+<BaseLayout
+  title="Privacy Policy — TNext Cigar"
+  description="How TNext Cigar collects, uses, and protects your data."
+  noIndex={false}
+>
+  <section class="container-prose pt-20 md:pt-32 pb-24">
+    <p class="eyebrow mb-4">Legal</p>
+    <h1 class="font-display text-4xl md:text-6xl leading-tight">Privacy Policy</h1>
+    <p class="text-sm text-[color:var(--color-text-muted)] mt-4 uppercase tracking-wider">Last updated: {lastUpdated}</p>
+
+    <div class="prose mt-12">
+      <p>
+        TNext Cigar ("we", "us", "our") publishes editorial content about cigars at <a href="https://thenextcigar.com">thenextcigar.com</a>. This policy explains what we collect, why, and what your rights are.
+      </p>
+
+      <h2>What we collect</h2>
+      <p><strong>Newsletter subscribers:</strong> if you sign up, we collect your email address. That's it. We use it to send the newsletter and nothing else. Our newsletter platform (Beehiiv) processes the email on our behalf under their own privacy terms.</p>
+      <p><strong>Contact form submissions:</strong> if you email us via the contact page, we receive your name, email, and message. We use these to reply to you. We don't add you to mailing lists without consent.</p>
+      <p><strong>Analytics:</strong> we use privacy-respecting analytics (Cloudflare Web Analytics) that does not set cookies and does not identify individual visitors. We see aggregate numbers — page views, referrers, country — never personal data.</p>
+      <p><strong>Advertising cookies:</strong> if you accept the cookie banner and we have ad networks running (Google AdSense, Ezoic, Mediavine, etc.), those networks may set their own cookies for ad personalization. You can decline these in the banner.</p>
+
+      <h2>What we don't collect</h2>
+      <ul>
+        <li>We don't sell your data. Ever.</li>
+        <li>We don't track you across sites.</li>
+        <li>We don't use Facebook Pixel, Google Analytics, or session-replay tools.</li>
+        <li>We don't ask for your name, location, or any data beyond what's necessary for the service you're requesting (subscribing, contacting, buying).</li>
+      </ul>
+
+      <h2>Affiliate links</h2>
+      <p>
+        Some links in our editorial point to licensed cigar retailers (Famous Smoke Shop, JR Cigar, Cigars International, Atlantic Cigar, etc.). If you click through and buy, those retailers may pay us a small commission. This never affects what we cover or what we say about it. Where a piece contains affiliate links, we disclose it at the top of the article.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>You can:</p>
+      <ul>
+        <li>Unsubscribe from the newsletter at any time (link in every email)</li>
+        <li>Request a copy of any data we hold on you (email <a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a>)</li>
+        <li>Request deletion of any data we hold on you (same email)</li>
+        <li>Opt out of advertising cookies via the cookie banner or your browser settings</li>
+      </ul>
+      <p>If you're in the EU/UK, you have additional rights under GDPR including the right to lodge a complaint with your data protection authority.</p>
+
+      <h2>Age requirement</h2>
+      <p>This site covers cigars and is intended for adults aged 21+ (or the legal age in your jurisdiction). We don't knowingly collect data from minors. If you're under 21, please leave the site.</p>
+
+      <h2>Changes</h2>
+      <p>We update this policy as the site evolves. The "Last updated" date at the top is the source of truth. Material changes will be announced in the newsletter.</p>
+
+      <h2>Contact</h2>
+      <p>Questions about this policy? Email <a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a>.</p>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,65 +1,70 @@
 @import "tailwindcss";
 
 /* ============================================================================
- * thenextcigar.com — design tokens (v4, Newsplate clone)
- * Faithful port of newsplate.framer.media: pure dark editorial palette,
- * red breaking-news accent, modern sans-serif typography throughout.
+ * thenextcigar.com — design tokens (v5, Newsplate light palette)
+ * Faithful port of newsplate.framer.media: white/cream paper as default surface,
+ * charcoal text, red breaking-news accent. Dark surfaces (header ticker, footer)
+ * use the .section-dark utility class to opt in.
  * ========================================================================== */
 
 @theme {
-  /* === Dark surfaces (default) === */
-  --color-bg: #151515;            /* primary dark */
-  --color-bg-soft: #181818;       /* slightly raised */
-  --color-surface: #1b1b1b;       /* cards */
-  --color-surface-2: #282828;     /* alt surface, hover state */
-  --color-surface-warm: #1e1c18;
+  /* === Default LIGHT surfaces === */
+  --color-bg: #ffffff;             /* clean white paper */
+  --color-bg-soft: #fafafa;        /* slight warmth */
+  --color-surface: #f4f4f4;        /* alt section, card hover */
+  --color-surface-2: #ededed;      /* deeper alt */
+  --color-surface-warm: #fcf8de;   /* warm cream tint, used selectively */
 
-  /* === Light surfaces (used selectively for inverted sections) === */
-  --color-light: #f4f4f4;
-  --color-light-soft: #ededed;
-  --color-cream: #fcf8de;         /* warm cream tint */
-  --color-paper: #faf3e6;
-
-  /* === Text === */
-  --color-text: #f4f4f4;          /* on dark */
-  --color-text-soft: #dddddd;
-  --color-text-muted: #999999;
-  --color-text-mute-2: #787878;
-  --color-text-on-light: #151515;
-  --color-text-on-light-soft: #282828;
-
-  /* legacy aliases — keep components working */
-  --color-text-inverse: #151515;
-  --color-text-inverse-soft: #282828;
-  --color-text-inverse-mute: #787878;
-  --color-muted: #999999;
-  --color-muted-2: #787878;
-
-  /* === Borders === */
-  --color-border: #282828;
-  --color-border-soft: #1f1f1f;
-  --color-border-light: #ededed;
+  /* === Dark surfaces (header ticker, footer, hero overlay) === */
   --color-dark: #151515;
   --color-dark-soft: #181818;
   --color-dark-surface: #1b1b1b;
   --color-dark-border: #282828;
 
+  /* === Text on light === */
+  --color-text: #151515;
+  --color-text-soft: #282828;
+  --color-text-muted: #787878;
+  --color-text-mute-2: #999999;
+
+  /* === Text on dark === */
+  --color-text-on-dark: #f4f4f4;
+  --color-text-on-dark-soft: #dddddd;
+  --color-text-on-dark-mute: #999999;
+
+  /* legacy aliases — keep components working */
+  --color-text-inverse: #151515;
+  --color-text-inverse-soft: #282828;
+  --color-text-inverse-mute: #787878;
+  --color-muted: #787878;
+  --color-muted-2: #999999;
+
+  /* === Borders === */
+  --color-border: #ededed;
+  --color-border-soft: #f4f4f4;
+  --color-border-light: #ededed;
+
   /* === Accents — Newsplate's signature red === */
-  --color-accent: #ff2e2e;        /* breaking news red */
+  --color-accent: #ff2e2e;
   --color-accent-hover: #e54d2e;
   --color-accent-soft: #ff2e2e;
   --color-accent-deep: #a61b1b;
-  --color-yellow: #eab308;        /* highlights */
-  --color-cyan: #1fa0e0;          /* category coding */
+  --color-yellow: #eab308;
+  --color-cyan: #1fa0e0;
   --color-burgundy: #6e2620;
   --color-burgundy-soft: #8a3530;
 
-  /* legacy aliases */
-  --color-cream-soft: #ede1cb;
-  --color-cream-deep: #d8c8ad;
-  --color-text-inverse: #f4f4f4;
+  /* legacy */
+  --color-cream: #fcf8de;
+  --color-cream-soft: #fdfae8;
+  --color-cream-deep: #f0e5b8;
+  --color-paper: #faf3e6;
+  --color-light: #ffffff;
+  --color-light-soft: #fafafa;
+  --color-text-on-light: #151515;
+  --color-text-on-light-soft: #282828;
 
-  /* === Typography — Newsplate uses Inter Display for headlines, Inter/Source Sans for body === */
+  /* === Typography === */
   --font-display: "Inter", "Inter Display", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-body: "Inter", "Source Sans 3", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
@@ -97,11 +102,11 @@ header, footer { position: relative; z-index: 10; }
 
 ::selection {
   background: var(--color-accent);
-  color: var(--color-text);
+  color: #ffffff;
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-track { background: var(--color-bg-soft); }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
 
@@ -115,30 +120,29 @@ header, footer { position: relative; z-index: 10; }
  * Section variants
  * -------------------------------------------------------------------------- */
 
-.section-light {
-  background: var(--color-light);
-  color: var(--color-text-on-light);
-  --color-bg: var(--color-light);
-  --color-text: var(--color-text-on-light);
-  --color-text-soft: var(--color-text-on-light-soft);
-  --color-border: var(--color-border-light);
-  --color-muted: var(--color-text-mute-2);
+.section-dark {
+  background: var(--color-dark);
+  color: var(--color-text-on-dark);
+  --color-bg: var(--color-dark);
+  --color-bg-soft: var(--color-dark-soft);
+  --color-surface: var(--color-dark-surface);
+  --color-surface-2: var(--color-dark-border);
+  --color-text: var(--color-text-on-dark);
+  --color-text-soft: var(--color-text-on-dark-soft);
+  --color-text-muted: var(--color-text-on-dark-mute);
+  --color-text-mute-2: #6e6e6e;
+  --color-border: var(--color-dark-border);
+  --color-muted: var(--color-text-on-dark-mute);
 }
+
 .section-warm {
   background: var(--color-surface);
 }
 .section-cream {
-  background: var(--color-cream);
-  color: var(--color-text-on-light);
-  --color-bg: var(--color-cream);
-  --color-text: var(--color-text-on-light);
-  --color-text-soft: var(--color-text-on-light-soft);
-  --color-border: var(--color-border-light);
-  --color-muted: var(--color-text-mute-2);
+  background: var(--color-surface-warm);
 }
-.section-dark {
-  background: var(--color-dark);
-  color: var(--color-text);
+.section-light {
+  background: var(--color-bg);
 }
 
 /* ----------------------------------------------------------------------------
@@ -152,7 +156,6 @@ header, footer { position: relative; z-index: 10; }
   line-height: 1.05;
 }
 
-/* Newsplate's signature eyebrow style — chunky uppercase with a leading red dot/bar */
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -171,7 +174,6 @@ header, footer { position: relative; z-index: 10; }
   background: var(--color-accent);
 }
 
-/* Big "section eyebrow" — used above WHAT'S HOT IN, LATEST NEWS, etc. */
 .section-eyebrow {
   display: inline-block;
   font-family: var(--font-display);
@@ -183,7 +185,6 @@ header, footer { position: relative; z-index: 10; }
   text-transform: uppercase;
 }
 
-/* Category tag — small red label on cards */
 .category-tag {
   display: inline-flex;
   align-items: center;
@@ -211,7 +212,7 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ----------------------------------------------------------------------------
- * Prose (article body)
+ * Prose
  * -------------------------------------------------------------------------- */
 
 .prose {
@@ -257,7 +258,7 @@ header, footer { position: relative; z-index: 10; }
   font-style: normal;
 }
 .prose code {
-  background: var(--color-surface-2);
+  background: var(--color-surface);
   padding: 0.15em 0.4em;
   border-radius: 3px;
   font-size: 0.9em;
@@ -345,7 +346,7 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ----------------------------------------------------------------------------
- * Cards — Newsplate style
+ * Cards — Newsplate-style on light
  * -------------------------------------------------------------------------- */
 
 .card {
@@ -402,18 +403,8 @@ header, footer { position: relative; z-index: 10; }
   letter-spacing: 0.04em;
 }
 
-/* Card on light section — invert text */
-.section-light .card-title,
-.section-cream .card-title {
-  color: var(--color-text-on-light);
-}
-.section-light .card:hover .card-title,
-.section-cream .card:hover .card-title {
-  color: var(--color-accent);
-}
-
 /* ----------------------------------------------------------------------------
- * Buttons — Newsplate style
+ * Buttons
  * -------------------------------------------------------------------------- */
 
 .btn {
@@ -433,11 +424,11 @@ header, footer { position: relative; z-index: 10; }
 }
 .btn-primary {
   background: var(--color-text);
-  color: var(--color-bg);
+  color: #ffffff;
 }
 .btn-primary:hover {
   background: var(--color-accent);
-  color: var(--color-text);
+  color: #ffffff;
 }
 .btn-ghost {
   background: transparent;
@@ -450,16 +441,19 @@ header, footer { position: relative; z-index: 10; }
 }
 .btn-accent {
   background: var(--color-accent);
-  color: var(--color-text);
+  color: #ffffff;
 }
 .btn-accent:hover {
   background: var(--color-accent-hover);
 }
 
-/* ----------------------------------------------------------------------------
- * Decorative
- * -------------------------------------------------------------------------- */
+/* On dark sections, invert button styles where needed */
+.section-dark .btn-primary { background: #ffffff; color: var(--color-dark); }
+.section-dark .btn-primary:hover { background: var(--color-accent); color: #ffffff; }
+.section-dark .btn-ghost { color: #ffffff; border-color: rgba(255,255,255,0.2); }
+.section-dark .btn-ghost:hover { border-color: var(--color-accent); color: var(--color-accent); }
 
+/* Decorative */
 .hairline {
   height: 1px;
   background: var(--color-border);
@@ -470,20 +464,14 @@ header, footer { position: relative; z-index: 10; }
 .container-prose  { max-width: 760px;  margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
 .container-wide   { max-width: 1440px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
 
-/* ----------------------------------------------------------------------------
- * View transitions
- * -------------------------------------------------------------------------- */
-
+/* View transitions */
 @view-transition { navigation: auto; }
-
-::view-transition-old(root),
-::view-transition-new(root) {
+::view-transition-old(root), ::view-transition-new(root) {
   animation-duration: 380ms;
   animation-timing-function: var(--ease-out-expo);
 }
 ::view-transition-old(root) { animation-name: vt-fade-out; }
 ::view-transition-new(root) { animation-name: vt-fade-in; }
-
 @keyframes vt-fade-out { to { opacity: 0; } }
 @keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
 
@@ -496,40 +484,25 @@ header, footer { position: relative; z-index: 10; }
   .animate-drift { animation: none; }
 }
 
-/* ----------------------------------------------------------------------------
- * Magnetic + ad slot + smoke
- * -------------------------------------------------------------------------- */
-
+/* Magnetic + ad slot + smoke */
 .magnetic-area { display: inline-block; padding: 1rem; margin: -1rem; }
 .magnetic-target { display: inline-block; transition: transform 200ms var(--ease-out-expo); will-change: transform; }
 
 .ad-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   border: 1px dashed var(--color-border);
-  background: var(--color-surface);
-  position: relative;
-  overflow: hidden;
+  background: var(--color-bg-soft);
+  position: relative; overflow: hidden;
 }
 .ad-slot::before {
-  content: "Sponsored";
-  position: absolute;
-  top: 0.5rem;
-  left: 0.75rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  font-weight: 600;
+  content: "Sponsored"; position: absolute; top: 0.5rem; left: 0.75rem;
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--color-text-muted); font-weight: 600;
 }
 .ad-slot__inner {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: center;
-  padding: 1rem 2rem;
+  color: var(--color-text-muted); font-size: 0.8rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  text-align: center; padding: 1rem 2rem;
 }
 .ad-slot--leaderboard { width: 100%; max-width: 970px; height: 90px; margin: 0 auto; }
 .ad-slot--billboard   { width: 100%; max-width: 970px; min-height: 250px; margin: 0 auto; }
@@ -538,26 +511,18 @@ header, footer { position: relative; z-index: 10; }
 .ad-slot--halfpage    { width: 300px; height: 600px; }
 
 .smoke-decor {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0.06;
-  filter: blur(2px);
+  position: absolute; pointer-events: none;
+  opacity: 0.04; filter: blur(2px);
 }
 
-/* ----------------------------------------------------------------------------
- * Marquee / ticker (used in the top notification bar)
- * -------------------------------------------------------------------------- */
-
+/* Marquee / ticker */
 .ticker-bar {
   background: var(--color-accent);
-  color: var(--color-text);
-  overflow: hidden;
-  white-space: nowrap;
+  color: #ffffff;
+  overflow: hidden; white-space: nowrap;
   padding: 0.5rem 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
 }
 .ticker-track {
   display: inline-block;
@@ -565,3 +530,52 @@ header, footer { position: relative; z-index: 10; }
   padding-left: 100%;
 }
 .ticker-track > span { margin-right: 3rem; }
+
+/* ----------------------------------------------------------------------------
+ * Modals (used by SubscribeModal, SearchModal)
+ * -------------------------------------------------------------------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, var(--color-dark) 75%, transparent);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease-out-expo);
+}
+.modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal {
+  background: var(--color-bg);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  padding: 2.5rem;
+  position: relative;
+  transform: translateY(20px);
+  transition: transform 400ms var(--ease-out-expo);
+  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.35);
+}
+.modal-backdrop.is-open .modal {
+  transform: translateY(0);
+}
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: color 200ms;
+}
+.modal-close:hover { color: var(--color-text); }

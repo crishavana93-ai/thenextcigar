@@ -1,0 +1,49 @@
+---
+// Slim cookie consent banner. Shows once, dismissible, stored in localStorage.
+// Required for EU/UK visitors and best practice once we add ad networks.
+---
+
+<div id="cookie-banner" class="fixed bottom-0 left-0 right-0 z-50 section-dark border-t border-[color:var(--color-dark-border)]" hidden>
+  <div class="container-wide py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+    <p class="text-xs sm:text-sm text-[color:var(--color-text-on-dark-soft)] flex-1">
+      We use cookies for analytics and (eventually) ads to keep this editorial free. By continuing you agree to our
+      <a href="/privacy" class="underline hover:text-[color:var(--color-accent)] transition-colors">Privacy Policy</a>.
+    </p>
+    <div class="flex gap-2 flex-shrink-0">
+      <button id="cookie-decline" class="text-xs uppercase tracking-wider text-[color:var(--color-text-on-dark-mute)] hover:text-white transition-colors px-4 py-2">
+        Decline
+      </button>
+      <button id="cookie-accept" class="btn btn-accent !py-2 !px-5 text-xs">
+        Accept
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "tnc_cookie_consent";
+
+  function setupCookieBanner() {
+    const banner = document.getElementById("cookie-banner");
+    if (!banner || (banner as any).dataset.bound === "1") return;
+    (banner as any).dataset.bound = "1";
+
+    const consent = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch { return "accept"; } })();
+    if (consent) return; // already decided
+
+    banner.removeAttribute("hidden");
+
+    const decide = (value: "accept" | "decline") => {
+      try { localStorage.setItem(STORAGE_KEY, value); } catch {}
+      banner.setAttribute("hidden", "");
+      // dispatch event so analytics/ad scripts can listen
+      document.dispatchEvent(new CustomEvent("tnc:cookie-consent", { detail: { value } }));
+    };
+
+    document.getElementById("cookie-accept")?.addEventListener("click", () => decide("accept"));
+    document.getElementById("cookie-decline")?.addEventListener("click", () => decide("decline"));
+  }
+
+  document.addEventListener("astro:page-load", setupCookieBanner);
+  setupCookieBanner();
+</script>

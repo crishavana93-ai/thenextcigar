@@ -1,0 +1,90 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+
+export async function getStaticPaths() {
+  const authors = await getCollection("authors");
+  const allPosts = await getCollection("blog");
+  return authors.map((author) => {
+    const posts = allPosts
+      .filter((p) => p.data.author === author.data.slug)
+      .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
+    return {
+      params: { slug: author.data.slug },
+      props: { author, posts },
+    };
+  });
+}
+
+const { author, posts } = Astro.props;
+const allCategories = await getCollection("categories");
+const categoryByslug = new Map(allCategories.map((c) => [c.data.slug, c.data]));
+
+const a = author.data;
+---
+
+<BaseLayout
+  title={`${a.name} — TNext Cigar`}
+  description={a.excerpt || `Stories by ${a.name}`}
+>
+  <section class="container-wide pt-20 md:pt-28 pb-16">
+    <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-text-muted)]" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
+      <span class="mx-2">/</span>
+      <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">News</a>
+      <span class="mx-2">/</span>
+      <span class="text-[color:var(--color-text)]">{a.name}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+      {a.avatar && (
+        <div class="md:col-span-3 reveal">
+          <div class="aspect-square rounded-full overflow-hidden bg-[color:var(--color-surface)] max-w-[200px]">
+            <img src={`/assets/authors/${a.slug}/${a.avatar}`} alt={a.name} class="w-full h-full object-cover" />
+          </div>
+        </div>
+      )}
+      <div class:list={["reveal", a.avatar ? "md:col-span-9" : "md:col-span-12"]} data-reveal-delay="1">
+        <p class="eyebrow mb-4">Editor</p>
+        <h1 class="font-display text-5xl md:text-7xl leading-tight">{a.name}</h1>
+        {a.jobTitle && (
+          <p class="text-lg text-[color:var(--color-text-muted)] mt-3">{a.jobTitle}</p>
+        )}
+        {a.excerpt && (
+          <p class="lead mt-6">{a.excerpt}</p>
+        )}
+        {a.bio && (
+          <div class="prose mt-8" set:html={a.bio} />
+        )}
+
+        {(a.email || a.linkedin || a.instagram || a.twitter || a.website) && (
+          <div class="mt-8 flex flex-wrap gap-4 text-sm">
+            {a.email && <a href={`mailto:${a.email}`} class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors">Email</a>}
+            {a.website && <a href={a.website} class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors">Website</a>}
+            {a.linkedin && <a href={a.linkedin} class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors">LinkedIn</a>}
+            {a.instagram && <a href={a.instagram} class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors">Instagram</a>}
+            {a.twitter && <a href={a.twitter} class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors">Twitter / X</a>}
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="container-wide pb-24">
+    <div class="hairline mb-12"></div>
+    <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Stories by {a.name}</p>
+    <h2 class="section-eyebrow mb-12">{posts.length} {posts.length === 1 ? "story" : "stories"}</h2>
+
+    {posts.length === 0 ? (
+      <p class="text-[color:var(--color-text-muted)]">No stories yet.</p>
+    ) : (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        {posts.map((post, i) => {
+          const c = post.data.category ? categoryByslug.get(post.data.category) : null;
+          return <PostCard post={post} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
+        })}
+      </div>
+    )}
+  </section>
+</BaseLayout>
