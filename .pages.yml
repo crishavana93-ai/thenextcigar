@@ -1,0 +1,168 @@
+# Pages CMS configuration — TNext Cigar
+# This file defines what Pages CMS shows in the editor at app.pagescms.org.
+# Push to main and Pages CMS picks it up automatically.
+
+media:
+  input: public/uploads
+  output: /uploads
+  categories: [image, document]
+
+content:
+  # ─────────────────────────────────────────────────────────────────────
+  # ARTICLES — main content
+  # ─────────────────────────────────────────────────────────────────────
+  - name: blog
+    label: Articles
+    type: collection
+    path: src/content/blog
+    filename: '{primary}.mdx'
+    format: yaml-frontmatter
+    view:
+      fields: [title, category, publishedAt, isPremium, featured]
+      primary: title
+      sort: [{ field: publishedAt, direction: desc }]
+      default:
+        sort: publishedAt
+        order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+        description: 'The article headline. 50–70 chars is best for SEO.'
+      - name: slug
+        label: URL slug
+        type: string
+        required: true
+        pattern:
+          regex: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          message: 'Lowercase letters, numbers, and hyphens only.'
+        description: 'Becomes /blog/<slug>/. Auto-fills from title — edit if you want.'
+      - name: excerpt
+        label: Excerpt
+        type: text
+        description: '1–2 sentence summary. Used as the meta description and on cards.'
+      - name: publishedAt
+        label: Publish date
+        type: date
+        required: true
+        options:
+          time: true
+        description: 'When this article goes live.'
+      - name: updatedAt
+        label: Last updated
+        type: date
+        options:
+          time: true
+        description: 'Optional — set when you make significant edits.'
+      - name: category
+        label: Category
+        type: reference
+        options:
+          collection: categories
+          value: '{fields.slug}'
+          search: [name, slug]
+          label: '{fields.name}'
+        description: 'Pick from the categories collection.'
+      - name: author
+        label: Author
+        type: reference
+        options:
+          collection: authors
+          value: '{fields.slug}'
+          search: [name, slug]
+          label: '{fields.name}'
+      - name: cover
+        label: Cover image
+        type: image
+        description: 'Wide hero image. 1600×900 recommended.'
+      - name: thumbnail
+        label: Thumbnail
+        type: image
+        description: 'Optional — defaults to cover if blank.'
+      - name: featured
+        label: Featured (homepage hero)
+        type: boolean
+        default: false
+      - name: sidebarFeatured
+        label: Sidebar featured
+        type: boolean
+        default: false
+      - name: isPremium
+        label: Members-only (premium)
+        type: boolean
+        default: false
+        description: 'Shows the lock badge and routes through the paywall.'
+      - name: seo
+        label: SEO (optional — fills from above if blank)
+        type: object
+        list: false
+        fields:
+          - { name: metaTitle, label: Meta title, type: string, description: '50–60 chars. Defaults to article title.' }
+          - { name: metaDescription, label: Meta description, type: text, description: '150–160 chars. Defaults to excerpt.' }
+          - { name: focusKeyword, label: Focus keyword, type: string, description: 'For your editorial QA only — not exposed publicly.' }
+          - { name: ogImage, label: OG image, type: image, description: '1200×630. Defaults to cover.' }
+          - { name: canonicalUrl, label: Canonical URL, type: string, description: 'Only set if originally published elsewhere.' }
+          - { name: noIndex, label: Hide from search engines, type: boolean, default: false }
+      - name: body
+        label: Article body
+        type: rich-text
+        description: 'Full article body. Markdown supported.'
+        options:
+          format: markdown
+      - name: sourceId
+        label: Source ID
+        type: string
+        hidden: true
+
+  # ─────────────────────────────────────────────────────────────────────
+  # CATEGORIES
+  # ─────────────────────────────────────────────────────────────────────
+  - name: categories
+    label: Categories
+    type: collection
+    path: src/content/categories
+    filename: '{primary}.json'
+    format: json
+    view:
+      fields: [name, slug]
+      primary: name
+      sort: [{ field: name, direction: asc }]
+    fields:
+      - { name: slug, label: Slug, type: string, required: true, pattern: { regex: '^[a-z0-9-]+$', message: 'Lowercase letters, numbers, hyphens.' } }
+      - { name: name, label: Display name, type: string, required: true }
+      - { name: description, label: Description, type: text }
+      - { name: thumbnail, label: Thumbnail (filename only), type: string }
+
+  # ─────────────────────────────────────────────────────────────────────
+  # AUTHORS
+  # ─────────────────────────────────────────────────────────────────────
+  - name: authors
+    label: Authors
+    type: collection
+    path: src/content/authors
+    filename: '{primary}.json'
+    format: json
+    view:
+      fields: [name, slug, jobTitle]
+      primary: name
+    fields:
+      - { name: slug, label: Slug, type: string, required: true }
+      - { name: name, label: Full name, type: string, required: true }
+      - { name: jobTitle, label: Job title, type: string }
+      - { name: excerpt, label: Short bio, type: text }
+      - { name: bio, label: Long bio, type: rich-text, options: { format: markdown } }
+      - { name: email, label: Email, type: string }
+      - { name: website, label: Website, type: string }
+      - { name: twitter, label: 'X / Twitter', type: string }
+      - { name: instagram, label: Instagram, type: string }
+      - { name: linkedin, label: LinkedIn, type: string }
+      - { name: facebook, label: Facebook, type: string }
+      - { name: avatar, label: Avatar (filename only), type: string }
+      - { name: portrait, label: Portrait (filename only), type: string }
+
+settings:
+  content:
+    merge:
+      style: pull-request   # commit creates a PR you can review and merge
+                            # (change to "direct" if you want commits to go straight to main)
