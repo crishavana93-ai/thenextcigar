@@ -1,0 +1,110 @@
+---
+import { getCollection } from "astro:content";
+
+// Pull latest 8 blog post titles for the ticker
+const posts = (await getCollection("blog"))
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
+  .slice(0, 8);
+---
+
+<div class="news-ticker section-dark border-b border-[color:var(--color-dark-border)]">
+  <div class="news-ticker__inner">
+    <div class="news-ticker__label">News Ticker</div>
+    <div class="news-ticker__viewport">
+      <div class="news-ticker__track">
+        {/* Render twice so the marquee loops seamlessly */}
+        {[...posts, ...posts].map((p) => (
+          <a href={`/blog/${p.data.slug}/`} class="news-ticker__item">
+            <span aria-hidden="true" class="news-ticker__diamond">◆</span>
+            <span>{p.data.title}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .news-ticker {
+    overflow: hidden;
+    position: relative;
+  }
+  .news-ticker__inner {
+    display: flex;
+    align-items: stretch;
+    height: 44px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  .news-ticker__label {
+    background: var(--color-accent);
+    color: #ffffff;
+    padding: 0 1.25rem;
+    display: flex;
+    align-items: center;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+    padding-right: 1.85rem;
+  }
+  .news-ticker__viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .news-ticker__viewport::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(to right, transparent, var(--color-dark));
+    pointer-events: none;
+    z-index: 1;
+  }
+  .news-ticker__track {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.5rem;
+    padding-left: 1.5rem;
+    animation: ticker-scroll 90s linear infinite;
+    white-space: nowrap;
+  }
+  .news-ticker__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.85rem;
+    color: var(--color-text-on-dark-soft);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    transition: color 200ms;
+    flex-shrink: 0;
+  }
+  .news-ticker__item:hover {
+    color: var(--color-accent);
+  }
+  .news-ticker__diamond {
+    color: var(--color-accent);
+    font-size: 0.5rem;
+  }
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  /* Pause on hover */
+  .news-ticker:hover .news-ticker__track {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .news-ticker__track { animation: none; }
+  }
+</style>

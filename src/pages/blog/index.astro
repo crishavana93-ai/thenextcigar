@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostCard from "../../components/PostCard.astro";
 import Newsletter from "../../components/Newsletter.astro";
@@ -10,25 +11,77 @@ const allPosts = (await getCollection("blog")).sort(
 );
 const categories = await getCollection("categories");
 const categoryByslug = new Map(categories.map((c) => [c.data.slug, c.data]));
+
+const featured = allPosts.find((p) => p.data.featured) ?? allPosts[0];
+const rest = allPosts.filter((p) => p.id !== featured?.id);
+
+const fc = featured?.data.category ? categoryByslug.get(featured.data.category) : null;
+const fmtDate = (d: Date | string) =>
+  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 ---
 
 <BaseLayout
-  title="All stories — The Next Cigar"
+  title="All stories — TNext Cigar"
   description={`Every story we've published — ${allPosts.length} pieces on cigars, culture, gear, and the news that matters.`}
 >
-  <section class="container-wide py-20 md:py-28">
-    <div class="max-w-2xl reveal">
-      <p class="eyebrow mb-4">Archive</p>
-      <h1 class="font-display text-5xl md:text-7xl leading-tight">All stories</h1>
-      <p class="lead mt-6">Every piece published on The Next Cigar — newest first.</p>
-    </div>
+  {/* ─── FEATURED HEADLINE STORY (Newsplate-style top of archive) ─── */}
+  {featured && (
+    <section class="container-wide pt-12 md:pt-20 pb-12">
+      <div class="flex items-center justify-between mb-8 reveal flex-wrap gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Archive</p>
+          <p class="section-eyebrow">All stories</p>
+        </div>
+      </div>
 
-    <nav class="mt-12 flex flex-wrap gap-2" aria-label="Filter by category">
-      <a href="/blog" class="px-4 py-2 text-sm rounded-sm bg-[color:var(--color-accent)] text-[color:var(--color-bg)] tracking-wide">All</a>
+      <a href={`/blog/${featured.data.slug}/`} class="group block reveal">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
+          <div class="lg:col-span-7">
+            <div class="relative overflow-hidden rounded-sm aspect-[16/10] bg-[color:var(--color-surface)]">
+              {featured.data.cover && (
+                <Image
+                  src={featured.data.cover}
+                  alt={featured.data.title}
+                  widths={[800, 1200, 1800]}
+                  sizes="(min-width: 1024px) 60vw, 100vw"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="eager"
+                />
+              )}
+              {featured.data.isPremium && (
+                <span class="absolute top-4 left-4 px-3 py-1.5 text-[0.65rem] font-bold tracking-widest uppercase bg-[color:var(--color-dark)] text-white rounded-sm flex items-center gap-1.5">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Member only
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="lg:col-span-5">
+            {fc && <p class="category-tag mb-4">{fc.name}</p>}
+            <h1 class="font-display text-3xl md:text-5xl lg:text-6xl leading-[1.05] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+              {featured.data.title}
+            </h1>
+            {featured.data.excerpt && (
+              <p class="lead mt-6">{featured.data.excerpt}</p>
+            )}
+            <p class="mt-6 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+              {fmtDate(featured.data.publishedAt)} · Editor's pick
+            </p>
+          </div>
+        </div>
+      </a>
+    </section>
+  )}
+
+  {/* ─── CATEGORY FILTER PILLS ─── */}
+  <section class="container-wide pb-8">
+    <div class="hairline mb-8"></div>
+    <nav class="flex flex-wrap gap-2" aria-label="Filter by category">
+      <a href="/blog/" class="px-4 py-2 text-sm rounded-full bg-[color:var(--color-text)] text-white tracking-wide font-semibold">All</a>
       {categories.map((c) => (
         <a
-          href={`/category/${c.data.slug}`}
-          class="px-4 py-2 text-sm rounded-sm border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] tracking-wide transition-colors"
+          href={`/category/${c.data.slug}/`}
+          class="px-4 py-2 text-sm rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] tracking-wide transition-colors"
         >
           {c.data.name}
         </a>
@@ -36,28 +89,38 @@ const categoryByslug = new Map(categories.map((c) => [c.data.slug, c.data]));
     </nav>
   </section>
 
-  {/* Top-of-archive ad */}
+  {/* ─── LEADERBOARD AD ─── */}
   <div class="container-wide pb-12">
     <AdSlot variant="leaderboard" />
   </div>
 
-  <section class="container-wide pb-24">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-      {allPosts.map((post, i) => {
+  {/* ─── ARCHIVE GRID ─── */}
+  <section class="container-wide pb-20">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+      {rest.slice(0, 9).map((post, i) => {
         const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
-        // Inject an in-feed ad after the 6th post
-        const card = (
+        return (
           <PostCard post={post} categoryName={cat?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />
         );
-        return card;
       })}
     </div>
 
-    {/* Mid-archive ad */}
-    {allPosts.length > 9 && (
-      <div class="my-12 reveal">
-        <AdSlot variant="billboard" />
-      </div>
+    {rest.length > 9 && (
+      <>
+        {/* Mid-archive ad */}
+        <div class="my-16 reveal">
+          <AdSlot variant="billboard" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          {rest.slice(9).map((post, i) => {
+            const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
+            return (
+              <PostCard post={post} categoryName={cat?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />
+            );
+          })}
+        </div>
+      </>
     )}
   </section>
 

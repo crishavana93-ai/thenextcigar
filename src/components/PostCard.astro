@@ -7,9 +7,7 @@ interface Props {
   categoryName?: string;
   size?: "sm" | "md" | "lg" | "xl";
   delay?: 1 | 2 | 3 | 4;
-  /** Horizontal layout (image left, text right) — used in side-rail lists */
   horizontal?: boolean;
-  /** Hide the image entirely (text-only entry) */
   noImage?: boolean;
 }
 
@@ -30,7 +28,7 @@ const cover = data.cover ?? data.thumbnail;
 ---
 
 <a
-  href={`/blog/${data.slug}`}
+  href={`/blog/${data.slug}/`}
   class:list={[
     "card reveal block group",
     horizontal && "flex flex-row gap-4 items-start",
@@ -48,8 +46,9 @@ const cover = data.cover ?? data.thumbnail;
         loading="lazy"
       />
       {data.isPremium && (
-        <span class="absolute top-3 left-3 px-2 py-1 text-[0.6rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-[color:var(--color-text)] rounded-sm">
-          Premium
+        <span class="absolute top-3 left-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-dark)] text-white rounded-sm flex items-center gap-1.5">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Member only
         </span>
       )}
     </div>

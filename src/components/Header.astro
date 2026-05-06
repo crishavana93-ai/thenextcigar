@@ -1,23 +1,30 @@
 ---
 import Logo from "./Logo.astro";
+import NewsTicker from "./NewsTicker.astro";
+import SocialIcons from "./SocialIcons.astro";
+import { getCollection } from "astro:content";
+
+const categories = (await getCollection("categories")).sort((a, b) => a.data.name.localeCompare(b.data.name));
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/blog", label: "News" },
-  { href: "/category/cigar-101", label: "Cigar 101" },
-  { href: "/category/havana-cigar-life", label: "Havana" },
-  { href: "/category/cigar-culture", label: "Culture" },
+  // Categories handled as dropdown below
+  { href: "/watch", label: "Watch" },
+  { href: "/shop", label: "Shop" },
   { href: "/about", label: "About" },
 ];
 
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
-
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "long", year: "numeric", month: "long", day: "numeric",
 });
 ---
 
-{/* Thin dark date + ticker bar */}
+{/* News ticker bar — Newsplate signature */}
+<NewsTicker />
+
+{/* Thin date + status bar */}
 <div class="section-dark border-b border-[color:var(--color-dark-border)]">
   <div class="container-wide flex items-center justify-between py-2 text-[0.7rem] tracking-widest uppercase text-[color:var(--color-text-on-dark-mute)]">
     <span>{today}</span>
@@ -36,17 +43,60 @@ const today = new Date().toLocaleDateString("en-US", {
       <Logo variant="mark" class="sm:hidden w-9 h-9 text-[color:var(--color-text)]" />
     </a>
 
-    <nav class="hidden lg:flex items-center gap-8" aria-label="Primary">
-      {navLinks.map((link) => {
+    <nav class="hidden lg:flex items-center gap-7" aria-label="Primary">
+      {navLinks.slice(0, 2).map((link) => {
         const active = link.href === "/" ? path === "/" : path.startsWith(link.href);
         return (
-          <a
-            href={link.href}
-            class:list={[
-              "text-sm font-semibold tracking-wide transition-colors uppercase",
-              active ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]",
-            ]}
-          >
+          <a href={link.href}
+             class:list={[
+               "text-sm font-semibold tracking-wide transition-colors uppercase",
+               active ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]",
+             ]}>
+            {link.label}
+          </a>
+        );
+      })}
+
+      {/* Categories dropdown */}
+      <div class="relative group" data-dropdown>
+        <button
+          type="button"
+          class:list={[
+            "text-sm font-semibold tracking-wide uppercase transition-colors flex items-center gap-1.5",
+            path.startsWith("/category") ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]",
+          ]}
+          aria-expanded="false"
+          aria-haspopup="true"
+        >
+          Categories
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="transition-transform group-hover:rotate-180"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <div class="bg-[color:var(--color-bg)] border border-[color:var(--color-border)] shadow-xl rounded p-2 min-w-[220px]">
+            {categories.map((c) => (
+              <a
+                href={`/category/${c.data.slug}/`}
+                class="block px-4 py-2.5 text-sm tracking-wide uppercase text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:bg-[color:var(--color-bg-soft)] rounded transition-colors"
+              >
+                {c.data.name}
+              </a>
+            ))}
+            <div class="my-2 mx-3 border-t border-[color:var(--color-border)]"></div>
+            <a href="/blog/" class="block px-4 py-2.5 text-sm tracking-wide uppercase font-semibold text-[color:var(--color-accent)] hover:bg-[color:var(--color-bg-soft)] rounded transition-colors">
+              View all stories →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {navLinks.slice(2).map((link) => {
+        const active = path.startsWith(link.href);
+        return (
+          <a href={link.href}
+             class:list={[
+               "text-sm font-semibold tracking-wide transition-colors uppercase",
+               active ? "text-[color:var(--color-accent)]" : "text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]",
+             ]}>
             {link.label}
           </a>
         );
@@ -54,30 +104,44 @@ const today = new Date().toLocaleDateString("en-US", {
     </nav>
 
     <div class="flex items-center gap-3 flex-shrink-0">
+      {/* Social icons (desktop only) */}
+      <div class="hidden xl:flex">
+        <SocialIcons size="sm" variant="light" />
+      </div>
       <button id="search-btn" class="hidden sm:inline-flex w-10 h-10 items-center justify-center rounded-full border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] hover:border-[color:var(--color-accent)] transition-colors" aria-label="Search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </button>
-      <a href="/subscribe" class="btn btn-accent !py-2.5 !px-5 hidden sm:inline-flex">
-        Subscribe
-      </a>
+      <a href="/subscribe" class="btn btn-accent !py-2.5 !px-5 hidden sm:inline-flex">Subscribe</a>
       <button id="mobile-menu-button" class="lg:hidden text-[color:var(--color-text)] p-2" aria-label="Open menu" aria-expanded="false">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       </button>
     </div>
   </div>
 
+  {/* Mobile menu */}
   <div id="mobile-menu" class="lg:hidden hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg)]">
     <nav class="container-wide flex flex-col py-4 gap-1" aria-label="Mobile">
-      {navLinks.map((link) => (
-        <a href={link.href} class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide">
-          {link.label}
-        </a>
-      ))}
-      <a href="/subscribe" class="btn btn-accent mt-3 self-start">Subscribe</a>
+      <a href="/" class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide">Home</a>
+      <a href="/blog/" class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide">News</a>
+      <details class="border-t border-[color:var(--color-border)] mt-1 pt-1">
+        <summary class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide cursor-pointer">Categories</summary>
+        <div class="pl-3">
+          {categories.map((c) => (
+            <a href={`/category/${c.data.slug}/`} class="block py-2.5 text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wide">
+              {c.data.name}
+            </a>
+          ))}
+        </div>
+      </details>
+      <a href="/watch/" class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide border-t border-[color:var(--color-border)]">Watch</a>
+      <a href="/shop/" class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide">Shop</a>
+      <a href="/about/" class="py-3 text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)] transition-colors uppercase text-sm font-semibold tracking-wide">About</a>
+      <a href="/subscribe/" class="btn btn-accent mt-3 self-start">Subscribe</a>
+      <div class="pt-4 mt-2 border-t border-[color:var(--color-border)]">
+        <SocialIcons size="sm" variant="light" />
+      </div>
     </nav>
   </div>
 </header>
@@ -92,10 +156,9 @@ const today = new Date().toLocaleDateString("en-US", {
         btn.setAttribute("aria-expanded", String(open));
       });
     }
-    // Search button — for now points at /blog (acts as archive). Replace with modal trigger when Pagefind ships.
     const searchBtn = document.getElementById("search-btn");
     if (searchBtn) {
-      searchBtn.addEventListener("click", () => { window.location.href = "/blog"; });
+      searchBtn.addEventListener("click", () => { window.location.href = "/blog/"; });
     }
   }
   document.addEventListener("astro:page-load", setupHeader);

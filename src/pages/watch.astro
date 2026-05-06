@@ -1,0 +1,258 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import AdSlot from "../components/AdSlot.astro";
+import { channels } from "../data/youtube-channels";
+
+interface Video {
+  videoId: string;
+  title: string;
+  channelName: string;
+  channelHandle?: string;
+  publishedAt: string;
+  thumbnail: string;
+}
+
+/**
+ * Fetch and parse a single YouTube channel's RSS feed.
+ * Returns an empty array on failure so one bad channel doesn't break the page.
+ */
+async function fetchChannelVideos(channelId: string, channelName: string, channelHandle?: string, max = 5): Promise<Video[]> {
+  const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "thenextcigar.com/1.0 (+https://thenextcigar.com)" },
+    });
+    if (!res.ok) {
+      console.warn(`/watch: ${channelName} returned ${res.status}`);
+      return [];
+    }
+    const xml = await res.text();
+    // Parse <entry>...</entry> blocks
+    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0, max);
+    return entries.map((m) => {
+      const e = m[1];
+      const videoId = (e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1] || "";
+      const title = (e.match(/<title>([\s\S]*?)<\/title>/) || [])[1]?.trim() || "";
+      const published = (e.match(/<published>([^<]+)<\/published>/) || [])[1] || "";
+      // Highest-resolution thumbnail follows pattern: i.ytimg.com/vi/<id>/hqdefault.jpg
+      const thumbnail = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : "";
+      return {
+        videoId,
+        title: title.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
+        channelName,
+        channelHandle,
+        publishedAt: published,
+        thumbnail,
+      };
+    }).filter((v) => v.videoId);
+  } catch (err) {
+    console.warn(`/watch: ${channelName} fetch error`, err);
+    return [];
+  }
+}
+
+// Fetch all enabled channels in parallel
+const allVideos: Video[] = (
+  await Promise.all(
+    channels.filter((c) => c.enabled).map((c) => fetchChannelVideos(c.id, c.name, c.handle))
+  )
+).flat();
+
+// Sort newest first
+allVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+const fmtDate = (d: string) =>
+  d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+
+// Build "watch list" header info
+const channelCount = channels.filter((c) => c.enabled).length;
+const videoCount = allVideos.length;
+---
+
+<BaseLayout
+  title="Watch — TNext Cigar"
+  description="The latest cigar videos from across YouTube — reviews, factory tours, brand launches, and editorial features. Updated on every site rebuild."
+>
+  <section class="container-wide pt-12 md:pt-20 pb-12">
+    <p class="eyebrow mb-4 reveal">Watch</p>
+    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">The latest from cigar YouTube.</h1>
+    <p class="lead mt-6 max-w-2xl reveal">
+      Aggregated automatically from the cigar channels worth watching — official brand films, reviewer cuts, factory tours. Click any thumbnail to play. We don't host the videos; YouTube does.
+    </p>
+    <p class="mt-4 text-sm text-[color:var(--color-text-muted)] reveal">
+      {videoCount} videos from {channelCount} channels · refreshed on each rebuild.
+    </p>
+  </section>
+
+  {videoCount === 0 ? (
+    <section class="container-narrow py-12">
+      <div class="rounded border border-[color:var(--color-border)] bg-[color:var(--color-bg-soft)] p-8 text-center">
+        <p class="font-display text-2xl mb-2">No videos to show right now.</p>
+        <p class="text-[color:var(--color-text-muted)] text-sm">
+          The configured YouTube channel IDs may need updating. See <code>src/data/youtube-channels.ts</code> in the repo.
+        </p>
+      </div>
+    </section>
+  ) : (
+    <section class="container-wide pb-20">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        {allVideos.slice(0, 12).map((v, i) => (
+          <article class="reveal group" data-reveal-delay={((i % 3) + 1) as 1 | 2 | 3}>
+            <button
+              class="block w-full text-left video-facade"
+              data-video-id={v.videoId}
+              data-video-title={v.title}
+              aria-label={`Play: ${v.title}`}
+            >
+              <div class="relative overflow-hidden rounded aspect-video bg-[color:var(--color-surface)]">
+                <img
+                  src={v.thumbnail}
+                  alt={v.title}
+                  loading="lazy"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/15 transition-colors">
+                  <div class="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-[color:var(--color-accent)] ml-1">
+                      <path d="M5 4l14 8-14 8z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <p class="text-[0.7rem] uppercase tracking-widest text-[color:var(--color-text-muted)] font-semibold mb-2 flex items-center gap-2">
+                  <span class="inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)]"></span>
+                  {v.channelName}
+                </p>
+                <h3 class="font-display text-lg md:text-xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors line-clamp-2">
+                  {v.title}
+                </h3>
+                <p class="mt-3 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+                  {fmtDate(v.publishedAt)}
+                </p>
+              </div>
+            </button>
+          </article>
+        ))}
+      </div>
+
+      {/* Mid-grid ad */}
+      {allVideos.length > 12 && (
+        <div class="my-12 reveal">
+          <AdSlot variant="billboard" />
+        </div>
+      )}
+
+      {allVideos.length > 12 && (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          {allVideos.slice(12, 24).map((v, i) => (
+            <article class="reveal group" data-reveal-delay={((i % 3) + 1) as 1 | 2 | 3}>
+              <button
+                class="block w-full text-left video-facade"
+                data-video-id={v.videoId}
+                data-video-title={v.title}
+                aria-label={`Play: ${v.title}`}
+              >
+                <div class="relative overflow-hidden rounded aspect-video bg-[color:var(--color-surface)]">
+                  <img src={v.thumbnail} alt={v.title} loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/15 transition-colors">
+                    <div class="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="text-[color:var(--color-accent)] ml-1"><path d="M5 4l14 8-14 8z"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <p class="text-[0.7rem] uppercase tracking-widest text-[color:var(--color-text-muted)] font-semibold mb-2 flex items-center gap-2">
+                    <span class="inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)]"></span>
+                    {v.channelName}
+                  </p>
+                  <h3 class="font-display text-lg md:text-xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors line-clamp-2">
+                    {v.title}
+                  </h3>
+                  <p class="mt-3 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
+                    {fmtDate(v.publishedAt)}
+                  </p>
+                </div>
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  )}
+
+  {/* Lightbox modal — populated on click */}
+  <div id="video-lightbox" class="modal-backdrop" hidden role="dialog" aria-modal="true">
+    <div class="modal !p-0 !max-w-4xl bg-black overflow-hidden">
+      <button class="modal-close !text-white" id="video-lightbox-close" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="aspect-video w-full bg-black">
+        <iframe
+          id="video-lightbox-iframe"
+          class="w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <section class="container-narrow pb-24 reveal">
+    <div class="hairline mb-12"></div>
+    <p class="eyebrow mb-3">Wait — what about Cigar Aficionado, Halfwheel, etc.?</p>
+    <h2 class="font-display text-3xl md:text-4xl mb-6">Why YouTube only?</h2>
+    <p class="text-[color:var(--color-text-muted)] leading-relaxed mb-4">
+      Videos hosted on cigar publishers' own websites (Cigar Aficionado's player, Halfwheel's video pages, brand microsites) are copyrighted and we don't have the legal right to embed them on our site.
+    </p>
+    <p class="text-[color:var(--color-text-muted)] leading-relaxed mb-4">
+      <strong>YouTube is different</strong> — Google's terms of service explicitly allow embedding any public video via their player. So whenever a publisher cross-posts to YouTube (which most do for reach), it shows up here automatically.
+    </p>
+    <p class="text-[color:var(--color-text-muted)] leading-relaxed">
+      For pieces hosted exclusively on a publisher's own player, we link out with a styled card — no embed, no rights infringement. You'll see those in our editorial when relevant.
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  function setupVideoLightbox() {
+    const lightbox = document.getElementById("video-lightbox");
+    const iframe = document.getElementById("video-lightbox-iframe") as HTMLIFrameElement | null;
+    const closeBtn = document.getElementById("video-lightbox-close");
+    if (!lightbox || !iframe) return;
+    if ((lightbox as any).dataset.bound === "1") return;
+    (lightbox as any).dataset.bound = "1";
+
+    const open = (videoId: string, title: string) => {
+      // Use youtube-nocookie.com so player doesn't set tracking cookies until play
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+      iframe.title = title;
+      lightbox.removeAttribute("hidden");
+      requestAnimationFrame(() => lightbox.classList.add("is-open"));
+      document.body.style.overflow = "hidden";
+    };
+    const close = () => {
+      lightbox.classList.remove("is-open");
+      iframe.src = ""; // stop playback
+      document.body.style.overflow = "";
+      setTimeout(() => lightbox.setAttribute("hidden", ""), 300);
+    };
+
+    document.querySelectorAll<HTMLButtonElement>(".video-facade").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const id = btn.dataset.videoId;
+        const title = btn.dataset.videoTitle || "Cigar video";
+        if (id) open(id, title);
+      });
+    });
+
+    closeBtn?.addEventListener("click", close);
+    lightbox.addEventListener("click", (e) => { if (e.target === lightbox) close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !lightbox.hasAttribute("hidden")) close(); });
+  }
+
+  document.addEventListener("astro:page-load", setupVideoLightbox);
+  setupVideoLightbox();
+</script>
