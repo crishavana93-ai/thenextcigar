@@ -24,7 +24,13 @@ const FORM_ID = "8d78f521-7cc8-49f1-8315-1e9da6629415";
   class:list={["beehiiv-embed", center && "beehiiv-embed--center"]}
   style={`max-width: ${maxWidth};`}
 >
-  <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form={FORM_ID}></script>
+  <!--
+    is:inline is critical here — without it Astro bundles this script,
+    which breaks Beehiiv's loader handshake and leaves the form's parent
+    wrapper stuck at height:0 (iframe loads but is invisible). Diagnosed
+    2026-05-07 by inspecting the live DOM.
+  -->
+  <script async is:inline src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form={FORM_ID}></script>
 </div>
 
 <style>
