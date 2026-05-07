@@ -33,6 +33,46 @@ const FORM_ID = "8d78f521-7cc8-49f1-8315-1e9da6629415";
   <script async is:inline src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form={FORM_ID}></script>
 </div>
 
+<!--
+  Defensive fallback shim. Beehiiv's loader wraps each form iframe in a div
+  with `style="overflow:hidden;height:0;"` and waits for a postMessage from
+  the iframe (`beehiiv:styles`) before revealing it. In some environments
+  (bot-protection challenges, slow/blocked third-party scripts, etc.) that
+  message never arrives and the form stays invisible despite loading
+  correctly. After 7 seconds, force-reveal any stuck wrapper so the form is
+  always usable.
+-->
+<script is:inline>
+  (function () {
+    function reveal() {
+      var frames = document.querySelectorAll(
+        'iframe[src*="subscribe-forms.beehiiv.com"]'
+      );
+      frames.forEach(function (f) {
+        var p = f.parentElement;
+        if (!p) return;
+        var stuck =
+          p.style.height === "0px" ||
+          getComputedStyle(p).height === "0px";
+        if (stuck) {
+          p.style.height = "";
+          p.style.overflow = "";
+          // Beehiiv default form height — adjust to taste.
+          if (!f.getAttribute("data-bhv-sized")) {
+            f.style.height = "360px";
+          }
+        }
+      });
+    }
+    // Run after 7s — gives Beehiiv's normal handshake first crack at it.
+    setTimeout(reveal, 7000);
+    // Also re-check on Astro client-side route changes.
+    document.addEventListener("astro:page-load", function () {
+      setTimeout(reveal, 7000);
+    });
+  })();
+</script>
+
 <style>
   .beehiiv-embed {
     width: 100%;
