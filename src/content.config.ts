@@ -69,7 +69,11 @@ const authors = defineCollection({
 // include Snipcart's required attributes when rendered.
 // ─────────────────────────────────────────────────────────────────────
 const products = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/products" }),
+  loader: glob({
+    // Only top-level product files — never descend into images/ or README.md notes.
+    pattern: ["*.{md,mdx}", "!**/README.md"],
+    base: "./src/content/products",
+  }),
   schema: ({ image }) =>
     z.object({
       // Identity
