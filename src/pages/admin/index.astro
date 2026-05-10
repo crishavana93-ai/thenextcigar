@@ -144,8 +144,8 @@ const counts = {
 ---
 
 <BaseLayout title="Admin — TNext Cigar" noIndex={true}>
-  <div id="admin-gate" class="fixed inset-0 z-[9999] bg-[color:var(--color-bg)] flex items-center justify-center p-6">
-    <div class="max-w-sm w-full">
+  <div id="admin-gate" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:#ffffff;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
+    <div class="max-w-sm w-full" style="position:relative;z-index:10000;">
       <h1 class="font-display text-3xl mb-2">Admin</h1>
       <p class="text-[color:var(--color-text-muted)] text-sm mb-6">Enter password to continue.</p>
       <input
