@@ -28,29 +28,29 @@ const categoryByslug = new Map(allCategories.map((c) => [c.data.slug, c.data]));
   title={`${category.data.name} — The Next Cigar`}
   description={category.data.description || `${posts.length} stories on ${category.data.name}.`}
 >
-  <section class="container-wide pt-20 md:pt-32 pb-12">
-    <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-muted)]" aria-label="Breadcrumb">
+  {/* Compact header — breadcrumb + title in one tight band so the photos appear without scrolling */}
+  <section class="container-wide pt-20 md:pt-24 pb-4">
+    <nav class="mb-3 text-xs tracking-widest uppercase text-[color:var(--color-text-muted)]" aria-label="Breadcrumb">
       <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
       <span class="mx-2">/</span>
       <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">Stories</a>
       <span class="mx-2">/</span>
       <span class="text-[color:var(--color-text)]">{category.data.name}</span>
     </nav>
-
-    <div class="max-w-2xl reveal">
-      <p class="eyebrow mb-4">Category</p>
-      <h1 class="font-display text-5xl md:text-7xl leading-tight">{category.data.name}</h1>
-      {category.data.description && (
-        <p class="lead mt-6">{category.data.description}</p>
-      )}
-      <p class="mt-4 text-[color:var(--color-muted)] text-sm tracking-wide">
+    <div class="flex items-baseline justify-between gap-4 flex-wrap">
+      <h1 class="font-display text-3xl md:text-4xl leading-tight">{category.data.name}</h1>
+      <p class="text-[color:var(--color-text-muted)] text-sm tracking-wide">
         {posts.length} {posts.length === 1 ? "story" : "stories"}
       </p>
     </div>
+    {category.data.description && (
+      <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-base">{category.data.description}</p>
+    )}
   </section>
 
-  <section class="container-wide pb-24">
-    <nav class="mb-12 flex flex-wrap gap-2" aria-label="Other categories">
+  {/* Category filter pills moved to TOP so navigation is immediate, no scrolling required */}
+  <section class="container-wide pb-6">
+    <nav class="flex flex-wrap gap-2" aria-label="Other categories">
       <a href="/blog" class="px-4 py-2 text-sm rounded-sm border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] tracking-wide transition-colors">All stories</a>
       {allCategories.map((c) => (
         <a
@@ -66,13 +66,17 @@ const categoryByslug = new Map(allCategories.map((c) => [c.data.slug, c.data]));
         </a>
       ))}
     </nav>
+  </section>
 
-    <div class="mb-10">
-      <AdSlot variant="leaderboard" />
-    </div>
+  {/* Sponsored ad — kept here for editorial-publication feel, between filters and content */}
+  <section class="container-wide pb-8">
+    <AdSlot variant="leaderboard" />
+  </section>
 
+  {/* Posts grid — main content, now visible above the fold on most screens */}
+  <section class="container-wide pb-24">
     {posts.length === 0 ? (
-      <p class="text-[color:var(--color-muted)]">No stories in this category yet.</p>
+      <p class="text-[color:var(--color-text-muted)]">No stories in this category yet.</p>
     ) : (
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {posts.map((post, i) => {
