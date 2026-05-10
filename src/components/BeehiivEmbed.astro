@@ -1,89 +1,51 @@
 ---
 /**
- * BeehiivEmbed — drops in the Beehiiv subscribe form via their v3 loader.
- * The script tag is replaced in place with the rendered form once the
- * loader fetches the form definition from Beehiiv.
+ * NewsletterEmbed (filename kept as BeehiivEmbed.astro to avoid import
+ * churn). Drops in the MailerLite signup form. The MailerLite Universal
+ * loader is included in BaseLayout.astro so the script only fetches once
+ * per page, even when multiple forms render (page form + SubscribeModal +
+ * Footer Newsletter).
  *
- * To swap to a different Beehiiv form, change FORM_ID once here and
+ * To swap to a different MailerLite form, change FORM_HASH once here and
  * every signup spot on the site updates together.
+ *
+ * Migrated from Beehiiv → MailerLite on 2026-05-10. Custom sending domain
+ * `contact@thenextcigar.com` is authenticated (DKIM + SPF + DMARC), so
+ * welcome emails come from your own domain instead of `mail.beehiiv.com`.
  */
 
 interface Props {
-  /** Optional max width for the wrapper. Default 480px (Beehiiv's natural width). */
+  /** Optional max width for the wrapper. Default 560px. */
   maxWidth?: string;
   /** Center the form horizontally inside its parent */
   center?: boolean;
 }
 
-const { maxWidth = "480px", center = false } = Astro.props;
+const { maxWidth = "560px", center = false } = Astro.props;
 
-const FORM_ID = "8d78f521-7cc8-49f1-8315-1e9da6629415";
+// MailerLite form hash for "TheNextCigar Newsletter Signup"
+// (visible in the form's embed code under the `data-form` attribute).
+const FORM_HASH = "Xn19hv";
 ---
 
 <div
-  class:list={["beehiiv-embed", center && "beehiiv-embed--center"]}
+  class:list={["newsletter-embed", center && "newsletter-embed--center"]}
   style={`max-width: ${maxWidth};`}
 >
-  <!--
-    is:inline is critical here — without it Astro bundles this script,
-    which breaks Beehiiv's loader handshake and leaves the form's parent
-    wrapper stuck at height:0 (iframe loads but is invisible). Diagnosed
-    2026-05-07 by inspecting the live DOM.
-  -->
-  <script async is:inline src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form={FORM_ID}></script>
+  <div class="ml-embedded" data-form={FORM_HASH}></div>
 </div>
 
-<!--
-  Defensive fallback shim. Beehiiv's loader wraps each form iframe in a div
-  with `style="overflow:hidden;height:0;"` and waits for a postMessage from
-  the iframe (`beehiiv:styles`) before revealing it. In some environments
-  (bot-protection challenges, slow/blocked third-party scripts, etc.) that
-  message never arrives and the form stays invisible despite loading
-  correctly. After 7 seconds, force-reveal any stuck wrapper so the form is
-  always usable.
--->
-<script is:inline>
-  (function () {
-    function reveal() {
-      var frames = document.querySelectorAll(
-        'iframe[src*="subscribe-forms.beehiiv.com"]'
-      );
-      frames.forEach(function (f) {
-        var p = f.parentElement;
-        if (!p) return;
-        var stuck =
-          p.style.height === "0px" ||
-          getComputedStyle(p).height === "0px";
-        if (stuck) {
-          p.style.height = "";
-          p.style.overflow = "";
-          // Beehiiv default form height — adjust to taste.
-          if (!f.getAttribute("data-bhv-sized")) {
-            f.style.height = "360px";
-          }
-        }
-      });
-    }
-    // Run after 7s — gives Beehiiv's normal handshake first crack at it.
-    setTimeout(reveal, 7000);
-    // Also re-check on Astro client-side route changes.
-    document.addEventListener("astro:page-load", function () {
-      setTimeout(reveal, 7000);
-    });
-  })();
-</script>
-
 <style>
-  .beehiiv-embed {
+  .newsletter-embed {
     width: 100%;
   }
-  .beehiiv-embed--center {
+  .newsletter-embed--center {
     margin-left: auto;
     margin-right: auto;
   }
-  /* Beehiiv's form ships with light styling. Make sure it sits nicely on
-     dark sections by giving it a subtle backing */
-  :global(.section-dark) .beehiiv-embed {
+  /* MailerLite ships its own form styling. Keep it sitting flush in
+     dark sections by giving the wrapper a subtle backing. */
+  :global(.section-dark) .newsletter-embed {
     background: var(--color-bg);
     border-radius: 8px;
     padding: 0.5rem;
