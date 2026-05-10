@@ -276,7 +276,11 @@ const counts = {
     const error = document.getElementById("admin-error");
 
     function unlock() {
+      // Inline style="display:flex" on the gate beats Tailwind's .hidden,
+      // so set display:none directly. classList.add("hidden") is kept as a
+      // belt-and-suspenders signal in case anything else queries it.
       gate.classList.add("hidden");
+      gate.style.display = "none";
       content.classList.remove("hidden");
       try { sessionStorage.setItem(KEY, "1"); } catch (e) {}
     }
