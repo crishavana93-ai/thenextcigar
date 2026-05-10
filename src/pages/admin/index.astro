@@ -1,29 +1,40 @@
 ---
 /**
- * Admin dashboard — read-only overview of all blog posts.
+ * Admin dashboard — pro editorial cockpit for thenextcigar.com
  *
  * Complements Pages CMS:
- *  - Pages CMS handles editing (rich form fields, image upload, GitHub commits)
- *  - This /admin page handles OVERVIEW: status, scheduling visibility, basic SEO scoring
+ *   - Pages CMS handles editing (rich form fields, image upload, GitHub commits)
+ *   - This /admin page handles OVERVIEW: status, scheduling, Yoast-style SEO
+ *     scoring, SERP preview, social-card preview, readability, and quick links
+ *     into Pages CMS for every post.
  *
- * Auth: client-side password gate. Set the password in `ADMIN_PASSWORD`
- * env var (Cloudflare Pages > Settings > Environment variables). Defaults
- * to "tnc-admin" if not set so you can develop locally without setup.
+ * Auth: client-side password gate, value baked at build time from
+ * ADMIN_PASSWORD env var (Cloudflare Pages > Settings > Environment variables).
+ * Falls back to "tnc-admin" if unset, so local dev works out of the box.
  *
- * The gate is security-through-obscurity, not real auth — anyone with the
- * URL + password gets in. For a 1-person publication this is fine. Upgrade
- * to Cloudflare Access if you ever need true auth.
+ * The gate is security-through-obscurity, not real auth — anyone with the URL
+ * + password gets in. For a 1-person publication this is fine. Upgrade to
+ * Cloudflare Access if you ever need true multi-user auth.
  */
 
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
-const PAGES_CMS_BASE =
-  "https://app.pagescms.org/crishavana93-ai/thenextcigar/main/collection/blog";
+// ─── config ──────────────────────────────────────────────────────────────
+const REPO_OWNER = "crishavana93-ai";
+const REPO_NAME = "thenextcigar";
+const REPO_BRANCH = "main";
+const SITE_URL = "https://thenextcigar.com";
+
+const PAGES_CMS_BASE = `https://app.pagescms.org/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}`;
+const PAGES_CMS_COLLECTION = `${PAGES_CMS_BASE}/collection/blog`;
+const PAGES_CMS_NEW = `${PAGES_CMS_COLLECTION}/new`;
+const PAGES_CMS_MEDIA = `${PAGES_CMS_BASE}/media`;
+const GITHUB_REPO_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
 
 const adminPassword = import.meta.env.ADMIN_PASSWORD || "tnc-admin";
 
-// Pull all blog posts and compute status + SEO scores
+// ─── data load ───────────────────────────────────────────────────────────
 const allPosts = await getCollection("blog");
 const allCategories = await getCollection("categories");
 const categoryByslug = new Map(allCategories.map((c) => [c.data.slug, c.data]));
@@ -32,118 +43,412 @@ const now = new Date();
 
 type Status = "draft" | "scheduled" | "published";
 
+interface SeoCheck {
+  label: string;
+  state: "good" | "ok" | "bad";
+  detail: string;
+}
+
 interface PostRow {
   slug: string;
+  fileBaseName: string;
   title: string;
+  excerpt: string;
   status: Status;
   publishedAt: Date;
   category: string;
+  categorySlug: string;
   wordCount: number;
-  seoScore: { value: number; flags: string[] };
-  pagesCmsUrl: string;
+  charCount: number;
+  paragraphCount: number;
+  sentenceCount: number;
+  avgSentenceWords: number;
+  fleschReadingEase: number;
+  readabilityLabel: string;
+  h2Count: number;
+  h3Count: number;
+  imageCount: number;
+  imagesMissingAlt: number;
+  internalLinks: number;
+  externalLinks: number;
+  cover: string | null;
+  metaTitle: string;
+  metaDescription: string;
+  focusKeyword: string;
+  keywordDensity: number;
+  seoScore: number;
+  seoChecks: SeoCheck[];
+  pagesCmsEditUrl: string;
   liveUrl: string;
+  githubUrl: string;
+  rawIdForFilter: string;
 }
 
-function computeSeoScore(post: any, body: string) {
-  const flags: string[] = [];
-  let score = 100;
+// ─── readability + SEO scoring ───────────────────────────────────────────
 
+const TRANSITION_WORDS = [
+  "however","therefore","moreover","furthermore","additionally","consequently",
+  "meanwhile","nevertheless","nonetheless","accordingly","thus","hence",
+  "because","although","whereas","while","since","unless","until",
+  "first","second","third","finally","lastly","next","then","afterwards",
+  "for example","for instance","in addition","in contrast","on the other hand",
+  "as a result","in conclusion","to summarize","in fact","indeed",
+];
+
+function syllableCount(word: string): number {
+  // Crude but standard Flesch implementation
+  const w = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!w) return 0;
+  if (w.length <= 3) return 1;
+  const cleaned = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "")
+                   .replace(/^y/, "");
+  const groups = cleaned.match(/[aeiouy]{1,2}/g);
+  return groups ? Math.max(1, groups.length) : 1;
+}
+
+function fleschReadingEase(words: number, sentences: number, syllables: number): number {
+  if (words === 0 || sentences === 0) return 0;
+  return 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words);
+}
+
+function readabilityLabel(score: number): string {
+  if (score >= 80) return "Very easy";
+  if (score >= 70) return "Easy";
+  if (score >= 60) return "Plain";
+  if (score >= 50) return "Fairly difficult";
+  if (score >= 30) return "Difficult";
+  return "Very difficult";
+}
+
+function analyze(post: any) {
+  const body: string = (post.body || "") as string;
   const title: string = post.data.title || "";
+  const slug: string = post.data.slug || post.id;
   const excerpt: string = post.data.excerpt || "";
-  const metaTitle: string = post.data.seo?.metaTitle || title;
-  const metaDescription: string = post.data.seo?.metaDescription || excerpt;
-  const focusKeyword: string = post.data.seo?.focusKeyword || "";
-  const cover = post.data.cover;
+  const seo = post.data.seo || {};
+  const metaTitle: string = seo.metaTitle || title;
+  const metaDescription: string = seo.metaDescription || excerpt;
+  const focusKeyword: string = (seo.focusKeyword || "").trim();
+  const cover = post.data.cover ? String(post.data.cover) : null;
 
-  if (metaTitle.length < 30 || metaTitle.length > 70) {
-    flags.push(`Meta title length: ${metaTitle.length} (aim 30–70)`);
-    score -= 10;
-  }
-  if (metaDescription.length < 120 || metaDescription.length > 165) {
-    flags.push(`Meta description length: ${metaDescription.length} (aim 120–165)`);
-    score -= 10;
-  }
-  if (!cover) {
-    flags.push("No cover image set");
-    score -= 15;
-  }
-  if (!focusKeyword) {
-    flags.push("No focus keyword set");
-    score -= 5;
-  } else {
-    const kw = focusKeyword.toLowerCase();
-    if (!title.toLowerCase().includes(kw)) {
-      flags.push(`Focus keyword "${focusKeyword}" not in title`);
-      score -= 8;
+  // Strip frontmatter-style things just in case + code blocks
+  const text = body.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");
+
+  // Word/sentence stats
+  const words = text.match(/\b[\w'-]+\b/g) || [];
+  const wordCount = words.length;
+  const charCount = text.length;
+  const paragraphs = text.split(/\n{2,}/).filter((p) => p.trim().length > 0);
+  const paragraphCount = paragraphs.length;
+  const sentences = text.replace(/\n/g, " ").match(/[^.!?]+[.!?]+/g) || [];
+  const sentenceCount = Math.max(1, sentences.length);
+  const avgSentenceWords = wordCount && sentenceCount ? wordCount / sentenceCount : 0;
+
+  let totalSyllables = 0;
+  for (const w of words) totalSyllables += syllableCount(w);
+  const flesch = fleschReadingEase(wordCount, sentenceCount, totalSyllables);
+
+  // Heading + image + link stats
+  const h2Count = (text.match(/^##\s+/gm) || []).length;
+  const h3Count = (text.match(/^###\s+/gm) || []).length;
+  const allImages = [...text.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)];
+  const imagesMissingAlt = allImages.filter((m) => !m[1].trim()).length;
+  const allLinks = [...text.matchAll(/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g)];
+  let internalLinks = 0;
+  let externalLinks = 0;
+  for (const m of allLinks) {
+    const href = m[2];
+    if (/^https?:\/\//.test(href) && !href.includes("thenextcigar.com")) {
+      externalLinks++;
+    } else {
+      internalLinks++;
     }
-    if (!body.toLowerCase().includes(kw)) {
-      flags.push(`Focus keyword "${focusKeyword}" not in body`);
-      score -= 8;
+  }
+
+  // Focus keyword analysis
+  const kw = focusKeyword.toLowerCase();
+  const lowerTitle = title.toLowerCase();
+  const lowerSlug = slug.toLowerCase();
+  const lowerMeta = metaDescription.toLowerCase();
+  const lowerBody = text.toLowerCase();
+  const firstParagraph = (paragraphs[0] || "").toLowerCase();
+
+  const headings = (text.match(/^#{2,3}\s+(.+)$/gm) || []).join(" ").toLowerCase();
+
+  let kwOccurrences = 0;
+  if (kw) {
+    const safe = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    kwOccurrences = (lowerBody.match(new RegExp("\\b" + safe + "\\b", "g")) || []).length;
+  }
+  const keywordDensity = wordCount > 0 && kw ? (kwOccurrences * (kw.split(/\s+/).length)) / wordCount * 100 : 0;
+
+  // SEO checks (Yoast-inspired)
+  const checks: SeoCheck[] = [];
+  const score = (cond: "good" | "ok" | "bad") => cond;
+
+  // 1. Meta title length
+  {
+    const len = metaTitle.length;
+    let st: SeoCheck["state"] = "bad";
+    if (len >= 30 && len <= 70) st = "good";
+    else if (len >= 20 && len <= 80) st = "ok";
+    checks.push({ label: "Meta title length", state: st, detail: `${len} chars (aim 30–70)` });
+  }
+  // 2. Meta description length
+  {
+    const len = metaDescription.length;
+    let st: SeoCheck["state"] = "bad";
+    if (len >= 120 && len <= 165) st = "good";
+    else if (len >= 70 && len <= 200) st = "ok";
+    checks.push({ label: "Meta description length", state: st, detail: `${len} chars (aim 120–165)` });
+  }
+  // 3. Cover image
+  checks.push({
+    label: "Cover image set",
+    state: cover ? "good" : "bad",
+    detail: cover ? "Present" : "Missing — set a cover for social cards",
+  });
+  // 4. Focus keyword set
+  checks.push({
+    label: "Focus keyword set",
+    state: kw ? "good" : "bad",
+    detail: kw ? `"${focusKeyword}"` : "Pick a focus keyword to enable richer checks",
+  });
+  if (kw) {
+    // 5. Keyword in title
+    checks.push({
+      label: "Keyword in title",
+      state: lowerTitle.includes(kw) ? "good" : "bad",
+      detail: lowerTitle.includes(kw) ? "Present" : "Add focus keyword to the title",
+    });
+    // 6. Keyword in slug
+    checks.push({
+      label: "Keyword in URL slug",
+      state: lowerSlug.includes(kw.replace(/\s+/g, "-")) ? "good" : "ok",
+      detail: lowerSlug.includes(kw.replace(/\s+/g, "-")) ? "Present" : "Slug doesn’t contain the keyword",
+    });
+    // 7. Keyword in meta description
+    checks.push({
+      label: "Keyword in meta description",
+      state: lowerMeta.includes(kw) ? "good" : "bad",
+      detail: lowerMeta.includes(kw) ? "Present" : "Use the keyword in the meta description",
+    });
+    // 8. Keyword in first paragraph
+    checks.push({
+      label: "Keyword in intro",
+      state: firstParagraph.includes(kw) ? "good" : "ok",
+      detail: firstParagraph.includes(kw) ? "Mentioned in first paragraph" : "Mention keyword early",
+    });
+    // 9. Keyword in subheadings
+    checks.push({
+      label: "Keyword in subheadings",
+      state: headings.includes(kw) ? "good" : "ok",
+      detail: headings.includes(kw) ? "Present in H2/H3" : "Use keyword in at least one subheading",
+    });
+    // 10. Density
+    {
+      let st: SeoCheck["state"] = "bad";
+      if (keywordDensity >= 0.5 && keywordDensity <= 3) st = "good";
+      else if (keywordDensity > 0 && keywordDensity < 4) st = "ok";
+      checks.push({
+        label: "Keyword density",
+        state: st,
+        detail: `${keywordDensity.toFixed(2)}% (${kwOccurrences}× — aim 0.5–3%)`,
+      });
     }
   }
-
-  // Headings — at least 2 H2s for editorial structure
-  const h2Count = (body.match(/^##\s+/gm) || []).length;
-  if (h2Count < 2) {
-    flags.push(`Only ${h2Count} H2 headings (aim 2+)`);
-    score -= 8;
+  // 11. Headings
+  checks.push({
+    label: "Subheading structure",
+    state: h2Count >= 3 ? "good" : h2Count >= 2 ? "ok" : "bad",
+    detail: `${h2Count} H2, ${h3Count} H3 (aim ≥3 H2)`,
+  });
+  // 12. Word count
+  {
+    let st: SeoCheck["state"] = "bad";
+    let detail = `${wordCount} words`;
+    if (wordCount >= 800 && wordCount <= 2500) { st = "good"; detail += " — solid"; }
+    else if (wordCount >= 500 && wordCount < 800) { st = "ok"; detail += " — slightly thin"; }
+    else if (wordCount > 2500) { st = "ok"; detail += " — very long, ensure it stays focused"; }
+    else { detail += " — too thin (aim 800+)"; }
+    checks.push({ label: "Word count", state: st, detail });
+  }
+  // 13. Internal links
+  checks.push({
+    label: "Internal links",
+    state: internalLinks >= 2 ? "good" : internalLinks === 1 ? "ok" : "bad",
+    detail: `${internalLinks} internal (aim ≥2)`,
+  });
+  // 14. External links
+  checks.push({
+    label: "External links",
+    state: externalLinks >= 1 ? "good" : "ok",
+    detail: `${externalLinks} external (cite sources)`,
+  });
+  // 15. Image alt text
+  {
+    let st: SeoCheck["state"] = "ok";
+    let detail = `${allImages.length} images`;
+    if (allImages.length === 0) { detail += " — none in body"; }
+    else if (imagesMissingAlt === 0) { st = "good"; detail += ", all have alt text"; }
+    else { st = "bad"; detail += `, ${imagesMissingAlt} missing alt text`; }
+    checks.push({ label: "Image alt text", state: st, detail });
+  }
+  // 16. Readability
+  {
+    let st: SeoCheck["state"] = "bad";
+    if (flesch >= 60) st = "good";
+    else if (flesch >= 50) st = "ok";
+    checks.push({
+      label: "Readability (Flesch)",
+      state: st,
+      detail: `${flesch.toFixed(1)} — ${readabilityLabel(flesch)}`,
+    });
+  }
+  // 17. Sentence length
+  {
+    const longSentences = sentences.filter((s) => (s.match(/\b[\w'-]+\b/g) || []).length > 25).length;
+    const longRatio = sentenceCount > 0 ? (longSentences / sentenceCount) * 100 : 0;
+    let st: SeoCheck["state"] = "good";
+    if (longRatio > 25) st = "bad";
+    else if (longRatio > 15) st = "ok";
+    checks.push({
+      label: "Sentence length",
+      state: st,
+      detail: `${longRatio.toFixed(0)}% sentences >25 words (avg ${avgSentenceWords.toFixed(1)})`,
+    });
+  }
+  // 18. Transition words
+  {
+    const tWords = TRANSITION_WORDS.filter((w) => lowerBody.includes(w)).length;
+    let st: SeoCheck["state"] = "good";
+    if (tWords < 3) st = "bad";
+    else if (tWords < 6) st = "ok";
+    checks.push({
+      label: "Transition words",
+      state: st,
+      detail: `${tWords} unique transition phrases used`,
+    });
   }
 
-  // Word count — too short = thin content, too long = unfocused
-  const words = body.trim().split(/\s+/).filter(Boolean).length;
-  if (words < 600) {
-    flags.push(`Thin content: ${words} words (aim 800+)`);
-    score -= 12;
+  // Compute score
+  let scoreVal = 0;
+  let weightSum = 0;
+  for (const c of checks) {
+    const weight = c.label.includes("Keyword in title") || c.label === "Cover image set" || c.label === "Focus keyword set" || c.label === "Word count" ? 1.5 : 1;
+    weightSum += weight;
+    if (c.state === "good") scoreVal += weight;
+    else if (c.state === "ok") scoreVal += weight * 0.5;
   }
+  const finalScore = Math.round((scoreVal / weightSum) * 100);
 
-  return { value: Math.max(0, score), flags };
+  return {
+    title, excerpt, slug, body,
+    metaTitle, metaDescription, focusKeyword,
+    cover,
+    wordCount, charCount, paragraphCount, sentenceCount, avgSentenceWords,
+    flesch, h2Count, h3Count,
+    imageCount: allImages.length, imagesMissingAlt,
+    internalLinks, externalLinks,
+    keywordDensity,
+    seoScore: finalScore,
+    seoChecks: checks,
+  };
 }
 
+// ─── build rows ──────────────────────────────────────────────────────────
 const rows: PostRow[] = allPosts.map((post) => {
+  const a = analyze(post);
   const publishedAt = new Date(post.data.publishedAt);
   let status: Status;
-  if (publishedAt > now) status = "scheduled";
-  else if (publishedAt.getFullYear() > 2029) status = "draft";
-  else status = "published";
-
-  // For scheduled posts >5 years out, treat as draft
-  if (status === "scheduled" && publishedAt.getFullYear() > now.getFullYear() + 5) {
-    status = "draft";
+  if (publishedAt > now) {
+    status = publishedAt.getFullYear() > now.getFullYear() + 5 ? "draft" : "scheduled";
+  } else {
+    status = "published";
   }
 
-  const body: string = (post.body || "") as string;
-  const seo = computeSeoScore(post, body);
-  const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
-
   const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
+  const fileBaseName = `${post.id}.mdx`;
+  const filePath = `src/content/blog/${fileBaseName}`;
+
   return {
-    slug: post.data.slug,
-    title: post.data.title,
+    slug: a.slug,
+    fileBaseName,
+    title: a.title,
+    excerpt: a.excerpt,
     status,
     publishedAt,
     category: cat?.name || "—",
-    wordCount,
-    seoScore: seo,
-    pagesCmsUrl: `${PAGES_CMS_BASE}/${post.id}`,
-    liveUrl: `https://thenextcigar.com/blog/${post.data.slug}/`,
+    categorySlug: post.data.category || "",
+    wordCount: a.wordCount,
+    charCount: a.charCount,
+    paragraphCount: a.paragraphCount,
+    sentenceCount: a.sentenceCount,
+    avgSentenceWords: a.avgSentenceWords,
+    fleschReadingEase: a.flesch,
+    readabilityLabel: readabilityLabel(a.flesch),
+    h2Count: a.h2Count,
+    h3Count: a.h3Count,
+    imageCount: a.imageCount,
+    imagesMissingAlt: a.imagesMissingAlt,
+    internalLinks: a.internalLinks,
+    externalLinks: a.externalLinks,
+    cover: a.cover,
+    metaTitle: a.metaTitle,
+    metaDescription: a.metaDescription,
+    focusKeyword: a.focusKeyword,
+    keywordDensity: a.keywordDensity,
+    seoScore: a.seoScore,
+    seoChecks: a.seoChecks,
+    pagesCmsEditUrl: `${PAGES_CMS_COLLECTION}/edit/${encodeURIComponent(filePath)}`,
+    liveUrl: `${SITE_URL}/blog/${a.slug}/`,
+    githubUrl: `${GITHUB_REPO_URL}/blob/${REPO_BRANCH}/${filePath}`,
+    rawIdForFilter: (a.title + " " + a.slug + " " + (cat?.name || "") + " " + a.focusKeyword).toLowerCase(),
   };
 });
 
-// Sort: drafts first, then scheduled, then published (newest first within group)
+// Sort: drafts first, then scheduled (soonest), then published (newest first within group)
 const statusOrder: Record<Status, number> = { draft: 0, scheduled: 1, published: 2 };
 rows.sort((a, b) => {
   if (a.status !== b.status) return statusOrder[a.status] - statusOrder[b.status];
+  if (a.status === "scheduled") return a.publishedAt.getTime() - b.publishedAt.getTime();
   return b.publishedAt.getTime() - a.publishedAt.getTime();
 });
 
+// Stats
 const counts = {
+  total: rows.length,
   draft: rows.filter((r) => r.status === "draft").length,
   scheduled: rows.filter((r) => r.status === "scheduled").length,
   published: rows.filter((r) => r.status === "published").length,
+  noCover: rows.filter((r) => !r.cover).length,
+  noKeyword: rows.filter((r) => !r.focusKeyword).length,
+  thinContent: rows.filter((r) => r.wordCount < 600).length,
+  lowSeo: rows.filter((r) => r.seoScore < 70).length,
 };
+
+const avgSeo = rows.length ? Math.round(rows.reduce((s, r) => s + r.seoScore, 0) / rows.length) : 0;
+const totalWords = rows.reduce((s, r) => s + r.wordCount, 0);
+
+const categoryCounts = new Map<string, number>();
+for (const r of rows) {
+  if (r.status !== "published") continue;
+  categoryCounts.set(r.category, (categoryCounts.get(r.category) || 0) + 1);
+}
+const topCategories = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+// Categories for filter dropdown
+const filterCategories = [...new Set(rows.map((r) => r.category).filter((c) => c !== "—"))].sort();
+
+const buildTime = new Date().toLocaleString("en-US", {
+  weekday: "short", month: "short", day: "numeric", year: "numeric",
+  hour: "numeric", minute: "2-digit",
+});
 ---
 
 <BaseLayout title="Admin — TNext Cigar" noIndex={true}>
+
+  <!-- ────── PASSWORD GATE ────── -->
   <div id="admin-gate" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:#ffffff;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
     <div class="max-w-sm w-full" style="position:relative;z-index:10000;">
       <h1 class="font-display text-3xl mb-2">Admin</h1>
@@ -155,118 +460,325 @@ const counts = {
         class="w-full px-4 py-3 border border-[color:var(--color-border)] rounded-sm focus:outline-none focus:border-[color:var(--color-accent)]"
         autocomplete="current-password"
       />
-      <button
-        id="admin-submit"
-        class="btn btn-accent w-full mt-3"
-      >Unlock</button>
+      <button id="admin-submit" class="btn btn-accent w-full mt-3">Unlock</button>
       <p id="admin-error" class="text-[color:var(--color-accent)] text-sm mt-3 hidden">Wrong password.</p>
     </div>
   </div>
 
-  <div id="admin-content" class="container-wide pt-20 pb-24 hidden">
-    <div class="flex items-baseline justify-between flex-wrap gap-4 mb-8">
-      <div>
-        <p class="eyebrow mb-2">Admin</p>
-        <h1 class="font-display text-4xl">Posts overview</h1>
-      </div>
-      <div class="flex gap-3 text-sm flex-wrap">
-        <span class="px-3 py-1 rounded-sm bg-[color:var(--color-bg-soft)] text-[color:var(--color-text-soft)]">
-          {counts.draft} draft
-        </span>
-        <span class="px-3 py-1 rounded-sm bg-yellow-100 text-yellow-900">
-          {counts.scheduled} scheduled
-        </span>
-        <span class="px-3 py-1 rounded-sm bg-green-100 text-green-900">
-          {counts.published} published
-        </span>
-      </div>
-    </div>
+  <!-- ────── DASHBOARD ────── -->
+  <div id="admin-content" class="hidden" style="background:#fafafa;min-height:100vh;">
 
-    <div class="mb-6 p-4 bg-[color:var(--color-bg-soft)] border border-[color:var(--color-border)] rounded-sm">
-      <p class="text-sm text-[color:var(--color-text-soft)]">
-        <strong>Workflow:</strong> Click <em>"Edit"</em> on any post → Pages CMS opens with that article loaded → make changes → Save → Cloudflare auto-rebuilds in ~2 min.
-        <br/>
-        <strong>SEO score</strong> grades each post on title length, meta-description, focus keyword presence, headings, word count, and cover image. Click any flag to see what to fix.
-      </p>
-    </div>
+    <!-- Top toolbar (sticky) -->
+    <header class="sticky top-0 z-30 bg-white border-b border-[color:var(--color-border)] shadow-sm">
+      <div class="px-6 py-3 flex items-center gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-widest bg-[color:var(--color-accent)] text-white rounded-sm">Admin</span>
+          <h1 class="font-display text-xl">TNext Cigar Cockpit</h1>
+        </div>
+        <div class="flex-1 min-w-[200px] max-w-md">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search title, slug, category, focus keyword…"
+            class="w-full px-4 py-2 text-sm border border-[color:var(--color-border)] rounded-sm focus:outline-none focus:border-[color:var(--color-accent)]"
+          />
+        </div>
+        <div class="flex items-center gap-2 ml-auto flex-wrap">
+          <a href={PAGES_CMS_NEW} target="_blank" rel="noopener" class="btn btn-accent !py-2 !px-4 text-sm font-semibold">+ New post</a>
+          <a href={PAGES_CMS_COLLECTION} target="_blank" rel="noopener" class="px-3 py-2 text-sm border border-[color:var(--color-border)] rounded-sm hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] transition-colors">Pages CMS</a>
+          <a href={PAGES_CMS_MEDIA} target="_blank" rel="noopener" class="px-3 py-2 text-sm border border-[color:var(--color-border)] rounded-sm hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] transition-colors">Media</a>
+          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener" class="px-3 py-2 text-sm border border-[color:var(--color-border)] rounded-sm hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] transition-colors">GitHub</a>
+          <a href={SITE_URL} target="_blank" rel="noopener" class="px-3 py-2 text-sm border border-[color:var(--color-border)] rounded-sm hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] transition-colors">View site</a>
+          <button id="admin-logout" class="px-3 py-2 text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)]">Logout</button>
+        </div>
+      </div>
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm border-collapse">
-        <thead class="text-xs uppercase tracking-wider text-[color:var(--color-text-muted)] border-b border-[color:var(--color-border)]">
-          <tr>
-            <th class="text-left py-3 px-2">Title</th>
-            <th class="text-left py-3 px-2">Status</th>
-            <th class="text-left py-3 px-2">Date</th>
-            <th class="text-left py-3 px-2">Category</th>
-            <th class="text-right py-3 px-2">Words</th>
-            <th class="text-right py-3 px-2">SEO</th>
-            <th class="text-right py-3 px-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr class="border-b border-[color:var(--color-border)] hover:bg-[color:var(--color-bg-soft)] transition-colors">
-              <td class="py-3 px-2">
-                <div class="font-medium">{row.title}</div>
-                {row.seoScore.flags.length > 0 && (
-                  <details class="text-xs text-[color:var(--color-text-muted)] mt-1">
-                    <summary class="cursor-pointer hover:text-[color:var(--color-accent)]">
-                      {row.seoScore.flags.length} SEO flag{row.seoScore.flags.length === 1 ? "" : "s"}
-                    </summary>
-                    <ul class="mt-1 ml-4 list-disc">
-                      {row.seoScore.flags.map((f) => <li>{f}</li>)}
-                    </ul>
-                  </details>
-                )}
-              </td>
-              <td class="py-3 px-2">
-                <span class:list={[
-                  "px-2 py-0.5 rounded-sm text-xs uppercase tracking-wider",
-                  row.status === "draft" && "bg-[color:var(--color-bg-soft)] text-[color:var(--color-text-muted)]",
-                  row.status === "scheduled" && "bg-yellow-100 text-yellow-900",
-                  row.status === "published" && "bg-green-100 text-green-900",
-                ]}>
-                  {row.status}
-                </span>
-              </td>
-              <td class="py-3 px-2 text-[color:var(--color-text-soft)]">
-                {row.publishedAt.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-              </td>
-              <td class="py-3 px-2 text-[color:var(--color-text-soft)]">{row.category}</td>
-              <td class="py-3 px-2 text-right text-[color:var(--color-text-soft)]">{row.wordCount}</td>
-              <td class="py-3 px-2 text-right">
-                <span class:list={[
-                  "font-mono font-bold",
-                  row.seoScore.value >= 85 && "text-green-700",
-                  row.seoScore.value >= 60 && row.seoScore.value < 85 && "text-yellow-700",
-                  row.seoScore.value < 60 && "text-red-700",
-                ]}>
-                  {row.seoScore.value}
-                </span>
-              </td>
-              <td class="py-3 px-2 text-right">
-                <a href={row.pagesCmsUrl} target="_blank" rel="noopener" class="text-[color:var(--color-accent)] hover:underline mr-3">Edit</a>
+      <!-- Filter pills -->
+      <div class="px-6 pb-3 flex items-center gap-2 flex-wrap">
+        <span class="text-[0.65rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mr-1">Status:</span>
+        <button data-status="all" class="status-pill active px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-bg-soft)] hover:border-[color:var(--color-accent)] transition-colors">All ({counts.total})</button>
+        <button data-status="draft" class="status-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">Drafts ({counts.draft})</button>
+        <button data-status="scheduled" class="status-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">Scheduled ({counts.scheduled})</button>
+        <button data-status="published" class="status-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">Published ({counts.published})</button>
+
+        <span class="mx-2 text-[color:var(--color-border)]">|</span>
+
+        <span class="text-[0.65rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mr-1">Issue:</span>
+        <button data-issue="lowseo" class="issue-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">Low SEO &lt;70 ({counts.lowSeo})</button>
+        <button data-issue="nocover" class="issue-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">No cover ({counts.noCover})</button>
+        <button data-issue="nokeyword" class="issue-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">No focus keyword ({counts.noKeyword})</button>
+        <button data-issue="thin" class="issue-pill px-3 py-1 text-xs rounded-full border border-[color:var(--color-border)] hover:border-[color:var(--color-accent)] transition-colors">Thin content ({counts.thinContent})</button>
+
+        <span class="mx-2 text-[color:var(--color-border)]">|</span>
+
+        <select id="cat-filter" class="px-3 py-1 text-xs border border-[color:var(--color-border)] rounded-full bg-white focus:outline-none focus:border-[color:var(--color-accent)]">
+          <option value="all">All categories</option>
+          {filterCategories.map((c) => <option value={c}>{c}</option>)}
+        </select>
+
+        <select id="sort-by" class="px-3 py-1 text-xs border border-[color:var(--color-border)] rounded-full bg-white focus:outline-none focus:border-[color:var(--color-accent)]">
+          <option value="default">Sort: Recommended</option>
+          <option value="seo-asc">SEO score (low → high)</option>
+          <option value="seo-desc">SEO score (high → low)</option>
+          <option value="words-desc">Words (high → low)</option>
+          <option value="words-asc">Words (low → high)</option>
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="title">Title A→Z</option>
+        </select>
+
+        <span class="ml-auto text-xs text-[color:var(--color-text-muted)]">
+          Showing <span id="visible-count">{counts.total}</span> of {counts.total}
+        </span>
+      </div>
+    </header>
+
+    <!-- Stats strip -->
+    <section class="px-6 py-5 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <div class="bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Total posts</div>
+        <div class="text-2xl font-display">{counts.total}</div>
+      </div>
+      <div class="bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Avg SEO</div>
+        <div class="text-2xl font-display" style={`color:${avgSeo>=80?"#16a34a":avgSeo>=60?"#ca8a04":"#dc2626"}`}>{avgSeo}</div>
+        <div class="mt-2 h-1 bg-[color:var(--color-bg-soft)] rounded-full overflow-hidden">
+          <div style={`width:${avgSeo}%;background:${avgSeo>=80?"#16a34a":avgSeo>=60?"#ca8a04":"#dc2626"};height:100%;`}></div>
+        </div>
+      </div>
+      <div class="bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Total words</div>
+        <div class="text-2xl font-display">{(totalWords/1000).toFixed(1)}k</div>
+      </div>
+      <div class="bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Drafts</div>
+        <div class="text-2xl font-display text-[color:var(--color-text-muted)]">{counts.draft}</div>
+      </div>
+      <div class="bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Scheduled</div>
+        <div class="text-2xl font-display" style="color:#ca8a04">{counts.scheduled}</div>
+      </div>
+      <div class="bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-1">Need attention</div>
+        <div class="text-2xl font-display" style="color:#dc2626">{counts.lowSeo + counts.noCover + counts.noKeyword}</div>
+        <div class="text-[0.65rem] text-[color:var(--color-text-muted)] mt-1">Low SEO + missing cover/kw</div>
+      </div>
+    </section>
+
+    <!-- Top categories chart -->
+    {topCategories.length > 0 && (
+      <section class="mx-6 mb-5 bg-white p-4 rounded border border-[color:var(--color-border)]">
+        <div class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-3">Posts per category</div>
+        <div class="flex items-end gap-3">
+          {topCategories.map(([name, n]) => {
+            const max = topCategories[0][1];
+            const pct = max ? (n / max) * 100 : 0;
+            return (
+              <div class="flex-1 min-w-[80px]">
+                <div class="text-xs font-medium mb-1 truncate">{name}</div>
+                <div class="h-3 bg-[color:var(--color-bg-soft)] rounded-sm overflow-hidden">
+                  <div style={`width:${pct}%;height:100%;background:var(--color-accent);`}></div>
+                </div>
+                <div class="text-[0.7rem] text-[color:var(--color-text-muted)] mt-1">{n} post{n===1?"":"s"}</div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    <!-- Post list -->
+    <section class="px-6 pb-12">
+      <div id="post-list" class="space-y-2">
+        {rows.map((row, idx) => {
+          const seoColor = row.seoScore >= 80 ? "#16a34a" : row.seoScore >= 60 ? "#ca8a04" : "#dc2626";
+          const issueFlags: string[] = [];
+          if (row.seoScore < 70) issueFlags.push("lowseo");
+          if (!row.cover) issueFlags.push("nocover");
+          if (!row.focusKeyword) issueFlags.push("nokeyword");
+          if (row.wordCount < 600) issueFlags.push("thin");
+
+          return (
+          <article
+            class="post-row bg-white border border-[color:var(--color-border)] rounded overflow-hidden"
+            data-status={row.status}
+            data-category={row.category}
+            data-issues={issueFlags.join(",")}
+            data-search={row.rawIdForFilter}
+            data-seo={row.seoScore}
+            data-words={row.wordCount}
+            data-date={row.publishedAt.getTime()}
+            data-title={row.title.toLowerCase()}
+          >
+            <!-- Collapsed row -->
+            <div class="p-4 flex items-center gap-4 cursor-pointer hover:bg-[color:var(--color-bg-soft)] transition-colors" data-toggle>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <span class:list={[
+                    "px-2 py-0.5 rounded-sm text-[0.6rem] uppercase tracking-wider font-bold",
+                    row.status === "draft" && "bg-[color:var(--color-bg-soft)] text-[color:var(--color-text-muted)]",
+                    row.status === "scheduled" && "bg-yellow-100 text-yellow-900",
+                    row.status === "published" && "bg-green-100 text-green-900",
+                  ]}>{row.status}</span>
+                  <span class="text-[0.65rem] text-[color:var(--color-text-muted)] uppercase tracking-wider">{row.category}</span>
+                  <span class="text-[0.65rem] text-[color:var(--color-text-muted)]">·</span>
+                  <span class="text-[0.65rem] text-[color:var(--color-text-muted)]">{row.publishedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                </div>
+                <div class="font-medium truncate">{row.title}</div>
+                <div class="text-xs text-[color:var(--color-text-muted)] truncate mt-0.5">/{row.slug}</div>
+              </div>
+              <div class="flex items-center gap-4 flex-shrink-0">
+                <div class="text-right">
+                  <div class="text-[0.6rem] uppercase tracking-wider text-[color:var(--color-text-muted)]">Words</div>
+                  <div class="text-sm font-medium">{row.wordCount}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-[0.6rem] uppercase tracking-wider text-[color:var(--color-text-muted)]">Read</div>
+                  <div class="text-sm font-medium">{row.fleschReadingEase.toFixed(0)}</div>
+                </div>
+                <div class="text-right min-w-[60px]">
+                  <div class="text-[0.6rem] uppercase tracking-wider text-[color:var(--color-text-muted)]">SEO</div>
+                  <div class="text-lg font-mono font-bold" style={`color:${seoColor}`}>{row.seoScore}</div>
+                </div>
+                <a href={row.pagesCmsEditUrl} target="_blank" rel="noopener" onclick="event.stopPropagation()" class="px-3 py-1.5 text-xs font-semibold bg-[color:var(--color-accent)] text-white rounded-sm hover:opacity-90 transition-opacity">Edit</a>
                 {row.status === "published" && (
-                  <a href={row.liveUrl} target="_blank" rel="noopener" class="text-[color:var(--color-text-soft)] hover:text-[color:var(--color-accent)]">View</a>
+                  <a href={row.liveUrl} target="_blank" rel="noopener" onclick="event.stopPropagation()" class="px-3 py-1.5 text-xs border border-[color:var(--color-border)] rounded-sm hover:border-[color:var(--color-accent)] transition-colors">View</a>
                 )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="row-chevron text-[color:var(--color-text-muted)] flex-shrink-0 transition-transform"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
 
-    <div class="mt-12 pt-6 border-t border-[color:var(--color-border)] text-sm text-[color:var(--color-text-muted)]">
-      <p><strong>Build snapshot:</strong> {new Date().toLocaleString("en-US")} — this dashboard reflects posts at the last Cloudflare Pages build. Edit a post and save in Pages CMS to trigger a rebuild and refresh this view.</p>
-    </div>
+            <!-- Expanded panel -->
+            <div class="row-detail hidden border-t border-[color:var(--color-border)] bg-[color:var(--color-bg-soft)]">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+
+                <!-- Left: SEO checks + content stats -->
+                <div>
+                  <h3 class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-3">SEO checklist (Yoast-style)</h3>
+                  <ul class="space-y-1.5 mb-6">
+                    {row.seoChecks.map((c) => {
+                      const color = c.state === "good" ? "#16a34a" : c.state === "ok" ? "#ca8a04" : "#dc2626";
+                      const dot = c.state === "good" ? "●" : c.state === "ok" ? "●" : "●";
+                      return (
+                        <li class="flex items-start gap-2 text-sm">
+                          <span style={`color:${color};line-height:1.5;`}>{dot}</span>
+                          <span class="flex-1">
+                            <span class="font-medium">{c.label}.</span>
+                            <span class="text-[color:var(--color-text-muted)] ml-1">{c.detail}</span>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <h3 class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-3">Content stats</h3>
+                  <div class="grid grid-cols-3 gap-2 mb-4 text-xs">
+                    <div class="bg-white p-2 rounded border border-[color:var(--color-border)]">
+                      <div class="text-[color:var(--color-text-muted)]">Words</div>
+                      <div class="font-medium text-base">{row.wordCount}</div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-[color:var(--color-border)]">
+                      <div class="text-[color:var(--color-text-muted)]">Sentences</div>
+                      <div class="font-medium text-base">{row.sentenceCount}</div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-[color:var(--color-border)]">
+                      <div class="text-[color:var(--color-text-muted)]">Paragraphs</div>
+                      <div class="font-medium text-base">{row.paragraphCount}</div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-[color:var(--color-border)]">
+                      <div class="text-[color:var(--color-text-muted)]">H2 / H3</div>
+                      <div class="font-medium text-base">{row.h2Count} / {row.h3Count}</div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-[color:var(--color-border)]">
+                      <div class="text-[color:var(--color-text-muted)]">Internal / External</div>
+                      <div class="font-medium text-base">{row.internalLinks} / {row.externalLinks}</div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-[color:var(--color-border)]">
+                      <div class="text-[color:var(--color-text-muted)]">Images</div>
+                      <div class="font-medium text-base">{row.imageCount} <span class="text-xs text-[color:var(--color-text-muted)]">({row.imagesMissingAlt} no alt)</span></div>
+                    </div>
+                  </div>
+
+                  <h3 class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Quick actions</h3>
+                  <div class="flex flex-wrap gap-2">
+                    <a href={row.pagesCmsEditUrl} target="_blank" rel="noopener" class="px-3 py-1.5 text-xs font-semibold bg-[color:var(--color-accent)] text-white rounded-sm hover:opacity-90">Edit in Pages CMS</a>
+                    <a href={row.githubUrl} target="_blank" rel="noopener" class="px-3 py-1.5 text-xs border border-[color:var(--color-border)] rounded-sm bg-white hover:border-[color:var(--color-accent)]">Open .mdx on GitHub</a>
+                    {row.status === "published" && (
+                      <a href={row.liveUrl} target="_blank" rel="noopener" class="px-3 py-1.5 text-xs border border-[color:var(--color-border)] rounded-sm bg-white hover:border-[color:var(--color-accent)]">View live post</a>
+                    )}
+                    <button class="copy-btn px-3 py-1.5 text-xs border border-[color:var(--color-border)] rounded-sm bg-white hover:border-[color:var(--color-accent)]" data-copy={row.liveUrl}>Copy URL</button>
+                  </div>
+                </div>
+
+                <!-- Right: SERP + social previews + meta -->
+                <div>
+                  <h3 class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-3">Google SERP preview</h3>
+                  <div class="bg-white p-4 rounded border border-[color:var(--color-border)] mb-6 font-sans">
+                    <div class="text-xs text-[#202124] truncate mb-1">{SITE_URL.replace("https://","")} › blog › {row.slug}</div>
+                    <div class="text-[#1a0dab] text-lg leading-snug font-normal mb-1" style="font-family: arial, sans-serif;">
+                      {row.metaTitle.length > 60 ? row.metaTitle.slice(0, 60) + "…" : row.metaTitle}
+                    </div>
+                    <div class="text-sm text-[#4d5156] leading-snug" style="font-family: arial, sans-serif;">
+                      {row.metaDescription.length > 160 ? row.metaDescription.slice(0, 160) + "…" : row.metaDescription || <em class="text-[color:var(--color-text-muted)]">No description set</em>}
+                    </div>
+                  </div>
+
+                  <h3 class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-3">Social card preview</h3>
+                  <div class="bg-white rounded border border-[color:var(--color-border)] overflow-hidden mb-6">
+                    {row.cover ? (
+                      <div class="aspect-[1.91/1] bg-[color:var(--color-bg-soft)] flex items-center justify-center text-xs text-[color:var(--color-text-muted)] border-b border-[color:var(--color-border)]">
+                        Cover image set ✓
+                      </div>
+                    ) : (
+                      <div class="aspect-[1.91/1] bg-[color:var(--color-bg-soft)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)] border-b border-[color:var(--color-border)]">
+                        No cover image
+                      </div>
+                    )}
+                    <div class="p-3">
+                      <div class="text-[0.65rem] uppercase tracking-wider text-[color:var(--color-text-muted)] mb-1">{SITE_URL.replace("https://","")}</div>
+                      <div class="font-semibold text-sm leading-snug mb-1">{row.metaTitle}</div>
+                      <div class="text-xs text-[color:var(--color-text-muted)] leading-snug">
+                        {row.metaDescription.slice(0, 100)}{row.metaDescription.length > 100 ? "…" : ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 class="text-[0.62rem] uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Meta details</h3>
+                  <dl class="text-sm space-y-2">
+                    <div>
+                      <dt class="text-[0.65rem] uppercase tracking-wider text-[color:var(--color-text-muted)]">Focus keyword</dt>
+                      <dd>{row.focusKeyword || <span class="text-[color:var(--color-text-muted)]">—</span>}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-[0.65rem] uppercase tracking-wider text-[color:var(--color-text-muted)]">Slug</dt>
+                      <dd class="font-mono text-xs">{row.slug}</dd>
+                    </div>
+                    <div>
+                      <dt class="text-[0.65rem] uppercase tracking-wider text-[color:var(--color-text-muted)]">File</dt>
+                      <dd class="font-mono text-xs">src/content/blog/{row.fileBaseName}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+              </div>
+            </div>
+          </article>
+        )})}
+      </div>
+
+      <div id="empty-state" class="hidden text-center py-16 text-[color:var(--color-text-muted)]">
+        No posts match the current filters. <button id="reset-filters" class="text-[color:var(--color-accent)] hover:underline">Reset filters</button>
+      </div>
+    </section>
+
+    <footer class="px-6 py-6 border-t border-[color:var(--color-border)] text-xs text-[color:var(--color-text-muted)]">
+      Build snapshot: {buildTime}. This dashboard reflects posts at the last Cloudflare Pages build. Edit a post and save in Pages CMS to trigger a rebuild and refresh this view.
+    </footer>
   </div>
 </BaseLayout>
 
+<!-- ────── GATE SCRIPT ────── -->
 <script is:inline define:vars={{ adminPassword }}>
-  // Simple client-side password gate. Stored hash of the actual password in
-  // the build, checked at runtime. Not real auth — fine for a 1-person admin
-  // panel behind an unguessable URL. Upgrade to Cloudflare Access for
-  // multi-user setups.
   (function () {
     const KEY = "tnc_admin_unlocked";
     const gate = document.getElementById("admin-gate");
@@ -276,13 +788,16 @@ const counts = {
     const error = document.getElementById("admin-error");
 
     function unlock() {
-      // Inline style="display:flex" on the gate beats Tailwind's .hidden,
-      // so set display:none directly. classList.add("hidden") is kept as a
-      // belt-and-suspenders signal in case anything else queries it.
+      // Inline display:flex on the gate beats Tailwind's .hidden, so set
+      // display:none directly. classList kept for any selector that queries it.
       gate.classList.add("hidden");
       gate.style.display = "none";
       content.classList.remove("hidden");
       try { sessionStorage.setItem(KEY, "1"); } catch (e) {}
+    }
+    function lock() {
+      try { sessionStorage.removeItem(KEY); } catch (e) {}
+      window.location.reload();
     }
 
     function check() {
@@ -295,22 +810,157 @@ const counts = {
       }
     }
 
-    // If already unlocked this session, skip the gate
-    try {
-      if (sessionStorage.getItem(KEY)) unlock();
-    } catch (e) {}
+    try { if (sessionStorage.getItem(KEY)) unlock(); } catch (e) {}
 
-    // Move the gate out of <main> to escape main's z-index:2 stacking context
-    // (header/footer have z-index:10 at body level, so a gate inside main
-    // could never paint above them no matter how high its own z-index was).
-    if (gate.parentElement !== document.body) {
-      document.body.appendChild(gate);
-    }
+    // Move the gate out of <main> so it escapes main's z-index:2 stacking
+    // context (header/footer have z-index:10 at body level, which would
+    // otherwise paint above the gate).
+    if (gate.parentElement !== document.body) document.body.appendChild(gate);
 
     submit.addEventListener("click", check);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") check();
-    });
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") check(); });
     input.focus();
+
+    // Logout button (rendered later, attach when content shows)
+    document.addEventListener("click", (e) => {
+      if (e.target && e.target.id === "admin-logout") lock();
+    });
+  })();
+</script>
+
+<!-- ────── DASHBOARD INTERACTIONS ────── -->
+<script is:inline>
+  (function () {
+    function init() {
+      const list = document.getElementById("post-list");
+      if (!list || list.dataset.bound === "1") return;
+      list.dataset.bound = "1";
+
+      const rows = [...list.querySelectorAll(".post-row")];
+      const search = document.getElementById("search-input");
+      const visibleCount = document.getElementById("visible-count");
+      const emptyState = document.getElementById("empty-state");
+      const catFilter = document.getElementById("cat-filter");
+      const sortBy = document.getElementById("sort-by");
+      const statusPills = [...document.querySelectorAll(".status-pill")];
+      const issuePills = [...document.querySelectorAll(".issue-pill")];
+
+      const state = {
+        status: "all",
+        issue: null,
+        category: "all",
+        search: "",
+        sort: "default",
+      };
+
+      // Expand/collapse rows
+      list.addEventListener("click", (e) => {
+        const toggle = e.target.closest("[data-toggle]");
+        if (!toggle) return;
+        if (e.target.closest("a, button")) return;
+        const row = toggle.closest(".post-row");
+        const detail = row.querySelector(".row-detail");
+        const chev = row.querySelector(".row-chevron");
+        const open = !detail.classList.contains("hidden");
+        detail.classList.toggle("hidden");
+        if (chev) chev.style.transform = open ? "rotate(0deg)" : "rotate(180deg)";
+      });
+
+      // Copy URL buttons
+      list.addEventListener("click", (e) => {
+        const btn = e.target.closest(".copy-btn");
+        if (!btn) return;
+        const url = btn.dataset.copy;
+        navigator.clipboard?.writeText(url).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = "Copied ✓";
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        });
+      });
+
+      function apply() {
+        const q = state.search.trim().toLowerCase();
+        let visible = 0;
+        for (const r of rows) {
+          let show = true;
+          if (state.status !== "all" && r.dataset.status !== state.status) show = false;
+          if (state.issue) {
+            const issues = (r.dataset.issues || "").split(",");
+            if (!issues.includes(state.issue)) show = false;
+          }
+          if (state.category !== "all" && r.dataset.category !== state.category) show = false;
+          if (q && !(r.dataset.search || "").includes(q)) show = false;
+          r.style.display = show ? "" : "none";
+          if (show) visible++;
+        }
+        if (visibleCount) visibleCount.textContent = visible;
+        if (emptyState) emptyState.classList.toggle("hidden", visible !== 0);
+      }
+
+      function applySort() {
+        const sorted = [...rows].sort((a, b) => {
+          switch (state.sort) {
+            case "seo-asc":   return Number(a.dataset.seo) - Number(b.dataset.seo);
+            case "seo-desc":  return Number(b.dataset.seo) - Number(a.dataset.seo);
+            case "words-desc": return Number(b.dataset.words) - Number(a.dataset.words);
+            case "words-asc":  return Number(a.dataset.words) - Number(b.dataset.words);
+            case "date-desc": return Number(b.dataset.date) - Number(a.dataset.date);
+            case "date-asc":  return Number(a.dataset.date) - Number(b.dataset.date);
+            case "title":     return a.dataset.title.localeCompare(b.dataset.title);
+            default:          return 0;
+          }
+        });
+        if (state.sort === "default") return; // keep server order
+        for (const r of sorted) list.appendChild(r);
+      }
+
+      search?.addEventListener("input", (e) => { state.search = e.target.value; apply(); });
+      catFilter?.addEventListener("change", (e) => { state.category = e.target.value; apply(); });
+      sortBy?.addEventListener("change", (e) => { state.sort = e.target.value; applySort(); apply(); });
+
+      statusPills.forEach((p) => p.addEventListener("click", () => {
+        statusPills.forEach((x) => x.classList.remove("active", "bg-[color:var(--color-bg-soft)]"));
+        p.classList.add("active", "bg-[color:var(--color-bg-soft)]");
+        state.status = p.dataset.status;
+        apply();
+      }));
+
+      issuePills.forEach((p) => p.addEventListener("click", () => {
+        const isActive = p.classList.contains("active");
+        issuePills.forEach((x) => x.classList.remove("active", "bg-[color:var(--color-bg-soft)]"));
+        if (isActive) {
+          state.issue = null;
+        } else {
+          p.classList.add("active", "bg-[color:var(--color-bg-soft)]");
+          state.issue = p.dataset.issue;
+        }
+        apply();
+      }));
+
+      const resetBtn = document.getElementById("reset-filters");
+      resetBtn?.addEventListener("click", () => {
+        state.status = "all"; state.issue = null; state.category = "all"; state.search = "";
+        if (search) search.value = "";
+        if (catFilter) catFilter.value = "all";
+        statusPills.forEach((x) => x.classList.remove("active", "bg-[color:var(--color-bg-soft)]"));
+        statusPills.find((x) => x.dataset.status === "all")?.classList.add("active", "bg-[color:var(--color-bg-soft)]");
+        issuePills.forEach((x) => x.classList.remove("active", "bg-[color:var(--color-bg-soft)]"));
+        apply();
+      });
+
+      apply();
+    }
+
+    // Wait until the dashboard is visible (after gate unlock) — gate's unlock()
+    // removes .hidden from #admin-content. Use a MutationObserver as a hook.
+    const target = document.getElementById("admin-content");
+    if (target && !target.classList.contains("hidden")) {
+      init();
+    } else if (target) {
+      const obs = new MutationObserver(() => {
+        if (!target.classList.contains("hidden")) { init(); obs.disconnect(); }
+      });
+      obs.observe(target, { attributes: true, attributeFilter: ["class"] });
+    }
   })();
 </script>
