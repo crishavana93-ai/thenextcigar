@@ -296,6 +296,13 @@ const counts = {
       if (sessionStorage.getItem(KEY)) unlock();
     } catch (e) {}
 
+    // Move the gate out of <main> to escape main's z-index:2 stacking context
+    // (header/footer have z-index:10 at body level, so a gate inside main
+    // could never paint above them no matter how high its own z-index was).
+    if (gate.parentElement !== document.body) {
+      document.body.appendChild(gate);
+    }
+
     submit.addEventListener("click", check);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") check();
