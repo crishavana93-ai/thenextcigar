@@ -4,7 +4,12 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SubscribeModal from "../components/SubscribeModal.astro";
 import CookieBanner from "../components/CookieBanner.astro";
-import { ClientRouter } from "astro:transitions";
+// ClientRouter (view transitions) was removed 2026-05-10 because it was
+// preventing MailerLite forms, Astro <Image> components, and the Snipcart
+// cart from re-mounting on client-side navigation — symptom: forms invisible
+// until page refresh, post images not showing on category pages. Full page
+// loads add ~200ms per nav but everything else works without further patches.
+// import { ClientRouter } from "astro:transitions";
 
 interface Props {
   title?: string;
@@ -82,7 +87,7 @@ const siteName = "The Next Cigar";
       ml('account', '2332920');
     </script>
 
-    <ClientRouter />
+    {/* <ClientRouter /> — disabled, see frontmatter comment */}
   </head>
   <body class="min-h-screen bg-bg text-text antialiased">
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:text-bg focus:px-4 focus:py-2 focus:rounded">
