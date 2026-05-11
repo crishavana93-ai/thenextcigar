@@ -61,20 +61,28 @@ const variantAttrs = (data.variants || []).map((v, i) => {
       {/* GALLERY */}
       <div class="reveal">
         <div class="rounded-sm overflow-hidden bg-[color:var(--color-surface)] aspect-square">
-          <Image
-            src={data.cover}
-            alt={data.name}
-            widths={[600, 1200]}
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            class="w-full h-full object-cover"
-            loading="eager"
-          />
+          {typeof data.cover === "string" ? (
+            <img src={data.cover} alt={data.name} class="w-full h-full object-cover" loading="eager" />
+          ) : (
+            <Image
+              src={data.cover}
+              alt={data.name}
+              widths={[600, 1200]}
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              class="w-full h-full object-cover"
+              loading="eager"
+            />
+          )}
         </div>
         {data.gallery && data.gallery.length > 1 && (
           <div class="mt-3 grid grid-cols-4 gap-3">
             {data.gallery.map((img, i) => (
               <div class="rounded-sm overflow-hidden bg-[color:var(--color-surface)] aspect-square">
-                <Image src={img} alt={`${data.name} — view ${i + 1}`} widths={[200, 400]} sizes="120px" class="w-full h-full object-cover" loading="lazy" />
+                {typeof img === "string" ? (
+                  <img src={img} alt={`${data.name} — view ${i + 1}`} class="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <Image src={img} alt={`${data.name} — view ${i + 1}`} widths={[200, 400]} sizes="120px" class="w-full h-full object-cover" loading="lazy" />
+                )}
               </div>
             ))}
           </div>

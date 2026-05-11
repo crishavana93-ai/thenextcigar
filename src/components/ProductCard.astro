@@ -18,13 +18,22 @@ const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
 
 <a href={`/shop/${data.slug}/`} class="card reveal block group" data-reveal-delay={delay} aria-label={data.name}>
   <div class="card-image relative">
-    <Image
-      src={data.cover}
-      alt={data.name}
-      widths={[400, 800, 1200]}
-      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-      loading="lazy"
-    />
+    {typeof data.cover === "string" ? (
+      <img
+        src={data.cover}
+        alt={data.name}
+        loading="lazy"
+        class="w-full h-full object-cover"
+      />
+    ) : (
+      <Image
+        src={data.cover}
+        alt={data.name}
+        widths={[400, 800, 1200]}
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        loading="lazy"
+      />
+    )}
     {isOnSale && (
       <span class="absolute top-3 left-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-white rounded-sm">
         Sale
