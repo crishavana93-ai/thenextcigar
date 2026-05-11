@@ -139,16 +139,27 @@ const breadcrumbSchema = {
     {data.cover && (
       <div class="container-wide mb-16 reveal">
         <div class="relative overflow-hidden rounded-sm aspect-[16/9] md:aspect-[16/8]">
-          <Image
-            src={data.cover}
-            alt={data.title}
-            widths={[800, 1200, 1800, 2400]}
-            sizes="(min-width: 1280px) 1280px, 100vw"
-            class="parallax-cover w-full h-full object-cover"
-            data-parallax
-            data-parallax-speed="0.08"
-            loading="eager"
-          />
+          {typeof data.cover === "string" ? (
+            <img
+              src={data.cover}
+              alt={data.title}
+              class="parallax-cover w-full h-full object-cover"
+              data-parallax
+              data-parallax-speed="0.08"
+              loading="eager"
+            />
+          ) : (
+            <Image
+              src={data.cover}
+              alt={data.title}
+              widths={[800, 1200, 1800, 2400]}
+              sizes="(min-width: 1280px) 1280px, 100vw"
+              class="parallax-cover w-full h-full object-cover"
+              data-parallax
+              data-parallax-speed="0.08"
+              loading="eager"
+            />
+          )}
         </div>
       </div>
     )}
