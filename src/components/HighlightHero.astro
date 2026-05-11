@@ -69,7 +69,14 @@ const fmtDate = (d: Date | string) =>
         return (
           <a href={`/blog/${p.data.slug}`} class="reveal group flex-1" data-reveal-delay={(i + 1) as 1 | 2}>
             <div class="relative overflow-hidden rounded aspect-[16/10] lg:aspect-[16/9] mb-4 bg-[color:var(--color-surface)]">
-              {p.data.cover && (
+              {p.data.cover && (typeof p.data.cover === "string" ? (
+                <img
+                  src={p.data.cover}
+                  alt={p.data.title}
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="eager"
+                />
+              ) : (
                 <Image
                   src={p.data.cover}
                   alt={p.data.title}
@@ -78,7 +85,7 @@ const fmtDate = (d: Date | string) =>
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="eager"
                 />
-              )}
+              ))}
             </div>
             {c && <p class="category-tag mb-2">{c.name}</p>}
             <h3 class="font-display text-lg md:text-xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
