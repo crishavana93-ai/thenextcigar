@@ -40,9 +40,29 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <div class="hairline my-16"></div>
 
-    <form id="contact-form" class="reveal" novalidate>
+    {/*
+      Form handler: Formsubmit.co — no signup, no API key required.
+      Submissions POST to formsubmit.co and are forwarded to the email below.
+      First submission triggers a one-time verification email — click the
+      "Confirm your email" link inside, then all subsequent submissions
+      route directly to the inbox. Replace the email in the action URL if
+      you ever change your inbox.
+    */}
+    <form
+      id="contact-form"
+      class="reveal"
+      action="https://formsubmit.co/guatabeycigars@gmail.com"
+      method="POST"
+    >
       <p class="eyebrow mb-3">Or send us a note</p>
       <h3 class="font-display text-2xl mb-6">General inquiries</h3>
+
+      {/* Formsubmit config — hidden fields */}
+      <input type="hidden" name="_subject" value="New message from thenextcigar.com" />
+      <input type="hidden" name="_template" value="table" />
+      <input type="hidden" name="_captcha" value="true" />
+      <input type="hidden" name="_next" value="https://thenextcigar.com/contact/?sent=1" />
+      <input type="hidden" name="_honey" value="" style="display:none" tabindex="-1" autocomplete="off" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
@@ -70,25 +90,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         We read every message. Expect a reply within 2 business days.
       </p>
     </form>
+
+    {/* Success confirmation — shown when Formsubmit redirects back with ?sent=1 */}
+    <div id="contact-sent" class="hidden mt-8 p-6 rounded border border-[color:var(--color-accent)] bg-[color:var(--color-bg-soft)]">
+      <p class="font-display text-2xl mb-2">Message received.</p>
+      <p class="text-[color:var(--color-text-soft)]">Thanks — we'll be in touch within 2 business days.</p>
+    </div>
   </section>
 </BaseLayout>
 
 <script>
-  function setup() {
-    const form = document.getElementById("contact-form") as HTMLFormElement | null;
-    if (!form || (form as any).dataset.bound === "1") return;
-    (form as any).dataset.bound = "1";
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      // Until we wire up Formspree / Cloudflare Pages function, fall back to mailto
-      const data = new FormData(form);
-      const subject = encodeURIComponent(`[Site] ${data.get("subject") || "Inquiry"}`);
-      const body = encodeURIComponent(
-        `Name: ${data.get("name")}\nEmail: ${data.get("email")}\n\n${data.get("message")}`
-      );
-      window.location.href = `mailto:contact@thenextcigar.com?subject=${subject}&body=${body}`;
-    });
-  }
-  document.addEventListener("astro:page-load", setup);
-  setup();
+  // Show success banner if redirected back with ?sent=1
+  (function () {
+    if (new URLSearchParams(window.location.search).get("sent") === "1") {
+      const banner = document.getElementById("contact-sent");
+      const form = document.getElementById("contact-form");
+      if (banner) banner.classList.remove("hidden");
+      if (form) (form as HTMLFormElement).style.display = "none";
+      window.scrollTo({ top: document.body.scrollHeight / 2, behavior: "smooth" });
+    }
+  })();
 </script>
