@@ -1,0 +1,81 @@
+---
+import { fetchLatestVideos } from "../lib/youtube";
+
+const videos = await fetchLatestVideos(6);
+
+const fmtDate = (d: string) =>
+  d
+    ? new Date(d).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
+---
+
+{videos.length > 0 && (
+  <section class="py-20 section-dark">
+    <div class="container-wide">
+      <div class="flex items-end justify-between mb-10 reveal flex-wrap gap-4">
+        <div>
+          <p class="text-[0.78rem] font-bold tracking-[0.18em] uppercase text-[color:var(--color-accent)] mb-2">
+            Now playing
+          </p>
+          <h2 class="font-display text-3xl md:text-4xl lg:text-5xl leading-[1.05] tracking-tight text-[color:var(--color-text-on-dark)]">
+            Cigar videos worth watching.
+          </h2>
+        </div>
+        <a
+          href="/watch"
+          class="text-sm text-[color:var(--color-text-on-dark-mute)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider"
+        >
+          See all videos →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {videos.map((video, i) => (
+          <a
+            href={`https://www.youtube.com/watch?v=${video.videoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="reveal group block"
+            data-reveal-delay={((i % 3) + 1) as 1 | 2 | 3}
+            aria-label={video.title}
+          >
+            <div class="relative overflow-hidden rounded-sm aspect-video bg-[color:var(--color-dark-surface)] mb-4">
+              {video.thumbnail && (
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  loading="lazy"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              )}
+              {/* Subtle vignette so the play button always has contrast */}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none"></div>
+              {/* Play button overlay */}
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[color:var(--color-accent)] flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-white ml-1">
+                    <path d="M8 5v14l11-7L8 5z" />
+                  </svg>
+                </div>
+              </div>
+              {/* Channel badge in corner */}
+              <div class="absolute bottom-3 left-3 px-2.5 py-1 bg-black/70 backdrop-blur-sm rounded-sm text-[0.62rem] uppercase tracking-widest font-bold text-white">
+                {video.channelName}
+              </div>
+            </div>
+            <h3 class="font-display text-lg leading-snug text-[color:var(--color-text-on-dark)] group-hover:text-[color:var(--color-headline-hover-on-dark)] transition-colors duration-300 line-clamp-2">
+              {video.title}
+            </h3>
+            <p class="mt-2 text-xs text-[color:var(--color-text-on-dark-mute)] uppercase tracking-wider">
+              {fmtDate(video.publishedAt)}
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+)}

@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import HighlightHero from "../components/HighlightHero.astro";
+import HomeVideos from "../components/HomeVideos.astro";
 import CategoryBand from "../components/CategoryBand.astro";
 import PremiumCTA from "../components/PremiumCTA.astro";
 import AdSlot from "../components/AdSlot.astro";
@@ -63,6 +64,9 @@ const news = postsByCategory("latest-news");
   <div class="container-wide py-8">
     <AdSlot variant="leaderboard" />
   </div>
+
+  {/* VIDEOS — latest cigar videos from across YouTube (dark section, breaks up the page) */}
+  <HomeVideos />
 
   {/* WHAT'S HOT IN — Cigar 101 */}
   {cigar101.length > 0 && (
