@@ -1,0 +1,372 @@
+---
+/**
+ * <EventsMap />
+ *
+ * Interactive Leaflet + OpenStreetMap of cigar lounges, retailers, Casa del
+ * Habano locations, and upcoming festivals worldwide. Uses the browser
+ * Geolocation API to center on the user with a Stockholm fallback if
+ * permission is denied.
+ *
+ * Why Leaflet + OSM:
+ *   - Free, no API key
+ *   - Tiny payload (~40kB CSS + JS from unpkg CDN)
+ *   - Works without React/hydration
+ *
+ * Editor's note: pin types map to icon colors via CSS-only — no PNG sprites.
+ */
+
+import { events as cigarEvents } from "../data/cigar-events";
+import { places } from "../data/cigar-places";
+
+// Inline JSON for the client script — Astro serializes at build time.
+const dataJson = JSON.stringify({
+  events: cigarEvents.map((e) => ({
+    slug: e.slug,
+    name: e.name,
+    tagline: e.tagline,
+    startDate: e.startDate,
+    endDate: e.endDate,
+    location: e.location,
+    lat: e.lat,
+    lng: e.lng,
+    url: e.url,
+    type: e.type,
+    blurb: e.blurb,
+  })),
+  places: places.map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    type: p.type,
+    city: p.city,
+    country: p.country,
+    address: p.address ?? "",
+    lat: p.lat,
+    lng: p.lng,
+    website: p.website ?? "",
+    note: p.note ?? "",
+  })),
+});
+---
+
+<section class="events-map-section" aria-labelledby="map-title">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <div class="events-map-header reveal">
+    <p class="section-eyebrow">Find your closest spot</p>
+    <h2 id="map-title" class="font-display text-3xl md:text-4xl leading-tight">
+      Cigar lounges, retailers, and events on the map
+    </h2>
+    <p class="mt-3 text-[color:var(--color-text-muted)] max-w-2xl">
+      Allow location access and we'll centre the map on you, then surface the closest
+      Casa del Habano, retailer, and lounge — plus any festivals happening within reach.
+    </p>
+  </div>
+
+  <div class="events-map-legend reveal" role="group" aria-label="Pin legend">
+    <span class="legend-pin legend-pin--festival" aria-hidden="true"></span>
+    <span class="legend-label">Festival / Event</span>
+
+    <span class="legend-pin legend-pin--casadelhabano" aria-hidden="true"></span>
+    <span class="legend-label">Casa del Habano</span>
+
+    <span class="legend-pin legend-pin--house" aria-hidden="true"></span>
+    <span class="legend-label">Brand House</span>
+
+    <span class="legend-pin legend-pin--lounge" aria-hidden="true"></span>
+    <span class="legend-label">Lounge / Club</span>
+
+    <span class="legend-pin legend-pin--retailer" aria-hidden="true"></span>
+    <span class="legend-label">Retailer</span>
+  </div>
+
+  <div id="cigar-events-map" class="events-map" data-tnc={dataJson}></div>
+
+  <div id="events-map-nearby" class="events-map-nearby reveal" aria-live="polite"></div>
+</section>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+  is:inline
+></script>
+
+<script is:inline>
+  (function () {
+    const STOCKHOLM = [59.3293, 18.0686];
+
+    function fmtDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+    function fmtRange(startIso, endIso) {
+      const start = new Date(startIso);
+      const end = new Date(endIso);
+      if (start.toDateString() === end.toDateString()) return fmtDate(startIso);
+      const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+      if (sameMonth) {
+        return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })}–${end.getDate()}, ${end.getFullYear()}`;
+      }
+      return `${fmtDate(startIso)} – ${fmtDate(endIso)}`;
+    }
+
+    function haversineKm(a, b) {
+      const R = 6371;
+      const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+      const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+      const lat1 = (a.lat * Math.PI) / 180;
+      const lat2 = (b.lat * Math.PI) / 180;
+      const h =
+        Math.sin(dLat / 2) ** 2 +
+        Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+      return 2 * R * Math.asin(Math.sqrt(h));
+    }
+
+    function pinIcon(L, kind) {
+      // Build a DivIcon so we get a CSS-styled marker (no sprite PNG).
+      return L.divIcon({
+        className: "tnc-pin tnc-pin--" + kind,
+        html: '<span class="tnc-pin__dot"></span>',
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      });
+    }
+
+    function popupHtml(item, kind) {
+      if (kind === "festival") {
+        return [
+          '<div class="tnc-popup">',
+          '<p class="tnc-popup__eyebrow">Festival · ', item.location, '</p>',
+          '<h3 class="tnc-popup__title">', item.name, '</h3>',
+          '<p class="tnc-popup__date">', fmtRange(item.startDate, item.endDate), '</p>',
+          '<p class="tnc-popup__blurb">', item.tagline, '</p>',
+          item.url ? '<a class="tnc-popup__cta" href="' + item.url + '" target="_blank" rel="noopener">Official site →</a>' : '',
+          '</div>'
+        ].join('');
+      }
+      const typeLabel = {
+        casadelhabano: "Casa del Habano",
+        retailer: "Retailer",
+        lounge: "Lounge",
+        house: "Brand House",
+        pub: "Cigar-friendly pub",
+        club: "Members' club",
+      }[item.type] || "Place";
+      return [
+        '<div class="tnc-popup">',
+        '<p class="tnc-popup__eyebrow">', typeLabel, ' · ', item.city, ', ', item.country, '</p>',
+        '<h3 class="tnc-popup__title">', item.name, '</h3>',
+        item.address ? '<p class="tnc-popup__addr">' + item.address + '</p>' : '',
+        item.note ? '<p class="tnc-popup__blurb">' + item.note + '</p>' : '',
+        item.website ? '<a class="tnc-popup__cta" href="' + item.website + '" target="_blank" rel="noopener">Website →</a>' : '',
+        '</div>'
+      ].join('');
+    }
+
+    function renderNearby(user, places, events) {
+      const nearby = document.getElementById("events-map-nearby");
+      if (!nearby) return;
+      const placesByDist = places
+        .map((p) => ({ p, d: haversineKm(user, p) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 4);
+      const eventsByDist = events
+        .filter((e) => new Date(e.endDate).getTime() >= Date.now())
+        .map((e) => ({ e, d: haversineKm(user, e) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 3);
+
+      const eventList = eventsByDist.map(({ e, d }) => (
+        '<li><span class="distance-pill">' + Math.round(d) + ' km</span> <strong>' + e.name + '</strong> · ' + fmtRange(e.startDate, e.endDate) + ' · ' + e.location + '</li>'
+      )).join('');
+
+      const placeList = placesByDist.map(({ p, d }) => (
+        '<li><span class="distance-pill">' + Math.round(d) + ' km</span> <strong>' + p.name + '</strong> · ' + p.city + (p.website ? ' · <a href="' + p.website + '" target="_blank" rel="noopener">visit →</a>' : '') + '</li>'
+      )).join('');
+
+      nearby.innerHTML = [
+        '<div class="nearby-grid">',
+        '<div class="nearby-card">',
+        '<p class="section-eyebrow">Closest events</p>',
+        eventList ? '<ul>' + eventList + '</ul>' : '<p class="text-muted">No events within reach right now.</p>',
+        '</div>',
+        '<div class="nearby-card">',
+        '<p class="section-eyebrow">Closest places</p>',
+        placeList ? '<ul>' + placeList + '</ul>' : '<p class="text-muted">Try moving the map to find places.</p>',
+        '</div>',
+        '</div>',
+      ].join('');
+    }
+
+    function init() {
+      const el = document.getElementById("cigar-events-map");
+      if (!el || el.dataset.bound === "1" || typeof L === "undefined") return;
+      el.dataset.bound = "1";
+
+      const data = JSON.parse(el.dataset.tnc || '{"events":[],"places":[]}');
+
+      const map = L.map(el, { worldCopyJump: true, scrollWheelZoom: false }).setView(STOCKHOLM, 4);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      data.places.forEach((p) => {
+        const m = L.marker([p.lat, p.lng], { icon: pinIcon(L, p.type), title: p.name });
+        m.bindPopup(popupHtml(p, "place"), { maxWidth: 320 });
+        m.addTo(map);
+      });
+      data.events.forEach((e) => {
+        const m = L.marker([e.lat, e.lng], { icon: pinIcon(L, "festival"), title: e.name });
+        m.bindPopup(popupHtml(e, "festival"), { maxWidth: 320 });
+        m.addTo(map);
+      });
+
+      // Default nearby card uses Stockholm; geolocation upgrades it
+      renderNearby({ lat: STOCKHOLM[0], lng: STOCKHOLM[1] }, data.places, data.events);
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const user = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            map.setView([user.lat, user.lng], 7);
+            L.circleMarker([user.lat, user.lng], {
+              radius: 7,
+              fillColor: "#ff2e2e",
+              fillOpacity: 1,
+              color: "#fff",
+              weight: 2,
+            }).addTo(map).bindPopup("<strong>You are here</strong>");
+            renderNearby(user, data.places, data.events);
+          },
+          () => {},
+          { enableHighAccuracy: false, maximumAge: 600000, timeout: 8000 }
+        );
+      }
+    }
+
+    // Wait for Leaflet to finish loading from CDN before initialising.
+    function ready() {
+      if (typeof L !== "undefined") { init(); return; }
+      setTimeout(ready, 100);
+    }
+    document.addEventListener("astro:page-load", ready);
+    if (document.readyState === "complete") ready();
+    else window.addEventListener("load", ready);
+  })();
+</script>
+
+<style is:global>
+  /* Container */
+  .events-map-section {
+    max-width: 100%;
+    padding: 2.5rem 0 3.5rem;
+  }
+  .events-map-header { padding: 0 1.5rem 1.5rem; max-width: 90rem; margin: 0 auto; }
+  .events-map-legend {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
+    padding: 0 1.5rem 1.25rem; max-width: 90rem; margin: 0 auto;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+  }
+  .events-map {
+    width: 100%;
+    height: 460px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  @media (min-width: 768px) { .events-map { height: 580px; } }
+
+  /* Legend pins */
+  .legend-pin {
+    display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+    margin-right: 0.4rem; vertical-align: middle;
+  }
+  .legend-pin--festival      { background: #ff2e2e; }
+  .legend-pin--casadelhabano { background: #6e2620; }
+  .legend-pin--house         { background: #b08968; }
+  .legend-pin--lounge        { background: #1fa0e0; }
+  .legend-pin--retailer      { background: #2b2b2b; }
+  .legend-pin--pub           { background: #eab308; }
+  .legend-pin--club          { background: #6c3483; }
+  .legend-label { color: var(--color-text-soft); margin-right: 0.4rem; }
+
+  /* Map pins (DivIcon) */
+  .tnc-pin { display: flex; align-items: center; justify-content: center; }
+  .tnc-pin__dot {
+    display: block; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .tnc-pin--festival       .tnc-pin__dot { background: #ff2e2e; }
+  .tnc-pin--casadelhabano  .tnc-pin__dot { background: #6e2620; }
+  .tnc-pin--house          .tnc-pin__dot { background: #b08968; }
+  .tnc-pin--lounge         .tnc-pin__dot { background: #1fa0e0; }
+  .tnc-pin--retailer       .tnc-pin__dot { background: #2b2b2b; }
+  .tnc-pin--pub            .tnc-pin__dot { background: #eab308; }
+  .tnc-pin--club           .tnc-pin__dot { background: #6c3483; }
+
+  /* Popups */
+  .leaflet-popup-content-wrapper {
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+  .tnc-popup { padding: 0.25rem 0.5rem; min-width: 220px; }
+  .tnc-popup__eyebrow {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-accent); margin: 0 0 0.4rem 0;
+  }
+  .tnc-popup__title {
+    font-family: var(--font-display); font-weight: 800; line-height: 1.15;
+    font-size: 1.05rem; margin: 0 0 0.35rem 0; color: var(--color-text);
+  }
+  .tnc-popup__date {
+    font-size: 0.85rem; color: var(--color-burgundy);
+    font-weight: 600; margin: 0 0 0.45rem 0;
+  }
+  .tnc-popup__addr { font-size: 0.78rem; color: var(--color-text-muted); margin: 0 0 0.35rem 0; }
+  .tnc-popup__blurb { font-size: 0.85rem; line-height: 1.5; color: var(--color-text-soft); margin: 0 0 0.6rem 0; }
+  .tnc-popup__cta {
+    font-size: 0.78rem; font-weight: 700; color: var(--color-accent);
+    text-decoration: none; letter-spacing: 0.02em;
+  }
+  .tnc-popup__cta:hover { text-decoration: underline; }
+
+  /* Nearby panel under the map */
+  .events-map-nearby { padding: 1.5rem; max-width: 90rem; margin: 0 auto; }
+  .nearby-grid {
+    display: grid; gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 768px) {
+    .nearby-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  }
+  .nearby-card {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.25rem 1.25rem 1rem;
+  }
+  .nearby-card .section-eyebrow { margin-bottom: 0.75rem; }
+  .nearby-card ul { list-style: none; padding: 0; margin: 0; }
+  .nearby-card li { padding: 0.45rem 0; border-bottom: 1px solid var(--color-border); font-size: 0.92rem; color: var(--color-text-soft); }
+  .nearby-card li:last-child { border-bottom: 0; }
+  .nearby-card a { color: var(--color-accent); text-decoration: none; }
+  .nearby-card a:hover { text-decoration: underline; }
+  .distance-pill {
+    display: inline-block; min-width: 3.5rem; text-align: center;
+    background: var(--color-burgundy); color: #fff;
+    padding: 0.1rem 0.45rem; border-radius: 3px;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+    margin-right: 0.5rem; vertical-align: middle;
+  }
+  .text-muted { color: var(--color-text-muted); font-size: 0.88rem; }
+</style>
