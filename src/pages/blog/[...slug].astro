@@ -21,13 +21,22 @@ const category = data.category ? await getEntry("categories", data.category) : n
 const author = data.author ? await getEntry("authors", data.author) : null;
 
 const allPosts = await getCollection("blog");
-const related = allPosts
+
+// Related = same category first (most recent), backfilled with other
+// categories if there are fewer than 3 in the same category. Guarantees
+// every post gets 3 internal links from this section — single biggest
+// sitewide SEO lift since it satisfies Yoast's "internal links: 2+"
+// check on every post automatically.
+const sameCategory = allPosts
   .filter((p) => p.id !== post.id && p.data.category === data.category)
-  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
-  .slice(0, 3);
-const moreFromArchive = allPosts
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
+const otherCategories = allPosts
   .filter((p) => p.id !== post.id && p.data.category !== data.category)
-  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime())
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
+
+const related = [...sameCategory, ...otherCategories].slice(0, 3);
+const moreFromArchive = otherCategories
+  .filter((p) => !related.includes(p))
   .slice(0, 3);
 
 const categoryByslug = new Map((await getCollection("categories")).map((c) => [c.data.slug, c.data]));
