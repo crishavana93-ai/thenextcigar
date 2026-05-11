@@ -61,7 +61,7 @@ const fmtDate = (d: Date | string) =>
           ))}
         </div>
         <p class="category-tag mb-3">{categoryName}</p>
-        <h3 class="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.1] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+        <h3 class="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.1] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-headline-hover-on-light)] transition-colors duration-300">
           {featured.data.title}
         </h3>
         {featured.data.excerpt && (
@@ -99,7 +99,7 @@ const fmtDate = (d: Date | string) =>
             </div>
             <div class="flex-1 min-w-0">
               <p class="category-tag mb-2 text-[0.65rem]">{categoryName}</p>
-              <h4 class="font-display text-base lg:text-lg leading-snug text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors line-clamp-3">
+              <h4 class="font-display text-base lg:text-lg leading-snug text-[color:var(--color-text)] group-hover:text-[color:var(--color-headline-hover-on-light)] transition-colors duration-300 line-clamp-3">
                 {p.data.title}
               </h4>
               <p class="mt-2 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">

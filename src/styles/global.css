@@ -49,6 +49,12 @@
   --color-accent-hover: #e54d2e;
   --color-accent-soft: #ff2e2e;
   --color-accent-deep: #a61b1b;
+  /* Refined hover tokens for HEADLINES over photos / dark surfaces.
+     Using primary red on big titles felt like a sale banner; warm cream
+     and burgundy land as premium editorial. Use these in card titles
+     instead of --color-accent for headline hover states. */
+  --color-headline-hover-on-dark: #f0e5b8;  /* cream-deep over photos */
+  --color-headline-hover-on-light: #6e2620; /* burgundy on white cards */
   --color-yellow: #eab308;
   --color-cyan: #1fa0e0;
   --color-burgundy: #6e2620;
@@ -391,10 +397,11 @@ header, footer { position: relative; z-index: 10; }
   letter-spacing: -0.015em;
   line-height: 1.2;
   color: var(--color-text);
-  transition: color 200ms;
+  transition: color 300ms var(--ease-out-expo);
 }
 .card:hover .card-title {
-  color: var(--color-accent);
+  /* Burgundy on hover — refined editorial feel rather than primary red */
+  color: var(--color-headline-hover-on-light);
 }
 .card-meta {
   margin-top: 0.75rem;

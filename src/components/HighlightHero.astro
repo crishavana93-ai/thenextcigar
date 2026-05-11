@@ -47,7 +47,7 @@ const fmtDate = (d: Date | string) =>
         <div class="absolute inset-0 bg-gradient-to-t from-[color:var(--color-bg)] via-[color:var(--color-bg)]/50 to-transparent"></div>
         <div class="absolute bottom-0 left-0 right-0 p-6 md:p-10">
           {fc && <p class="category-tag mb-3">{fc.name}</p>}
-          <h2 class="font-display text-2xl md:text-4xl lg:text-5xl leading-[1.05] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+          <h2 class="font-display text-2xl md:text-4xl lg:text-5xl leading-[1.05] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-headline-hover-on-light)] transition-colors duration-300">
             {featured.data.title}
           </h2>
           {featured.data.excerpt && (
@@ -88,7 +88,7 @@ const fmtDate = (d: Date | string) =>
               ))}
             </div>
             {c && <p class="category-tag mb-2">{c.name}</p>}
-            <h3 class="font-display text-lg md:text-xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
+            <h3 class="font-display text-lg md:text-xl leading-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-headline-hover-on-light)] transition-colors duration-300">
               {p.data.title}
             </h3>
             <p class="mt-2 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
