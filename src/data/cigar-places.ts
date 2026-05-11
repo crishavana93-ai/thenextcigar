@@ -301,6 +301,44 @@ export const places: CigarPlace[] = [
     website: "https://wolarsen.dk/",
     note: "Trading since 1864. Specialists in the Danish pipe tradition but the cigar room is serious. Walk-in humidor and a quiet smoking lounge.",
   },
+  {
+    slug: "macanudo-copenhagen",
+    name: "Cigar Shop Macanudo Copenhagen",
+    type: "retailer",
+    city: "Copenhagen",
+    country: "Denmark",
+    address: "Silkegade 23, 1113 København K",
+    lat: 55.6803,
+    lng: 12.5807,
+    website: "https://clubmacanudo.com/locations/copenhagen/",
+    note: "STG's relaunch of the former Davidoff My Own Blend store. Walk-in humidor with a strong Macanudo and General Cigar selection, a few steps from Strøget.",
+  },
+  {
+    slug: "musen-og-elefanten",
+    name: "Musen & Elefanten",
+    type: "pub",
+    city: "Copenhagen",
+    country: "Denmark",
+    address: "Vestergade 21, 1456 København K",
+    lat: 55.6776,
+    lng: 12.5710,
+    website: "https://musenogelefanten.dk/",
+    note: "One of the only bars in Denmark that sells cigars. Two floors, old-Copenhagen apartment vibe, smoking nights on designated days. The cult cigar bar of København.",
+  },
+
+  // ─── SOUTHERN SWEDEN ─────────────────────────────────────────────────────
+  {
+    slug: "malmo-cigarr-tobakshandel",
+    name: "Malmö Cigarr & Tobakshandel",
+    type: "retailer",
+    city: "Malmö",
+    country: "Sweden",
+    address: "Gustav Adolfs Torg 41, 211 39 Malmö",
+    lat: 55.6035,
+    lng: 13.0009,
+    website: "https://www.facebook.com/MalmoCigarrTobakshandel/",
+    note: "Small shop, big depth. The cigar specialist for southern Sweden — walk-in humidor on Gustav Adolfs Torg, the destination for serious Skåne smokers.",
+  },
 
   // ─── ASIA ───────────────────────────────────────────────────────────────
   {

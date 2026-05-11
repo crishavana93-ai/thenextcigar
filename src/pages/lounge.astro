@@ -1,0 +1,554 @@
+---
+/**
+ * /lounge — MVP landing page for The Lounge.
+ *
+ * Vetted IRL connection layer for cigar travelers and locals.
+ * This page is the validation funnel: it explains the concept, captures
+ * waitlist signups, and sets the cultural tone for the founding cohort.
+ * No real product behind it yet — first 60 days are WhatsApp-group beta
+ * before we write any code.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { places } from "../data/cigar-places";
+
+const heroPlaces = places.slice(0, 6);
+const cityCount = new Set(places.map((p) => p.city)).size;
+---
+
+<BaseLayout
+  title="The Lounge — A members-only network for cigar travelers"
+  description="The Next Cigar's invite-only network for cigar smokers who travel. Find verified members in your city tonight, get welcomed into lounges abroad, smoke better wherever you land."
+>
+  {/* ─── HERO ─── */}
+  <section class="lounge-hero">
+    <div class="container-wide pt-24 md:pt-32 pb-20 reveal">
+      <p class="lounge-eyebrow">By invitation · Launching Q3 2026</p>
+      <h1 class="lounge-title">
+        Find your people.<br/>
+        Wherever you land.
+      </h1>
+      <p class="lounge-lead">
+        The Lounge is a vetted, members-only network for cigar smokers who
+        travel. Walk into a strange city, open the app, see which verified
+        members are at the lounge tonight — or which local hosts will welcome
+        you to theirs.
+      </p>
+      <p class="lounge-lead lounge-lead--soft">
+        No swipes, no selling, no noise. Lounge-paced introductions, real
+        people, real smokes. Built on top of The Next Cigar's editorial
+        community — the same readers you already trust.
+      </p>
+
+      <form
+        id="lounge-waitlist"
+        class="lounge-waitlist"
+        action="https://formsubmit.co/guatabeycigars@gmail.com"
+        method="POST"
+      >
+        <input type="hidden" name="_subject" value="The Lounge — Waitlist signup" />
+        <input type="hidden" name="_template" value="table" />
+        <input type="hidden" name="_captcha" value="true" />
+        <input type="hidden" name="_next" value="https://thenextcigar.com/lounge/?joined=1" />
+        <input type="hidden" name="_honey" value="" />
+        <input
+          type="email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="your-email@anywhere.com"
+          aria-label="Email"
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="Your home city"
+          aria-label="City"
+        />
+        <button type="submit" class="btn btn-accent">Request invite →</button>
+      </form>
+      <p class="lounge-fineprint">
+        Founding cohort is capped at 200 invitations. We're hand-vetting every
+        signup. 21+ only.
+      </p>
+    </div>
+  </section>
+
+  {/* ─── HOW IT WORKS ─── */}
+  <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
+    <p class="section-eyebrow">How it works</p>
+    <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
+      Five things, built to respect lounge etiquette.
+    </h2>
+
+    <div class="lounge-features">
+      <div class="lounge-feature reveal">
+        <span class="lounge-feature__num">01</span>
+        <h3>Check in to a lounge</h3>
+        <p>
+          Walk into a partner lounge, tap "I'm here." Other verified members
+          inside see you've arrived. They can wave across the room — literally —
+          or send a quiet "join me?" tap. No public broadcast.
+        </p>
+      </div>
+      <div class="lounge-feature reveal" data-reveal-delay="2">
+        <span class="lounge-feature__num">02</span>
+        <h3>Travel mode</h3>
+        <p>
+          Flag your next trip. See verified members who'll be in that city the
+          same week, local hosts who've offered to welcome visitors, and the
+          editorial map of lounges worth your time.
+        </p>
+      </div>
+      <div class="lounge-feature reveal" data-reveal-delay="3">
+        <span class="lounge-feature__num">03</span>
+        <h3>Verified hosts</h3>
+        <p>
+          A subset of members opt in to host visitors in their home city.
+          Reputation-tracked. Hosts get recognition, partner-lounge perks, and
+          the founding badge that comes with being one of the first.
+        </p>
+      </div>
+      <div class="lounge-feature reveal">
+        <span class="lounge-feature__num">04</span>
+        <h3>Slow messaging</h3>
+        <p>
+          DMs unlock only after you've been at the same lounge, been
+          host-introduced, or sent a single template intro. No mass-messaging,
+          no swipes, no hustle. Built for a smoke-paced conversation.
+        </p>
+      </div>
+      <div class="lounge-feature reveal" data-reveal-delay="2">
+        <span class="lounge-feature__num">05</span>
+        <h3>Partner lounges</h3>
+        <p>
+          A growing network of verified lounges worldwide where members get
+          recognized at the door. Complimentary first coffee at most,
+          members-only nights at some. Discovery for travelers, foot traffic
+          for the houses.
+        </p>
+      </div>
+      <div class="lounge-feature reveal" data-reveal-delay="3">
+        <span class="lounge-feature__num">06</span>
+        <h3>Concierge tier</h3>
+        <p>
+          For the deeper travelers: pre-trip planning, host introductions
+          arranged in advance, festival pre-events at Habanos, ProCigar, and
+          Big Smoke. Available to upgrade after your first six months.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* ─── CITIES STRIP ─── */}
+  <section class="lounge-cities-band">
+    <div class="container-wide py-16 reveal">
+      <p class="section-eyebrow text-[color:var(--color-text-on-dark-mute)]">Founding network</p>
+      <h2 class="font-display text-3xl md:text-4xl leading-tight mt-2 text-[color:var(--color-text-on-dark)]">
+        Hand-picked across {cityCount} cities. Growing every month.
+      </h2>
+      <div class="lounge-cities-grid">
+        {heroPlaces.map((p) => (
+          <div class="lounge-city-card">
+            <p class="lounge-city-card__city">{p.city}</p>
+            <p class="lounge-city-card__name">{p.name}</p>
+            <p class="lounge-city-card__country">{p.country}</p>
+          </div>
+        ))}
+      </div>
+      <p class="mt-8 text-sm text-[color:var(--color-text-on-dark-mute)]">
+        Full map of partner-eligible houses on the <a href="/category/cigar-events/" class="underline hover:text-[color:var(--color-accent)]">Events &amp; Map page →</a>
+      </p>
+    </div>
+  </section>
+
+  {/* ─── PRICING ─── */}
+  <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
+    <p class="section-eyebrow">Membership</p>
+    <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
+      Two tiers. One quiet community.
+    </h2>
+
+    <div class="lounge-pricing">
+      <div class="lounge-tier reveal">
+        <p class="lounge-tier__name">Member</p>
+        <p class="lounge-tier__price">$89<span>/year</span></p>
+        <p class="lounge-tier__pitch">For aficionados who travel a few times a year and want the people, not the algorithm.</p>
+        <ul>
+          <li>Verified profile + founding badge</li>
+          <li>Check-in at all partner lounges</li>
+          <li>Travel mode for any city</li>
+          <li>Member directory across {cityCount}+ cities</li>
+          <li>Quarterly TNC members-only digest</li>
+        </ul>
+      </div>
+      <div class="lounge-tier lounge-tier--featured reveal" data-reveal-delay="2">
+        <span class="lounge-tier__flag">Founding offer</span>
+        <p class="lounge-tier__name">Concierge</p>
+        <p class="lounge-tier__price">$349<span>/year</span></p>
+        <p class="lounge-tier__pitch">For the deeper traveler. Hand-arranged introductions, pre-festival meetings, the real network.</p>
+        <ul>
+          <li>Everything in Member</li>
+          <li>Pre-trip host introductions arranged in advance</li>
+          <li>Reserved seats at TNC festival pre-events (Habanos, ProCigar, Big Smoke)</li>
+          <li>Direct line to the TNC editorial team for travel questions</li>
+          <li>Annual gift from a partner house</li>
+        </ul>
+      </div>
+    </div>
+    <p class="mt-8 text-sm text-[color:var(--color-text-muted)] max-w-2xl">
+      Founding cohort pricing locks for two years. Concierge tier opens by
+      invitation after the first six months of Member-tier activity.
+    </p>
+  </section>
+
+  {/* ─── INSTALL THE APP ─── */}
+  <section class="container-wide pb-20 reveal">
+    <div class="lounge-install">
+      <div>
+        <p class="section-eyebrow">Install</p>
+        <h2 class="font-display text-2xl md:text-3xl leading-tight mt-2">Add The Next Cigar to your home screen</h2>
+        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
+          The Lounge is web-first. Install thenextcigar.com as an app on iOS or
+          Android in two taps — full-screen, no browser chrome, and check-in
+          notifications when you arrive at a partner lounge.
+        </p>
+      </div>
+      <div class="lounge-install__actions">
+        <button id="install-pwa" class="btn btn-accent" hidden>Install the app</button>
+        <details class="lounge-install__help">
+          <summary>How to install manually</summary>
+          <div>
+            <p><strong>iPhone / iPad (Safari):</strong> tap the Share button → "Add to Home Screen" → Add.</p>
+            <p><strong>Android (Chrome):</strong> tap the three-dot menu → "Install app" / "Add to Home Screen."</p>
+            <p><strong>Desktop (Chrome, Edge, Brave):</strong> address bar shows an install icon — click it.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  {/* ─── FAQ ─── */}
+  <section class="container-wide pb-24">
+    <p class="section-eyebrow">Common questions</p>
+    <h2 class="font-display text-3xl md:text-4xl leading-tight mt-2">Honest answers.</h2>
+
+    <div class="lounge-faq reveal">
+      <details>
+        <summary>When does the Lounge launch?</summary>
+        <p>We're in private beta with the founding cohort starting Q3 2026. Public-paid launch follows in Q4 once we've proven the WhatsApp-only beta actually drives real meet-ups. We won't ship code we're not confident in.</p>
+      </details>
+      <details>
+        <summary>Why pay? Other forums are free.</summary>
+        <p>Free communities (Reddit, FOH) solve a different problem — online discussion. The Lounge is about IRL coordination. The $89 fee is both pricing and a quality filter; trolls don't pay $89/year to bother strangers. It also funds verification and partner-lounge programming.</p>
+      </details>
+      <details>
+        <summary>Is this an app I download or a website?</summary>
+        <p>Web-first, installable as a PWA (Progressive Web App). Tap the install button above or use your browser's "Add to Home Screen" — you get a full-screen native-feeling app without the App Store gatekeeping. Native iOS/Android come later.</p>
+      </details>
+      <details>
+        <summary>I run a lounge. Can I be a partner?</summary>
+        <p>Yes — that's a core part of the model. <a href="/contact/" class="text-[color:var(--color-accent)] underline">Get in touch</a> and we'll send the partner deck. Partner lounges get listed in-app, verified-member walk-ins, and quarterly featured-house slots in TNC editorial.</p>
+      </details>
+      <details>
+        <summary>What about privacy?</summary>
+        <p>Discretion is baked in. Profiles default to first-name + initial. No public broadcasts. No location sharing unless you actively check in. No data sold. The community polices itself — anyone reported by two members is auto-suspended pending review.</p>
+      </details>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lounge-hero {
+    background:
+      radial-gradient(circle at 20% 30%, rgba(110, 38, 32, 0.08), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255, 46, 46, 0.05), transparent 55%),
+      var(--color-bg);
+  }
+  .lounge-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 1.25rem;
+  }
+  .lounge-title {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    max-width: 30ch;
+    color: var(--color-text);
+  }
+  @media (min-width: 768px) { .lounge-title { font-size: 4.5rem; } }
+  @media (min-width: 1024px) { .lounge-title { font-size: 5.5rem; } }
+  .lounge-lead {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+    max-width: 36rem;
+  }
+  .lounge-lead--soft { color: var(--color-text-muted); }
+  .lounge-waitlist {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    max-width: 40rem;
+  }
+  .lounge-waitlist input[type="email"],
+  .lounge-waitlist input[type="text"] {
+    flex: 1 1 12rem;
+    min-width: 12rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.95rem;
+    color: var(--color-text);
+  }
+  .lounge-waitlist input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .lounge-waitlist .btn { flex: 0 0 auto; }
+  .lounge-fineprint {
+    margin-top: 0.85rem;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .lounge-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+  @media (min-width: 768px) { .lounge-features { grid-template-columns: 1fr 1fr; gap: 2.5rem; } }
+  @media (min-width: 1024px) { .lounge-features { grid-template-columns: 1fr 1fr 1fr; } }
+  .lounge-feature__num {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    color: var(--color-accent);
+    margin-bottom: 0.85rem;
+  }
+  .lounge-feature h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 0.65rem;
+    color: var(--color-text);
+  }
+  .lounge-feature p {
+    color: var(--color-text-soft);
+    line-height: 1.6;
+  }
+
+  .lounge-cities-band {
+    background: var(--color-dark);
+    color: var(--color-text-on-dark);
+  }
+  .lounge-cities-grid {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 640px) { .lounge-cities-grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .lounge-cities-grid { grid-template-columns: repeat(3, 1fr); } }
+  .lounge-city-card {
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-dark-border);
+    border-radius: 4px;
+    background: var(--color-dark-surface);
+  }
+  .lounge-city-card__city {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 0.4rem;
+  }
+  .lounge-city-card__name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    line-height: 1.25;
+    color: var(--color-text-on-dark);
+    margin-bottom: 0.3rem;
+  }
+  .lounge-city-card__country {
+    font-size: 0.82rem;
+    color: var(--color-text-on-dark-mute);
+  }
+
+  .lounge-pricing {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 768px) { .lounge-pricing { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+  .lounge-tier {
+    padding: 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-soft);
+    position: relative;
+  }
+  .lounge-tier--featured {
+    border-color: var(--color-accent);
+    box-shadow: 0 8px 32px rgba(255, 46, 46, 0.08);
+  }
+  .lounge-tier__flag {
+    position: absolute;
+    top: -12px;
+    left: 2rem;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.7rem;
+    border-radius: 3px;
+  }
+  .lounge-tier__name {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+  }
+  .lounge-tier__price {
+    font-family: var(--font-display);
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .lounge-tier__price span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    letter-spacing: 0;
+  }
+  .lounge-tier__pitch {
+    color: var(--color-text-soft);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+  .lounge-tier ul { list-style: none; padding: 0; margin: 0; }
+  .lounge-tier li {
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  .lounge-tier li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+  .lounge-tier li:last-child { border-bottom: 0; }
+
+  .lounge-install {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-soft);
+  }
+  @media (min-width: 768px) {
+    .lounge-install {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3rem;
+    }
+  }
+  .lounge-install__actions { flex: 0 0 auto; min-width: 16rem; }
+  .lounge-install__help {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+  .lounge-install__help summary {
+    cursor: pointer;
+    color: var(--color-text-soft);
+  }
+  .lounge-install__help div p {
+    margin: 0.5rem 0;
+    color: var(--color-text-muted);
+  }
+
+  .lounge-faq { margin-top: 2.5rem; max-width: 50rem; }
+  .lounge-faq details {
+    border-bottom: 1px solid var(--color-border);
+    padding: 1.25rem 0;
+  }
+  .lounge-faq summary {
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .lounge-faq summary::after {
+    content: "+";
+    font-size: 1.5rem;
+    color: var(--color-accent);
+    font-weight: 300;
+    transition: transform 0.25s ease;
+  }
+  .lounge-faq details[open] summary::after { transform: rotate(45deg); }
+  .lounge-faq p {
+    margin-top: 1rem;
+    color: var(--color-text-soft);
+    line-height: 1.6;
+  }
+</style>
+
+<script is:inline>
+  // PWA install prompt — only shows the in-page button when the browser
+  // raises beforeinstallprompt (Chrome/Edge/Brave). iOS Safari handles
+  // install via Share menu, which the FAQ covers.
+  (function () {
+    let deferredPrompt = null;
+    const btn = document.getElementById("install-pwa");
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (btn) btn.hidden = false;
+    });
+    btn?.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") btn.hidden = true;
+      deferredPrompt = null;
+    });
+    // Also check if running already as installed PWA
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      if (btn) btn.textContent = "App installed ✓";
+    }
+  })();
+</script>
