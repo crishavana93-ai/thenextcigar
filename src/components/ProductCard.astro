@@ -14,16 +14,24 @@ const fmtPrice = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: data.currency }).format(n);
 
 const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
+const isComingSoon = (data as any).comingSoon === true;
+const expectedArrival = (data as any).expectedArrival as string | undefined;
+
+// Coming-soon products link to the Sourcing Diary post for context.
+// Available products go to the normal product detail page.
+const href = isComingSoon
+  ? "/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/"
+  : `/shop/${data.slug}/`;
 ---
 
-<a href={`/shop/${data.slug}/`} class="card reveal block group" data-reveal-delay={delay} aria-label={data.name}>
+<a href={href} class="card reveal block group" data-reveal-delay={delay} aria-label={data.name}>
   <div class="card-image relative">
     {typeof data.cover === "string" ? (
       <img
         src={data.cover}
         alt={data.name}
         loading="lazy"
-        class="w-full h-full object-cover"
+        class={`w-full h-full object-cover ${isComingSoon ? "card-image--dim" : ""}`}
       />
     ) : (
       <Image
@@ -32,13 +40,39 @@ const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
         widths={[400, 800, 1200]}
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         loading="lazy"
+        class={isComingSoon ? "card-image--dim" : ""}
       />
     )}
-    {isOnSale && (
+
+    {/* Coming Soon — primary badge + center overlay text */}
+    {isComingSoon && (
+      <>
+        <span class="absolute top-3 left-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-burgundy)] text-white rounded-sm">
+          Coming Soon
+        </span>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="px-4 py-2 bg-[color:var(--color-dark)]/70 backdrop-blur-[2px] rounded-sm">
+            <p class="text-white text-[0.7rem] font-bold tracking-[0.22em] uppercase text-center">
+              Coming Soon
+            </p>
+            {expectedArrival && (
+              <p class="mt-0.5 text-white/70 text-[0.62rem] tracking-widest uppercase text-center">
+                {expectedArrival}
+              </p>
+            )}
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* Sale tag — only when NOT coming soon */}
+    {!isComingSoon && isOnSale && (
       <span class="absolute top-3 left-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-white rounded-sm">
         Sale
       </span>
     )}
+
+    {/* Digital tag — independent of coming-soon state */}
     {data.type === "digital" && (
       <span class="absolute top-3 right-3 px-2.5 py-1.5 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-dark)] text-white rounded-sm flex items-center gap-1.5">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -54,10 +88,30 @@ const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
       </p>
     )}
     <div class="mt-4 flex items-baseline gap-3">
-      <span class="font-semibold text-[color:var(--color-text)]">{fmtPrice(data.price)}</span>
-      {isOnSale && (
-        <span class="text-sm text-[color:var(--color-text-mute-2)] line-through">{fmtPrice(data.compareAtPrice!)}</span>
+      {isComingSoon ? (
+        <span class="text-sm font-semibold tracking-wider uppercase text-[color:var(--color-burgundy)]">
+          Notify me when it lands →
+        </span>
+      ) : (
+        <>
+          <span class="font-semibold text-[color:var(--color-text)]">{fmtPrice(data.price)}</span>
+          {isOnSale && (
+            <span class="text-sm text-[color:var(--color-text-mute-2)] line-through">{fmtPrice(data.compareAtPrice!)}</span>
+          )}
+        </>
       )}
     </div>
   </div>
 </a>
+
+<style>
+  /* Coming-soon images get a subtle desaturation + warm tint so they read
+     as "preview / not the real product yet" without looking broken */
+  .card-image--dim {
+    filter: grayscale(35%) brightness(0.78) sepia(8%);
+    transition: filter 0.4s ease;
+  }
+  .group:hover .card-image--dim {
+    filter: grayscale(20%) brightness(0.88);
+  }
+</style>

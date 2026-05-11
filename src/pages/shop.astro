@@ -4,8 +4,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import ProductCard from "../components/ProductCard.astro";
 import Newsletter from "../components/Newsletter.astro";
 
-const products = (await getCollection("products"))
-  .filter((p) => !p.data.isArchived)
+const allProducts = (await getCollection("products"))
+  .filter((p) => !p.data.isArchived);
+
+// Coming-soon products section off to the bottom of the page so the
+// available SKUs read as the "real" shop and the previews don't compete
+// for attention.
+const products = allProducts.filter((p) => !(p.data as any).comingSoon)
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+const comingSoon = allProducts.filter((p) => (p.data as any).comingSoon === true)
   .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
 
 const featured = products.filter((p) => p.data.featured);
@@ -52,6 +59,36 @@ const rest = products.filter((p) => !p.data.featured);
     <section class="container-narrow pb-24 text-center reveal">
       <p class="font-display text-3xl mb-4">Coming soon.</p>
       <p class="text-[color:var(--color-text-muted)]">The shop is being stocked. Check back next week.</p>
+    </section>
+  )}
+
+  {/* ─── COMING SOON SECTION ─── */}
+  {comingSoon.length > 0 && (
+    <section class="container-wide pb-24">
+      <div class="hairline mb-16"></div>
+      <div class="flex items-end justify-between mb-12 reveal flex-wrap gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-[color:var(--color-burgundy)] mb-2 font-bold">
+            Sourcing now
+          </p>
+          <h2 class="font-display text-3xl md:text-4xl leading-tight">Coming soon</h2>
+          <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl text-base">
+            Pieces we're sampling, testing, and stocking right now. Read the full sourcing story in
+            <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="text-[color:var(--color-accent)] underline">Sourcing Diary No. 1</a>
+            — or
+            <a href="/subscribe/" class="text-[color:var(--color-accent)] underline">subscribe</a>
+            to be alerted when each piece lands.
+          </p>
+        </div>
+        <a href="/subscribe/" class="btn btn-accent self-start whitespace-nowrap">
+          Get launch alerts
+        </a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        {comingSoon.map((p, i) => (
+          <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
+        ))}
+      </div>
     </section>
   )}
 

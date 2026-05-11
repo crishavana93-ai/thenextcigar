@@ -141,6 +141,13 @@ const products = defineCollection({
       // Publication state
       publishedAt: z.coerce.date(),
       isArchived: z.boolean().default(false),
+      // Coming Soon — true for products that don't have real photos /
+      // confirmed inventory yet. ProductCard renders a "COMING SOON" badge
+      // instead of a price, and the CTA becomes "Notify me when it lands".
+      // Real available products keep this false (default).
+      comingSoon: z.boolean().default(false),
+      // Optional date string used in the Coming Soon caption ("Arriving August 2026")
+      expectedArrival: z.string().optional().nullable(),
       // SEO
       seo: z
         .object({
