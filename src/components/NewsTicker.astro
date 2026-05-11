@@ -58,16 +58,23 @@ const posts = (await getCollection("blog"))
     display: flex;
     align-items: center;
   }
+  .news-ticker__viewport::before,
   .news-ticker__viewport::after {
     content: "";
     position: absolute;
-    right: 0;
     top: 0;
     bottom: 0;
-    width: 80px;
-    background: linear-gradient(to right, transparent, var(--color-dark));
+    width: 60px;
     pointer-events: none;
     z-index: 1;
+  }
+  .news-ticker__viewport::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-dark), transparent);
+  }
+  .news-ticker__viewport::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-dark), transparent);
   }
   .news-ticker__track {
     display: inline-flex;

@@ -42,7 +42,14 @@ const fmtDate = (d: Date | string) =>
       {/* Featured of category */}
       <a href={`/blog/${featured.data.slug}`} class="reveal group block">
         <div class="relative overflow-hidden rounded aspect-[16/10] bg-[color:var(--color-surface)] mb-6">
-          {featured.data.cover && (
+          {featured.data.cover && (typeof featured.data.cover === "string" ? (
+            <img
+              src={featured.data.cover}
+              alt={featured.data.title}
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
             <Image
               src={featured.data.cover}
               alt={featured.data.title}
@@ -51,7 +58,7 @@ const fmtDate = (d: Date | string) =>
               class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               loading="lazy"
             />
-          )}
+          ))}
         </div>
         <p class="category-tag mb-3">{categoryName}</p>
         <h3 class="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.1] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-accent)] transition-colors">
@@ -72,7 +79,14 @@ const fmtDate = (d: Date | string) =>
         {rest.map((p, i) => (
           <a href={`/blog/${p.data.slug}`} class="reveal group flex gap-4 py-5 first:pt-0" data-reveal-delay={(i + 1) as 1 | 2 | 3}>
             <div class="relative overflow-hidden rounded w-32 h-24 lg:w-40 lg:h-28 flex-shrink-0 bg-[color:var(--color-surface)]">
-              {p.data.cover && (
+              {p.data.cover && (typeof p.data.cover === "string" ? (
+                <img
+                  src={p.data.cover}
+                  alt={p.data.title}
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+              ) : (
                 <Image
                   src={p.data.cover}
                   alt={p.data.title}
@@ -81,7 +95,7 @@ const fmtDate = (d: Date | string) =>
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                 />
-              )}
+              ))}
             </div>
             <div class="flex-1 min-w-0">
               <p class="category-tag mb-2 text-[0.65rem]">{categoryName}</p>

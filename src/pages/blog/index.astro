@@ -38,7 +38,14 @@ const fmtDate = (d: Date | string) =>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
           <div class="lg:col-span-7">
             <div class="relative overflow-hidden rounded-sm aspect-[16/10] bg-[color:var(--color-surface)]">
-              {featured.data.cover && (
+              {featured.data.cover && (typeof featured.data.cover === "string" ? (
+                <img
+                  src={featured.data.cover}
+                  alt={featured.data.title}
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="eager"
+                />
+              ) : (
                 <Image
                   src={featured.data.cover}
                   alt={featured.data.title}
@@ -47,7 +54,7 @@ const fmtDate = (d: Date | string) =>
                   class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="eager"
                 />
-              )}
+              ))}
               {featured.data.isPremium && (
                 <span class="absolute top-4 left-4 px-3 py-1.5 text-[0.65rem] font-bold tracking-widest uppercase bg-[color:var(--color-dark)] text-white rounded-sm flex items-center gap-1.5">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>

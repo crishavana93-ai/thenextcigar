@@ -13,7 +13,12 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   image: {
-    // Optimize all images automatically
+    // Allow remote optimization for Unsplash (free-license editorial covers)
+    // and Amazon CDN (product thumbnails in gear roundups).
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "m.media-amazon.com" },
+    ],
   },
   prefetch: {
     prefetchAll: true,

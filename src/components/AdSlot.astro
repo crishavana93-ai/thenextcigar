@@ -33,19 +33,73 @@ const sizeMap: Record<string, string> = {
 
 {!hidden && (
   <aside
-    class:list={["ad-slot", `ad-slot--${variant}`, className]}
+    class:list={["ad-slot", `ad-slot--${variant}`, "ad-slot--house", className]}
     role="complementary"
-    aria-label="Sponsored content"
+    aria-label="Newsletter signup"
   >
-    <div class="ad-slot__inner">
-      {label ?? `Ad slot · ${sizeMap[variant]}`}
-    </div>
     {/*
-      To wire this up:
-      1. Sign up with Ezoic (low traffic threshold) or AdSense (instant approval).
-      2. Replace this content with their <script> + <ins> code.
-      3. For Mediavine / Raptive (50k+ sessions/month), they place ads automatically
-         once their site-wide script tag is in BaseLayout.astro.
+      House-ad fallback: shown while no third-party ad network is wired.
+      Converts otherwise-empty inventory into newsletter signups. Once
+      AdSense / Ezoic / Mediavine is approved and live, replace this
+      block with their <script>+<ins> snippet — the surrounding <aside>
+      dimensions stay so layout doesn't shift.
     */}
+    <a href="/subscribe" class="ad-slot__house" data-variant={variant}>
+      <div class="ad-slot__house-eyebrow">The Next Cigar · Sunday newsletter</div>
+      <div class="ad-slot__house-title">Cigar news, deep dives, and the rare smokes worth tracking down.</div>
+      <div class="ad-slot__house-cta">Join free →</div>
+    </a>
   </aside>
 )}
+
+<style>
+  .ad-slot--house {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+  .ad-slot__house {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, var(--color-dark) 0%, #1f1f1f 100%);
+    color: var(--color-text-on-dark);
+    text-decoration: none;
+    border-radius: 6px;
+    border: 1px solid var(--color-dark-border);
+    transition: border-color 200ms, transform 200ms;
+    min-height: 90px;
+  }
+  .ad-slot__house:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+  .ad-slot__house-eyebrow {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+  .ad-slot__house-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--color-text-on-dark);
+    max-width: 60ch;
+  }
+  .ad-slot__house-cta {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-top: 0.25rem;
+  }
+  .ad-slot__house[data-variant="leaderboard"] { min-height: 90px; }
+  .ad-slot__house[data-variant="billboard"] { min-height: 250px; }
+  .ad-slot__house[data-variant="medium"] { min-height: 250px; max-width: 300px; }
+  .ad-slot__house[data-variant="halfpage"] { min-height: 480px; max-width: 300px; }
+  .ad-slot__house[data-variant="in-article"] { min-height: 200px; }
+</style>

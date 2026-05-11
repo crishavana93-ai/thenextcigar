@@ -27,7 +27,14 @@ const fmtDate = (d: Date | string) =>
     {/* FEATURED — large left, spans 2 cols */}
     <a href={`/blog/${featured.data.slug}`} class="lg:col-span-2 group reveal" aria-label={featured.data.title}>
       <div class="relative overflow-hidden rounded aspect-[16/10] bg-[color:var(--color-surface)]">
-        {featured.data.cover && (
+        {featured.data.cover && (typeof featured.data.cover === "string" ? (
+          <img
+            src={featured.data.cover}
+            alt={featured.data.title}
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 animate-drift"
+            loading="eager"
+          />
+        ) : (
           <Image
             src={featured.data.cover}
             alt={featured.data.title}
@@ -36,7 +43,7 @@ const fmtDate = (d: Date | string) =>
             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 animate-drift"
             loading="eager"
           />
-        )}
+        ))}
         <div class="absolute inset-0 bg-gradient-to-t from-[color:var(--color-bg)] via-[color:var(--color-bg)]/50 to-transparent"></div>
         <div class="absolute bottom-0 left-0 right-0 p-6 md:p-10">
           {fc && <p class="category-tag mb-3">{fc.name}</p>}

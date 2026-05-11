@@ -40,12 +40,45 @@ const words = post.body?.split(/\s+/).length ?? 0;
 const readMinutes = Math.max(1, Math.round(words / 220));
 
 const shareUrl = `https://thenextcigar.com/blog/${data.slug}`;
+const coverUrl = typeof data.cover === "string"
+  ? data.cover
+  : (data.cover?.src ?? "/og-default.svg");
+
+// Article + BreadcrumbList JSON-LD for Google rich results
+const categoryName = data.category ?? "News";
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: data.title,
+  description: data.excerpt || data.title,
+  image: [coverUrl.startsWith("http") ? coverUrl : `https://thenextcigar.com${coverUrl}`],
+  datePublished: new Date(data.publishedAt).toISOString(),
+  dateModified: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date(data.publishedAt).toISOString(),
+  author: [{ "@type": "Person", name: data.author ?? "The Next Cigar Editorial" }],
+  publisher: {
+    "@type": "Organization",
+    name: "The Next Cigar",
+    logo: { "@type": "ImageObject", url: "https://thenextcigar.com/logo.svg" },
+  },
+  mainEntityOfPage: { "@type": "WebPage", "@id": shareUrl + "/" },
+  wordCount: words,
+  articleSection: categoryName,
+};
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://thenextcigar.com/" },
+    { "@type": "ListItem", position: 2, name: "News", item: "https://thenextcigar.com/blog/" },
+    { "@type": "ListItem", position: 3, name: data.title, item: shareUrl + "/" },
+  ],
+};
 ---
 
 <BaseLayout
   title={`${data.title} — TNext Cigar`}
   description={data.excerpt || data.title}
-  image={data.cover?.src ?? "/og-default.svg"}
+  image={coverUrl}
 >
   <article>
     {/* ─── HEADLINE BLOCK ─── */}
@@ -258,6 +291,10 @@ const shareUrl = `https://thenextcigar.com/blog/${data.slug}`;
       </div>
     </section>
   )}
+
+  {/* Structured data for Google rich results */}
+  <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </BaseLayout>
 
 <script>
