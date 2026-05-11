@@ -4,6 +4,7 @@ import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ProductCard from "../../components/ProductCard.astro";
 import Newsletter from "../../components/Newsletter.astro";
+import NotifyMeForm from "../../components/NotifyMeForm.astro";
 
 export async function getStaticPaths() {
   const products = (await getCollection("products")).filter((p) => !p.data.isArchived);
@@ -21,6 +22,8 @@ const fmtPrice = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: data.currency }).format(n);
 
 const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
+const isComingSoon = (data as any).comingSoon === true;
+const expectedArrival = (data as any).expectedArrival as string | undefined;
 
 // Related products (same type, excluding this one)
 const allProducts = await getCollection("products");
@@ -100,54 +103,82 @@ const variantAttrs = (data.variants || []).map((v, i) => {
           <p class="lead mt-6">{data.excerpt}</p>
         )}
 
-        <div class="mt-8 flex items-baseline gap-4">
-          <span class="font-display text-3xl font-bold text-[color:var(--color-text)]">{fmtPrice(data.price)}</span>
-          {isOnSale && (
-            <span class="text-lg text-[color:var(--color-text-mute-2)] line-through">{fmtPrice(data.compareAtPrice!)}</span>
-          )}
-          {isOnSale && (
-            <span class="px-2 py-0.5 text-[0.65rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-white rounded-sm">
-              {Math.round(((data.compareAtPrice! - data.price) / data.compareAtPrice!) * 100)}% off
-            </span>
-          )}
-        </div>
+        {isComingSoon ? (
+          <>
+            {/* COMING SOON STATE — replaces price + Snipcart button */}
+            <div class="mt-8 inline-flex items-center gap-3 px-3 py-1.5 bg-[color:var(--color-burgundy)] text-white text-xs font-bold tracking-widest uppercase rounded-sm">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Coming Soon
+              {expectedArrival && <span class="opacity-80 normal-case tracking-normal">· Arriving {expectedArrival}</span>}
+            </div>
 
-        {/* SNIPCART BUTTON */}
-        <div class="mt-8">
-          <button
-            type="button"
-            class="snipcart-add-item btn btn-primary !px-8 !py-4 text-base"
-            data-item-id={data.sku}
-            data-item-price={data.price}
-            data-item-url={productUrl}
-            data-item-name={data.name}
-            data-item-image={typeof data.cover === "string" ? data.cover : data.cover.src}
-            data-item-description={data.excerpt || ""}
-            data-item-shippable={String(data.requiresShipping)}
-            data-item-weight={data.weight ?? ""}
-            data-item-categories={data.category || ""}
-            {...variantAttrs.reduce((acc, v) => ({ ...acc, [v.name]: v.value, [v.options]: v.optionsValue }), {})}
-            disabled={!data.inStock}
-          >
-            {data.inStock ? "Add to cart" : "Sold out"}
-          </button>
-          <a href="#" class="snipcart-checkout ml-3 text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
-            View cart →
-          </a>
-        </div>
+            <div class="mt-6">
+              <NotifyMeForm
+                sku={data.slug}
+                productName={data.name}
+                expectedArrival={expectedArrival}
+                variant="card"
+              />
+            </div>
 
-        <div class="mt-6 text-xs text-[color:var(--color-text-muted)] space-y-1">
-          {data.type === "digital" && (
-            <p>✓ Instant download · DRM-free PDF · Yours forever</p>
-          )}
-          {data.type !== "digital" && data.requiresShipping && (
-            <>
-              <p>✓ Ships within 1–3 business days</p>
-              <p>✓ 30-day return window on unused items</p>
-            </>
-          )}
-          <p>✓ Secure checkout via Stripe (Snipcart)</p>
-        </div>
+            <div class="mt-6 text-xs text-[color:var(--color-text-muted)] space-y-1">
+              <p>✓ One email when this product lands — no spam</p>
+              <p>✓ Founding-customer pricing locked in for the first 200 sign-ups</p>
+              <p>✓ Full sourcing story in <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="text-[color:var(--color-accent)] underline">Sourcing Diary No. 1</a></p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div class="mt-8 flex items-baseline gap-4">
+              <span class="font-display text-3xl font-bold text-[color:var(--color-text)]">{fmtPrice(data.price)}</span>
+              {isOnSale && (
+                <span class="text-lg text-[color:var(--color-text-mute-2)] line-through">{fmtPrice(data.compareAtPrice!)}</span>
+              )}
+              {isOnSale && (
+                <span class="px-2 py-0.5 text-[0.65rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-white rounded-sm">
+                  {Math.round(((data.compareAtPrice! - data.price) / data.compareAtPrice!) * 100)}% off
+                </span>
+              )}
+            </div>
+
+            {/* SNIPCART BUTTON */}
+            <div class="mt-8">
+              <button
+                type="button"
+                class="snipcart-add-item btn btn-primary !px-8 !py-4 text-base"
+                data-item-id={data.sku}
+                data-item-price={data.price}
+                data-item-url={productUrl}
+                data-item-name={data.name}
+                data-item-image={typeof data.cover === "string" ? data.cover : data.cover.src}
+                data-item-description={data.excerpt || ""}
+                data-item-shippable={String(data.requiresShipping)}
+                data-item-weight={data.weight ?? ""}
+                data-item-categories={data.category || ""}
+                {...variantAttrs.reduce((acc, v) => ({ ...acc, [v.name]: v.value, [v.options]: v.optionsValue }), {})}
+                disabled={!data.inStock}
+              >
+                {data.inStock ? "Add to cart" : "Sold out"}
+              </button>
+              <a href="#" class="snipcart-checkout ml-3 text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
+                View cart →
+              </a>
+            </div>
+
+            <div class="mt-6 text-xs text-[color:var(--color-text-muted)] space-y-1">
+              {data.type === "digital" && (
+                <p>✓ Instant download · DRM-free PDF · Yours forever</p>
+              )}
+              {data.type !== "digital" && data.requiresShipping && (
+                <>
+                  <p>✓ Ships within 1–3 business days</p>
+                  <p>✓ 30-day return window on unused items</p>
+                </>
+              )}
+              <p>✓ Secure checkout via Stripe (Snipcart)</p>
+            </div>
+          </>
+        )}
 
         {/* DESCRIPTION */}
         <div class="prose mt-12 max-w-none">

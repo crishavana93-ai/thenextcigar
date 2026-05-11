@@ -7,82 +7,63 @@ import Newsletter from "../components/Newsletter.astro";
 const allProducts = (await getCollection("products"))
   .filter((p) => !p.data.isArchived);
 
-// Coming-soon products section off to the bottom of the page so the
-// available SKUs read as the "real" shop and the previews don't compete
-// for attention.
-const products = allProducts.filter((p) => !(p.data as any).comingSoon)
-  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
-const comingSoon = allProducts.filter((p) => (p.data as any).comingSoon === true)
-  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+// EVERY product is Coming Soon while the catalog is being stocked.
+// Sort by featured first, then by expected arrival month (June → July → Aug).
+const comingSoon = allProducts.sort((a, b) => {
+  const fa = Number((b.data as any).featured) - Number((a.data as any).featured);
+  if (fa !== 0) return fa;
+  return ((a.data as any).expectedArrival ?? "").localeCompare((b.data as any).expectedArrival ?? "");
+});
 
-const featured = products.filter((p) => p.data.featured);
-const rest = products.filter((p) => !p.data.featured);
+const productCount = comingSoon.length;
 ---
 
 <BaseLayout
   title="Shop — TNext Cigar"
-  description="Curated accessories, branded merch, and digital guides for the cigar aficionado. We do not sell tobacco."
+  description="The TNC shop is being built in public. Curated cigar accessories, branded merch, and digital guides arriving summer 2026. Subscribe to be notified when each piece lands."
 >
-  <section class="container-wide pt-20 md:pt-32 pb-12">
-    <p class="eyebrow mb-4 reveal">Shop</p>
-    <h1 class="font-display text-5xl md:text-7xl leading-tight reveal">The kit, not the leaf.</h1>
-    <p class="lead mt-6 max-w-2xl reveal">
-      Cutters, lighters, branded merch, and digital guides — chosen because we'd own them ourselves. <strong>We don't sell tobacco.</strong> For cigars, we always link you to licensed retailers.
-    </p>
+  {/* ─── HERO BANNER: BIG COMING SOON ─── */}
+  <section class="shop-hero">
+    <div class="container-wide pt-20 md:pt-28 pb-16 md:pb-20 reveal">
+      <p class="shop-hero__eyebrow">The Next Cigar · Shop</p>
+      <h1 class="shop-hero__title">
+        Coming Soon.<br/>
+        <span class="shop-hero__title-sub">The whole shop, opening summer 2026.</span>
+      </h1>
+      <p class="shop-hero__lead">
+        We're building the TNC shop in public. Every piece below is being sampled,
+        quality-tested, and stocked at our Sweden fulfillment hub right now.
+        <strong>Nothing is for sale yet</strong> — but you can reserve your spot for
+        launch-day access on any piece you want.
+      </p>
+      <div class="shop-hero__actions">
+        <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="btn btn-accent">
+          Read the Sourcing Diary →
+        </a>
+        <a href="/subscribe/" class="shop-hero__secondary">
+          Subscribe for launch alerts
+        </a>
+      </div>
+      <p class="shop-hero__count">{productCount} pieces in the pipeline · First drops in June</p>
+    </div>
   </section>
 
-  {featured.length > 0 && (
-    <section class="container-wide pb-16">
-      <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2 reveal">Featured</p>
-      <h2 class="section-eyebrow mb-12 reveal">Editor's picks</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-        {featured.map((p, i) => (
-          <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
-        ))}
-      </div>
-    </section>
-  )}
-
-  {rest.length > 0 && (
-    <section class="container-wide pb-24">
-      <div class="hairline mb-16"></div>
-      <h2 class="section-eyebrow mb-12 reveal">Everything else</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-        {rest.map((p, i) => (
-          <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
-        ))}
-      </div>
-    </section>
-  )}
-
-  {products.length === 0 && (
-    <section class="container-narrow pb-24 text-center reveal">
-      <p class="font-display text-3xl mb-4">Coming soon.</p>
-      <p class="text-[color:var(--color-text-muted)]">The shop is being stocked. Check back next week.</p>
-    </section>
-  )}
-
-  {/* ─── COMING SOON SECTION ─── */}
+  {/* ─── PRODUCT GRID — ALL COMING SOON ─── */}
   {comingSoon.length > 0 && (
     <section class="container-wide pb-24">
-      <div class="hairline mb-16"></div>
-      <div class="flex items-end justify-between mb-12 reveal flex-wrap gap-4">
+      <div class="flex items-end justify-between mb-10 reveal flex-wrap gap-4">
         <div>
-          <p class="text-xs uppercase tracking-widest text-[color:var(--color-burgundy)] mb-2 font-bold">
-            Sourcing now
-          </p>
-          <h2 class="font-display text-3xl md:text-4xl leading-tight">Coming soon</h2>
+          <p class="section-eyebrow">The launch lineup</p>
+          <h2 class="font-display text-3xl md:text-4xl leading-tight mt-2">
+            Pieces landing this summer
+          </h2>
           <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl text-base">
-            Pieces we're sampling, testing, and stocking right now. Read the full sourcing story in
-            <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="text-[color:var(--color-accent)] underline">Sourcing Diary No. 1</a>
-            — or
-            <a href="/subscribe/" class="text-[color:var(--color-accent)] underline">subscribe</a>
-            to be alerted when each piece lands.
+            Click any piece for the full background story and the per-product
+            launch-alert signup. The buyers on each list get the first email
+            when that specific SKU goes live — and founding-customer pricing
+            locked in.
           </p>
         </div>
-        <a href="/subscribe/" class="btn btn-accent self-start whitespace-nowrap">
-          Get launch alerts
-        </a>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
         {comingSoon.map((p, i) => (
@@ -92,5 +73,93 @@ const rest = products.filter((p) => !p.data.featured);
     </section>
   )}
 
-  <Newsletter heading="Be first to new drops" blurb="Subscribers see new products before they're listed publicly. No drops, no FOMO." />
+  {productCount === 0 && (
+    <section class="container-narrow pb-24 text-center reveal">
+      <p class="font-display text-3xl mb-4">Coming soon.</p>
+      <p class="text-[color:var(--color-text-muted)]">The shop is being stocked. Check back next week.</p>
+    </section>
+  )}
+
+  <Newsletter heading="Be first to new drops" blurb="One email when each piece lands. No drops, no FOMO." />
 </BaseLayout>
+
+<style>
+  .shop-hero {
+    background:
+      radial-gradient(circle at 15% 25%, rgba(110, 38, 32, 0.10), transparent 55%),
+      radial-gradient(circle at 85% 75%, rgba(255, 46, 46, 0.06), transparent 55%),
+      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .shop-hero__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 1.5rem;
+  }
+  .shop-hero__title {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+  }
+  @media (min-width: 768px) { .shop-hero__title { font-size: 5rem; } }
+  @media (min-width: 1024px) { .shop-hero__title { font-size: 6.5rem; } }
+  .shop-hero__title-sub {
+    font-size: 0.42em;
+    font-weight: 600;
+    color: var(--color-burgundy);
+    letter-spacing: -0.005em;
+    display: block;
+    margin-top: 0.85rem;
+    line-height: 1.15;
+  }
+  .shop-hero__lead {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--color-text-soft);
+    max-width: 42rem;
+  }
+  .shop-hero__lead strong {
+    color: var(--color-text);
+    font-weight: 700;
+  }
+  .shop-hero__actions {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    align-items: center;
+  }
+  .shop-hero__secondary {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-soft);
+    text-decoration: underline;
+    text-decoration-color: var(--color-text-muted);
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+  }
+  .shop-hero__secondary:hover {
+    color: var(--color-accent);
+    text-decoration-color: var(--color-accent);
+  }
+  .shop-hero__count {
+    margin-top: 2rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-burgundy);
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+    display: inline-block;
+    padding-right: 2rem;
+  }
+</style>

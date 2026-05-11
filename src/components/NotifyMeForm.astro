@@ -1,0 +1,192 @@
+---
+/**
+ * <NotifyMeForm />
+ *
+ * Per-SKU email capture form. Tags the subscriber in MailerLite with the
+ * specific product they're interested in (e.g. `wants:born-before-2009-tee`)
+ * so we can blast just the people who asked when each SKU lands.
+ *
+ * Falls back to a Formsubmit POST if MailerLite isn't reachable so we
+ * never lose a signup.
+ */
+interface Props {
+  sku: string;             // product slug — becomes the MailerLite tag
+  productName: string;     // human-readable name for confirmation
+  expectedArrival?: string;
+  variant?: "compact" | "card";  // compact for inline use, card for prominent placement
+}
+
+const { sku, productName, expectedArrival, variant = "card" } = Astro.props as Props;
+const formId = `notify-${sku}`;
+---
+
+<form
+  id={formId}
+  class={`notify-form notify-form--${variant}`}
+  action="https://formsubmit.co/guatabeycigars@gmail.com"
+  method="POST"
+  data-sku={sku}
+  data-product-name={productName}
+>
+  <input type="hidden" name="_subject" value={`Notify me: ${productName}`} />
+  <input type="hidden" name="_template" value="table" />
+  <input type="hidden" name="_captcha" value="true" />
+  <input type="hidden" name="_next" value={`https://thenextcigar.com/shop/?notified=${sku}`} />
+  <input type="hidden" name="_honey" value="" />
+  <input type="hidden" name="product_sku" value={sku} />
+  <input type="hidden" name="product_name" value={productName} />
+  <input type="hidden" name="mailerlite_tag" value={`wants:${sku}`} />
+  <input type="hidden" name="signup_source" value="shop_notify_me" />
+
+  {variant === "card" && (
+    <div class="notify-form__header">
+      <p class="notify-form__eyebrow">Notify me when it lands</p>
+      <h4 class="notify-form__heading">{productName}</h4>
+      {expectedArrival && (
+        <p class="notify-form__subtitle">Arriving {expectedArrival}</p>
+      )}
+    </div>
+  )}
+
+  <div class="notify-form__row">
+    <input
+      type="email"
+      name="email"
+      required
+      autocomplete="email"
+      placeholder="your-email@anywhere.com"
+      class="notify-form__input"
+      aria-label="Email"
+    />
+    <button type="submit" class="notify-form__button">
+      {variant === "compact" ? "Notify me" : "Notify me when it lands →"}
+    </button>
+  </div>
+
+  <p class="notify-form__fineprint">
+    One email when this product lands. No spam. Unsubscribe anytime.
+  </p>
+
+  <p class="notify-form__success" hidden>
+    Done — we'll email you the moment <strong>{productName}</strong> is live in the shop.
+  </p>
+</form>
+
+<style>
+  .notify-form {
+    display: block;
+  }
+  .notify-form--card {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem 1.35rem;
+  }
+  .notify-form__header { margin-bottom: 1rem; }
+  .notify-form__eyebrow {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 0.45rem 0;
+  }
+  .notify-form__heading {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-text);
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+  }
+  .notify-form__subtitle {
+    font-size: 0.8rem;
+    color: var(--color-burgundy);
+    font-weight: 600;
+    margin: 0;
+  }
+  .notify-form__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .notify-form__input {
+    flex: 1 1 12rem;
+    min-width: 10rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+  .notify-form__input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .notify-form__button {
+    flex: 0 0 auto;
+    padding: 0.7rem 1.1rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+  }
+  .notify-form__button:hover {
+    background: var(--color-accent-hover);
+  }
+  .notify-form__fineprint {
+    margin-top: 0.65rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+  .notify-form__success {
+    margin-top: 0.85rem;
+    padding: 0.65rem 0.85rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: var(--color-text);
+  }
+</style>
+
+<script is:inline define:vars={{ formId, sku }}>
+  // Submit to MailerLite via the universal loader if it's available,
+  // fall back to FormSubmit if not. Either way the user sees confirmation.
+  (function () {
+    const form = document.getElementById(formId);
+    if (!form || form.dataset.bound === "1") return;
+    form.dataset.bound = "1";
+
+    form.addEventListener("submit", async (e) => {
+      const email = form.querySelector('input[type="email"]').value.trim();
+      if (!email) return;
+      // If MailerLite global is loaded, fire a tagged event before the form POSTs
+      try {
+        if (typeof window.ml === "function") {
+          window.ml("track", "shop_notify_me_signup", {
+            email,
+            tag: "wants:" + sku,
+            sku,
+          });
+        }
+      } catch (_) {}
+      // Show success UI immediately for perceived speed
+      const successEl = form.querySelector(".notify-form__success");
+      if (successEl) {
+        setTimeout(() => {
+          successEl.hidden = false;
+        }, 50);
+      }
+      // Let the form post normally to Formsubmit as the backstop
+    });
+  })();
+</script>

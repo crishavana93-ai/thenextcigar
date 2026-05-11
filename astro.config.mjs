@@ -18,6 +18,10 @@ export default defineConfig({
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "m.media-amazon.com" },
+      // Alibaba CDN — wholesale supplier product photos used on /shop/
+      { protocol: "https", hostname: "s.alicdn.com" },
+      { protocol: "https", hostname: "sc04.alicdn.com" },
+      { protocol: "https", hostname: "img.alicdn.com" },
     ],
   },
   prefetch: {
