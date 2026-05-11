@@ -20,6 +20,32 @@ const blog = defineCollection({
       sidebarFeatured: z.boolean().default(false),
       isPremium: z.boolean().default(false),
       sourceId: z.string().optional(),
+      // Gear-roundup products — populated on roundup posts so we can emit
+      // ItemList + Product JSON-LD for Google rich results / Shopping panel.
+      // Optional; only roundups need it. Schema mirrors schema.org/Product.
+      products: z
+        .array(
+          z.object({
+            name: z.string(),
+            image: z.string(),                   // absolute URL
+            price: z.union([z.number(), z.string()]).optional(),
+            priceLow: z.number().optional(),     // numeric low end (for range pricing)
+            priceHigh: z.number().optional(),    // numeric high end
+            currency: z.string().default("USD"),
+            url: z.string(),                     // affiliate / retailer URL
+            brand: z.string().optional(),
+            sku: z.string().optional(),
+            description: z.string().optional(),
+            rating: z.number().min(0).max(5).optional(),
+            reviewCount: z.number().int().optional(),
+            availability: z
+              .enum(["InStock", "OutOfStock", "PreOrder"])
+              .default("InStock")
+              .optional(),
+          })
+        )
+        .optional()
+        .nullable(),
       // SEO fields (optional, populated by Decap CMS editor)
       seo: z
         .object({

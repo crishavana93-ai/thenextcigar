@@ -56,6 +56,36 @@ export const channels: YouTubeChannel[] = [
     enabled: true,
   },
   {
+    name: "Jasim Ahmed Cigars",
+    id: "UC0vUXCsWLY2y5XGLjxKaoxg",
+    handle: "@jasimahmedoficial",
+    enabled: true,
+  },
+  {
+    name: "Cigar Vixen",
+    id: "UC3tzfsa5hcL-03Ffm-XW8_Q",
+    handle: "@CigarVixen",
+    enabled: true,
+  },
+  {
+    name: "CigarAdvisor",
+    id: "UC0UDYf_jxg_0XwpuYmNJWGQ",
+    handle: "@CigarAdvisor",
+    enabled: true,
+  },
+  {
+    name: "LeeMack912",
+    id: "UCm2h4PA9n5TOwspzEB3l9Sw",
+    handle: "@LeeMack912",
+    enabled: true,
+  },
+  {
+    name: "Zeal Cigar Review",
+    id: "UCdHZ38Wxj-diNslUwEOhSDg",
+    handle: "@zealcigars196",
+    enabled: true,
+  },
+  {
     name: "Cigar Coop",
     id: "UC0LQc8kuI6JrZbSpWXXyqcw", // placeholder — original handle 404s, needs verified ID
     handle: "@cigarcoop",

@@ -1,0 +1,215 @@
+---
+/**
+ * <EditorsPick />
+ *
+ * A drop-in callout box for highlighting a featured product mid-article.
+ * Import it from any MDX post and pass the props.
+ *
+ * Example MDX usage:
+ *
+ *   import EditorsPick from "../../components/EditorsPick.astro";
+ *
+ *   <EditorsPick
+ *     name="Xikar XO Cutter"
+ *     image="https://m.media-amazon.com/images/I/81BJOdok6DL._AC_SL400_.jpg"
+ *     price="$70–95"
+ *     url="https://amzn.to/3OYal29"
+ *     rating={4.8}
+ *     verdict="The cutter every serious smoker eventually owns. Lifetime warranty, planetary gear blade synchronization, blade edges that hold for a decade."
+ *   />
+ *
+ * Props:
+ *   - name         (required) product name
+ *   - image        (required) absolute URL — Amazon `m.media-amazon.com` or your own CDN
+ *   - price        (required) display string, e.g. "$70–95" or "$38"
+ *   - url          (required) affiliate URL (tagged amzn.to / ?tag=thenextcigar-20)
+ *   - verdict      (optional) 1–2 sentence editorial endorsement
+ *   - rating       (optional) numeric 1–5 (e.g. 4.7) — renders ★★★★★
+ *   - badge        (optional) override the "Editor's Pick" label
+ *   - cta          (optional) override the button label (default: "Buy on Amazon →")
+ */
+interface Props {
+  name: string;
+  image: string;
+  price: string;
+  url: string;
+  verdict?: string;
+  rating?: number;
+  badge?: string;
+  cta?: string;
+}
+
+const {
+  name,
+  image,
+  price,
+  url,
+  verdict,
+  rating,
+  badge = "Editor's Pick",
+  cta = "Buy on Amazon →",
+} = Astro.props as Props;
+
+// Render the star row. Half-stars rounded to nearest 0.5.
+const r = rating ? Math.max(0, Math.min(5, rating)) : null;
+const full = r ? Math.floor(r) : 0;
+const half = r ? r - full >= 0.5 : false;
+const stars = r
+  ? "★".repeat(full) + (half ? "½" : "") + "☆".repeat(5 - full - (half ? 1 : 0))
+  : null;
+---
+
+<aside class="not-prose editors-pick reveal" data-editors-pick>
+  <div class="editors-pick__badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+    <span>{badge}</span>
+  </div>
+
+  <div class="editors-pick__inner">
+    <a href={url} target="_blank" rel="sponsored noopener" class="editors-pick__image-link" aria-label={name}>
+      <img src={image} alt={name} loading="lazy" decoding="async" />
+    </a>
+
+    <div class="editors-pick__body">
+      <h3 class="editors-pick__name">{name}</h3>
+
+      {r && (
+        <div class="editors-pick__rating" aria-label={`${r} out of 5 stars`}>
+          <span class="editors-pick__stars" aria-hidden="true">{stars}</span>
+          <span class="editors-pick__rating-num">{r.toFixed(1)}</span>
+        </div>
+      )}
+
+      <p class="editors-pick__price">{price}</p>
+
+      {verdict && <p class="editors-pick__verdict">{verdict}</p>}
+
+      <span class="magnetic-area inline-block" data-magnetic-area>
+        <a href={url} target="_blank" rel="sponsored noopener" class="btn btn-accent magnetic-target editors-pick__cta" data-magnetic>
+          {cta}
+        </a>
+      </span>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .editors-pick {
+    position: relative;
+    margin: 2.5rem 0;
+    padding: 1.75rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .editors-pick::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--color-accent);
+  }
+
+  .editors-pick__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    margin-bottom: 1.25rem;
+    background: var(--color-accent);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border-radius: 3px;
+  }
+
+  .editors-pick__inner {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 640px) {
+    .editors-pick__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .editors-pick__image-link {
+    display: block;
+    border-radius: 4px;
+    overflow: hidden;
+    background: white;
+    border: 1px solid var(--color-border);
+    aspect-ratio: 1 / 1;
+    transition: transform 0.3s ease;
+  }
+
+  .editors-pick__image-link:hover {
+    transform: scale(1.03);
+  }
+
+  .editors-pick__image-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.5rem;
+  }
+
+  .editors-pick__name {
+    font-family: var(--font-display, "Inter"), system-ui;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.5rem 0;
+    color: var(--color-text);
+  }
+
+  .editors-pick__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .editors-pick__stars {
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+    font-size: 1rem;
+  }
+
+  .editors-pick__rating-num {
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .editors-pick__price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 0.85rem 0;
+    letter-spacing: -0.005em;
+  }
+
+  .editors-pick__verdict {
+    color: var(--color-text-soft);
+    font-size: 0.94rem;
+    line-height: 1.55;
+    margin: 0 0 1.25rem 0;
+  }
+
+  .editors-pick__cta {
+    text-decoration: none;
+  }
+</style>
