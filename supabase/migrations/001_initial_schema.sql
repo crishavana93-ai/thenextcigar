@@ -67,8 +67,9 @@ create table if not exists public.checkins (
   message         text check (char_length(message) <= 140)  -- "Open to a smoke if anyone's around"
 );
 
-create index if not exists checkins_lounge_active_idx
-  on public.checkins (lounge_id, expires_at) where expires_at > now();
+-- NOTE: PostgreSQL requires functions in index predicates to be IMMUTABLE.
+-- now() and current_date are STABLE, so we use plain (non-partial) indexes here.
+create index if not exists checkins_lounge_idx on public.checkins (lounge_id, expires_at);
 create index if not exists checkins_member_idx on public.checkins (member_id);
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -88,8 +89,7 @@ create table if not exists public.travel_plans (
 );
 
 create index if not exists travel_plans_city_idx on public.travel_plans (city, arrive_date);
-create index if not exists travel_plans_active_idx
-  on public.travel_plans (arrive_date) where depart_date >= current_date;
+create index if not exists travel_plans_depart_idx on public.travel_plans (depart_date);
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- 5. INTRODUCTIONS

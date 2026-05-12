@@ -1,0 +1,565 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="Member profile — The Lounge"
+  description="Member profile view."
+  noIndex
+>
+  <LoungeHeader active="directory" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading…</p>
+      </div>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-8 md:pt-12 pb-2">
+        <a href="/lounge/app/directory/" class="lounge-mem-back">← All members</a>
+      </section>
+
+      <section class="container-wide pt-2 pb-8 reveal">
+        <div class="lounge-mem-head">
+          <div class="lounge-mem-head__avatar" id="mem-avatar">?</div>
+          <div class="lounge-mem-head__info">
+            <p class="section-eyebrow" id="mem-eyebrow">Member</p>
+            <h1 class="font-display text-4xl md:text-5xl leading-[1.05] tracking-tight mt-2" id="mem-name">…</h1>
+            <p class="lounge-mem-head__city" id="mem-city">—</p>
+            <div class="lounge-mem-head__badges" id="mem-badges"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="container-wide pb-8">
+        <div class="lounge-mem-card">
+          <p class="lounge-mem-card__label">Bio</p>
+          <p class="lounge-mem-card__body" id="mem-bio">—</p>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24" id="mem-actions-section">
+        <div id="mem-self-notice" hidden class="lounge-mem-self">
+          <p class="lounge-mem-self__row">This is your own profile.</p>
+          <a href="/lounge/app/profile/" class="lounge-mem-self__cta">Edit your profile →</a>
+        </div>
+
+        <div id="mem-intro-state-existing" hidden class="lounge-mem-intro lounge-mem-intro--pending">
+          <p class="lounge-mem-intro__eyebrow" id="mem-intro-eyebrow">Introduction status</p>
+          <p class="lounge-mem-intro__body" id="mem-intro-body">—</p>
+        </div>
+
+        <div id="mem-intro-form-wrap" hidden>
+          <button id="mem-intro-cta" class="lounge-mem-cta" type="button">Request an introduction</button>
+
+          <form id="mem-intro-form" class="lounge-mem-intro-form" hidden>
+            <label class="lounge-mem-intro-form__label">
+              Context
+              <select name="context" required>
+                <option value="manual" selected>I just want to say hello</option>
+                <option value="travel_plan">I'm traveling to their city</option>
+                <option value="host_intro">I'd like to host them</option>
+                <option value="lounge_check_in">We're at the same lounge</option>
+              </select>
+            </label>
+
+            <label class="lounge-mem-intro-form__label">
+              Message (max 500 chars)
+              <textarea name="intro_message" required rows="4" maxlength="500"
+                placeholder="A line or two about why you'd like to meet."></textarea>
+            </label>
+
+            <div class="lounge-mem-intro-form__actions">
+              <button type="button" id="mem-intro-cancel" class="lounge-mem-intro-form__cancel">Cancel</button>
+              <button type="submit" class="lounge-mem-intro-form__submit">Send request →</button>
+            </div>
+
+            <p id="mem-intro-status" hidden class="lounge-mem-intro-form__status"></p>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <section id="lounge-not-found" hidden class="container-wide py-24 text-center">
+      <p class="section-eyebrow">Not found</p>
+      <h1 class="font-display text-4xl mt-2">No such member.</h1>
+      <p class="mt-4 text-[color:var(--color-text-soft)]">
+        That profile doesn't exist or has been removed.
+      </p>
+      <p class="mt-6">
+        <a href="/lounge/app/directory/" class="lounge-mem-back">← Back to the directory</a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+
+  .lounge-app__guard {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .lounge-mem-back {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+  .lounge-mem-back:hover { color: var(--color-accent); }
+
+  .lounge-mem-head {
+    display: flex;
+    gap: 1.75rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .lounge-mem-head__avatar {
+    width: 7rem;
+    height: 7rem;
+    border-radius: 50%;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lounge-mem-head__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .lounge-mem-head__city {
+    margin: 0.4rem 0 0 0;
+    font-size: 0.92rem;
+    color: var(--color-text-soft);
+  }
+  .lounge-mem-head__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+  }
+  .lounge-mem-head__badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.65rem;
+    border-radius: 3px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+  .lounge-mem-head__badge--founding {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+  .lounge-mem-head__badge--host {
+    background: var(--color-burgundy);
+    color: #fff;
+    border-color: var(--color-burgundy);
+  }
+
+  .lounge-mem-card {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.5rem 1.85rem;
+    max-width: 48rem;
+  }
+  .lounge-mem-card__label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.6rem 0;
+  }
+  .lounge-mem-card__body {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--color-text);
+    margin: 0;
+    white-space: pre-line;
+  }
+
+  .lounge-mem-self {
+    max-width: 48rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    padding: 1.25rem 1.5rem;
+  }
+  .lounge-mem-self__row {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 0.95rem;
+  }
+  .lounge-mem-self__cta {
+    display: inline-block;
+    margin-top: 0.75rem;
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: underline;
+  }
+
+  .lounge-mem-intro {
+    max-width: 48rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+  }
+  .lounge-mem-intro--pending { border-left: 3px solid var(--color-accent); }
+  .lounge-mem-intro--accepted { border-left: 3px solid #16a34a; }
+  .lounge-mem-intro--declined { border-left: 3px solid #c62828; opacity: 0.85; }
+  .lounge-mem-intro__eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.5rem 0;
+  }
+  .lounge-mem-intro__body {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .lounge-mem-cta {
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 0.95rem 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .lounge-mem-cta:hover { background: var(--color-accent-hover); }
+  .lounge-mem-cta:disabled { opacity: 0.6; cursor: wait; }
+
+  .lounge-mem-intro-form {
+    margin-top: 1.25rem;
+    max-width: 48rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .lounge-mem-intro-form__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+  .lounge-mem-intro-form__label select,
+  .lounge-mem-intro-form__label textarea {
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    text-transform: none;
+    letter-spacing: normal;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .lounge-mem-intro-form__label select:focus,
+  .lounge-mem-intro-form__label textarea:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .lounge-mem-intro-form__actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .lounge-mem-intro-form__cancel {
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    padding: 0.7rem 1.1rem;
+    border-radius: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+  }
+  .lounge-mem-intro-form__submit {
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 0.7rem 1.25rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .lounge-mem-intro-form__submit:hover { background: var(--color-accent-hover); }
+  .lounge-mem-intro-form__submit:disabled { opacity: 0.6; cursor: wait; }
+  .lounge-mem-intro-form__status {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    font-size: 0.88rem;
+    color: var(--color-text);
+  }
+  .lounge-mem-intro-form__status.is-error {
+    background: #fde9e9;
+    border-color: #c62828;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../lib/supabase";
+
+  type ProfileRow = {
+    id: string;
+    display_name: string | null;
+    city: string | null;
+    country_code: string | null;
+    bio: string | null;
+    avatar_url: string | null;
+    is_host: boolean | null;
+    is_founding: boolean | null;
+    joined_at: string | null;
+  };
+
+  type IntroRow = {
+    id: string;
+    accepted: boolean | null;
+    intro_message: string;
+    context: string;
+    created_at: string;
+  };
+
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] || "";
+    const second = parts[1]?.[0] || "";
+    return (first + second).toUpperCase() || "?";
+  }
+
+  function getIdFromUrl(): string | null {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+  }
+
+  async function init(): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+
+    const memberId = getIdFromUrl();
+    if (!memberId) {
+      window.location.href = "/lounge/app/directory/";
+      return;
+    }
+
+    const supabase = getSupabase();
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at")
+      .eq("id", memberId)
+      .maybeSingle();
+
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    const notFound = document.getElementById("lounge-not-found");
+
+    if (error || !profile) {
+      console.error("[Lounge member] failed to load profile:", error);
+      if (guard) guard.style.display = "none";
+      if (notFound) notFound.hidden = false;
+      return;
+    }
+
+    const p = profile as ProfileRow;
+
+    // Populate head
+    const avatarEl = document.getElementById("mem-avatar");
+    if (avatarEl) {
+      if (p.avatar_url) {
+        avatarEl.innerHTML = `<img src="${p.avatar_url}" alt="" />`;
+      } else {
+        avatarEl.textContent = initials(p.display_name);
+      }
+    }
+    const nameEl = document.getElementById("mem-name");
+    if (nameEl) nameEl.textContent = p.display_name || "Member";
+    const cityEl = document.getElementById("mem-city");
+    if (cityEl) cityEl.textContent = p.city ? `${p.city}${p.country_code ? ` · ${p.country_code}` : ""}` : "City not set";
+    const bioEl = document.getElementById("mem-bio");
+    if (bioEl) bioEl.textContent = p.bio || "This member hasn't written a bio yet.";
+
+    // Badges
+    const badges = document.getElementById("mem-badges");
+    if (badges) {
+      const parts: string[] = [];
+      if (p.is_founding) parts.push(`<span class="lounge-mem-head__badge lounge-mem-head__badge--founding">Founding member</span>`);
+      if (p.is_host) parts.push(`<span class="lounge-mem-head__badge lounge-mem-head__badge--host">Host</span>`);
+      if (p.joined_at) {
+        const d = new Date(p.joined_at);
+        parts.push(`<span class="lounge-mem-head__badge">Joined ${d.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>`);
+      }
+      badges.innerHTML = parts.join("");
+    }
+
+    // Action section
+    const selfNotice = document.getElementById("mem-self-notice");
+    const introExisting = document.getElementById("mem-intro-state-existing");
+    const introFormWrap = document.getElementById("mem-intro-form-wrap");
+
+    if (p.id === user.id) {
+      if (selfNotice) selfNotice.hidden = false;
+    } else {
+      // Check for existing intro
+      const { data: existing } = await supabase
+        .from("introductions")
+        .select("id, accepted, intro_message, context, created_at")
+        .eq("from_member_id", user.id)
+        .eq("to_member_id", p.id)
+        .maybeSingle();
+
+      if (existing) {
+        const intro = existing as IntroRow;
+        if (introExisting) {
+          introExisting.hidden = false;
+          const eyebrow = document.getElementById("mem-intro-eyebrow");
+          const body = document.getElementById("mem-intro-body");
+          let status = "Pending — waiting on response";
+          let cls = "lounge-mem-intro--pending";
+          if (intro.accepted === true) {
+            status = "Accepted — you can now message each other (DMs coming soon)";
+            cls = "lounge-mem-intro--accepted";
+          } else if (intro.accepted === false) {
+            status = "Declined — try again later or in person";
+            cls = "lounge-mem-intro--declined";
+          }
+          introExisting.className = `lounge-mem-intro ${cls}`;
+          if (eyebrow) eyebrow.textContent = "Introduction status";
+          if (body) body.textContent = status;
+        }
+      } else {
+        if (introFormWrap) introFormWrap.hidden = false;
+        wireIntroForm(user.id, p.id);
+      }
+    }
+
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+  }
+
+  function wireIntroForm(fromId: string, toId: string): void {
+    const cta = document.getElementById("mem-intro-cta") as HTMLButtonElement | null;
+    const form = document.getElementById("mem-intro-form") as HTMLFormElement | null;
+    const cancel = document.getElementById("mem-intro-cancel") as HTMLButtonElement | null;
+    const status = document.getElementById("mem-intro-status") as HTMLParagraphElement | null;
+    if (!cta || !form || !cancel) return;
+
+    cta.addEventListener("click", () => {
+      form.hidden = false;
+      cta.hidden = true;
+    });
+    cancel.addEventListener("click", () => {
+      form.hidden = true;
+      cta.hidden = false;
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending…";
+
+      const fd = new FormData(form);
+      const context = String(fd.get("context") || "manual");
+      const intro_message = String(fd.get("intro_message") || "").trim();
+
+      if (!intro_message) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send request →";
+        return;
+      }
+
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.from("introductions").insert({
+          from_member_id: fromId,
+          to_member_id: toId,
+          context,
+          intro_message,
+        });
+        if (error) throw error;
+
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.innerHTML = `<strong>Request sent.</strong> You'll get an email when they respond.`;
+        }
+        form.querySelector('textarea')?.setAttribute('disabled', '');
+        form.querySelector('select')?.setAttribute('disabled', '');
+        cancel.style.display = "none";
+        submitBtn.style.display = "none";
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err?.message || "Could not send. Try again.";
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send request →";
+      }
+    });
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

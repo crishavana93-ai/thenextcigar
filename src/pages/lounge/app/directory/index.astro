@@ -1,0 +1,398 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="Members — The Lounge"
+  description="Browse the founding cohort of The Lounge."
+  noIndex
+>
+  <LoungeHeader active="directory" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading members…</p>
+      </div>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-12 md:pt-16 pb-6 reveal">
+        <p class="section-eyebrow">The Lounge · Members</p>
+        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
+          Founding cohort.
+        </h1>
+        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
+          Real cigar smokers from real cities. Filter by where you're going next,
+          or who's offered to host visitors.
+        </p>
+      </section>
+
+      <section class="container-wide pb-6">
+        <div class="lounge-dir-filters">
+          <label class="lounge-dir-filter">
+            <span>City</span>
+            <input id="filter-city" type="text" placeholder="e.g. Stockholm" />
+          </label>
+
+          <label class="lounge-dir-filter lounge-dir-filter--check">
+            <input id="filter-host" type="checkbox" />
+            <span>Hosts only</span>
+          </label>
+
+          <label class="lounge-dir-filter lounge-dir-filter--check">
+            <input id="filter-founding" type="checkbox" />
+            <span>Founding members</span>
+          </label>
+
+          <p id="filter-count" class="lounge-dir-count">—</p>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div id="lounge-dir-grid" class="lounge-dir-grid"></div>
+        <div id="lounge-dir-empty" hidden class="lounge-dir-empty">
+          <p class="lounge-dir-empty__eyebrow">No matches</p>
+          <p class="lounge-dir-empty__body">
+            Adjust your filters, or invite a friend to join.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+
+  .lounge-app__guard {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .lounge-dir-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+  }
+  .lounge-dir-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+  .lounge-dir-filter input[type="text"] {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.92rem;
+    color: var(--color-text);
+    text-transform: none;
+    letter-spacing: normal;
+    min-width: 14rem;
+  }
+  .lounge-dir-filter input[type="text"]:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .lounge-dir-filter--check {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .lounge-dir-filter--check input { accent-color: var(--color-accent); width: 1.05rem; height: 1.05rem; }
+  .lounge-dir-count {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .lounge-dir-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .lounge-dir-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.5rem 1.4rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+    min-height: 11rem;
+  }
+  .lounge-dir-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+  .lounge-dir-card__top {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+  }
+  .lounge-dir-card__avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    object-fit: cover;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+  }
+  .lounge-dir-card__avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .lounge-dir-card__name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--color-text);
+    margin: 0;
+  }
+  .lounge-dir-card__city {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+    margin: 0.15rem 0 0 0;
+  }
+  .lounge-dir-card__bio {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-soft);
+    margin: 0 0 1rem 0;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .lounge-dir-card__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+  .lounge-dir-card__badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.55rem;
+    border-radius: 3px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+  .lounge-dir-card__badge--founding {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+  .lounge-dir-card__badge--host {
+    background: var(--color-burgundy);
+    color: #fff;
+    border-color: var(--color-burgundy);
+  }
+
+  .lounge-dir-empty {
+    margin-top: 2rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 2.5rem;
+    text-align: center;
+  }
+  .lounge-dir-empty__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.5rem 0;
+  }
+  .lounge-dir-empty__body {
+    color: var(--color-text-soft);
+    margin: 0;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+
+  type ProfileRow = {
+    id: string;
+    display_name: string | null;
+    city: string | null;
+    country_code: string | null;
+    bio: string | null;
+    avatar_url: string | null;
+    is_host: boolean | null;
+    is_founding: boolean | null;
+    joined_at: string | null;
+  };
+
+  let all: ProfileRow[] = [];
+
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] || "";
+    const second = parts[1]?.[0] || "";
+    return (first + second).toUpperCase() || "?";
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderGrid(rows: ProfileRow[]): void {
+    const grid = document.getElementById("lounge-dir-grid");
+    const empty = document.getElementById("lounge-dir-empty");
+    const countEl = document.getElementById("filter-count");
+    if (!grid || !empty || !countEl) return;
+
+    countEl.textContent = `${rows.length} ${rows.length === 1 ? "member" : "members"}`;
+
+    if (rows.length === 0) {
+      grid.innerHTML = "";
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+
+    grid.innerHTML = rows
+      .map((p) => {
+        const name = escapeHtml(p.display_name || "Member");
+        const city = p.city ? escapeHtml(p.city) : "City not set";
+        const bio = p.bio ? escapeHtml(p.bio) : "—";
+        const avatar = p.avatar_url
+          ? `<img src="${escapeHtml(p.avatar_url)}" alt="" loading="lazy" />`
+          : initials(p.display_name);
+        const badges: string[] = [];
+        if (p.is_founding)
+          badges.push(`<span class="lounge-dir-card__badge lounge-dir-card__badge--founding">Founding</span>`);
+        if (p.is_host)
+          badges.push(`<span class="lounge-dir-card__badge lounge-dir-card__badge--host">Host</span>`);
+
+        return `
+          <a class="lounge-dir-card" href="/lounge/app/member/?id=${p.id}">
+            <div class="lounge-dir-card__top">
+              <div class="lounge-dir-card__avatar">${avatar}</div>
+              <div>
+                <h2 class="lounge-dir-card__name">${name}</h2>
+                <p class="lounge-dir-card__city">${city}</p>
+              </div>
+            </div>
+            <p class="lounge-dir-card__bio">${bio}</p>
+            <div class="lounge-dir-card__badges">${badges.join("")}</div>
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  function applyFilters(): void {
+    const cityInput = document.getElementById("filter-city") as HTMLInputElement | null;
+    const hostInput = document.getElementById("filter-host") as HTMLInputElement | null;
+    const foundingInput = document.getElementById("filter-founding") as HTMLInputElement | null;
+
+    const cityNeedle = (cityInput?.value || "").trim().toLowerCase();
+    const hostOnly = !!hostInput?.checked;
+    const foundingOnly = !!foundingInput?.checked;
+
+    const filtered = all.filter((p) => {
+      if (cityNeedle && !(p.city || "").toLowerCase().includes(cityNeedle)) return false;
+      if (hostOnly && !p.is_host) return false;
+      if (foundingOnly && !p.is_founding) return false;
+      return true;
+    });
+
+    renderGrid(filtered);
+  }
+
+  async function init(): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at")
+      .order("joined_at", { ascending: false });
+
+    if (error) {
+      console.error("[Lounge directory] failed to load profiles:", error);
+      all = [];
+    } else {
+      all = (data as ProfileRow[]) || [];
+    }
+
+    renderGrid(all);
+
+    // Wire up filters
+    document.getElementById("filter-city")?.addEventListener("input", applyFilters);
+    document.getElementById("filter-host")?.addEventListener("change", applyFilters);
+    document.getElementById("filter-founding")?.addEventListener("change", applyFilters);
+
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>
