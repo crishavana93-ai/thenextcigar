@@ -1,0 +1,219 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Join The Lounge — The Next Cigar"
+  description="Sign up for the founding cohort of The Lounge — a private cigar-traveler network."
+  noIndex
+>
+  <section class="lounge-auth">
+    <div class="lounge-auth__inner reveal">
+      <p class="lounge-auth__eyebrow">The Lounge · Founding Cohort</p>
+      <h1 class="lounge-auth__title">Reserve your place.</h1>
+      <p class="lounge-auth__lead">
+        Enter your email and we'll send a one-time magic link. No password to remember,
+        no fee during the founding-cohort beta. You'll be inside the app in 60 seconds.
+      </p>
+
+      <form id="signup-form" class="lounge-auth__form">
+        <label class="lounge-auth__label">
+          Email
+          <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
+        </label>
+
+        <label class="lounge-auth__label">
+          First name + initial (how others see you)
+          <input type="text" name="display_name" required maxlength="40" placeholder="Cris O." />
+        </label>
+
+        <button type="submit" class="lounge-auth__button">Send magic link →</button>
+      </form>
+
+      <p id="signup-status" class="lounge-auth__status" hidden></p>
+
+      <p class="lounge-auth__alt">
+        Already a member? <a href="/lounge/login/">Sign in</a>
+      </p>
+
+      <p class="lounge-auth__legal">
+        By joining you agree to the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>.
+        21+ only. Cigar smokers and aficionados; not a marketplace for tobacco sale.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lounge-auth {
+    min-height: calc(100vh - 80px);
+    background:
+      radial-gradient(circle at 15% 25%, rgba(110, 38, 32, 0.10), transparent 55%),
+      radial-gradient(circle at 85% 75%, rgba(255, 46, 46, 0.06), transparent 55%),
+      var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1.5rem;
+  }
+  .lounge-auth__inner {
+    width: 100%;
+    max-width: 28rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 2.5rem;
+  }
+  .lounge-auth__eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 0.85rem 0;
+  }
+  .lounge-auth__title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    margin: 0 0 0.85rem 0;
+  }
+  .lounge-auth__lead {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+    margin: 0 0 1.5rem 0;
+  }
+  .lounge-auth__form { display: flex; flex-direction: column; gap: 1rem; }
+  .lounge-auth__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+  .lounge-auth__label input {
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--color-text);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .lounge-auth__label input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .lounge-auth__button {
+    margin-top: 0.5rem;
+    padding: 0.85rem 1.2rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .lounge-auth__button:hover { background: var(--color-accent-hover); }
+  .lounge-auth__button:disabled { opacity: 0.6; cursor: wait; }
+  .lounge-auth__status {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+  .lounge-auth__status.is-error {
+    background: #fde9e9;
+    border-color: #c62828;
+  }
+  .lounge-auth__alt {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+  .lounge-auth__alt a {
+    color: var(--color-accent);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+  .lounge-auth__legal {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+  .lounge-auth__legal a { color: var(--color-text-soft); text-decoration: underline; }
+</style>
+
+<script>
+  import { getSupabase } from "../../lib/supabase";
+
+  function setup() {
+    const form = document.getElementById("signup-form") as HTMLFormElement | null;
+    const status = document.getElementById("signup-status") as HTMLParagraphElement | null;
+    if (!form || form.dataset.bound === "1") return;
+    form.dataset.bound = "1";
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const email = String(data.get("email") || "").trim();
+      const display_name = String(data.get("display_name") || "").trim();
+      if (!email || !display_name) return;
+
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: `${window.location.origin}/lounge/app/`,
+            data: { display_name },
+          },
+        });
+        if (error) throw error;
+
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.innerHTML = `Magic link sent to <strong>${email}</strong>. Check your inbox (and spam folder). Click the link to land inside the Lounge.`;
+        }
+        form.style.display = "none";
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err.message || "Something went wrong. Try again, or email guatabeycigars@gmail.com if it persists.";
+        }
+        btn.disabled = false;
+        btn.textContent = "Send magic link →";
+      }
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+  setup();
+</script>

@@ -1,0 +1,264 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="The Lounge — Member Dashboard"
+  description="Your home base inside The Lounge."
+  noIndex
+>
+  <LoungeHeader active="dashboard" />
+
+  <main class="lounge-app">
+    {/* Auth guard renders a loading shell first; client-side script swaps in real content */}
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading the Lounge…</p>
+      </div>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-12 md:pt-16 pb-8 reveal">
+        <p class="section-eyebrow">Welcome back</p>
+        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
+          Hello, <span id="dash-name">…</span>.
+        </h1>
+        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
+          The Lounge is being built in public, week by week. Here's what's live so far
+          and what's landing next.
+        </p>
+      </section>
+
+      <section class="container-wide pb-12">
+        <div class="lounge-dash-grid">
+          {/* Profile card */}
+          <a href="/lounge/app/profile/" class="lounge-dash-card lounge-dash-card--primary">
+            <p class="lounge-dash-card__eyebrow">Live this week</p>
+            <h2 class="lounge-dash-card__title">Set up your profile</h2>
+            <p class="lounge-dash-card__body">
+              Display name, city, bio, photo. The first 60 seconds that locals see when
+              they decide whether to welcome you to their lounge.
+            </p>
+            <span class="lounge-dash-card__cta">Edit profile →</span>
+          </a>
+
+          {/* Members directory (coming Week 2) */}
+          <div class="lounge-dash-card lounge-dash-card--soon">
+            <p class="lounge-dash-card__eyebrow">Week 2</p>
+            <h2 class="lounge-dash-card__title">Browse the directory</h2>
+            <p class="lounge-dash-card__body">
+              See every founding-cohort member, filter by city, find the locals who've
+              opted in to host visitors.
+            </p>
+            <span class="lounge-dash-card__cta lounge-dash-card__cta--muted">Coming soon</span>
+          </div>
+
+          {/* Check-in (coming Week 3) */}
+          <div class="lounge-dash-card lounge-dash-card--soon">
+            <p class="lounge-dash-card__eyebrow">Week 3</p>
+            <h2 class="lounge-dash-card__title">Check in at a lounge</h2>
+            <p class="lounge-dash-card__body">
+              Tap "I'm here" when you walk into a partner lounge. Other members at the
+              same lounge get a quiet ping. No public broadcast.
+            </p>
+            <span class="lounge-dash-card__cta lounge-dash-card__cta--muted">Coming soon</span>
+          </div>
+
+          {/* Travel mode (coming Week 4) */}
+          <div class="lounge-dash-card lounge-dash-card--soon">
+            <p class="lounge-dash-card__eyebrow">Week 4</p>
+            <h2 class="lounge-dash-card__title">Travel mode</h2>
+            <p class="lounge-dash-card__body">
+              Declare your next trip. Locals in that city see you're coming. Smooth
+              introductions, no awkward DMs.
+            </p>
+            <span class="lounge-dash-card__cta lounge-dash-card__cta--muted">Coming soon</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div class="lounge-dash-meta">
+          <p class="lounge-dash-meta__row">
+            <span class="lounge-dash-meta__label">Member since</span>
+            <span id="dash-joined">—</span>
+          </p>
+          <p class="lounge-dash-meta__row">
+            <span class="lounge-dash-meta__label">City</span>
+            <span id="dash-city">—</span>
+          </p>
+          <p class="lounge-dash-meta__row" id="dash-founding-row" hidden>
+            <span class="lounge-dash-meta__label">Status</span>
+            <span class="lounge-dash-meta__badge">Founding Member</span>
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+
+  .lounge-app__guard {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .lounge-dash-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  @media (min-width: 640px) { .lounge-dash-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+
+  .lounge-dash-card {
+    display: block;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.75rem 1.85rem;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .lounge-dash-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+  .lounge-dash-card--soon {
+    background: var(--color-bg);
+    pointer-events: none;
+    opacity: 0.88;
+  }
+  .lounge-dash-card--primary {
+    border-left: 3px solid var(--color-accent);
+  }
+  .lounge-dash-card__eyebrow {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-burgundy);
+    margin: 0 0 0.85rem 0;
+  }
+  .lounge-dash-card__title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+    margin: 0 0 0.65rem 0;
+  }
+  .lounge-dash-card__body {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+    margin: 0 0 1.25rem 0;
+  }
+  .lounge-dash-card__cta {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+  }
+  .lounge-dash-card__cta--muted { color: var(--color-text-muted); }
+
+  .lounge-dash-meta {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.5rem 1.85rem;
+    max-width: 32rem;
+  }
+  .lounge-dash-meta__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--color-border);
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--color-text);
+  }
+  .lounge-dash-meta__row:last-child { border-bottom: 0; }
+  .lounge-dash-meta__label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-text-muted);
+  }
+  .lounge-dash-meta__badge {
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.65rem;
+    border-radius: 3px;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getCurrentProfile, touchActive } from "../../../lib/supabase";
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+
+    const profile = await getCurrentProfile();
+    if (!profile) {
+      // Profile row missing — should never happen (trigger creates one); send to profile setup
+      window.location.href = "/lounge/app/profile/?setup=1";
+      return;
+    }
+
+    // Touch last_active_at in the background
+    touchActive().catch(() => {});
+
+    // Populate dashboard
+    const nameEl = document.getElementById("dash-name");
+    if (nameEl) nameEl.textContent = profile.display_name || "Member";
+
+    const joinedEl = document.getElementById("dash-joined");
+    if (joinedEl && profile.joined_at) {
+      joinedEl.textContent = new Date(profile.joined_at).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+    }
+
+    const cityEl = document.getElementById("dash-city");
+    if (cityEl) cityEl.textContent = profile.city || "Not set";
+
+    if (profile.is_founding) {
+      const row = document.getElementById("dash-founding-row");
+      if (row) row.hidden = false;
+    }
+
+    // Swap loading shell for real content
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

@@ -1,0 +1,153 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Sign in — The Lounge"
+  description="Sign in to The Lounge — The Next Cigar's members network."
+  noIndex
+>
+  <section class="lounge-auth">
+    <div class="lounge-auth__inner reveal">
+      <p class="lounge-auth__eyebrow">The Lounge · Welcome back</p>
+      <h1 class="lounge-auth__title">Sign in.</h1>
+      <p class="lounge-auth__lead">
+        Enter your email and we'll send a one-time magic link. Same email you used to join.
+      </p>
+
+      <form id="login-form" class="lounge-auth__form">
+        <label class="lounge-auth__label">
+          Email
+          <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
+        </label>
+
+        <button type="submit" class="lounge-auth__button">Send magic link →</button>
+      </form>
+
+      <p id="login-status" class="lounge-auth__status" hidden></p>
+
+      <p class="lounge-auth__alt">
+        Not a member yet? <a href="/lounge/signup/">Reserve your place</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lounge-auth {
+    min-height: calc(100vh - 80px);
+    background:
+      radial-gradient(circle at 15% 25%, rgba(110, 38, 32, 0.10), transparent 55%),
+      radial-gradient(circle at 85% 75%, rgba(255, 46, 46, 0.06), transparent 55%),
+      var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1.5rem;
+  }
+  .lounge-auth__inner {
+    width: 100%;
+    max-width: 28rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 2.5rem;
+  }
+  .lounge-auth__eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-accent); margin: 0 0 0.85rem 0;
+  }
+  .lounge-auth__title {
+    font-family: var(--font-display); font-size: 2.25rem; font-weight: 800;
+    line-height: 1.05; letter-spacing: -0.02em;
+    color: var(--color-text); margin: 0 0 0.85rem 0;
+  }
+  .lounge-auth__lead {
+    font-size: 0.95rem; line-height: 1.55;
+    color: var(--color-text-soft); margin: 0 0 1.5rem 0;
+  }
+  .lounge-auth__form { display: flex; flex-direction: column; gap: 1rem; }
+  .lounge-auth__label {
+    display: flex; flex-direction: column; gap: 0.4rem;
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--color-text-muted);
+  }
+  .lounge-auth__label input {
+    padding: 0.75rem 0.85rem; border: 1px solid var(--color-border);
+    border-radius: 3px; background: #fff; font-size: 0.95rem;
+    color: var(--color-text); text-transform: none; letter-spacing: normal;
+  }
+  .lounge-auth__label input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+  .lounge-auth__button {
+    margin-top: 0.5rem; padding: 0.85rem 1.2rem;
+    background: var(--color-accent); color: #fff; border: none; border-radius: 3px;
+    font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    cursor: pointer; transition: background 0.2s ease;
+  }
+  .lounge-auth__button:hover { background: var(--color-accent-hover); }
+  .lounge-auth__button:disabled { opacity: 0.6; cursor: wait; }
+  .lounge-auth__status {
+    margin-top: 1rem; padding: 0.85rem 1rem;
+    background: var(--color-cream); border-left: 3px solid var(--color-accent);
+    border-radius: 3px; font-size: 0.88rem; line-height: 1.5; color: var(--color-text);
+  }
+  .lounge-auth__status.is-error { background: #fde9e9; border-color: #c62828; }
+  .lounge-auth__alt {
+    margin-top: 1.25rem; text-align: center;
+    font-size: 0.85rem; color: var(--color-text-muted);
+  }
+  .lounge-auth__alt a { color: var(--color-accent); font-weight: 600; text-decoration: underline; }
+</style>
+
+<script>
+  import { getSupabase, getCurrentUser } from "../../lib/supabase";
+
+  async function setup() {
+    // If already signed in, skip the form
+    const user = await getCurrentUser();
+    if (user) {
+      window.location.href = "/lounge/app/";
+      return;
+    }
+
+    const form = document.getElementById("login-form") as HTMLFormElement | null;
+    const status = document.getElementById("login-status") as HTMLParagraphElement | null;
+    if (!form || form.dataset.bound === "1") return;
+    form.dataset.bound = "1";
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const email = String(data.get("email") || "").trim();
+      if (!email) return;
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: `${window.location.origin}/lounge/app/` },
+        });
+        if (error) throw error;
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.innerHTML = `Magic link sent to <strong>${email}</strong>. Check your inbox to sign in.`;
+        }
+        form.style.display = "none";
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err.message || "Sign-in failed. Try again, or email guatabeycigars@gmail.com.";
+        }
+        btn.disabled = false;
+        btn.textContent = "Send magic link →";
+      }
+    });
+  }
+
+  document.addEventListener("astro:page-load", setup);
+  setup();
+</script>

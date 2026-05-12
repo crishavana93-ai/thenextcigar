@@ -1,0 +1,370 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="Profile — The Lounge"
+  description="Edit your Lounge profile."
+  noIndex
+>
+  <LoungeHeader active="profile" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <p class="lounge-app__guard-eyebrow">Loading your profile…</p>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-narrow pt-12 md:pt-16 pb-8 reveal">
+        <p class="section-eyebrow">Your profile</p>
+        <h1 class="font-display text-3xl md:text-4xl leading-[1.05] tracking-tight mt-2">
+          How members see you.
+        </h1>
+        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
+          Keep it short and first-name-only. The directory shows your display name + city + (optional) bio.
+          Email stays private. You can change any of this anytime.
+        </p>
+      </section>
+
+      <section class="container-narrow pb-24">
+        <form id="profile-form" class="profile-form">
+          {/* Avatar */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Photo
+              <div class="profile-form__avatar-wrap">
+                <img id="avatar-preview" alt="Your avatar" class="profile-form__avatar" />
+                <div class="profile-form__avatar-actions">
+                  <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" hidden />
+                  <button type="button" id="avatar-upload-btn" class="profile-form__small-btn">Upload</button>
+                  <button type="button" id="avatar-remove-btn" class="profile-form__small-btn profile-form__small-btn--ghost" hidden>Remove</button>
+                </div>
+                <p class="profile-form__hint">JPG, PNG or WebP. Under 2 MB. Square crops look best.</p>
+              </div>
+            </label>
+          </div>
+
+          {/* Display name */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Display name <span class="profile-form__hint-inline">(first name + initial)</span>
+              <input type="text" name="display_name" required maxlength="40" placeholder="Cris O." />
+            </label>
+          </div>
+
+          {/* Full name (private) */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Full name <span class="profile-form__hint-inline">private — never shown to other members</span>
+              <input type="text" name="full_name" maxlength="80" placeholder="Cristian Ortiz Suárez" />
+            </label>
+          </div>
+
+          {/* City */}
+          <div class="profile-form__row profile-form__row--two">
+            <label class="profile-form__label">
+              City
+              <input type="text" name="city" maxlength="60" placeholder="Stockholm" />
+            </label>
+            <label class="profile-form__label">
+              Country code <span class="profile-form__hint-inline">ISO-2, e.g. SE</span>
+              <input type="text" name="country_code" maxlength="2" pattern="[A-Za-z]{2}" placeholder="SE" />
+            </label>
+          </div>
+
+          {/* Bio */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Bio <span class="profile-form__hint-inline">up to 280 characters</span>
+              <textarea name="bio" maxlength="280" rows="3" placeholder="What you usually smoke, one cigar destination on your list…"></textarea>
+            </label>
+          </div>
+
+          {/* Host toggle */}
+          <div class="profile-form__row">
+            <label class="profile-form__toggle">
+              <input type="checkbox" name="is_host" />
+              <span>
+                <strong>I'd be open to host visitors in my city.</strong>
+                <small>Visiting members can request a discreet intro. You always decide if you reply.</small>
+              </span>
+            </label>
+          </div>
+
+          <button type="submit" class="profile-form__submit">Save profile</button>
+          <p id="profile-status" class="profile-form__status" hidden></p>
+        </form>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+  .lounge-app__guard {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  .profile-form {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 2rem 2.25rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .profile-form__row { display: flex; flex-direction: column; }
+  .profile-form__row--two {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .profile-form__row--two { grid-template-columns: 2fr 1fr; }
+  }
+  .profile-form__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+  .profile-form__hint-inline {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--color-text-muted);
+    margin-left: 0.4rem;
+    font-size: 0.7rem;
+  }
+  .profile-form__label input,
+  .profile-form__label textarea {
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    text-transform: none;
+    letter-spacing: normal;
+    font-family: inherit;
+  }
+  .profile-form__label input:focus,
+  .profile-form__label textarea:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .profile-form__avatar-wrap {
+    margin-top: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .profile-form__avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+  .profile-form__avatar-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .profile-form__small-btn {
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+  .profile-form__small-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .profile-form__small-btn--ghost { background: transparent; }
+  .profile-form__hint {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+    margin: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+  }
+  .profile-form__toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    background: var(--color-cream);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .profile-form__toggle input[type="checkbox"] {
+    margin-top: 0.2rem;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+  .profile-form__toggle span { display: flex; flex-direction: column; gap: 0.25rem; }
+  .profile-form__toggle strong { font-size: 0.92rem; font-weight: 700; color: var(--color-text); }
+  .profile-form__toggle small { font-size: 0.8rem; color: var(--color-text-soft); line-height: 1.4; }
+  .profile-form__submit {
+    margin-top: 0.5rem;
+    padding: 0.9rem 1.5rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    align-self: flex-start;
+  }
+  .profile-form__submit:hover { background: var(--color-accent-hover); }
+  .profile-form__submit:disabled { opacity: 0.6; cursor: wait; }
+  .profile-form__status {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    font-size: 0.88rem;
+    color: var(--color-text);
+  }
+  .profile-form__status.is-error { background: #fde9e9; border-color: #c62828; }
+</style>
+
+<script>
+  import { getSupabase, getCurrentUser, getCurrentProfile } from "../../../lib/supabase";
+
+  const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%23ededed'/><text x='50%' y='55%' font-family='Arial' font-size='32' fill='%23999' text-anchor='middle' dominant-baseline='middle' font-weight='800'>TNC</text></svg>";
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+
+    const profile = await getCurrentProfile();
+    if (!profile) return;
+
+    // Populate form
+    const form = document.getElementById("profile-form") as HTMLFormElement;
+    if (!form) return;
+    (form.elements.namedItem("display_name") as HTMLInputElement).value = profile.display_name || "";
+    (form.elements.namedItem("full_name") as HTMLInputElement).value = profile.full_name || "";
+    (form.elements.namedItem("city") as HTMLInputElement).value = profile.city || "";
+    (form.elements.namedItem("country_code") as HTMLInputElement).value = profile.country_code || "";
+    (form.elements.namedItem("bio") as HTMLTextAreaElement).value = profile.bio || "";
+    (form.elements.namedItem("is_host") as HTMLInputElement).checked = !!profile.is_host;
+
+    // Avatar preview
+    const avatarPreview = document.getElementById("avatar-preview") as HTMLImageElement;
+    const removeBtn = document.getElementById("avatar-remove-btn") as HTMLButtonElement;
+    if (profile.avatar_url) {
+      avatarPreview.src = profile.avatar_url;
+      removeBtn.hidden = false;
+    } else {
+      avatarPreview.src = DEFAULT_AVATAR;
+    }
+
+    // Avatar upload handler
+    const uploadBtn = document.getElementById("avatar-upload-btn") as HTMLButtonElement;
+    const fileInput = document.getElementById("avatar-input") as HTMLInputElement;
+    uploadBtn.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Max file size is 2 MB.");
+        return;
+      }
+      const supabase = getSupabase();
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, cacheControl: "60" });
+      if (upErr) { alert("Upload failed: " + upErr.message); return; }
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      const cacheBusted = `${publicUrl}?t=${Date.now()}`;
+      // Save url to profile
+      await supabase.from("profiles").update({ avatar_url: cacheBusted }).eq("id", user.id);
+      avatarPreview.src = cacheBusted;
+      removeBtn.hidden = false;
+    });
+
+    removeBtn.addEventListener("click", async () => {
+      const supabase = getSupabase();
+      await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+      avatarPreview.src = DEFAULT_AVATAR;
+      removeBtn.hidden = true;
+    });
+
+    // Save handler
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("profile-status") as HTMLParagraphElement;
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true; btn.textContent = "Saving…";
+
+      const data = new FormData(form);
+      const update = {
+        display_name: String(data.get("display_name") || "").trim(),
+        full_name: String(data.get("full_name") || "").trim() || null,
+        city: String(data.get("city") || "").trim() || null,
+        country_code: String(data.get("country_code") || "").trim().toUpperCase() || null,
+        bio: String(data.get("bio") || "").trim() || null,
+        is_host: data.get("is_host") === "on",
+      };
+
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
+        if (error) throw error;
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.textContent = "Saved. Members will see your profile updated immediately.";
+        }
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err.message || "Save failed. Try again.";
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Save profile";
+      }
+    });
+
+    // Reveal form
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

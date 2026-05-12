@@ -1,0 +1,129 @@
+---
+/**
+ * Lounge app header — shown on every authenticated page under /lounge/app/.
+ * Different from the public TNC header (Header.astro): minimal, member-focused,
+ * with a logged-in nav bar.
+ */
+interface Props {
+  active?: "dashboard" | "directory" | "map" | "travel" | "inbox" | "profile";
+}
+const { active = "dashboard" } = Astro.props as Props;
+---
+
+<header class="lounge-header">
+  <div class="container-wide flex items-center justify-between py-4">
+    <a href="/lounge/app/" class="lounge-header__brand">
+      <span class="lounge-header__mark">TNC</span>
+      <span class="lounge-header__sub">The Lounge</span>
+    </a>
+
+    <nav class="lounge-header__nav" aria-label="Lounge sections">
+      <a href="/lounge/app/" class:list={["lounge-nav-link", active === "dashboard" && "is-active"]}>Home</a>
+      <a href="/lounge/app/directory/" class:list={["lounge-nav-link", active === "directory" && "is-active"]}>Members</a>
+      <a href="/lounge/app/map/" class:list={["lounge-nav-link", active === "map" && "is-active"]}>Map</a>
+      <a href="/lounge/app/travel/" class:list={["lounge-nav-link", active === "travel" && "is-active"]}>Travel</a>
+      <a href="/lounge/app/inbox/" class:list={["lounge-nav-link", active === "inbox" && "is-active"]}>Inbox</a>
+    </nav>
+
+    <div class="lounge-header__user">
+      <a href="/lounge/app/profile/" class:list={["lounge-nav-link", active === "profile" && "is-active"]} aria-label="Edit profile">
+        <span id="lounge-header-name">…</span>
+      </a>
+      <button id="lounge-signout" class="lounge-signout" aria-label="Sign out">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .lounge-header {
+    background: var(--color-dark);
+    color: var(--color-text-on-dark);
+    border-bottom: 1px solid var(--color-dark-border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .lounge-header__brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    color: var(--color-text-on-dark);
+    text-decoration: none;
+  }
+  .lounge-header__mark {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+  .lounge-header__sub {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .lounge-header__nav {
+    display: none;
+    gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .lounge-header__nav { display: flex; }
+  }
+  .lounge-nav-link {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-text-on-dark-mute);
+    text-decoration: none;
+    padding: 0.4rem 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .lounge-nav-link:hover {
+    color: var(--color-text-on-dark);
+  }
+  .lounge-nav-link.is-active {
+    color: var(--color-text-on-dark);
+    border-bottom-color: var(--color-accent);
+  }
+  .lounge-header__user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .lounge-signout {
+    background: none;
+    border: 1px solid var(--color-dark-border);
+    color: var(--color-text-on-dark-mute);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    padding: 0.4rem 0.8rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .lounge-signout:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text-on-dark);
+  }
+</style>
+
+<script>
+  import { getCurrentProfile, signOutAndRedirect } from "../../lib/supabase";
+
+  async function setup() {
+    const nameEl = document.getElementById("lounge-header-name");
+    const profile = await getCurrentProfile();
+    if (nameEl && profile) {
+      nameEl.textContent = profile.display_name || "Member";
+    }
+    const btn = document.getElementById("lounge-signout");
+    btn?.addEventListener("click", () => signOutAndRedirect());
+  }
+  document.addEventListener("astro:page-load", setup);
+  setup();
+</script>
