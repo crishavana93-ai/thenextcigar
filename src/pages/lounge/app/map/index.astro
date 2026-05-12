@@ -1,0 +1,651 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="Map — The Lounge"
+  description="Check in at a partner cigar lounge."
+  noIndex
+>
+  <LoungeHeader active="map" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading the map…</p>
+      </div>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-12 md:pt-16 pb-4 reveal">
+        <p class="section-eyebrow">The Lounge · Map</p>
+        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
+          Where are you smoking?
+        </h1>
+        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
+          Tap a venue to see who's here right now, then check in.
+          Your check-in is visible to members only and expires after 4 hours.
+        </p>
+      </section>
+
+      {/* Active check-in banner */}
+      <section class="container-wide pb-4" id="my-active-section" hidden>
+        <div class="lounge-checkin-active">
+          <div class="lounge-checkin-active__info">
+            <p class="lounge-checkin-active__eyebrow">You're checked in at</p>
+            <p class="lounge-checkin-active__venue" id="my-active-venue">—</p>
+            <p class="lounge-checkin-active__expires" id="my-active-expires">—</p>
+          </div>
+          <button id="my-active-checkout" class="lounge-checkin-active__btn" type="button">Check out →</button>
+        </div>
+      </section>
+
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+      />
+
+      <section class="container-wide pb-12">
+        <div class="lounge-map-layout">
+          <div id="lounge-map" class="lounge-map"></div>
+
+          <aside class="lounge-map-side">
+            <div id="side-empty" class="lounge-map-side__empty">
+              <p class="lounge-map-side__eyebrow">Tap a venue</p>
+              <p class="lounge-map-side__body">
+                Click any pin on the map to see who's there and check in.
+              </p>
+            </div>
+
+            <div id="side-detail" hidden>
+              <p class="lounge-map-side__eyebrow" id="side-type">Lounge</p>
+              <h2 class="lounge-map-side__title" id="side-name">—</h2>
+              <p class="lounge-map-side__city" id="side-city">—</p>
+              <p class="lounge-map-side__note" id="side-note">—</p>
+
+              <div class="lounge-map-side__active">
+                <p class="lounge-map-side__active-eyebrow">Currently here</p>
+                <div id="side-active-list" class="lounge-map-side__active-list">
+                  <p class="lounge-map-side__active-empty">No members checked in.</p>
+                </div>
+              </div>
+
+              <form id="checkin-form" class="lounge-checkin-form">
+                <label class="lounge-checkin-form__label">
+                  Optional message (max 140 chars)
+                  <input type="text" name="message" maxlength="140"
+                    placeholder="e.g. Open to a smoke if anyone's around" />
+                </label>
+                <button type="submit" class="lounge-checkin-form__submit">Check in here →</button>
+                <p id="checkin-status" hidden class="lounge-checkin-form__status"></p>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+  is:inline
+></script>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+
+  .lounge-app__guard {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Active check-in banner */
+  .lounge-checkin-active {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 6px;
+    padding: 1.1rem 1.5rem;
+  }
+  .lounge-checkin-active__info { flex-grow: 1; }
+  .lounge-checkin-active__eyebrow {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .lounge-checkin-active__venue {
+    margin: 0.25rem 0 0.1rem 0;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .lounge-checkin-active__expires {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+  .lounge-checkin-active__btn {
+    background: rgba(0, 0, 0, 0.18);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 0.65rem 1.1rem;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .lounge-checkin-active__btn:hover { background: rgba(0, 0, 0, 0.32); }
+
+  /* Map layout */
+  .lounge-map-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .lounge-map-layout { grid-template-columns: 1fr 22rem; }
+  }
+  .lounge-map {
+    height: 70vh;
+    min-height: 28rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    background: var(--color-bg-soft);
+  }
+
+  /* Side panel */
+  .lounge-map-side {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.5rem 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .lounge-map-side__empty { color: var(--color-text-muted); }
+  .lounge-map-side__eyebrow {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-burgundy);
+  }
+  .lounge-map-side__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--color-text);
+  }
+  .lounge-map-side__city {
+    margin: 0.4rem 0 0.85rem 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+  }
+  .lounge-map-side__note {
+    margin: 0 0 1.25rem 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+  }
+  .lounge-map-side__body {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--color-text-soft);
+  }
+  .lounge-map-side__active {
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 1rem;
+  }
+  .lounge-map-side__active-eyebrow {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .lounge-map-side__active-list { display: flex; flex-direction: column; gap: 0.55rem; }
+  .lounge-map-side__active-empty {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+  .lounge-map-side__active-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.88rem;
+    color: var(--color-text);
+  }
+  .lounge-map-side__active-avatar {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 50%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lounge-map-side__active-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .lounge-map-side__active-name { font-weight: 600; }
+  .lounge-map-side__active-msg {
+    color: var(--color-text-soft);
+    font-size: 0.8rem;
+    margin-left: 0.4rem;
+  }
+
+  /* Check-in form */
+  .lounge-checkin-form { display: flex; flex-direction: column; gap: 0.85rem; }
+  .lounge-checkin-form__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+  .lounge-checkin-form__label input {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.92rem;
+    color: var(--color-text);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .lounge-checkin-form__label input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .lounge-checkin-form__submit {
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .lounge-checkin-form__submit:hover { background: var(--color-accent-hover); }
+  .lounge-checkin-form__submit:disabled { opacity: 0.6; cursor: wait; }
+  .lounge-checkin-form__status {
+    margin: 0;
+    padding: 0.75rem 0.85rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    font-size: 0.86rem;
+    color: var(--color-text);
+  }
+  .lounge-checkin-form__status.is-error {
+    background: #fde9e9;
+    border-color: #c62828;
+  }
+
+  /* Leaflet pin colors (CSS-only div icons) */
+  :global(.lounge-pin) {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  }
+  :global(.lounge-pin--lounge) { background: #6e2620; }
+  :global(.lounge-pin--retailer) { background: #2d4a3e; }
+  :global(.lounge-pin--casadelhabano) { background: #c0392b; }
+  :global(.lounge-pin--house) { background: #1c2541; }
+  :global(.lounge-pin--pub) { background: #8a6d3b; }
+  :global(.lounge-pin--club) { background: #5d3a78; }
+  :global(.lounge-pin--has-active) {
+    box-shadow: 0 0 0 4px rgba(255,46,46,0.35), 0 1px 4px rgba(0,0,0,0.35);
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+
+  type Lounge = {
+    id: string;
+    slug: string;
+    name: string;
+    city: string;
+    country: string;
+    address: string | null;
+    lat: number;
+    lng: number;
+    type: string;
+    perks: string | null;
+    website: string | null;
+  };
+
+  type CheckinRow = {
+    id: string;
+    member_id: string;
+    lounge_id: string;
+    expires_at: string;
+    message: string | null;
+    profile: { display_name: string | null; avatar_url: string | null } | null;
+  };
+
+  let allLounges: Lounge[] = [];
+  let activeByLoungeId: Record<string, CheckinRow[]> = {};
+  let myUserId = "";
+  let selected: Lounge | null = null;
+  let map: any = null;
+  let markersBySlug: Record<string, any> = {};
+
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+  }
+
+  function fmtRelativeRemaining(iso: string): string {
+    const remaining = new Date(iso).getTime() - Date.now();
+    if (remaining <= 0) return "expired";
+    const mins = Math.round(remaining / 60000);
+    if (mins < 60) return `expires in ${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `expires in ${h}h ${m}m`;
+  }
+
+  async function loadActive(): Promise<void> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("checkins")
+      .select("id, member_id, lounge_id, expires_at, message, profile:member_id(display_name, avatar_url)");
+    if (error) {
+      console.error("[Lounge map] failed to load checkins:", error);
+      return;
+    }
+    const rows = (data || []) as CheckinRow[];
+    activeByLoungeId = {};
+    for (const r of rows) {
+      if (!activeByLoungeId[r.lounge_id]) activeByLoungeId[r.lounge_id] = [];
+      activeByLoungeId[r.lounge_id].push(r);
+    }
+  }
+
+  function renderMyActive(): void {
+    const section = document.getElementById("my-active-section");
+    const venueEl = document.getElementById("my-active-venue");
+    const expiresEl = document.getElementById("my-active-expires");
+    if (!section || !venueEl || !expiresEl) return;
+
+    const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
+    if (!mine) {
+      section.hidden = true;
+      return;
+    }
+    const lounge = allLounges.find((l) => l.id === mine.lounge_id);
+    venueEl.textContent = lounge ? `${lounge.name} · ${lounge.city}` : "(venue)";
+    expiresEl.textContent = fmtRelativeRemaining(mine.expires_at);
+    section.hidden = false;
+
+    const btn = document.getElementById("my-active-checkout") as HTMLButtonElement | null;
+    if (btn) {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        btn.textContent = "Checking out…";
+        const supabase = getSupabase();
+        await supabase.from("checkins").delete().eq("id", mine.id);
+        await loadActive();
+        renderMyActive();
+        renderMap();
+        renderSide();
+        btn.disabled = false;
+        btn.textContent = "Check out →";
+      };
+    }
+  }
+
+  function pinClass(type: string, hasActive: boolean): string {
+    const base = `lounge-pin lounge-pin--${type}`;
+    return hasActive ? `${base} lounge-pin--has-active` : base;
+  }
+
+  function renderMap(): void {
+    if (!map) return;
+    // Clear old markers
+    Object.values(markersBySlug).forEach((m: any) => map.removeLayer(m));
+    markersBySlug = {};
+
+    const L = (window as any).L;
+    for (const lounge of allLounges) {
+      const hasActive = (activeByLoungeId[lounge.id]?.length || 0) > 0;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="${pinClass(lounge.type, hasActive)}"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      const marker = L.marker([lounge.lat, lounge.lng], { icon }).addTo(map);
+      marker.on("click", () => selectLounge(lounge));
+      markersBySlug[lounge.slug] = marker;
+    }
+  }
+
+  function selectLounge(lounge: Lounge): void {
+    selected = lounge;
+    renderSide();
+  }
+
+  function renderSide(): void {
+    const empty = document.getElementById("side-empty");
+    const detail = document.getElementById("side-detail");
+    if (!empty || !detail) return;
+
+    if (!selected) {
+      empty.hidden = false;
+      detail.hidden = true;
+      return;
+    }
+    empty.hidden = true;
+    detail.hidden = false;
+
+    const l = selected;
+    (document.getElementById("side-type") as HTMLElement).textContent = l.type.replace(/^./, (c) => c.toUpperCase());
+    (document.getElementById("side-name") as HTMLElement).textContent = l.name;
+    (document.getElementById("side-city") as HTMLElement).textContent = `${l.city} · ${l.country}`;
+    (document.getElementById("side-note") as HTMLElement).textContent = l.address || "";
+
+    // Active list
+    const list = document.getElementById("side-active-list") as HTMLElement;
+    const active = activeByLoungeId[l.id] || [];
+    if (active.length === 0) {
+      list.innerHTML = `<p class="lounge-map-side__active-empty">No members checked in.</p>`;
+    } else {
+      list.innerHTML = active
+        .map((c) => {
+          const name = c.profile?.display_name || "Member";
+          const avatar = c.profile?.avatar_url
+            ? `<img src="${c.profile.avatar_url}" alt="" />`
+            : initials(c.profile?.display_name || null);
+          const msg = c.message ? `<span class="lounge-map-side__active-msg">"${escapeHtml(c.message)}"</span>` : "";
+          const isMe = c.member_id === myUserId;
+          const meTag = isMe ? ` (you)` : "";
+          return `
+            <a class="lounge-map-side__active-row" href="${isMe ? '/lounge/app/profile/' : `/lounge/app/member/?id=${c.member_id}`}">
+              <span class="lounge-map-side__active-avatar">${avatar}</span>
+              <span><span class="lounge-map-side__active-name">${escapeHtml(name)}</span>${meTag}${msg}</span>
+            </a>`;
+        })
+        .join("");
+    }
+
+    // Wire check-in form (only one form per page, rewire each time)
+    const form = document.getElementById("checkin-form") as HTMLFormElement;
+    const status = document.getElementById("checkin-status") as HTMLParagraphElement;
+    // Check whether user already has an active check-in here
+    const alreadyHere = active.some((c) => c.member_id === myUserId);
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (alreadyHere) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Already checked in";
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Check in here →";
+    }
+    if (status) {
+      status.hidden = true;
+      status.classList.remove("is-error");
+    }
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Checking in…";
+      const fd = new FormData(form);
+      const message = String(fd.get("message") || "").trim() || null;
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.from("checkins").insert({
+          member_id: myUserId,
+          lounge_id: l.id,
+          message,
+        });
+        if (error) throw error;
+        await loadActive();
+        renderMyActive();
+        renderMap();
+        renderSide();
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.textContent = "You're checked in.";
+        }
+        (form.elements.namedItem("message") as HTMLInputElement).value = "";
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err?.message || "Could not check in.";
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Check in here →";
+      }
+    };
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function waitForLeaflet(): Promise<void> {
+    return new Promise((resolve) => {
+      const check = () => {
+        if ((window as any).L) resolve();
+        else setTimeout(check, 50);
+      };
+      check();
+    });
+  }
+
+  async function init(): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    myUserId = user.id;
+
+    const supabase = getSupabase();
+    const { data: lounges, error } = await supabase
+      .from("partner_lounges")
+      .select("id, slug, name, city, country, address, lat, lng, type, perks, website")
+      .not("verified_at", "is", null);
+    if (error) {
+      console.error("[Lounge map] failed to load lounges:", error);
+      allLounges = [];
+    } else {
+      allLounges = (lounges as Lounge[]) || [];
+    }
+
+    await loadActive();
+
+    // Init Leaflet
+    await waitForLeaflet();
+    const L = (window as any).L;
+    map = L.map("lounge-map", { worldCopyJump: true }).setView([30, 10], 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    renderMap();
+    renderMyActive();
+
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+
+    // If user has an active check-in, fly to that venue
+    const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
+    if (mine) {
+      const lounge = allLounges.find((l) => l.id === mine.lounge_id);
+      if (lounge) {
+        map.setView([lounge.lat, lounge.lng], 13);
+        selectLounge(lounge);
+      }
+    }
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

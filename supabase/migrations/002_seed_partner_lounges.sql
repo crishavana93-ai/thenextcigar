@@ -1,0 +1,43 @@
+-- Seed partner_lounges from src/data/cigar-places.ts
+-- All seeded venues are pre-verified (verified_at = now()) so they appear in the Lounge map.
+-- Re-runnable: ON CONFLICT (slug) updates the row but preserves the original verified_at.
+
+insert into public.partner_lounges (slug, name, city, country, address, lat, lng, type, verified_at, perks, website)
+values
+  ('sautter-mayfair', 'Sautter of Mayfair', 'London', 'United Kingdom', '106 Mount Street, Mayfair, London W1K 2TW', 51.5095, -0.153, 'retailer', now(), 'Mayfair''s premier cigar merchant. Walk-in humidor with the deepest Habanos selection in the UK.', 'https://www.sautter.com/'),
+  ('davidoff-london', 'Davidoff of London', 'London', 'United Kingdom', '35 St James''s Street, London SW1A 1HD', 51.5066, -0.138, 'retailer', now(), 'Davidoff''s flagship UK store on St James''s. Walk-in humidor, knowledgeable counter staff, the historic 19th-century shop.', 'https://www.davidofflondon.com/'),
+  ('jj-fox', 'J.J. Fox of St James''s', 'London', 'United Kingdom', '19 St James''s Street, London SW1A 1ES', 51.5069, -0.1391, 'retailer', now(), 'Trading since 1787 — the oldest tobacconist in continuous operation in the UK. Churchill''s own shop.', 'https://jjfox.co.uk/'),
+  ('boisdale-canary-wharf', 'Boisdale of Canary Wharf', 'London', 'United Kingdom', 'Cabot Place, Canary Wharf, London E14 4QT', 51.505, -0.0193, 'club', now(), 'Cigar terrace overlooking the dock. Live jazz, full whisky list, the smoking-friendly room.', 'https://www.boisdale.co.uk/canary-wharf/'),
+  ('hunters-frankau-london', 'Hunters & Frankau', 'London', 'United Kingdom', '13 Grosvenor Crescent, Belgravia, London SW1X 7EE', 51.5009, -0.1531, 'retailer', now(), 'UK distributor of Habanos. Trade-only at the office but the retail Cabinet showroom is open by appointment.', 'https://www.hf.uk.com/'),
+  ('casa-habano-conde-villanueva', 'La Casa del Habano · Conde de Villanueva', 'Havana', 'Cuba', 'Calle Mercaderes 202, La Habana Vieja', 23.138, -82.353, 'casadelhabano', now(), 'Inside the historic Hostal Conde de Villanueva. Smoking room, fully stocked humidor, the location every Havana traveler eventually finds.', 'https://www.habanos.com/'),
+  ('casa-habano-club-habana', 'La Casa del Habano · Club Habana', 'Havana', 'Cuba', '5ta Avenida y 188, Playa, Havana', 23.0985, -82.479, 'casadelhabano', now(), 'Beachfront LCDH at the Club Habana resort. Quietest of the Havana houses; deep cabinet selection.', null),
+  ('casa-habano-partagas', 'La Casa del Habano · Partagás', 'Havana', 'Cuba', 'Industria 520, Centro Habana', 23.1356, -82.3589, 'casadelhabano', now(), 'Adjacent to the Partagás factory site. Walking-in tourists welcome; the upstairs lounge is where the regulars sit.', null),
+  ('davidoff-madison', 'Davidoff of Geneva · Madison Avenue', 'New York', 'United States', '535 Madison Ave, New York, NY 10022', 40.7607, -73.9728, 'retailer', now(), 'Davidoff''s NYC flagship. Walk-in humidor, smoking lounge in the back, premium-only selection.', 'https://www.davidoffgeneva.com/'),
+  ('club-macanudo-nyc', 'Club Macanudo', 'New York', 'United States', '26 East 63rd Street, New York, NY 10065', 40.7659, -73.9684, 'lounge', now(), 'Upper East Side cigar bar. Cocktail list, lockers for regulars, and a kitchen that takes the food seriously.', 'https://www.clubmacanudonyc.com/'),
+  ('carnegie-club', 'The Carnegie Club', 'New York', 'United States', '156 W 56th St, New York, NY 10019', 40.7649, -73.9784, 'lounge', now(), 'Old-school cigar lounge near Carnegie Hall. Live big-band sets on Saturday, smoking permitted indoors.', 'https://hospitalityholdings.com/cigar-bar/'),
+  ('casa-cuba-miami', 'Casa de Montecristo', 'Miami', 'United States', '1900 Biscayne Blvd, Miami, FL 33132', 25.7926, -80.1881, 'lounge', now(), 'Imperial Brands'' US lounge concept. Smoking permitted indoors, deep New World inventory.', 'https://www.casademontecristo.com/'),
+  ('el-titan-bronze', 'El Titán de Bronce', 'Miami', 'United States', '1071 SW 8th St, Miami, FL 33130', 25.7651, -80.2143, 'retailer', now(), 'Little Havana''s working cigar factory. Watch the rollers, buy at counter, the most-authentic Cuban-style experience in the US.', 'https://www.eltitan.com/'),
+  ('cohiba-atmosphere-dubai', 'Cohiba Atmosphere Dubai', 'Dubai', 'United Arab Emirates', 'Sofitel Dubai The Obelisk, Dubai', 25.2289, 55.3287, 'house', now(), 'Habanos S.A.''s premium-tier lounge concept. Cigars + curated cocktail pairings; one of only a handful of Cohiba Atmosphere venues worldwide.', 'https://www.habanos.com/'),
+  ('le-fumoir-de-vincennes', 'La Civette', 'Paris', 'France', '157 Rue Saint-Honoré, 75001 Paris', 48.8625, 2.3415, 'retailer', now(), 'Historic Right Bank tobacconist trading since 1716. The discreet Paris choice — the cabinet is small but every cigar in it has a reason.', null),
+  ('casa-del-habano-frankfurt', 'La Casa del Habano Frankfurt', 'Frankfurt', 'Germany', 'Goethestraße 13, 60313 Frankfurt am Main', 50.1144, 8.679, 'casadelhabano', now(), 'Germany''s flagship Habanos house. Smoking lounge, the deepest Habanos cabinet in the country.', 'https://lcdh-frankfurt.de/'),
+  ('davidoff-geneva-flagship', 'Davidoff de Genève', 'Geneva', 'Switzerland', 'Rue de Rive 2, 1204 Genève', 46.201, 6.1466, 'house', now(), 'Davidoff''s original Geneva flagship. The shop Zino Davidoff himself ran. Smoking salon, premium-only.', 'https://www.davidoffgeneva.com/'),
+  ('gimeno-barcelona', 'Gimeno Tabacos', 'Barcelona', 'Spain', 'La Rambla, 100, 08002 Barcelona', 41.3825, 2.1731, 'retailer', now(), 'Trading on Las Ramblas since 1920. The Barcelona stop — Habanos, German pipes, the historic tobacco shop you walk into by accident and stay an hour.', 'https://www.gimeno.es/'),
+  ('cigarrcentralen-stockholm', 'Cigarrcentralen', 'Stockholm', 'Sweden', 'Birger Jarlsgatan 17, 111 45 Stockholm', 59.3358, 18.0716, 'retailer', now(), 'Stockholm''s premier cigar specialist. Walk-in humidor, regular tastings, the meeting point for the Swedish cigar community.', 'https://cigarrcentralen.se/'),
+  ('lasse-diding-varberg', 'Hotel Gästis · Lasse Diding''s Cigarmaker', 'Varberg', 'Sweden', 'Bäckgatan 1, 432 41 Varberg', 57.1058, 12.2502, 'lounge', now(), 'The legendary Lasse Diding''s hotel and cigar lounge on Sweden''s west coast. Cuban inventory, smoking permitted indoors, the cult Swedish destination.', 'https://www.hotelgastis.se/'),
+  ('wb-engel-copenhagen', 'W.Ø. Larsen', 'Copenhagen', 'Denmark', 'Læderstræde 11, 1201 København', 55.6772, 12.5793, 'retailer', now(), 'Trading since 1864. Specialists in the Danish pipe tradition but the cigar room is serious. Walk-in humidor and a quiet smoking lounge.', 'https://wolarsen.dk/'),
+  ('macanudo-copenhagen', 'Cigar Shop Macanudo Copenhagen', 'Copenhagen', 'Denmark', 'Silkegade 23, 1113 København K', 55.6803, 12.5807, 'retailer', now(), 'STG''s relaunch of the former Davidoff My Own Blend store. Walk-in humidor with a strong Macanudo and General Cigar selection, a few steps from Strøget.', 'https://clubmacanudo.com/locations/copenhagen/'),
+  ('musen-og-elefanten', 'Musen & Elefanten', 'Copenhagen', 'Denmark', 'Vestergade 21, 1456 København K', 55.6776, 12.571, 'pub', now(), 'One of the only bars in Denmark that sells cigars. Two floors, old-Copenhagen apartment vibe, smoking nights on designated days. The cult cigar bar of København.', 'https://musenogelefanten.dk/'),
+  ('malmo-cigarr-tobakshandel', 'Malmö Cigarr & Tobakshandel', 'Malmö', 'Sweden', 'Gustav Adolfs Torg 41, 211 39 Malmö', 55.6035, 13.0009, 'retailer', now(), 'Small shop, big depth. The cigar specialist for southern Sweden — walk-in humidor on Gustav Adolfs Torg, the destination for serious Skåne smokers.', 'https://www.facebook.com/MalmoCigarrTobakshandel/'),
+  ('casa-habano-hongkong', 'La Casa del Habano Hong Kong', 'Hong Kong', 'Hong Kong', 'Pacific Place, 88 Queensway, Admiralty', 22.2783, 114.166, 'casadelhabano', now(), 'Hong Kong''s flagship LCDH inside Pacific Place mall. The closest you get to Havana on the Pacific Rim.', 'https://www.habanos.com/'),
+  ('regalia-tokyo', 'Casa Fuente Tokyo (Imperial Hotel)', 'Tokyo', 'Japan', '1-1-1 Uchisaiwai-cho, Chiyoda-ku, Tokyo', 35.6716, 139.7591, 'lounge', now(), 'Imperial Hotel''s smoking salon. Smoking permitted indoors, curated selection from Arturo Fuente and Davidoff.', null)
+on conflict (slug) do update set
+  name = excluded.name,
+  city = excluded.city,
+  country = excluded.country,
+  address = excluded.address,
+  lat = excluded.lat,
+  lng = excluded.lng,
+  type = excluded.type,
+  verified_at = coalesce(public.partner_lounges.verified_at, excluded.verified_at),
+  perks = excluded.perks,
+  website = excluded.website;

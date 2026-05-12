@@ -1,0 +1,624 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="Travel mode — The Lounge"
+  description="Tell members where you're going next."
+  noIndex
+>
+  <LoungeHeader active="travel" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading travel…</p>
+      </div>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-12 md:pt-16 pb-4 reveal">
+        <p class="section-eyebrow">The Lounge · Travel</p>
+        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
+          Where are you going?
+        </h1>
+        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
+          Declare your next trip and locals in that city see you're coming.
+          Smooth introductions, no awkward DMs.
+        </p>
+      </section>
+
+      {/* Two-column layout: your trips + add form on left, feed on right */}
+      <section class="container-wide pb-24">
+        <div class="lounge-travel-layout">
+
+          <div class="lounge-travel-col">
+            {/* Your trips */}
+            <div class="lounge-travel-card">
+              <p class="lounge-travel-card__eyebrow">Your upcoming trips</p>
+              <div id="my-trips-list" class="lounge-travel-list"></div>
+              <div id="my-trips-empty" hidden class="lounge-travel-empty">
+                <p>No trips declared yet.</p>
+              </div>
+            </div>
+
+            {/* Add a trip form */}
+            <div class="lounge-travel-card">
+              <p class="lounge-travel-card__eyebrow">Add a trip</p>
+              <form id="add-trip-form" class="lounge-travel-form">
+                <label class="lounge-travel-form__label">
+                  City
+                  <input type="text" name="city" required maxlength="120" placeholder="Stockholm" />
+                </label>
+                <label class="lounge-travel-form__label">
+                  Country code (optional)
+                  <input type="text" name="country_code" maxlength="2" placeholder="SE" />
+                </label>
+                <div class="lounge-travel-form__dates">
+                  <label class="lounge-travel-form__label">
+                    Arrive
+                    <input type="date" name="arrive_date" required />
+                  </label>
+                  <label class="lounge-travel-form__label">
+                    Depart
+                    <input type="date" name="depart_date" required />
+                  </label>
+                </div>
+                <label class="lounge-travel-form__label">
+                  Notes (optional, max 280 chars)
+                  <textarea name="notes" maxlength="280" rows="3"
+                    placeholder="What you're up to. Whether you'd like host recommendations. Whether you're up for meeting members."></textarea>
+                </label>
+                <button type="submit" class="lounge-travel-form__submit">Add trip →</button>
+                <p id="add-trip-status" hidden class="lounge-travel-form__status"></p>
+              </form>
+            </div>
+          </div>
+
+          <div class="lounge-travel-col">
+            {/* Others' trips */}
+            <div class="lounge-travel-card lounge-travel-card--feed">
+              <div class="lounge-travel-feed-head">
+                <p class="lounge-travel-card__eyebrow">Members coming to</p>
+                <div class="lounge-travel-feed-filter">
+                  <input type="text" id="filter-city" placeholder="any city" />
+                </div>
+              </div>
+              <p id="feed-count" class="lounge-travel-count">—</p>
+              <div id="feed-list" class="lounge-travel-feed"></div>
+              <div id="feed-empty" hidden class="lounge-travel-empty">
+                <p class="lounge-travel-empty__eyebrow">No upcoming trips</p>
+                <p>When members declare trips, they'll show here.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+
+  .lounge-app__guard {
+    min-height: 60vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  .lounge-travel-layout {
+    display: grid; grid-template-columns: 1fr; gap: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .lounge-travel-layout { grid-template-columns: 22rem 1fr; gap: 1.75rem; align-items: start; }
+  }
+  .lounge-travel-col { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .lounge-travel-card {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1.5rem 1.5rem;
+  }
+  .lounge-travel-card--feed { min-height: 24rem; }
+  .lounge-travel-card__eyebrow {
+    margin: 0 0 1rem 0;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--color-burgundy);
+  }
+
+  .lounge-travel-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .lounge-travel-trip {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    padding: 0.85rem 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    position: relative;
+  }
+  .lounge-travel-trip__city {
+    font-family: var(--font-display);
+    font-size: 1.05rem; font-weight: 800; color: var(--color-text);
+    margin: 0;
+  }
+  .lounge-travel-trip__dates {
+    margin: 0; font-size: 0.78rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .lounge-travel-trip__notes {
+    margin: 0.3rem 0 0 0;
+    font-size: 0.85rem; line-height: 1.45;
+    color: var(--color-text-soft);
+  }
+  .lounge-travel-trip__delete {
+    position: absolute; top: 0.5rem; right: 0.5rem;
+    background: transparent; border: none;
+    color: var(--color-text-muted);
+    font-size: 0.72rem; cursor: pointer;
+    padding: 0.2rem 0.45rem;
+    border-radius: 3px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .lounge-travel-trip__delete:hover { color: #c62828; background: #fde9e9; }
+
+  .lounge-travel-empty {
+    color: var(--color-text-muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+  .lounge-travel-empty__eyebrow {
+    margin: 0 0 0.35rem 0;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  .lounge-travel-form { display: flex; flex-direction: column; gap: 0.85rem; }
+  .lounge-travel-form__label {
+    display: flex; flex-direction: column; gap: 0.35rem;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+  .lounge-travel-form__label input,
+  .lounge-travel-form__label textarea {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.92rem;
+    color: var(--color-text);
+    text-transform: none; letter-spacing: normal;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .lounge-travel-form__label input:focus,
+  .lounge-travel-form__label textarea:focus {
+    outline: 2px solid var(--color-accent); outline-offset: 1px;
+  }
+  .lounge-travel-form__dates {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+  }
+  .lounge-travel-form__submit {
+    margin-top: 0.25rem;
+    background: var(--color-accent); color: #fff; border: none;
+    border-radius: 3px;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.82rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .lounge-travel-form__submit:hover { background: var(--color-accent-hover); }
+  .lounge-travel-form__submit:disabled { opacity: 0.6; cursor: wait; }
+  .lounge-travel-form__status {
+    margin: 0; padding: 0.7rem 0.85rem;
+    background: var(--color-cream);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 3px;
+    font-size: 0.85rem; color: var(--color-text);
+  }
+  .lounge-travel-form__status.is-error {
+    background: #fde9e9; border-color: #c62828;
+  }
+
+  .lounge-travel-feed-head {
+    display: flex; flex-wrap: wrap; align-items: end;
+    gap: 0.75rem; margin-bottom: 0.4rem;
+  }
+  .lounge-travel-feed-head .lounge-travel-card__eyebrow { margin: 0; }
+  .lounge-travel-feed-filter input {
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    min-width: 12rem;
+  }
+  .lounge-travel-feed-filter input:focus {
+    outline: 2px solid var(--color-accent); outline-offset: 1px;
+  }
+  .lounge-travel-count {
+    margin: 0 0 1rem 0;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  .lounge-travel-feed { display: flex; flex-direction: column; gap: 0.85rem; }
+  .lounge-travel-other {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 1rem;
+    align-items: start;
+    padding: 1.05rem 1.2rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+  }
+  .lounge-travel-other__avatar {
+    width: 2.6rem; height: 2.6rem; border-radius: 50%;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.95rem; font-weight: 800; color: var(--color-text-muted);
+    overflow: hidden;
+  }
+  .lounge-travel-other__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .lounge-travel-other__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.05rem; font-weight: 800; color: var(--color-text);
+  }
+  .lounge-travel-other__name a { color: inherit; text-decoration: none; }
+  .lounge-travel-other__name a:hover { color: var(--color-accent); }
+  .lounge-travel-other__city {
+    margin: 0.15rem 0;
+    font-size: 0.85rem; color: var(--color-burgundy); font-weight: 600;
+  }
+  .lounge-travel-other__dates {
+    margin: 0;
+    font-size: 0.78rem; color: var(--color-text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .lounge-travel-other__notes {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.86rem; line-height: 1.5;
+    color: var(--color-text-soft);
+  }
+  .lounge-travel-other__intro-btn {
+    background: var(--color-accent); color: #fff; border: none;
+    border-radius: 3px;
+    padding: 0.55rem 0.95rem;
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    cursor: pointer;
+    align-self: center;
+    white-space: nowrap;
+  }
+  .lounge-travel-other__intro-btn:hover { background: var(--color-accent-hover); }
+  .lounge-travel-other__intro-btn:disabled { opacity: 0.55; cursor: default; }
+  .lounge-travel-other__intro-pill {
+    align-self: center;
+    background: var(--color-cream);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    border-radius: 3px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getCurrentProfile, getSupabase } from "../../../../lib/supabase";
+
+  type Trip = {
+    id: string;
+    member_id: string;
+    city: string;
+    country_code: string | null;
+    arrive_date: string;
+    depart_date: string;
+    notes: string | null;
+    profile: { display_name: string | null; avatar_url: string | null } | null;
+  };
+
+  type IntroLite = { from_member_id: string; to_member_id: string; accepted: boolean | null };
+
+  let myUserId = "";
+  let myCity: string | null = null;
+  let allTrips: Trip[] = [];
+  let myIntros: IntroLite[] = [];
+
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function fmtDateRange(arrive: string, depart: string): string {
+    const a = new Date(arrive + "T00:00:00");
+    const d = new Date(depart + "T00:00:00");
+    const fmt = (date: Date, withYear: boolean) =>
+      date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        ...(withYear ? { year: "numeric" } : {}),
+      });
+    const sameYear = a.getFullYear() === d.getFullYear();
+    const sameMonth = sameYear && a.getMonth() === d.getMonth();
+    if (sameMonth) {
+      return `${a.toLocaleDateString("en-US", { month: "short" })} ${a.getDate()}–${d.getDate()}, ${a.getFullYear()}`;
+    }
+    return `${fmt(a, !sameYear)} → ${fmt(d, true)}`;
+  }
+
+  async function loadTrips(): Promise<void> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("travel_plans")
+      .select("id, member_id, city, country_code, arrive_date, depart_date, notes, profile:member_id(display_name, avatar_url)")
+      .order("arrive_date", { ascending: true });
+    if (error) {
+      console.error("[Lounge travel] failed to load trips:", error);
+      allTrips = [];
+    } else {
+      allTrips = (data as Trip[]) || [];
+    }
+  }
+
+  async function loadIntros(): Promise<void> {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("introductions")
+      .select("from_member_id, to_member_id, accepted")
+      .eq("from_member_id", myUserId);
+    if (error) {
+      console.error("[Lounge travel] failed to load intros:", error);
+      myIntros = [];
+    } else {
+      myIntros = (data as IntroLite[]) || [];
+    }
+  }
+
+  function hasIntroTo(memberId: string): IntroLite | null {
+    return myIntros.find((i) => i.to_member_id === memberId) || null;
+  }
+
+  function renderMyTrips(): void {
+    const listEl = document.getElementById("my-trips-list");
+    const emptyEl = document.getElementById("my-trips-empty");
+    if (!listEl || !emptyEl) return;
+    const mine = allTrips.filter((t) => t.member_id === myUserId);
+    if (mine.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+    listEl.innerHTML = mine
+      .map((t) => {
+        const notes = t.notes ? `<p class="lounge-travel-trip__notes">${escapeHtml(t.notes)}</p>` : "";
+        return `
+          <div class="lounge-travel-trip" data-trip-id="${t.id}">
+            <button class="lounge-travel-trip__delete" data-trip-id="${t.id}" type="button">Remove</button>
+            <p class="lounge-travel-trip__city">${escapeHtml(t.city)}${t.country_code ? ` · ${escapeHtml(t.country_code)}` : ""}</p>
+            <p class="lounge-travel-trip__dates">${fmtDateRange(t.arrive_date, t.depart_date)}</p>
+            ${notes}
+          </div>`;
+      })
+      .join("");
+    // Wire deletes
+    listEl.querySelectorAll(".lounge-travel-trip__delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const id = (e.currentTarget as HTMLElement).getAttribute("data-trip-id");
+        if (!id) return;
+        if (!confirm("Remove this trip?")) return;
+        const supabase = getSupabase();
+        await supabase.from("travel_plans").delete().eq("id", id);
+        await loadTrips();
+        renderMyTrips();
+        renderFeed();
+      });
+    });
+  }
+
+  function renderFeed(): void {
+    const listEl = document.getElementById("feed-list");
+    const emptyEl = document.getElementById("feed-empty");
+    const countEl = document.getElementById("feed-count");
+    if (!listEl || !emptyEl || !countEl) return;
+    const filterInput = document.getElementById("filter-city") as HTMLInputElement | null;
+    const needle = (filterInput?.value || "").trim().toLowerCase();
+
+    const others = allTrips.filter((t) => {
+      if (t.member_id === myUserId) return false;
+      if (needle && !t.city.toLowerCase().includes(needle)) return false;
+      return true;
+    });
+
+    countEl.textContent = `${others.length} ${others.length === 1 ? "trip" : "trips"}`;
+
+    if (others.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+
+    listEl.innerHTML = others
+      .map((t) => {
+        const name = escapeHtml(t.profile?.display_name || "Member");
+        const avatar = t.profile?.avatar_url
+          ? `<img src="${escapeHtml(t.profile.avatar_url)}" alt="" />`
+          : initials(t.profile?.display_name || null);
+        const notes = t.notes ? `<p class="lounge-travel-other__notes">${escapeHtml(t.notes)}</p>` : "";
+        const intro = hasIntroTo(t.member_id);
+        let cta = "";
+        if (intro) {
+          const label = intro.accepted === true ? "Intro accepted" : intro.accepted === false ? "Intro declined" : "Intro pending";
+          cta = `<span class="lounge-travel-other__intro-pill">${label}</span>`;
+        } else {
+          cta = `<button class="lounge-travel-other__intro-btn" type="button" data-member-id="${t.member_id}" data-city="${escapeHtml(t.city)}" data-arrive="${t.arrive_date}">Request intro</button>`;
+        }
+        return `
+          <div class="lounge-travel-other">
+            <div class="lounge-travel-other__avatar">${avatar}</div>
+            <div>
+              <p class="lounge-travel-other__name">
+                <a href="/lounge/app/member/?id=${t.member_id}">${name}</a>
+              </p>
+              <p class="lounge-travel-other__city">${escapeHtml(t.city)}${t.country_code ? ` · ${escapeHtml(t.country_code)}` : ""}</p>
+              <p class="lounge-travel-other__dates">${fmtDateRange(t.arrive_date, t.depart_date)}</p>
+              ${notes}
+            </div>
+            ${cta}
+          </div>`;
+      })
+      .join("");
+
+    // Wire intro buttons
+    listEl.querySelectorAll(".lounge-travel-other__intro-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const el = e.currentTarget as HTMLButtonElement;
+        const memberId = el.getAttribute("data-member-id");
+        const city = el.getAttribute("data-city");
+        if (!memberId) return;
+        const msg = prompt(
+          `Quick intro message — what would you like to tell them? (max 500 chars)`,
+          `Hi! Saw you're heading to ${city || "the same city"}. I'd love to swap recommendations or share a smoke.`
+        );
+        if (!msg || !msg.trim()) return;
+        el.disabled = true;
+        el.textContent = "Sending…";
+        try {
+          const supabase = getSupabase();
+          const { error } = await supabase.from("introductions").insert({
+            from_member_id: myUserId,
+            to_member_id: memberId,
+            context: "travel_plan",
+            intro_message: msg.trim().slice(0, 500),
+          });
+          if (error) throw error;
+          await loadIntros();
+          renderFeed();
+        } catch (err: any) {
+          alert(err?.message || "Could not send intro request.");
+          el.disabled = false;
+          el.textContent = "Request intro";
+        }
+      });
+    });
+  }
+
+  function wireAddForm(): void {
+    const form = document.getElementById("add-trip-form") as HTMLFormElement | null;
+    const status = document.getElementById("add-trip-status") as HTMLParagraphElement | null;
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving…";
+      const fd = new FormData(form);
+      const city = String(fd.get("city") || "").trim();
+      const country_code = String(fd.get("country_code") || "").trim().toUpperCase() || null;
+      const arrive_date = String(fd.get("arrive_date") || "");
+      const depart_date = String(fd.get("depart_date") || "");
+      const notes = String(fd.get("notes") || "").trim() || null;
+      if (!city || !arrive_date || !depart_date) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Add trip →";
+        return;
+      }
+      if (depart_date < arrive_date) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = "Depart date must be on or after arrive date.";
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Add trip →";
+        return;
+      }
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.from("travel_plans").insert({
+          member_id: myUserId,
+          city,
+          country_code,
+          arrive_date,
+          depart_date,
+          notes,
+        });
+        if (error) throw error;
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.innerHTML = `Trip to <strong>${escapeHtml(city)}</strong> saved.`;
+        }
+        form.reset();
+        await loadTrips();
+        renderMyTrips();
+        renderFeed();
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err?.message || "Could not save trip.";
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Add trip →";
+      }
+    });
+  }
+
+  async function init(): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    myUserId = user.id;
+
+    const profile = await getCurrentProfile();
+    myCity = profile?.city || null;
+
+    await Promise.all([loadTrips(), loadIntros()]);
+
+    // Default the filter to your city if profile has one
+    const filterInput = document.getElementById("filter-city") as HTMLInputElement | null;
+    if (filterInput && myCity) filterInput.value = myCity;
+
+    renderMyTrips();
+    renderFeed();
+    wireAddForm();
+
+    filterInput?.addEventListener("input", renderFeed);
+
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>
