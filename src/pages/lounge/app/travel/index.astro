@@ -18,14 +18,13 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     </div>
 
     <div id="lounge-content" hidden>
-      <section class="container-wide pt-12 md:pt-16 pb-4 reveal">
+      <section class="container-wide pt-8 md:pt-12 pb-3 reveal">
         <p class="section-eyebrow">The Lounge · Travel</p>
-        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
+        <h1 class="font-display text-3xl md:text-5xl leading-[1.05] tracking-tight mt-2">
           Where are you going?
         </h1>
-        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
-          Declare your next trip and locals in that city see you're coming.
-          Smooth introductions, no awkward DMs.
+        <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-sm">
+          Declare a trip, see who's heading your way.
         </p>
       </section>
 
@@ -208,12 +207,12 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
   .lounge-travel-form__submit {
     margin-top: 0.25rem;
     background: var(--color-accent); color: #fff; border: none;
-    border-radius: 3px;
-    padding: 0.85rem 1.25rem;
-    font-size: 0.82rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.1em;
+    border-radius: 999px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.74rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.15s ease;
   }
   .lounge-travel-form__submit:hover { background: var(--color-accent-hover); }
   .lounge-travel-form__submit:disabled { opacity: 0.6; cursor: wait; }

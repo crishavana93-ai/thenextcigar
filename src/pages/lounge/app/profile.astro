@@ -223,18 +223,18 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
   .profile-form__toggle strong { font-size: 0.92rem; font-weight: 700; color: var(--color-text); }
   .profile-form__toggle small { font-size: 0.8rem; color: var(--color-text-soft); line-height: 1.4; }
   .profile-form__submit {
-    margin-top: 0.5rem;
-    padding: 0.9rem 1.5rem;
+    margin-top: 0.4rem;
+    padding: 0.65rem 1.3rem;
     background: var(--color-accent);
     color: #fff;
     border: none;
-    border-radius: 3px;
-    font-size: 0.85rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.15s ease;
     align-self: flex-start;
   }
   .profile-form__submit:hover { background: var(--color-accent-hover); }
@@ -265,6 +265,10 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
 
     const profile = await getCurrentProfile();
     if (!profile) return;
+
+    // Track first-time setup state so we can route to the map after first save.
+    const urlParams = new URLSearchParams(window.location.search);
+    const isFirstTimeSetup = urlParams.get("setup") === "1" || !profile.city;
 
     // Populate form
     const form = document.getElementById("profile-form") as HTMLFormElement;
@@ -344,7 +348,17 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
         if (status) {
           status.hidden = false;
           status.classList.remove("is-error");
-          status.textContent = "Saved. Members will see your profile updated immediately.";
+          status.textContent = isFirstTimeSetup
+            ? "Saved. Taking you to the map…"
+            : "Saved. Members will see your profile updated immediately.";
+        }
+        if (isFirstTimeSetup) {
+          // First-time setup — route to the map with their city pre-selected,
+          // so the very next thing they see is the discovery surface.
+          const cityParam = update.city ? `?city=${encodeURIComponent(update.city)}` : "";
+          setTimeout(() => {
+            window.location.href = `/lounge/app/map/${cityParam}`;
+          }, 800);
         }
       } catch (err: any) {
         if (status) {

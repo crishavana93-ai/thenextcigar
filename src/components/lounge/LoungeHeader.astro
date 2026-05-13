@@ -22,7 +22,9 @@ const { active = "dashboard" } = Astro.props as Props;
       <a href="/lounge/app/directory/" class:list={["lounge-nav-link", active === "directory" && "is-active"]}>Members</a>
       <a href="/lounge/app/map/" class:list={["lounge-nav-link", active === "map" && "is-active"]}>Map</a>
       <a href="/lounge/app/travel/" class:list={["lounge-nav-link", active === "travel" && "is-active"]}>Travel</a>
-      <a href="/lounge/app/inbox/" class:list={["lounge-nav-link", active === "inbox" && "is-active"]}>Inbox</a>
+      <a href="/lounge/app/inbox/" class:list={["lounge-nav-link", active === "inbox" && "is-active"]}>
+        Inbox<span id="lounge-header-inbox-badge" class="lounge-header__badge" hidden>0</span>
+      </a>
     </nav>
 
     <div class="lounge-header__user">
@@ -110,10 +112,25 @@ const { active = "dashboard" } = Astro.props as Props;
     border-color: var(--color-accent);
     color: var(--color-text-on-dark);
   }
+  .lounge-header__badge {
+    display: inline-block;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    margin-left: 0.4rem;
+    min-width: 1rem;
+    text-align: center;
+    line-height: 1.3;
+    vertical-align: middle;
+  }
 </style>
 
 <script>
-  import { getCurrentProfile, signOutAndRedirect } from "../../lib/supabase";
+  import { getCurrentProfile, getCurrentUser, getSupabase, signOutAndRedirect } from "../../lib/supabase";
 
   async function setup() {
     const nameEl = document.getElementById("lounge-header-name");
@@ -123,6 +140,24 @@ const { active = "dashboard" } = Astro.props as Props;
     }
     const btn = document.getElementById("lounge-signout");
     btn?.addEventListener("click", () => signOutAndRedirect());
+
+    // Inbox pending count
+    const badge = document.getElementById("lounge-header-inbox-badge");
+    if (badge) {
+      const user = await getCurrentUser();
+      if (user) {
+        const supabase = getSupabase();
+        const { count } = await supabase
+          .from("introductions")
+          .select("id", { count: "exact", head: true })
+          .eq("to_member_id", user.id)
+          .is("accepted", null);
+        if (count && count > 0) {
+          badge.textContent = String(count);
+          badge.hidden = false;
+        }
+      }
+    }
   }
   document.addEventListener("astro:page-load", setup);
   setup();

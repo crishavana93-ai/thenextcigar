@@ -19,14 +19,13 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     </div>
 
     <div id="lounge-content" hidden>
-      <section class="container-wide pt-12 md:pt-16 pb-8 reveal">
+      <section class="container-wide pt-8 md:pt-12 pb-5 reveal">
         <p class="section-eyebrow">Welcome back</p>
-        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
+        <h1 class="font-display text-2xl md:text-4xl leading-[1.1] tracking-tight mt-2">
           Hello, <span id="dash-name">…</span>.
         </h1>
-        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
-          The Lounge is being built in public, week by week. Here's what's live so far
-          and what's landing next.
+        <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-sm">
+          Jump in — your map, your members, your trips. Below.
         </p>
       </section>
 
@@ -127,13 +126,13 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     background: var(--color-bg-soft);
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    padding: 1.75rem 1.85rem;
+    padding: 1.25rem 1.35rem;
     text-decoration: none;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    transition: border-color 0.15s ease, transform 0.15s ease;
   }
   .lounge-dash-card:hover {
     border-color: var(--color-accent);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   .lounge-dash-card--soon {
     background: var(--color-bg);
@@ -144,33 +143,33 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     border-left: 3px solid var(--color-accent);
   }
   .lounge-dash-card__eyebrow {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     font-weight: 800;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--color-burgundy);
-    margin: 0 0 0.85rem 0;
+    margin: 0 0 0.55rem 0;
   }
   .lounge-dash-card__title {
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 1.18rem;
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.2;
     letter-spacing: -0.01em;
     color: var(--color-text);
-    margin: 0 0 0.65rem 0;
+    margin: 0 0 0.4rem 0;
   }
   .lounge-dash-card__body {
-    font-size: 0.95rem;
-    line-height: 1.55;
+    font-size: 0.85rem;
+    line-height: 1.5;
     color: var(--color-text-soft);
-    margin: 0 0 1.25rem 0;
+    margin: 0 0 0.85rem 0;
   }
   .lounge-dash-card__cta {
-    font-size: 0.82rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     color: var(--color-accent);
   }
   .lounge-dash-card__cta--muted { color: var(--color-text-muted); }

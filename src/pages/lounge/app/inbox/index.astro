@@ -1,0 +1,427 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+---
+
+<BaseLayout
+  title="Inbox — The Lounge"
+  description="Your incoming and sent introduction requests."
+  noIndex
+>
+  <LoungeHeader active="inbox" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading inbox…</p>
+      </div>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-10 md:pt-14 pb-3 reveal">
+        <p class="section-eyebrow">The Lounge · Inbox</p>
+        <h1 class="font-display text-3xl md:text-5xl leading-[1.05] tracking-tight mt-2">
+          Your introductions.
+        </h1>
+        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl text-sm">
+          Members asking to meet you, and the requests you've sent. Accept to unlock direct messages.
+        </p>
+      </section>
+
+      <section class="container-wide pb-3">
+        <div class="lounge-tabs" role="tablist" aria-label="Inbox sections">
+          <button id="tab-received" class="lounge-tab is-active" type="button" role="tab" aria-selected="true">
+            Received <span id="received-count" class="lounge-tab__count">0</span>
+          </button>
+          <button id="tab-sent" class="lounge-tab" type="button" role="tab" aria-selected="false">
+            Sent <span id="sent-count" class="lounge-tab__count">0</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div id="received-pane" class="lounge-inbox-pane">
+          <div id="received-list" class="lounge-inbox-list"></div>
+          <div id="received-empty" hidden class="lounge-inbox-empty">
+            <p class="lounge-inbox-empty__eyebrow">All caught up</p>
+            <p>No incoming introduction requests right now.</p>
+          </div>
+        </div>
+
+        <div id="sent-pane" class="lounge-inbox-pane" hidden>
+          <div id="sent-list" class="lounge-inbox-list"></div>
+          <div id="sent-empty" hidden class="lounge-inbox-empty">
+            <p class="lounge-inbox-empty__eyebrow">Nothing sent yet</p>
+            <p>Browse the <a href="/lounge/app/directory/">members directory</a> or the <a href="/lounge/app/map/">map</a> and reach out to someone.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+
+  .lounge-app__guard {
+    min-height: 60vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  /* Tabs */
+  .lounge-tabs {
+    display: flex; gap: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .lounge-tab {
+    background: transparent;
+    border: none;
+    padding: 0.6rem 0;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .lounge-tab:hover { color: var(--color-text); }
+  .lounge-tab.is-active {
+    color: var(--color-text);
+    border-bottom-color: var(--color-accent);
+  }
+  .lounge-tab__count {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: 0.66rem; font-weight: 800;
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    min-width: 1.25rem; text-align: center;
+    letter-spacing: 0;
+  }
+  .lounge-tab.is-active .lounge-tab__count {
+    background: var(--color-accent); color: #fff; border-color: var(--color-accent);
+  }
+
+  /* Inbox list + rows */
+  .lounge-inbox-pane { margin-top: 1.25rem; }
+  .lounge-inbox-list { display: flex; flex-direction: column; gap: 0.65rem; }
+  .lounge-inbox-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.95rem;
+    align-items: start;
+    padding: 0.95rem 1.1rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+  }
+  .lounge-inbox-row--pending { border-left: 3px solid var(--color-accent); }
+  .lounge-inbox-row--accepted { border-left: 3px solid #2d6a4f; }
+  .lounge-inbox-row--declined { border-left: 3px solid #9b9b9b; opacity: 0.85; }
+
+  .lounge-inbox-avatar {
+    width: 2.5rem; height: 2.5rem; border-radius: 50%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.9rem; font-weight: 800; color: var(--color-text-muted);
+    overflow: hidden;
+  }
+  .lounge-inbox-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .lounge-inbox-meta { min-width: 0; }
+  .lounge-inbox-name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.98rem; font-weight: 800; color: var(--color-text);
+  }
+  .lounge-inbox-name a { color: inherit; text-decoration: none; }
+  .lounge-inbox-name a:hover { color: var(--color-accent); }
+  .lounge-inbox-context {
+    margin: 0.1rem 0;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--color-burgundy);
+  }
+  .lounge-inbox-message {
+    margin: 0.35rem 0 0 0;
+    font-size: 0.88rem; line-height: 1.5;
+    color: var(--color-text-soft);
+  }
+  .lounge-inbox-date {
+    margin: 0.35rem 0 0 0;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .lounge-inbox-actions { display: flex; flex-direction: column; gap: 0.35rem; align-items: end; }
+  .lounge-inbox-btn {
+    border: none; border-radius: 3px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+  }
+  .lounge-inbox-btn--accept { background: var(--color-accent); color: #fff; }
+  .lounge-inbox-btn--accept:hover { background: var(--color-accent-hover); }
+  .lounge-inbox-btn--decline {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+  .lounge-inbox-btn--decline:hover { color: var(--color-text); border-color: var(--color-text); }
+  .lounge-inbox-btn:disabled { opacity: 0.55; cursor: wait; }
+
+  .lounge-inbox-pill {
+    font-size: 0.66rem; font-weight: 800;
+    padding: 0.28rem 0.6rem;
+    border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .lounge-inbox-pill--accepted { background: #2d6a4f; color: #fff; }
+  .lounge-inbox-pill--declined { background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+  .lounge-inbox-pill--pending { background: var(--color-cream); color: var(--color-burgundy); border: 1px solid var(--color-border); }
+
+  .lounge-inbox-empty {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--color-text-soft);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+  .lounge-inbox-empty__eyebrow {
+    margin: 0 0 0.4rem 0;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .lounge-inbox-empty a { color: var(--color-accent); text-decoration: underline; }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+
+  type IntroRow = {
+    id: string;
+    from_member_id: string;
+    to_member_id: string;
+    context: string;
+    intro_message: string;
+    accepted: boolean | null;
+    responded_at: string | null;
+    created_at: string;
+    from_profile: { display_name: string | null; avatar_url: string | null } | null;
+    to_profile: { display_name: string | null; avatar_url: string | null } | null;
+  };
+
+  let myUserId = "";
+
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+  }
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function fmtContext(ctx: string): string {
+    switch (ctx) {
+      case "lounge_check_in": return "At the same lounge";
+      case "travel_plan": return "Travelling here";
+      case "host_intro": return "Wants to host";
+      case "manual": return "Just saying hi";
+      default: return ctx.replace(/_/g, " ");
+    }
+  }
+  function fmtDate(iso: string): string {
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  function rowClass(accepted: boolean | null): string {
+    if (accepted === true) return "lounge-inbox-row lounge-inbox-row--accepted";
+    if (accepted === false) return "lounge-inbox-row lounge-inbox-row--declined";
+    return "lounge-inbox-row lounge-inbox-row--pending";
+  }
+
+  function renderReceived(rows: IntroRow[]): void {
+    const list = document.getElementById("received-list") as HTMLElement;
+    const empty = document.getElementById("received-empty") as HTMLElement;
+    const countEl = document.getElementById("received-count") as HTMLElement;
+    const pending = rows.filter((r) => r.accepted === null).length;
+    if (countEl) countEl.textContent = String(pending);
+
+    if (rows.length === 0) {
+      list.innerHTML = "";
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+
+    list.innerHTML = rows
+      .map((r) => {
+        const name = escapeHtml(r.from_profile?.display_name || "Member");
+        const avatar = r.from_profile?.avatar_url
+          ? `<img src="${escapeHtml(r.from_profile.avatar_url)}" alt="" />`
+          : initials(r.from_profile?.display_name || null);
+        let actions = "";
+        if (r.accepted === null) {
+          actions = `
+            <button class="lounge-inbox-btn lounge-inbox-btn--accept" data-action="accept" data-id="${r.id}">Accept</button>
+            <button class="lounge-inbox-btn lounge-inbox-btn--decline" data-action="decline" data-id="${r.id}">Decline</button>`;
+        } else if (r.accepted === true) {
+          actions = `<span class="lounge-inbox-pill lounge-inbox-pill--accepted">Accepted</span>`;
+        } else {
+          actions = `<span class="lounge-inbox-pill lounge-inbox-pill--declined">Declined</span>`;
+        }
+        return `
+          <div class="${rowClass(r.accepted)}">
+            <div class="lounge-inbox-avatar">${avatar}</div>
+            <div class="lounge-inbox-meta">
+              <p class="lounge-inbox-name"><a href="/lounge/app/member/?id=${r.from_member_id}">${name}</a></p>
+              <p class="lounge-inbox-context">${escapeHtml(fmtContext(r.context))}</p>
+              <p class="lounge-inbox-message">${escapeHtml(r.intro_message)}</p>
+              <p class="lounge-inbox-date">${fmtDate(r.created_at)}</p>
+            </div>
+            <div class="lounge-inbox-actions">${actions}</div>
+          </div>`;
+      })
+      .join("");
+
+    // Wire actions
+    list.querySelectorAll<HTMLButtonElement>(".lounge-inbox-btn[data-action]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        if (!action || !id) return;
+        btn.disabled = true;
+        const accepted = action === "accept";
+        try {
+          const supabase = getSupabase();
+          const { error } = await supabase
+            .from("introductions")
+            .update({ accepted, responded_at: new Date().toISOString() })
+            .eq("id", id);
+          if (error) throw error;
+          await loadAll();
+        } catch (err: any) {
+          alert(err?.message || "Could not update. Try again.");
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function renderSent(rows: IntroRow[]): void {
+    const list = document.getElementById("sent-list") as HTMLElement;
+    const empty = document.getElementById("sent-empty") as HTMLElement;
+    const countEl = document.getElementById("sent-count") as HTMLElement;
+    if (countEl) countEl.textContent = String(rows.length);
+
+    if (rows.length === 0) {
+      list.innerHTML = "";
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+
+    list.innerHTML = rows
+      .map((r) => {
+        const name = escapeHtml(r.to_profile?.display_name || "Member");
+        const avatar = r.to_profile?.avatar_url
+          ? `<img src="${escapeHtml(r.to_profile.avatar_url)}" alt="" />`
+          : initials(r.to_profile?.display_name || null);
+        let pill: string;
+        if (r.accepted === true) pill = `<span class="lounge-inbox-pill lounge-inbox-pill--accepted">Accepted</span>`;
+        else if (r.accepted === false) pill = `<span class="lounge-inbox-pill lounge-inbox-pill--declined">Declined</span>`;
+        else pill = `<span class="lounge-inbox-pill lounge-inbox-pill--pending">Pending</span>`;
+        return `
+          <div class="${rowClass(r.accepted)}">
+            <div class="lounge-inbox-avatar">${avatar}</div>
+            <div class="lounge-inbox-meta">
+              <p class="lounge-inbox-name"><a href="/lounge/app/member/?id=${r.to_member_id}">${name}</a></p>
+              <p class="lounge-inbox-context">${escapeHtml(fmtContext(r.context))}</p>
+              <p class="lounge-inbox-message">${escapeHtml(r.intro_message)}</p>
+              <p class="lounge-inbox-date">${fmtDate(r.created_at)}</p>
+            </div>
+            <div class="lounge-inbox-actions">${pill}</div>
+          </div>`;
+      })
+      .join("");
+  }
+
+  async function loadAll(): Promise<void> {
+    const supabase = getSupabase();
+    const [{ data: received, error: err1 }, { data: sent, error: err2 }] = await Promise.all([
+      supabase
+        .from("introductions")
+        .select("id, from_member_id, to_member_id, context, intro_message, accepted, responded_at, created_at, from_profile:from_member_id(display_name, avatar_url)")
+        .eq("to_member_id", myUserId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("introductions")
+        .select("id, from_member_id, to_member_id, context, intro_message, accepted, responded_at, created_at, to_profile:to_member_id(display_name, avatar_url)")
+        .eq("from_member_id", myUserId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (err1) console.error("[Lounge inbox] received load error:", err1);
+    if (err2) console.error("[Lounge inbox] sent load error:", err2);
+
+    renderReceived(((received as unknown) as IntroRow[]) || []);
+    renderSent(((sent as unknown) as IntroRow[]) || []);
+  }
+
+  function wireTabs(): void {
+    const tabRecv = document.getElementById("tab-received") as HTMLButtonElement;
+    const tabSent = document.getElementById("tab-sent") as HTMLButtonElement;
+    const paneRecv = document.getElementById("received-pane") as HTMLElement;
+    const paneSent = document.getElementById("sent-pane") as HTMLElement;
+
+    function show(which: "received" | "sent") {
+      const isRecv = which === "received";
+      tabRecv.classList.toggle("is-active", isRecv);
+      tabSent.classList.toggle("is-active", !isRecv);
+      tabRecv.setAttribute("aria-selected", String(isRecv));
+      tabSent.setAttribute("aria-selected", String(!isRecv));
+      paneRecv.hidden = !isRecv;
+      paneSent.hidden = isRecv;
+    }
+    tabRecv.addEventListener("click", () => show("received"));
+    tabSent.addEventListener("click", () => show("sent"));
+
+    // ?tab=sent deep link
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "sent") show("sent");
+  }
+
+  async function init(): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    myUserId = user.id;
+    wireTabs();
+    await loadAll();
+    const guard = document.getElementById("lounge-guard");
+    const content = document.getElementById("lounge-content");
+    if (guard) guard.style.display = "none";
+    if (content) content.hidden = false;
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

@@ -10,37 +10,12 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
 >
   <LoungeHeader active="map" />
 
-  <main class="lounge-app">
-    <div id="lounge-guard" class="lounge-app__guard">
-      <div class="lounge-app__guard-inner">
-        <p class="lounge-app__guard-eyebrow">Loading the map…</p>
-      </div>
+  <main class="lounge-map-app">
+    <div id="lounge-guard" class="lounge-map-guard">
+      <p class="lounge-map-guard__eyebrow">Loading the map…</p>
     </div>
 
-    <div id="lounge-content" hidden>
-      <section class="container-wide pt-12 md:pt-16 pb-4 reveal">
-        <p class="section-eyebrow">The Lounge · Map</p>
-        <h1 class="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight mt-2">
-          Where are you smoking?
-        </h1>
-        <p class="mt-4 text-[color:var(--color-text-soft)] max-w-2xl">
-          Tap a venue to see who's here right now, then check in.
-          Your check-in is visible to members only and expires after 4 hours.
-        </p>
-      </section>
-
-      {/* Active check-in banner */}
-      <section class="container-wide pb-4" id="my-active-section" hidden>
-        <div class="lounge-checkin-active">
-          <div class="lounge-checkin-active__info">
-            <p class="lounge-checkin-active__eyebrow">You're checked in at</p>
-            <p class="lounge-checkin-active__venue" id="my-active-venue">—</p>
-            <p class="lounge-checkin-active__expires" id="my-active-expires">—</p>
-          </div>
-          <button id="my-active-checkout" class="lounge-checkin-active__btn" type="button">Check out →</button>
-        </div>
-      </section>
-
+    <div id="lounge-map-shell" hidden>
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -48,44 +23,79 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
         crossorigin=""
       />
 
-      <section class="container-wide pb-12">
-        <div class="lounge-map-layout">
-          <div id="lounge-map" class="lounge-map"></div>
-
-          <aside class="lounge-map-side">
-            <div id="side-empty" class="lounge-map-side__empty">
-              <p class="lounge-map-side__eyebrow">Tap a venue</p>
-              <p class="lounge-map-side__body">
-                Click any pin on the map to see who's there and check in.
-              </p>
-            </div>
-
-            <div id="side-detail" hidden>
-              <p class="lounge-map-side__eyebrow" id="side-type">Lounge</p>
-              <h2 class="lounge-map-side__title" id="side-name">—</h2>
-              <p class="lounge-map-side__city" id="side-city">—</p>
-              <p class="lounge-map-side__note" id="side-note">—</p>
-
-              <div class="lounge-map-side__active">
-                <p class="lounge-map-side__active-eyebrow">Currently here</p>
-                <div id="side-active-list" class="lounge-map-side__active-list">
-                  <p class="lounge-map-side__active-empty">No members checked in.</p>
-                </div>
-              </div>
-
-              <form id="checkin-form" class="lounge-checkin-form">
-                <label class="lounge-checkin-form__label">
-                  Optional message (max 140 chars)
-                  <input type="text" name="message" maxlength="140"
-                    placeholder="e.g. Open to a smoke if anyone's around" />
-                </label>
-                <button type="submit" class="lounge-checkin-form__submit">Check in here →</button>
-                <p id="checkin-status" hidden class="lounge-checkin-form__status"></p>
-              </form>
-            </div>
-          </aside>
+      {/* Filter bar */}
+      <div class="lounge-map-filters" aria-label="Map filters">
+        <select id="filter-city" class="lounge-map-filter">
+          <option value="">All cities</option>
+        </select>
+        <div class="lounge-map-toggles">
+          <label class="lounge-map-toggle">
+            <input type="checkbox" id="filter-members" checked />
+            <span>Show members</span>
+          </label>
+          <label class="lounge-map-toggle">
+            <input type="checkbox" id="filter-lounges" checked />
+            <span>Show lounges</span>
+          </label>
         </div>
-      </section>
+        <p class="lounge-map-summary" id="map-summary">—</p>
+      </div>
+
+      {/* Active check-in banner */}
+      <div id="my-active-banner" class="lounge-map-banner" hidden>
+        <div class="lounge-map-banner__info">
+          <span class="lounge-map-banner__eyebrow">Checked in at</span>
+          <strong id="my-active-venue" class="lounge-map-banner__venue">—</strong>
+          <span id="my-active-expires" class="lounge-map-banner__expires">—</span>
+        </div>
+        <button id="my-active-checkout" class="btn-pill btn-pill--ghost" type="button">Check out</button>
+      </div>
+
+      {/* Map */}
+      <div id="lounge-map" class="lounge-map"></div>
+
+      {/* Bottom sheet */}
+      <aside id="bottom-sheet" class="lounge-sheet" hidden>
+        <button class="lounge-sheet__close" type="button" aria-label="Close" id="sheet-close">×</button>
+
+        {/* Venue mode */}
+        <div id="sheet-venue" hidden>
+          <p class="lounge-sheet__eyebrow" id="venue-type">Lounge</p>
+          <h2 class="lounge-sheet__title" id="venue-name">—</h2>
+          <p class="lounge-sheet__sub" id="venue-city">—</p>
+          <p class="lounge-sheet__body" id="venue-address">—</p>
+
+          <div class="lounge-sheet__active">
+            <p class="lounge-sheet__active-label">Currently here</p>
+            <div id="venue-active-list" class="lounge-sheet__avatars">
+              <p class="lounge-sheet__empty">Nobody checked in.</p>
+            </div>
+          </div>
+
+          <form id="checkin-form" class="lounge-sheet__form">
+            <input type="text" name="message" maxlength="140" placeholder="Optional message (max 140 chars)" />
+            <button type="submit" class="btn-pill btn-pill--primary" id="checkin-submit">Check in</button>
+          </form>
+          <p id="checkin-status" class="lounge-sheet__status" hidden></p>
+        </div>
+
+        {/* Member mode */}
+        <div id="sheet-member" hidden>
+          <p class="lounge-sheet__eyebrow">Checked in</p>
+          <div class="lounge-sheet__member-head">
+            <div class="lounge-avatar lounge-avatar--lg" id="member-avatar">?</div>
+            <div>
+              <h2 class="lounge-sheet__title" id="member-name">—</h2>
+              <p class="lounge-sheet__sub" id="member-where">—</p>
+            </div>
+          </div>
+          <p class="lounge-sheet__body" id="member-msg"></p>
+          <div class="lounge-sheet__actions">
+            <a id="member-view" class="btn-pill btn-pill--ghost" href="#">View profile</a>
+            <button id="member-intro" class="btn-pill btn-pill--primary" type="button">Request intro</button>
+          </div>
+        </div>
+      </aside>
     </div>
   </main>
 </BaseLayout>
@@ -98,260 +108,295 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
 ></script>
 
 <style>
-  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
-
-  .lounge-app__guard {
+  .lounge-map-app {
+    background: var(--color-dark);
+    min-height: calc(100vh - 70px);
+    color: var(--color-text-on-dark, #f3efe6);
+  }
+  .lounge-map-guard {
     min-height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--color-dark);
   }
-  .lounge-app__guard-eyebrow {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
+  .lounge-map-guard__eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-accent);
   }
 
-  /* Active check-in banner */
-  .lounge-checkin-active {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    background: var(--color-accent);
-    color: #fff;
-    border-radius: 6px;
-    padding: 1.1rem 1.5rem;
+  /* Filter bar */
+  .lounge-map-filters {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 0.85rem;
+    padding: 0.8rem 1rem;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: sticky; top: 70px; z-index: 40;
   }
-  .lounge-checkin-active__info { flex-grow: 1; }
-  .lounge-checkin-active__eyebrow {
-    margin: 0;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    opacity: 0.85;
-  }
-  .lounge-checkin-active__venue {
-    margin: 0.25rem 0 0.1rem 0;
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: 800;
-    line-height: 1.15;
-  }
-  .lounge-checkin-active__expires {
-    margin: 0;
-    font-size: 0.8rem;
-    opacity: 0.85;
-  }
-  .lounge-checkin-active__btn {
-    background: rgba(0, 0, 0, 0.18);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    padding: 0.65rem 1.1rem;
-    border-radius: 3px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+  .lounge-map-filter {
+    background: rgba(255,255,255,0.06);
+    color: #f3efe6;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    transition: background 0.2s ease;
+    min-width: 12rem;
   }
-  .lounge-checkin-active__btn:hover { background: rgba(0, 0, 0, 0.32); }
+  .lounge-map-filter:focus {
+    outline: 2px solid var(--color-accent); outline-offset: 1px;
+  }
+  .lounge-map-toggles { display: flex; gap: 0.85rem; flex-wrap: wrap; }
+  .lounge-map-toggle {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.74rem; color: rgba(255,255,255,0.78);
+    cursor: pointer;
+    user-select: none;
+  }
+  .lounge-map-toggle input { accent-color: var(--color-accent); }
+  .lounge-map-summary {
+    margin: 0 0 0 auto;
+    font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+  }
 
-  /* Map layout */
-  .lounge-map-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+  /* Active banner */
+  .lounge-map-banner {
+    display: flex; align-items: center; gap: 0.85rem;
+    padding: 0.65rem 1rem;
+    background: var(--color-accent); color: #fff;
   }
-  @media (min-width: 1024px) {
-    .lounge-map-layout { grid-template-columns: 1fr 22rem; }
+  .lounge-map-banner__info { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; flex-grow: 1; }
+  .lounge-map-banner__eyebrow {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; opacity: 0.82;
   }
+  .lounge-map-banner__venue { font-size: 0.92rem; font-weight: 800; }
+  .lounge-map-banner__expires { font-size: 0.72rem; opacity: 0.78; }
+
+  /* Map itself */
   .lounge-map {
-    height: 70vh;
-    min-height: 28rem;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
+    height: calc(100vh - 70px - 60px); /* roughly: navbar + filter bar */
+    width: 100%;
+    background: #0d0d0d;
+  }
+  :global(.leaflet-control-zoom) {
+    border: none !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.55) !important;
+    border-radius: 8px !important;
     overflow: hidden;
-    background: var(--color-bg-soft);
+  }
+  :global(.leaflet-control-zoom a) {
+    background: rgba(0,0,0,0.7) !important;
+    color: #f5efe0 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    width: 38px !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    font-size: 18px !important;
+  }
+  :global(.leaflet-control-zoom a:hover) {
+    background: rgba(255,46,46,0.85) !important;
+    color: #fff !important;
+  }
+  :global(.leaflet-control-attribution) {
+    background: rgba(0,0,0,0.65) !important;
+    color: rgba(255,255,255,0.65) !important;
+    font-size: 9px !important;
+  }
+  :global(.leaflet-control-attribution a) {
+    color: rgba(255,255,255,0.85) !important;
   }
 
-  /* Side panel */
-  .lounge-map-side {
-    background: var(--color-bg-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    padding: 1.5rem 1.5rem;
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-  .lounge-map-side__empty { color: var(--color-text-muted); }
-  .lounge-map-side__eyebrow {
-    margin: 0 0 0.25rem 0;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-burgundy);
-  }
-  .lounge-map-side__title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: 1.45rem;
-    font-weight: 800;
-    line-height: 1.15;
-    color: var(--color-text);
-  }
-  .lounge-map-side__city {
-    margin: 0.4rem 0 0.85rem 0;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-text-muted);
-  }
-  .lounge-map-side__note {
-    margin: 0 0 1.25rem 0;
-    font-size: 0.9rem;
-    line-height: 1.55;
-    color: var(--color-text-soft);
-  }
-  .lounge-map-side__body {
-    margin: 0;
-    font-size: 0.92rem;
-    color: var(--color-text-soft);
-  }
-  .lounge-map-side__active {
-    padding: 1rem 0;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    margin-bottom: 1rem;
-  }
-  .lounge-map-side__active-eyebrow {
-    margin: 0 0 0.5rem 0;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
-  .lounge-map-side__active-list { display: flex; flex-direction: column; gap: 0.55rem; }
-  .lounge-map-side__active-empty {
-    margin: 0;
-    font-size: 0.82rem;
-    color: var(--color-text-muted);
-    font-style: italic;
-  }
-  .lounge-map-side__active-row {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    font-size: 0.88rem;
-    color: var(--color-text);
-  }
-  .lounge-map-side__active-avatar {
-    width: 1.85rem;
-    height: 1.85rem;
-    border-radius: 50%;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-size: 0.7rem;
-    font-weight: 800;
-    color: var(--color-text-muted);
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .lounge-map-side__active-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .lounge-map-side__active-name { font-weight: 600; }
-  .lounge-map-side__active-msg {
-    color: var(--color-text-soft);
-    font-size: 0.8rem;
-    margin-left: 0.4rem;
-  }
-
-  /* Check-in form */
-  .lounge-checkin-form { display: flex; flex-direction: column; gap: 0.85rem; }
-  .lounge-checkin-form__label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--color-text-muted);
-  }
-  .lounge-checkin-form__label input {
-    padding: 0.65rem 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: 3px;
-    background: #fff;
-    font-size: 0.92rem;
-    color: var(--color-text);
-    text-transform: none;
-    letter-spacing: normal;
-  }
-  .lounge-checkin-form__label input:focus {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 1px;
-  }
-  .lounge-checkin-form__submit {
-    background: var(--color-accent);
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    padding: 0.85rem 1.25rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-  .lounge-checkin-form__submit:hover { background: var(--color-accent-hover); }
-  .lounge-checkin-form__submit:disabled { opacity: 0.6; cursor: wait; }
-  .lounge-checkin-form__status {
-    margin: 0;
-    padding: 0.75rem 0.85rem;
-    background: var(--color-cream);
-    border-left: 3px solid var(--color-accent);
-    border-radius: 3px;
-    font-size: 0.86rem;
-    color: var(--color-text);
-  }
-  .lounge-checkin-form__status.is-error {
-    background: #fde9e9;
-    border-color: #c62828;
-  }
-
-  /* Leaflet pin colors (CSS-only div icons) */
-  :global(.lounge-pin) {
-    width: 16px;
-    height: 16px;
+  /* Pins */
+  :global(.tnc-venue-pin) {
+    width: 14px; height: 14px;
     border-radius: 50%;
     border: 2px solid #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.6);
   }
-  :global(.lounge-pin--lounge) { background: #6e2620; }
-  :global(.lounge-pin--retailer) { background: #2d4a3e; }
-  :global(.lounge-pin--casadelhabano) { background: #c0392b; }
-  :global(.lounge-pin--house) { background: #1c2541; }
-  :global(.lounge-pin--pub) { background: #8a6d3b; }
-  :global(.lounge-pin--club) { background: #5d3a78; }
-  :global(.lounge-pin--has-active) {
-    box-shadow: 0 0 0 4px rgba(255,46,46,0.35), 0 1px 4px rgba(0,0,0,0.35);
+  :global(.tnc-venue-pin--lounge) { background: #c8a052; }
+  :global(.tnc-venue-pin--retailer) { background: #4d7a5c; }
+  :global(.tnc-venue-pin--casadelhabano) { background: #c0392b; }
+  :global(.tnc-venue-pin--house) { background: #4a6fa5; }
+  :global(.tnc-venue-pin--pub) { background: #b07a3a; }
+  :global(.tnc-venue-pin--club) { background: #8e5da7; }
+  :global(.tnc-venue-pin--has-active) {
+    box-shadow: 0 0 0 4px rgba(255,46,46,0.45), 0 1px 6px rgba(0,0,0,0.6);
+  }
+
+  :global(.tnc-member-pin) {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: var(--color-burgundy, #6E2620);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    color: #f5efe0;
+    font-family: var(--font-display, Georgia);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+  :global(.tnc-member-pin img) {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+
+  /* Bottom sheet */
+  .lounge-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #f5efe0;
+    color: var(--color-text);
+    border-top: 1px solid rgba(0,0,0,0.1);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.35);
+    padding: 1.2rem 1.25rem 1.4rem;
+    z-index: 60;
+    max-height: 65vh;
+    overflow-y: auto;
+    animation: sheetUp 0.22s ease-out;
+  }
+  @media (min-width: 768px) {
+    .lounge-sheet {
+      left: auto; right: 1.5rem; bottom: 1.5rem;
+      width: 24rem;
+      border-radius: 12px;
+      max-height: 70vh;
+    }
+  }
+  @keyframes sheetUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .lounge-sheet__close {
+    position: absolute; top: 0.65rem; right: 0.9rem;
+    background: transparent; border: none;
+    width: 2rem; height: 2rem;
+    font-size: 1.4rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .lounge-sheet__close:hover { color: var(--color-text); }
+  .lounge-sheet__eyebrow {
+    margin: 0 0 0.3rem 0;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--color-burgundy);
+  }
+  .lounge-sheet__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.2rem; font-weight: 800; line-height: 1.2;
+    color: var(--color-text);
+  }
+  .lounge-sheet__sub {
+    margin: 0.25rem 0 0.4rem 0;
+    font-size: 0.78rem; color: var(--color-text-muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .lounge-sheet__body {
+    margin: 0 0 0.8rem 0;
+    font-size: 0.84rem; line-height: 1.55;
+    color: var(--color-text-soft);
+  }
+  .lounge-sheet__active {
+    padding: 0.85rem 0; margin: 0.4rem 0;
+    border-top: 1px solid rgba(0,0,0,0.07);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+  }
+  .lounge-sheet__active-label {
+    margin: 0 0 0.55rem 0;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .lounge-sheet__avatars { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .lounge-sheet__empty {
+    margin: 0;
+    font-size: 0.78rem; color: var(--color-text-muted); font-style: italic;
+  }
+  .lounge-sheet__avatar-row {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(0,0,0,0.04);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem 0.2rem 0.2rem;
+    font-size: 0.78rem;
+    text-decoration: none;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .lounge-sheet__avatar-row:hover { background: rgba(0,0,0,0.08); }
+
+  .lounge-avatar {
+    border-radius: 50%; overflow: hidden;
+    background: var(--color-bg);
+    border: 1px solid rgba(0,0,0,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 800; color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+  .lounge-avatar--sm { width: 1.5rem; height: 1.5rem; font-size: 0.62rem; }
+  .lounge-avatar--lg { width: 2.6rem; height: 2.6rem; font-size: 0.9rem; }
+  .lounge-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .lounge-sheet__form { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+  .lounge-sheet__form input {
+    flex-grow: 1;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.85rem;
+    background: #fff;
+    color: var(--color-text);
+  }
+  .lounge-sheet__form input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+  .lounge-sheet__status {
+    margin: 0.6rem 0 0 0;
+    font-size: 0.78rem; color: var(--color-burgundy);
+  }
+  .lounge-sheet__status.is-error { color: #c62828; }
+
+  .lounge-sheet__member-head {
+    display: flex; gap: 0.7rem; align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .lounge-sheet__actions {
+    display: flex; gap: 0.45rem; margin-top: 0.7rem;
+  }
+
+  /* Pill button system used across the new map UI */
+  .btn-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.74rem; font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: none; cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn-pill--primary { background: var(--color-accent); color: #fff; }
+  .btn-pill--primary:hover { background: var(--color-accent-hover); }
+  .btn-pill--ghost {
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.18);
+    color: var(--color-text);
+  }
+  .btn-pill--ghost:hover { background: rgba(0,0,0,0.06); }
+  .btn-pill:disabled { opacity: 0.55; cursor: wait; }
+
+  /* When the bottom sheet is open on mobile, push map up a touch */
+  @media (max-width: 767px) {
+    .lounge-map { height: calc(100vh - 70px - 60px); }
   }
 </style>
 
 <script>
-  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+  import { getCurrentUser, getCurrentProfile, getSupabase } from "../../../../lib/supabase";
 
   type Lounge = {
     id: string;
@@ -379,24 +424,40 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
   let allLounges: Lounge[] = [];
   let activeByLoungeId: Record<string, CheckinRow[]> = {};
   let myUserId = "";
-  let selected: Lounge | null = null;
+  let myCity: string | null = null;
+  let selectedLounge: Lounge | null = null;
+  let selectedCheckin: CheckinRow | null = null;
   let map: any = null;
-  let markersBySlug: Record<string, any> = {};
+  let venueMarkersById: Record<string, any> = {};
+  let memberMarkerIds: any[] = [];
 
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
   function initials(name: string | null): string {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
   }
-
-  function fmtRelativeRemaining(iso: string): string {
+  function fmtRemaining(iso: string): string {
     const remaining = new Date(iso).getTime() - Date.now();
     if (remaining <= 0) return "expired";
     const mins = Math.round(remaining / 60000);
-    if (mins < 60) return `expires in ${mins} min`;
+    if (mins < 60) return `${mins} min left`;
     const h = Math.floor(mins / 60);
     const m = mins % 60;
-    return `expires in ${h}h ${m}m`;
+    return `${h}h ${m}m left`;
+  }
+
+  function offsetAround(lat: number, lng: number, idx: number, total: number, radiusM = 35): [number, number] {
+    if (total <= 1) return [lat, lng];
+    const earthR = 6378137;
+    const angle = (2 * Math.PI * idx) / total;
+    const dx = radiusM * Math.cos(angle);
+    const dy = radiusM * Math.sin(angle);
+    const newLat = lat + (dy / earthR) * (180 / Math.PI);
+    const newLng = lng + (dx / (earthR * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
+    return [newLat, newLng];
   }
 
   async function loadActive(): Promise<void> {
@@ -416,126 +477,65 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     }
   }
 
-  function renderMyActive(): void {
-    const section = document.getElementById("my-active-section");
-    const venueEl = document.getElementById("my-active-venue");
-    const expiresEl = document.getElementById("my-active-expires");
-    if (!section || !venueEl || !expiresEl) return;
+  function populateCitySelect(): void {
+    const select = document.getElementById("filter-city") as HTMLSelectElement;
+    const cities = Array.from(new Set(allLounges.map((l) => l.city))).sort();
+    cities.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    });
 
-    const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
-    if (!mine) {
-      section.hidden = true;
-      return;
-    }
-    const lounge = allLounges.find((l) => l.id === mine.lounge_id);
-    venueEl.textContent = lounge ? `${lounge.name} · ${lounge.city}` : "(venue)";
-    expiresEl.textContent = fmtRelativeRemaining(mine.expires_at);
-    section.hidden = false;
-
-    const btn = document.getElementById("my-active-checkout") as HTMLButtonElement | null;
-    if (btn) {
-      btn.onclick = async () => {
-        btn.disabled = true;
-        btn.textContent = "Checking out…";
-        const supabase = getSupabase();
-        await supabase.from("checkins").delete().eq("id", mine.id);
-        await loadActive();
-        renderMyActive();
-        renderMap();
-        renderSide();
-        btn.disabled = false;
-        btn.textContent = "Check out →";
-      };
-    }
+    // Pre-select from URL or own city
+    const params = new URLSearchParams(window.location.search);
+    const urlCity = params.get("city");
+    const preselect = urlCity && cities.includes(urlCity) ? urlCity : (myCity && cities.includes(myCity) ? myCity : "");
+    if (preselect) select.value = preselect;
   }
 
-  function pinClass(type: string, hasActive: boolean): string {
-    const base = `lounge-pin lounge-pin--${type}`;
-    return hasActive ? `${base} lounge-pin--has-active` : base;
+  function flyToCity(city: string): void {
+    if (!city || !map) return;
+    const lounge = allLounges.find((l) => l.city.toLowerCase() === city.toLowerCase());
+    if (lounge) map.flyTo([lounge.lat, lounge.lng], 12, { duration: 0.8 });
   }
 
-  function renderMap(): void {
-    if (!map) return;
-    // Clear old markers
-    Object.values(markersBySlug).forEach((m: any) => map.removeLayer(m));
-    markersBySlug = {};
+  function showVenueSheet(l: Lounge): void {
+    selectedLounge = l;
+    selectedCheckin = null;
+    const sheet = document.getElementById("bottom-sheet") as HTMLElement;
+    sheet.hidden = false;
+    (document.getElementById("sheet-venue") as HTMLElement).hidden = false;
+    (document.getElementById("sheet-member") as HTMLElement).hidden = true;
+    (document.getElementById("venue-type") as HTMLElement).textContent = l.type.charAt(0).toUpperCase() + l.type.slice(1);
+    (document.getElementById("venue-name") as HTMLElement).textContent = l.name;
+    (document.getElementById("venue-city") as HTMLElement).textContent = `${l.city} · ${l.country}`;
+    (document.getElementById("venue-address") as HTMLElement).textContent = l.address || "";
 
-    const L = (window as any).L;
-    for (const lounge of allLounges) {
-      const hasActive = (activeByLoungeId[lounge.id]?.length || 0) > 0;
-      const icon = L.divIcon({
-        className: "",
-        html: `<div class="${pinClass(lounge.type, hasActive)}"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-      });
-      const marker = L.marker([lounge.lat, lounge.lng], { icon }).addTo(map);
-      marker.on("click", () => selectLounge(lounge));
-      markersBySlug[lounge.slug] = marker;
-    }
-  }
-
-  function selectLounge(lounge: Lounge): void {
-    selected = lounge;
-    renderSide();
-  }
-
-  function renderSide(): void {
-    const empty = document.getElementById("side-empty");
-    const detail = document.getElementById("side-detail");
-    if (!empty || !detail) return;
-
-    if (!selected) {
-      empty.hidden = false;
-      detail.hidden = true;
-      return;
-    }
-    empty.hidden = true;
-    detail.hidden = false;
-
-    const l = selected;
-    (document.getElementById("side-type") as HTMLElement).textContent = l.type.replace(/^./, (c) => c.toUpperCase());
-    (document.getElementById("side-name") as HTMLElement).textContent = l.name;
-    (document.getElementById("side-city") as HTMLElement).textContent = `${l.city} · ${l.country}`;
-    (document.getElementById("side-note") as HTMLElement).textContent = l.address || "";
-
-    // Active list
-    const list = document.getElementById("side-active-list") as HTMLElement;
+    const list = document.getElementById("venue-active-list") as HTMLElement;
     const active = activeByLoungeId[l.id] || [];
     if (active.length === 0) {
-      list.innerHTML = `<p class="lounge-map-side__active-empty">No members checked in.</p>`;
+      list.innerHTML = `<p class="lounge-sheet__empty">Nobody checked in.</p>`;
     } else {
       list.innerHTML = active
         .map((c) => {
           const name = c.profile?.display_name || "Member";
           const avatar = c.profile?.avatar_url
-            ? `<img src="${c.profile.avatar_url}" alt="" />`
+            ? `<img src="${escapeHtml(c.profile.avatar_url)}" alt="" />`
             : initials(c.profile?.display_name || null);
-          const msg = c.message ? `<span class="lounge-map-side__active-msg">"${escapeHtml(c.message)}"</span>` : "";
-          const isMe = c.member_id === myUserId;
-          const meTag = isMe ? ` (you)` : "";
-          return `
-            <a class="lounge-map-side__active-row" href="${isMe ? '/lounge/app/profile/' : `/lounge/app/member/?id=${c.member_id}`}">
-              <span class="lounge-map-side__active-avatar">${avatar}</span>
-              <span><span class="lounge-map-side__active-name">${escapeHtml(name)}</span>${meTag}${msg}</span>
-            </a>`;
+          const href = c.member_id === myUserId ? "/lounge/app/profile/" : `/lounge/app/member/?id=${c.member_id}`;
+          const meTag = c.member_id === myUserId ? " (you)" : "";
+          return `<a class="lounge-sheet__avatar-row" href="${href}"><span class="lounge-avatar lounge-avatar--sm">${avatar}</span>${escapeHtml(name)}${meTag}</a>`;
         })
         .join("");
     }
 
-    // Wire check-in form (only one form per page, rewire each time)
     const form = document.getElementById("checkin-form") as HTMLFormElement;
+    const submit = document.getElementById("checkin-submit") as HTMLButtonElement;
     const status = document.getElementById("checkin-status") as HTMLParagraphElement;
-    // Check whether user already has an active check-in here
     const alreadyHere = active.some((c) => c.member_id === myUserId);
-    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-    if (alreadyHere) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Already checked in";
-    } else {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Check in here →";
-    }
+    submit.disabled = alreadyHere;
+    submit.textContent = alreadyHere ? "Already checked in" : "Check in";
     if (status) {
       status.hidden = true;
       status.classList.remove("is-error");
@@ -543,8 +543,8 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
 
     form.onsubmit = async (e) => {
       e.preventDefault();
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Checking in…";
+      submit.disabled = true;
+      submit.textContent = "Checking in…";
       const fd = new FormData(form);
       const message = String(fd.get("message") || "").trim() || null;
       try {
@@ -556,33 +556,171 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
         });
         if (error) throw error;
         await loadActive();
+        renderMembersAndVenues();
         renderMyActive();
-        renderMap();
-        renderSide();
+        if (selectedLounge) showVenueSheet(selectedLounge);
+        form.reset();
         if (status) {
           status.hidden = false;
           status.classList.remove("is-error");
           status.textContent = "You're checked in.";
         }
-        (form.elements.namedItem("message") as HTMLInputElement).value = "";
       } catch (err: any) {
         if (status) {
           status.hidden = false;
           status.classList.add("is-error");
           status.textContent = err?.message || "Could not check in.";
         }
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Check in here →";
+        submit.disabled = false;
+        submit.textContent = "Check in";
       }
     };
   }
 
-  function escapeHtml(s: string): string {
-    return s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  function showMemberSheet(c: CheckinRow, lounge: Lounge | null): void {
+    selectedCheckin = c;
+    selectedLounge = lounge;
+    const sheet = document.getElementById("bottom-sheet") as HTMLElement;
+    sheet.hidden = false;
+    (document.getElementById("sheet-venue") as HTMLElement).hidden = true;
+    (document.getElementById("sheet-member") as HTMLElement).hidden = false;
+
+    const avEl = document.getElementById("member-avatar") as HTMLElement;
+    avEl.innerHTML = c.profile?.avatar_url
+      ? `<img src="${escapeHtml(c.profile.avatar_url)}" alt="" />`
+      : initials(c.profile?.display_name || null);
+    (document.getElementById("member-name") as HTMLElement).textContent = c.profile?.display_name || "Member";
+    (document.getElementById("member-where") as HTMLElement).textContent = lounge
+      ? `${lounge.name} · ${lounge.city}`
+      : "";
+    const msgEl = document.getElementById("member-msg") as HTMLElement;
+    msgEl.textContent = c.message ? `"${c.message}"` : "";
+    msgEl.hidden = !c.message;
+    const viewEl = document.getElementById("member-view") as HTMLAnchorElement;
+    viewEl.href = c.member_id === myUserId ? "/lounge/app/profile/" : `/lounge/app/member/?id=${c.member_id}`;
+    const introBtn = document.getElementById("member-intro") as HTMLButtonElement;
+    introBtn.hidden = c.member_id === myUserId;
+    introBtn.onclick = async () => {
+      const msg = prompt(
+        "Quick intro — what would you like to say?",
+        `Saw you at ${lounge?.name || "the lounge"}. Mind if I say hi?`
+      );
+      if (!msg || !msg.trim()) return;
+      introBtn.disabled = true;
+      introBtn.textContent = "Sending…";
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.from("introductions").insert({
+          from_member_id: myUserId,
+          to_member_id: c.member_id,
+          context: "lounge_check_in",
+          intro_message: msg.trim().slice(0, 500),
+        });
+        if (error) throw error;
+        introBtn.textContent = "Intro sent ✓";
+      } catch (err: any) {
+        alert(err?.message || "Could not send intro.");
+        introBtn.disabled = false;
+        introBtn.textContent = "Request intro";
+      }
+    };
+  }
+
+  function hideSheet(): void {
+    (document.getElementById("bottom-sheet") as HTMLElement).hidden = true;
+    selectedLounge = null;
+    selectedCheckin = null;
+  }
+
+  function renderMyActive(): void {
+    const banner = document.getElementById("my-active-banner") as HTMLElement;
+    const venueEl = document.getElementById("my-active-venue") as HTMLElement;
+    const expiresEl = document.getElementById("my-active-expires") as HTMLElement;
+    const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
+    if (!mine) {
+      banner.hidden = true;
+      return;
+    }
+    const lounge = allLounges.find((l) => l.id === mine.lounge_id);
+    venueEl.textContent = lounge ? `${lounge.name} · ${lounge.city}` : "(venue)";
+    expiresEl.textContent = `· ${fmtRemaining(mine.expires_at)}`;
+    banner.hidden = false;
+
+    const btn = document.getElementById("my-active-checkout") as HTMLButtonElement;
+    btn.onclick = async () => {
+      btn.disabled = true;
+      const supabase = getSupabase();
+      await supabase.from("checkins").delete().eq("id", mine.id);
+      await loadActive();
+      renderMembersAndVenues();
+      renderMyActive();
+      if (selectedLounge) showVenueSheet(selectedLounge);
+      btn.disabled = false;
+    };
+  }
+
+  function renderMembersAndVenues(): void {
+    if (!map) return;
+    const L = (window as any).L;
+    const showLounges = (document.getElementById("filter-lounges") as HTMLInputElement)?.checked ?? true;
+    const showMembers = (document.getElementById("filter-members") as HTMLInputElement)?.checked ?? true;
+    const cityFilter = (document.getElementById("filter-city") as HTMLSelectElement)?.value || "";
+    const summaryEl = document.getElementById("map-summary") as HTMLElement;
+
+    // Clear all
+    Object.values(venueMarkersById).forEach((m: any) => map.removeLayer(m));
+    venueMarkersById = {};
+    memberMarkerIds.forEach((m) => map.removeLayer(m));
+    memberMarkerIds = [];
+
+    const filteredLounges = allLounges.filter((l) => !cityFilter || l.city === cityFilter);
+    let memberCount = 0;
+
+    // Venue pins
+    if (showLounges) {
+      for (const l of filteredLounges) {
+        const hasActive = (activeByLoungeId[l.id]?.length || 0) > 0;
+        const icon = L.divIcon({
+          className: "",
+          html: `<div class="tnc-venue-pin tnc-venue-pin--${l.type}${hasActive ? " tnc-venue-pin--has-active" : ""}"></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        });
+        const m = L.marker([l.lat, l.lng], { icon, zIndexOffset: 50 }).addTo(map);
+        m.on("click", () => showVenueSheet(l));
+        venueMarkersById[l.id] = m;
+      }
+    }
+
+    // Member pins (avatar pins around their lounge)
+    if (showMembers) {
+      for (const l of filteredLounges) {
+        const active = activeByLoungeId[l.id] || [];
+        active.forEach((c, idx) => {
+          memberCount++;
+          const [lat, lng] = offsetAround(l.lat, l.lng, idx, active.length);
+          const av = c.profile?.avatar_url
+            ? `<img src="${escapeHtml(c.profile.avatar_url)}" alt="" />`
+            : initials(c.profile?.display_name || null);
+          const icon = L.divIcon({
+            className: "",
+            html: `<div class="tnc-member-pin">${av}</div>`,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19],
+          });
+          const m = L.marker([lat, lng], { icon, zIndexOffset: 100 }).addTo(map);
+          m.on("click", () => showMemberSheet(c, l));
+          memberMarkerIds.push(m);
+        });
+      }
+    }
+
+    if (summaryEl) {
+      const venues = filteredLounges.length;
+      const venuesLabel = `${venues} venue${venues === 1 ? "" : "s"}`;
+      const membersLabel = `${memberCount} member${memberCount === 1 ? "" : "s"} here now`;
+      summaryEl.textContent = `${venuesLabel}  ·  ${membersLabel}`;
+    }
   }
 
   function waitForLeaflet(): Promise<void> {
@@ -602,6 +740,8 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       return;
     }
     myUserId = user.id;
+    const profile = await getCurrentProfile();
+    myCity = profile?.city || null;
 
     const supabase = getSupabase();
     const { data: lounges, error } = await supabase
@@ -616,32 +756,55 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     }
 
     await loadActive();
+    populateCitySelect();
 
-    // Init Leaflet
     await waitForLeaflet();
     const L = (window as any).L;
-    map = L.map("lounge-map", { worldCopyJump: true }).setView([30, 10], 2);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 18,
+    map = L.map("lounge-map", { worldCopyJump: true, zoomControl: false }).setView([40, 0], 2);
+    L.control.zoom({ position: "topright" }).addTo(map);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      maxZoom: 19,
+      subdomains: "abcd",
     }).addTo(map);
 
-    renderMap();
+    renderMembersAndVenues();
     renderMyActive();
 
-    const guard = document.getElementById("lounge-guard");
-    const content = document.getElementById("lounge-content");
-    if (guard) guard.style.display = "none";
-    if (content) content.hidden = false;
+    // Wire filters
+    document.getElementById("filter-city")?.addEventListener("change", (e) => {
+      renderMembersAndVenues();
+      const city = (e.target as HTMLSelectElement).value;
+      if (city) flyToCity(city);
+    });
+    document.getElementById("filter-members")?.addEventListener("change", renderMembersAndVenues);
+    document.getElementById("filter-lounges")?.addEventListener("change", renderMembersAndVenues);
+    document.getElementById("sheet-close")?.addEventListener("click", hideSheet);
 
-    // If user has an active check-in, fly to that venue
-    const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
-    if (mine) {
-      const lounge = allLounges.find((l) => l.id === mine.lounge_id);
-      if (lounge) {
-        map.setView([lounge.lat, lounge.lng], 13);
-        selectLounge(lounge);
+    // Reveal
+    const guard = document.getElementById("lounge-guard");
+    const shell = document.getElementById("lounge-map-shell");
+    if (guard) guard.style.display = "none";
+    if (shell) shell.hidden = false;
+
+    // Make sure leaflet recalculates after reveal
+    setTimeout(() => map.invalidateSize(), 50);
+
+    // Open initial state
+    const params = new URLSearchParams(window.location.search);
+    const urlCity = params.get("city");
+    if (urlCity) {
+      flyToCity(urlCity);
+    } else {
+      const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
+      if (mine) {
+        const lounge = allLounges.find((l) => l.id === mine.lounge_id);
+        if (lounge) {
+          map.setView([lounge.lat, lounge.lng], 13);
+          showVenueSheet(lounge);
+        }
+      } else if (myCity) {
+        flyToCity(myCity);
       }
     }
   }
