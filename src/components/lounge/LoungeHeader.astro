@@ -28,11 +28,48 @@ const { active = "dashboard" } = Astro.props as Props;
     </nav>
 
     <div class="lounge-header__user">
-      <a href="/lounge/app/profile/" class:list={["lounge-nav-link", active === "profile" && "is-active"]} aria-label="Edit profile">
+      <a href="/lounge/app/profile/" class:list={["lounge-nav-link lounge-header__name-link", active === "profile" && "is-active"]} aria-label="Edit profile">
         <span id="lounge-header-name">…</span>
       </a>
-      <button id="lounge-signout" class="lounge-signout" aria-label="Sign out">Sign out</button>
+
+      {/* Hamburger replaces the standalone Sign Out button. Sign Out lives inside the dropdown. */}
+      <button id="lounge-hamburger" class="lounge-hamburger" type="button"
+        aria-label="Open menu" aria-haspopup="true" aria-expanded="false" aria-controls="lounge-menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="7" x2="21" y2="7" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="17" x2="21" y2="17" />
+        </svg>
+      </button>
     </div>
+  </div>
+
+  {/* Dropdown menu (anchored under the hamburger).
+      Kept intentionally small so the PWA stays isolated — no links out to the
+      public magazine, which would bounce the user out of the installed app. */}
+  <div id="lounge-menu" class="lounge-menu" hidden role="menu" aria-labelledby="lounge-hamburger">
+    <a href="/lounge/app/profile/" class="lounge-menu__item" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+      </svg>
+      <span>Edit profile</span>
+    </a>
+    <a href="https://thenextcigar.com/" class="lounge-menu__item" role="menuitem" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+      <span>The magazine</span>
+      <span class="lounge-menu__hint">opens browser</span>
+    </a>
+    <div class="lounge-menu__divider" role="separator"></div>
+    <button id="lounge-signout" class="lounge-menu__item lounge-menu__item--destructive" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      <span>Sign out</span>
+    </button>
   </div>
 </header>
 
@@ -97,22 +134,93 @@ const { active = "dashboard" } = Astro.props as Props;
     align-items: center;
     gap: 1rem;
   }
-  .lounge-signout {
-    background: none;
-    border: 1px solid var(--color-dark-border);
-    color: var(--color-text-on-dark-mute);
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    padding: 0.4rem 0.8rem;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  /* On mobile/tablet the bottom tab bar already shows the member's name in the
+     map / dashboard surfaces, so hide the redundant name in the header. */
+  @media (max-width: 1023.98px) {
+    .lounge-header__name-link { display: none; }
   }
-  .lounge-signout:hover {
-    border-color: var(--color-accent);
+
+  /* Hamburger button — replaces the standalone Sign Out CTA. */
+  .lounge-hamburger {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: var(--color-text-on-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .lounge-hamburger svg { width: 22px; height: 22px; display: block; }
+  .lounge-hamburger:hover { border-color: var(--color-gold, #c9a961); }
+  .lounge-hamburger[aria-expanded="true"] {
+    background: rgba(201, 169, 97, 0.16);
+    border-color: var(--color-gold, #c9a961);
+    color: var(--color-gold, #c9a961);
+  }
+
+  /* Dropdown menu */
+  .lounge-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 16px;
+    min-width: 220px;
+    background: var(--color-charcoal, #1a1d2e);
+    border: 1px solid rgba(201, 169, 97, 0.28);
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    padding: 6px;
+    z-index: 70;
+    animation: menuIn 0.16s ease-out;
+  }
+  @media (min-width: 768px) {
+    .lounge-menu { right: 24px; }
+  }
+  @keyframes menuIn {
+    from { transform: translateY(-4px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .lounge-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-on-dark, #f3efe6);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: left;
+    font-family: inherit;
+  }
+  .lounge-menu__item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.8; }
+  .lounge-menu__item:hover {
+    background: rgba(201, 169, 97, 0.1);
+    color: var(--color-gold, #c9a961);
+  }
+  .lounge-menu__item:hover svg { opacity: 1; color: var(--color-gold, #c9a961); }
+  .lounge-menu__item--destructive { color: rgba(255, 100, 100, 0.85); }
+  .lounge-menu__item--destructive:hover { background: rgba(255, 46, 46, 0.12); color: #ff6b6b; }
+  .lounge-menu__item--destructive:hover svg { color: #ff6b6b; }
+  .lounge-menu__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+  }
+  .lounge-menu__hint {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0;
+    text-transform: lowercase;
   }
   .lounge-header__badge {
     display: inline-block;
@@ -140,8 +248,38 @@ const { active = "dashboard" } = Astro.props as Props;
     if (nameEl && profile) {
       nameEl.textContent = profile.display_name || "Member";
     }
-    const btn = document.getElementById("lounge-signout");
-    btn?.addEventListener("click", () => signOutAndRedirect());
+
+    // Hamburger menu — opens dropdown with Sign Out + other menu items
+    const hamburger = document.getElementById("lounge-hamburger") as HTMLButtonElement | null;
+    const menu = document.getElementById("lounge-menu") as HTMLElement | null;
+    if (hamburger && menu) {
+      const openMenu = () => {
+        menu.hidden = false;
+        hamburger.setAttribute("aria-expanded", "true");
+      };
+      const closeMenu = () => {
+        menu.hidden = true;
+        hamburger.setAttribute("aria-expanded", "false");
+      };
+      hamburger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (menu.hidden) openMenu();
+        else closeMenu();
+      });
+      // Outside-click closes
+      document.addEventListener("click", (e) => {
+        if (!menu.hidden && !menu.contains(e.target as Node) && !hamburger.contains(e.target as Node)) {
+          closeMenu();
+        }
+      });
+      // Esc closes
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !menu.hidden) closeMenu();
+      });
+    }
+
+    // Sign Out (now inside the menu)
+    document.getElementById("lounge-signout")?.addEventListener("click", () => signOutAndRedirect());
 
     // Inbox pending count
     const badge = document.getElementById("lounge-header-inbox-badge");

@@ -17,6 +17,8 @@ interface Props {
   image?: string;
   canonicalURL?: string;
   noIndex?: boolean;
+  /** When true, skips the public site Header + Footer. Lounge pages render their own. */
+  bareChrome?: boolean;
 }
 
 const {
@@ -25,9 +27,18 @@ const {
   image = "/og-default.svg",
   canonicalURL = new URL(Astro.url.pathname, Astro.site).toString(),
   noIndex = false,
+  bareChrome = false,
 } = Astro.props as Props;
 
 const siteName = "The Next Cigar";
+
+// Auto-detect the Lounge MEMBER APP (not the marketing/auth pages) so it
+// renders with its own LoungeHeader + bottom tab bar and no public-site
+// header bleeding through. The /lounge/ marketing page and /lounge/signup
+// + /lounge/login pages still get the public header so visitors can find
+// their way back to the magazine.
+const isLoungeApp = Astro.url.pathname.startsWith("/lounge/app");
+const skipPublicChrome = bareChrome || isLoungeApp;
 ---
 
 <!doctype html>
@@ -126,13 +137,13 @@ const siteName = "The Next Cigar";
       Skip to content
     </a>
 
-    <Header />
+    {!skipPublicChrome && <Header />}
 
     <main id="main">
       <slot />
     </main>
 
-    <Footer />
+    {!skipPublicChrome && <Footer />}
 
     <SubscribeModal />
     <CookieBanner />

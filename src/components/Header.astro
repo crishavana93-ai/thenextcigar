@@ -1,17 +1,17 @@
 ---
 import Logo from "./Logo.astro";
-import NewsTicker from "./NewsTicker.astro";
 import SocialIcons from "./SocialIcons.astro";
 import { getCollection } from "astro:content";
 
 const categories = (await getCollection("categories")).sort((a, b) => a.data.name.localeCompare(b.data.name));
 
+// Primary nav. The Lounge gets pulled out below as a gold pill so it doesn't
+// disappear in a row of grey links.
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/blog", label: "News" },
   // Categories handled as dropdown below
   { href: "/watch", label: "Watch" },
-  { href: "/lounge", label: "The Lounge" },
   { href: "/shop", label: "Shop" },
   { href: "/about", label: "About" },
 ];
@@ -22,8 +22,9 @@ const today = new Date().toLocaleDateString("en-US", {
 });
 ---
 
-{/* News ticker bar — Newsplate signature */}
-<NewsTicker />
+{/* News ticker removed 2026-05-13 per founder feedback ("you have a blog not
+    a stock exchange"). The "News" link in the primary nav points at /blog
+    which serves the same content as a real page. */}
 
 {/* Thin date + status bar */}
 <div class="section-dark border-b border-[color:var(--color-dark-border)]">
@@ -102,6 +103,21 @@ const today = new Date().toLocaleDateString("en-US", {
           </a>
         );
       })}
+
+      {/* The Lounge — gold pill so it doesn't disappear among the grey nav. */}
+      <a
+        href="/lounge/"
+        class:list={[
+          "ml-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase transition-all border",
+          path.startsWith("/lounge")
+            ? "bg-[color:var(--color-gold)] text-[color:var(--color-charcoal)] border-[color:var(--color-gold)]"
+            : "border-[color:var(--color-gold)] text-[color:var(--color-gold)] hover:bg-[color:var(--color-gold)] hover:text-[color:var(--color-charcoal)]",
+        ]}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+        </svg>
+        The Lounge
+      </a>
     </nav>
 
     <div class="flex items-center gap-3 flex-shrink-0">
