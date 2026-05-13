@@ -1,0 +1,653 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+---
+
+<BaseLayout
+  title="Messages — The Lounge"
+  description="Direct messages with members you've connected with."
+  noIndex
+>
+  <LoungeHeader active="inbox" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Loading…</p>
+      </div>
+    </div>
+
+    {/* MODE A — Conversation list (default) */}
+    <div id="msg-list-mode" hidden>
+      <section class="container-wide pt-10 md:pt-14 pb-3 reveal">
+        <p class="lounge-label lounge-label--gold">The Lounge · Messages</p>
+        <h1 class="lounge-h1" style="margin-top:8px;">Conversations.</h1>
+        <p style="margin-top:6px;font-size:13px;color:var(--color-text-soft);">
+          DMs are unlocked once an introduction has been accepted on both sides.
+        </p>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div id="conversations-list" class="conv-list"></div>
+        <div id="conversations-empty" hidden class="conv-empty">
+          <p class="conv-empty__eyebrow">Nothing here yet</p>
+          <p class="conv-empty__body">
+            Messages unlock after an introduction is accepted. Visit your
+            <a href="/lounge/app/inbox/">inbox</a> to see incoming requests, or
+            browse <a href="/lounge/app/directory/">members</a> and reach out.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    {/* MODE B — Thread view (with ?with=<uuid>) */}
+    <div id="msg-thread-mode" hidden>
+      <section class="container-wide thread-head reveal">
+        <a href="/lounge/app/messages/" class="thread-back" aria-label="Back to conversations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+        </a>
+        <div class="thread-head__avatar" id="thread-avatar">?</div>
+        <div class="thread-head__info">
+          <h1 class="thread-head__name" id="thread-name">…</h1>
+          <p class="thread-head__city" id="thread-city">—</p>
+        </div>
+        <a id="thread-view-profile" href="#" class="lbtn lbtn-ghost lbtn-sm">View profile</a>
+      </section>
+
+      <section class="container-wide thread-body">
+        <div id="thread-empty" hidden class="thread-empty">
+          <p>Start the conversation.</p>
+        </div>
+        <div id="thread-messages" class="thread-msgs"></div>
+      </section>
+
+      <form id="thread-compose" class="thread-compose">
+        <textarea
+          id="thread-input"
+          name="body"
+          rows="1"
+          maxlength="2000"
+          placeholder="Write a message…"
+          autocomplete="off"
+        ></textarea>
+        <button type="submit" id="thread-send" class="lbtn lbtn-primary lbtn-sm" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+            <path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <div id="thread-locked" hidden class="thread-locked">
+      <section class="container-wide py-24 text-center">
+        <p class="lounge-label">Locked</p>
+        <h1 class="lounge-h1" style="margin-top:8px;">No accepted introduction.</h1>
+        <p style="margin-top:8px;color:var(--color-text-soft);max-width:32rem;margin-left:auto;margin-right:auto;">
+          Messages only unlock after both members have accepted an introduction.
+          Send a request, wait for them to accept, and we'll open this thread.
+        </p>
+        <a href="/lounge/app/directory/" class="lbtn lbtn-secondary lbtn-sm" style="margin-top:18px;">Back to members</a>
+      </section>
+    </div>
+  </main>
+  <LoungeTabBar active="inbox" />
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+  .lounge-app__guard {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  /* ── Conversation list ────────────────────────────────────────────────── */
+  .conv-list { display: flex; flex-direction: column; }
+  .conv-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    text-decoration: none;
+    color: var(--color-text);
+    transition: background 0.15s ease;
+  }
+  .conv-row:last-child { border-bottom: none; }
+  .conv-row:hover { background: rgba(201, 169, 97, 0.06); }
+  .conv-row.is-unread { background: rgba(201, 169, 97, 0.08); }
+
+  .conv-row__avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--color-bg-soft);
+    border: 2px solid var(--color-gold-soft);
+    overflow: hidden; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 800; color: var(--color-text-muted);
+  }
+  .conv-row__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .conv-row__main { min-width: 0; }
+  .conv-row__top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .conv-row__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .conv-row__time {
+    margin: 0;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+  .conv-row__preview {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: var(--color-text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .conv-row.is-unread .conv-row__preview { color: var(--color-text); font-weight: 600; }
+  .conv-row__dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--color-gold, #c9a961);
+    flex-shrink: 0;
+  }
+  .conv-row:not(.is-unread) .conv-row__dot { visibility: hidden; }
+
+  .conv-empty {
+    padding: 36px 20px;
+    text-align: center;
+    background: var(--color-bg-soft);
+    border: 1px dashed var(--color-gold-soft);
+    border-radius: 10px;
+  }
+  .conv-empty__eyebrow {
+    margin: 0 0 6px 0;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .conv-empty__body {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-text-soft);
+    line-height: 1.55;
+  }
+  .conv-empty a { color: var(--color-gold); text-decoration: underline; }
+
+  /* ── Thread view ──────────────────────────────────────────────────────── */
+  .thread-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    position: sticky;
+    top: 72px;
+    background: var(--color-bg);
+    z-index: 30;
+  }
+  .thread-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 999px;
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+  .thread-back:hover { background: rgba(201, 169, 97, 0.1); color: var(--color-text); }
+  .thread-head__avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--color-bg-soft);
+    border: 2px solid var(--color-gold, #c9a961);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 800; color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+  .thread-head__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .thread-head__info { flex-grow: 1; min-width: 0; }
+  .thread-head__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 16px; font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .thread-head__city {
+    margin: 2px 0 0 0;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .thread-body {
+    padding-top: 16px;
+    padding-bottom: 140px; /* room for compose bar + tab bar */
+    min-height: 40vh;
+  }
+  .thread-msgs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .thread-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+    padding: 9px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+  .thread-msg p { margin: 0; white-space: pre-wrap; }
+  .thread-msg--mine {
+    align-self: flex-end;
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal, #1a1d2e);
+    border-bottom-right-radius: 4px;
+  }
+  .thread-msg--theirs {
+    align-self: flex-start;
+    background: var(--color-bg-soft);
+    color: var(--color-text);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--color-gold-soft);
+  }
+  .thread-msg__time {
+    align-self: center;
+    margin: 14px 0 6px 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .thread-empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    padding: 40px 20px;
+  }
+
+  /* Sticky compose bar — sits above the tab bar */
+  .thread-compose {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-gold-soft);
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    z-index: 40;
+  }
+  @media (min-width: 1024px) {
+    .thread-compose { bottom: 0; padding-bottom: 14px; }
+  }
+  .thread-compose textarea {
+    flex-grow: 1;
+    min-height: 40px;
+    max-height: 140px;
+    resize: none;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--color-text);
+  }
+  .thread-compose textarea:focus {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 1px;
+    border-color: var(--color-gold);
+  }
+  .thread-compose .lbtn {
+    flex-shrink: 0;
+    min-width: 44px;
+    height: 40px;
+    padding: 0 12px;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+
+  type Profile = {
+    id: string;
+    display_name: string | null;
+    city: string | null;
+    country_code: string | null;
+    avatar_url: string | null;
+  };
+  type DM = {
+    id: string;
+    sender_id: string;
+    recipient_id: string;
+    body: string;
+    read_at: string | null;
+    created_at: string;
+  };
+
+  let myUserId = "";
+  let pollTimer: any = null;
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+  }
+  function avatarHtml(p: { display_name?: string | null; avatar_url?: string | null } | null): string {
+    if (!p) return "?";
+    if (p.avatar_url) return `<img src="${escapeHtml(p.avatar_url)}" alt="" />`;
+    return initials(p.display_name || null);
+  }
+  function timeAgo(iso: string): string {
+    const sec = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    if (sec < 60) return "now";
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h`;
+    const d = Math.floor(hr / 24);
+    if (d < 7) return `${d}d`;
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  function dayHeader(iso: string): string {
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const sameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (sameDay(d, today)) return "Today";
+    if (sameDay(d, yesterday)) return "Yesterday";
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  }
+
+  // ── Mode A — Conversation list ────────────────────────────────────────
+  async function renderList(): Promise<void> {
+    const supabase = getSupabase();
+    // Pull all DMs touching me, latest first
+    const { data: msgs } = await supabase
+      .from("direct_messages")
+      .select("id, sender_id, recipient_id, body, read_at, created_at")
+      .or(`sender_id.eq.${myUserId},recipient_id.eq.${myUserId}`)
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    const rows = (msgs as DM[]) || [];
+
+    // Group by "the other party"
+    const buckets = new Map<string, { latest: DM; unread: number }>();
+    for (const m of rows) {
+      const other = m.sender_id === myUserId ? m.recipient_id : m.sender_id;
+      const cur = buckets.get(other);
+      if (!cur) {
+        buckets.set(other, {
+          latest: m,
+          unread: m.recipient_id === myUserId && !m.read_at ? 1 : 0,
+        });
+      } else if (m.recipient_id === myUserId && !m.read_at) {
+        cur.unread += 1;
+      }
+    }
+
+    const otherIds = Array.from(buckets.keys());
+    const listEl = document.getElementById("conversations-list") as HTMLElement;
+    const emptyEl = document.getElementById("conversations-empty") as HTMLElement;
+
+    if (otherIds.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+
+    // Fetch the profiles for the other parties
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, display_name, city, country_code, avatar_url")
+      .in("id", otherIds);
+    const profileMap = new Map<string, Profile>((profiles as Profile[] || []).map((p) => [p.id, p]));
+
+    // Sort by latest message timestamp desc
+    const entries = Array.from(buckets.entries()).sort((a, b) =>
+      new Date(b[1].latest.created_at).getTime() - new Date(a[1].latest.created_at).getTime()
+    );
+
+    listEl.innerHTML = entries
+      .map(([otherId, info]) => {
+        const p = profileMap.get(otherId);
+        const name = escapeHtml(p?.display_name || "Member");
+        const preview = info.latest.sender_id === myUserId
+          ? `You: ${escapeHtml(info.latest.body)}`
+          : escapeHtml(info.latest.body);
+        const unreadClass = info.unread > 0 ? " is-unread" : "";
+        return `
+          <a class="conv-row${unreadClass}" href="/lounge/app/messages/?with=${otherId}">
+            <div class="conv-row__avatar">${avatarHtml(p)}</div>
+            <div class="conv-row__main">
+              <div class="conv-row__top">
+                <h2 class="conv-row__name">${name}</h2>
+                <span class="conv-row__time">${timeAgo(info.latest.created_at)}</span>
+              </div>
+              <p class="conv-row__preview">${preview}</p>
+            </div>
+            <span class="conv-row__dot" aria-label="${info.unread > 0 ? "Unread" : ""}"></span>
+          </a>`;
+      })
+      .join("");
+  }
+
+  // ── Mode B — Thread view ──────────────────────────────────────────────
+  let threadOtherId = "";
+  let threadProfile: Profile | null = null;
+  let lastRenderedCount = 0;
+
+  function scrollThreadToBottom(): void {
+    const wrap = document.getElementById("thread-messages");
+    if (!wrap) return;
+    wrap.scrollIntoView({ behavior: "smooth", block: "end" });
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+
+  async function loadThread(initial = false): Promise<void> {
+    const supabase = getSupabase();
+    const { data: msgs } = await supabase
+      .from("direct_messages")
+      .select("id, sender_id, recipient_id, body, read_at, created_at")
+      .or(
+        `and(sender_id.eq.${myUserId},recipient_id.eq.${threadOtherId}),` +
+        `and(sender_id.eq.${threadOtherId},recipient_id.eq.${myUserId})`
+      )
+      .order("created_at", { ascending: true })
+      .limit(500);
+
+    const rows = (msgs as DM[]) || [];
+    const wrap = document.getElementById("thread-messages") as HTMLElement;
+    const emptyEl = document.getElementById("thread-empty") as HTMLElement;
+
+    if (rows.length === 0) {
+      wrap.innerHTML = "";
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+
+    // Build HTML with day headers between groups
+    let html = "";
+    let lastDay = "";
+    for (const m of rows) {
+      const day = dayHeader(m.created_at);
+      if (day !== lastDay) {
+        html += `<div class="thread-msg__time">${day}</div>`;
+        lastDay = day;
+      }
+      const mine = m.sender_id === myUserId;
+      html += `<div class="thread-msg ${mine ? "thread-msg--mine" : "thread-msg--theirs"}"><p>${escapeHtml(m.body)}</p></div>`;
+    }
+    wrap.innerHTML = html;
+
+    // Mark unread messages addressed to me as read
+    const unreadIds = rows.filter((m) => m.recipient_id === myUserId && !m.read_at).map((m) => m.id);
+    if (unreadIds.length > 0) {
+      await supabase
+        .from("direct_messages")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", unreadIds);
+    }
+
+    // Scroll to bottom if new messages arrived (or initial)
+    if (initial || rows.length !== lastRenderedCount) {
+      lastRenderedCount = rows.length;
+      setTimeout(scrollThreadToBottom, 50);
+    }
+  }
+
+  async function renderThread(otherId: string): Promise<void> {
+    threadOtherId = otherId;
+    const supabase = getSupabase();
+
+    // Verify there's an accepted intro between us
+    const { data: intros } = await supabase
+      .from("introductions")
+      .select("accepted, from_member_id, to_member_id")
+      .or(
+        `and(from_member_id.eq.${myUserId},to_member_id.eq.${otherId}),` +
+        `and(from_member_id.eq.${otherId},to_member_id.eq.${myUserId})`
+      );
+    const accepted = (intros || []).some((i: any) => i.accepted === true);
+
+    if (!accepted) {
+      (document.getElementById("msg-thread-mode") as HTMLElement).hidden = true;
+      (document.getElementById("thread-locked") as HTMLElement).hidden = false;
+      return;
+    }
+
+    // Load other party's profile
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("id, display_name, city, country_code, avatar_url")
+      .eq("id", otherId)
+      .maybeSingle();
+    threadProfile = (prof as Profile) || null;
+
+    const av = document.getElementById("thread-avatar") as HTMLElement;
+    av.innerHTML = avatarHtml(threadProfile);
+    (document.getElementById("thread-name") as HTMLElement).textContent = threadProfile?.display_name || "Member";
+    const cityEl = document.getElementById("thread-city") as HTMLElement;
+    cityEl.textContent = threadProfile?.city
+      ? `${threadProfile.city}${threadProfile.country_code ? ` · ${threadProfile.country_code}` : ""}`
+      : "—";
+    (document.getElementById("thread-view-profile") as HTMLAnchorElement).href = `/lounge/app/member/?id=${otherId}`;
+
+    await loadThread(true);
+
+    // Wire compose
+    const form = document.getElementById("thread-compose") as HTMLFormElement;
+    const input = document.getElementById("thread-input") as HTMLTextAreaElement;
+    const sendBtn = document.getElementById("thread-send") as HTMLButtonElement;
+
+    // Auto-resize textarea
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(140, input.scrollHeight) + "px";
+    });
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const body = input.value.trim();
+      if (!body) return;
+      sendBtn.disabled = true;
+      try {
+        const { error } = await supabase.from("direct_messages").insert({
+          sender_id: myUserId,
+          recipient_id: threadOtherId,
+          body: body.slice(0, 2000),
+        });
+        if (error) throw error;
+        input.value = "";
+        input.style.height = "auto";
+        await loadThread();
+      } catch (err: any) {
+        alert(err?.message || "Could not send. The introduction may have been declined.");
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+
+    // Cmd+Enter / Ctrl+Enter sends
+    input.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    // Poll every 8 seconds while thread is open
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => loadThread(), 8000);
+
+    (document.getElementById("msg-thread-mode") as HTMLElement).hidden = false;
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  async function init(): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    myUserId = user.id;
+
+    const params = new URLSearchParams(window.location.search);
+    const otherId = params.get("with");
+    const guard = document.getElementById("lounge-guard");
+
+    if (otherId) {
+      if (otherId === myUserId) {
+        window.location.href = "/lounge/app/messages/";
+        return;
+      }
+      await renderThread(otherId);
+    } else {
+      await renderList();
+      (document.getElementById("msg-list-mode") as HTMLElement).hidden = false;
+    }
+
+    if (guard) guard.style.display = "none";
+  }
+
+  // Cleanup poll on unload
+  window.addEventListener("beforeunload", () => { if (pollTimer) clearInterval(pollTimer); });
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

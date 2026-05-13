@@ -284,7 +284,10 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
             <button class="lounge-inbox-btn lounge-inbox-btn--accept" data-action="accept" data-id="${r.id}">Accept</button>
             <button class="lounge-inbox-btn lounge-inbox-btn--decline" data-action="decline" data-id="${r.id}">Decline</button>`;
         } else if (r.accepted === true) {
-          actions = `<span class="lounge-inbox-pill lounge-inbox-pill--accepted">Accepted</span>`;
+          // DMs unlocked — send-a-note CTA replaces the dead 'Accepted' pill
+          actions = `
+            <a class="lounge-inbox-btn lounge-inbox-btn--accept" href="/lounge/app/messages/?with=${r.from_member_id}">Send a note →</a>
+            <span class="lounge-inbox-pill lounge-inbox-pill--accepted">Accepted</span>`;
         } else {
           actions = `<span class="lounge-inbox-pill lounge-inbox-pill--declined">Declined</span>`;
         }
@@ -345,10 +348,17 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         const avatar = r.to_profile?.avatar_url
           ? `<img src="${escapeHtml(r.to_profile.avatar_url)}" alt="" />`
           : initials(r.to_profile?.display_name || null);
-        let pill: string;
-        if (r.accepted === true) pill = `<span class="lounge-inbox-pill lounge-inbox-pill--accepted">Accepted</span>`;
-        else if (r.accepted === false) pill = `<span class="lounge-inbox-pill lounge-inbox-pill--declined">Declined</span>`;
-        else pill = `<span class="lounge-inbox-pill lounge-inbox-pill--pending">Pending</span>`;
+        let actions: string;
+        if (r.accepted === true) {
+          // Accepted intros become a direct "Send a note" entry-point to DMs
+          actions = `
+            <a class="lounge-inbox-btn lounge-inbox-btn--accept" href="/lounge/app/messages/?with=${r.to_member_id}">Send a note →</a>
+            <span class="lounge-inbox-pill lounge-inbox-pill--accepted">Accepted</span>`;
+        } else if (r.accepted === false) {
+          actions = `<span class="lounge-inbox-pill lounge-inbox-pill--declined">Declined</span>`;
+        } else {
+          actions = `<span class="lounge-inbox-pill lounge-inbox-pill--pending">Pending</span>`;
+        }
         return `
           <div class="${rowClass(r.accepted)}">
             <div class="lounge-inbox-avatar">${avatar}</div>
@@ -358,7 +368,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
               <p class="lounge-inbox-message">${escapeHtml(r.intro_message)}</p>
               <p class="lounge-inbox-date">${fmtDate(r.created_at)}</p>
             </div>
-            <div class="lounge-inbox-actions">${pill}</div>
+            <div class="lounge-inbox-actions">${actions}</div>
           </div>`;
       })
       .join("");

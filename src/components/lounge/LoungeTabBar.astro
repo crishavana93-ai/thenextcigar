@@ -145,13 +145,22 @@ const { active = "home" } = Astro.props as Props;
     const user = await getCurrentUser();
     if (!user) return;
     const supabase = getSupabase();
-    const { count } = await supabase
-      .from("introductions")
-      .select("id", { count: "exact", head: true })
-      .eq("to_member_id", user.id)
-      .is("accepted", null);
-    if (count && count > 0) {
-      badge.textContent = String(count);
+    // Badge counts BOTH: pending intro requests + unread direct messages.
+    const [{ count: introCount }, { count: dmCount }] = await Promise.all([
+      supabase
+        .from("introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("to_member_id", user.id)
+        .is("accepted", null),
+      supabase
+        .from("direct_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", user.id)
+        .is("read_at", null),
+    ]);
+    const total = (introCount || 0) + (dmCount || 0);
+    if (total > 0) {
+      badge.textContent = String(total);
       badge.hidden = false;
     } else {
       badge.hidden = true;

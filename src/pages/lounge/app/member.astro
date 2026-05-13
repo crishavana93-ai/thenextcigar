@@ -630,16 +630,20 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
           const body = document.getElementById("mem-intro-body");
           let status = "Pending — waiting on response";
           let cls = "lounge-mem-intro--pending";
+          let extraHtml = "";
           if (intro.accepted === true) {
-            status = "Accepted — you can now message each other (DMs coming soon)";
+            status = "Accepted. Direct messages are unlocked.";
             cls = "lounge-mem-intro--accepted";
+            extraHtml = `<a class="lounge-mem-cta" style="display:inline-block;margin-top:12px;text-decoration:none;" href="/lounge/app/messages/?with=${p.id}">Open conversation →</a>`;
           } else if (intro.accepted === false) {
             status = "Declined — try again later or in person";
             cls = "lounge-mem-intro--declined";
           }
           introExisting.className = `lounge-mem-intro ${cls}`;
           if (eyebrow) eyebrow.textContent = "Introduction status";
-          if (body) body.textContent = status;
+          if (body) {
+            body.innerHTML = `${escapeHtml(status)}${extraHtml}`;
+          }
         }
       } else {
         if (introFormWrap) introFormWrap.hidden = false;
