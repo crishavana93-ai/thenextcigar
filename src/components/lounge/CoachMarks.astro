@@ -1,0 +1,296 @@
+---
+/**
+ * CoachMarks — first-time onboarding overlay on the map.
+ *
+ * A 3-step walkthrough that runs ONCE per browser+device on first visit to
+ * /lounge/app/map/. Persists via localStorage flag `lounge_coach_marks_seen_v1`.
+ *
+ * Each step:
+ *   - Dim the rest of the screen with a soft backdrop.
+ *   - Add a gold-halo .coach-highlight class to the target UI region so it
+ *     glows through the dim.
+ *   - Show a small card with the title + body + Next/Skip controls.
+ *
+ * The card is positioned ABOVE or BELOW the target so the user can still
+ * see what's being explained — no overlay covers the highlighted element.
+ *
+ * To reset (for testing): localStorage.removeItem('lounge_coach_marks_seen_v1')
+ */
+---
+
+<div id="coach-overlay" class="coach-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="coach-title">
+  <div class="coach-backdrop" id="coach-backdrop"></div>
+
+  <div class="coach-card" id="coach-card" data-pos="bottom">
+    <div class="coach-card__head">
+      <span class="coach-card__icon" id="coach-icon" aria-hidden="true">●</span>
+      <span class="coach-card__counter" id="coach-counter">1 of 3</span>
+    </div>
+    <h3 class="coach-card__title" id="coach-title">—</h3>
+    <p class="coach-card__body" id="coach-body">—</p>
+    <div class="coach-card__actions">
+      <button type="button" id="coach-skip" class="coach-card__skip">Skip tour</button>
+      <button type="button" id="coach-next" class="coach-card__next">Got it →</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .coach-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .coach-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(1.5px);
+    -webkit-backdrop-filter: blur(1.5px);
+    pointer-events: auto;
+    animation: coachIn 0.22s ease-out;
+  }
+  @keyframes coachIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Card — positioned per-step via data-pos attribute */
+  .coach-card {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(360px, calc(100% - 32px));
+    background: #f5efe0;
+    color: #1a1d2e;
+    border: 1px solid rgba(201, 169, 97, 0.4);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    pointer-events: auto;
+    animation: cardIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes cardIn {
+    from { transform: translate(-50%, 14px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+  /* Step 1 — filter chips at top → card sits below them */
+  .coach-card[data-pos="top"] { top: calc(70px + 60px + 18px); }
+  /* Step 2 — carousel at bottom → card sits above it */
+  .coach-card[data-pos="bottom"] { bottom: calc(64px + 132px + 18px); }
+  /* Step 3 — venue pin somewhere on map → card centered vertically */
+  .coach-card[data-pos="center"] { top: 50%; transform: translate(-50%, -50%); }
+  @keyframes cardInCenter {
+    from { transform: translate(-50%, -46%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+  }
+  .coach-card[data-pos="center"] { animation: cardInCenter 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+  .coach-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .coach-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(201, 169, 97, 0.18);
+    color: #c9a961;
+    font-size: 14px;
+  }
+  .coach-card__icon svg { width: 16px; height: 16px; display: block; }
+  .coach-card__counter {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6b6663;
+  }
+  .coach-card__title {
+    margin: 0 0 6px 0;
+    font-family: Georgia, "Playfair Display", serif;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #1a1d2e;
+  }
+  .coach-card__body {
+    margin: 0 0 14px 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #1a1d2e;
+  }
+  .coach-card__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .coach-card__skip {
+    background: transparent;
+    border: none;
+    color: #6b6663;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 4px;
+    font-family: inherit;
+  }
+  .coach-card__skip:hover { color: #1a1d2e; }
+  .coach-card__next {
+    background: #c9a961;
+    color: #1a1d2e;
+    border: 1px solid #c9a961;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .coach-card__next:hover { background: #b69649; border-color: #b69649; }
+
+  /* Halo applied to the targeted UI region while a step is showing.
+     Defined :global so the parent map page's elements pick it up. */
+  :global(.coach-highlight) {
+    position: relative;
+    z-index: 201; /* above the backdrop */
+    box-shadow:
+      0 0 0 2px rgba(201, 169, 97, 0.9),
+      0 0 0 8px rgba(201, 169, 97, 0.25),
+      0 0 40px 8px rgba(201, 169, 97, 0.3) !important;
+    border-radius: 12px !important;
+    animation: coachPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes coachPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(201, 169, 97, 0.9), 0 0 0 8px rgba(201, 169, 97, 0.25), 0 0 40px 8px rgba(201, 169, 97, 0.3); }
+    50%      { box-shadow: 0 0 0 2px rgba(201, 169, 97, 1),   0 0 0 12px rgba(201, 169, 97, 0.18), 0 0 60px 12px rgba(201, 169, 97, 0.45); }
+  }
+</style>
+
+<script>
+  const STORAGE_KEY = "lounge_coach_marks_seen_v1";
+
+  type Step = {
+    icon: string;
+    title: string;
+    body: string;
+    targetSelector: string;
+    position: "top" | "bottom" | "center";
+  };
+
+  const STEPS: Step[] = [
+    {
+      icon: "🎯",
+      title: "Filter the map",
+      body: "Tap a chip to filter by city, members, venues, or hosts. Your city is already pre-selected if your profile has one.",
+      targetSelector: ".chip-rail",
+      position: "top",
+    },
+    {
+      icon: "👥",
+      title: "See who's checked in right now",
+      body: "Cards along the bottom show every member currently checked in. Tap one to fly the map to their venue and open their info.",
+      targetSelector: ".cruiser-strip",
+      position: "bottom",
+    },
+    {
+      icon: "📍",
+      title: "Check in at a venue",
+      body: "Tap any venue pin on the map to open it, then 'Check in'. You're visible to members only and your check-in expires after 4 hours — no public broadcast.",
+      targetSelector: ".lounge-map",
+      position: "center",
+    },
+  ];
+
+  function setupCoachMarks() {
+    const overlay = document.getElementById("coach-overlay") as HTMLElement | null;
+    const card = document.getElementById("coach-card") as HTMLElement | null;
+    const iconEl = document.getElementById("coach-icon") as HTMLElement | null;
+    const counterEl = document.getElementById("coach-counter") as HTMLElement | null;
+    const titleEl = document.getElementById("coach-title") as HTMLElement | null;
+    const bodyEl = document.getElementById("coach-body") as HTMLElement | null;
+    const nextBtn = document.getElementById("coach-next") as HTMLButtonElement | null;
+    const skipBtn = document.getElementById("coach-skip") as HTMLButtonElement | null;
+    const backdrop = document.getElementById("coach-backdrop") as HTMLElement | null;
+
+    if (!overlay || !card || !nextBtn || !skipBtn) return;
+
+    // Don't show if the user has dismissed before, or if they're not authenticated yet.
+    if (localStorage.getItem(STORAGE_KEY) === "1") return;
+
+    let currentTarget: HTMLElement | null = null;
+    let stepIdx = 0;
+
+    function clearHighlight() {
+      if (currentTarget) {
+        currentTarget.classList.remove("coach-highlight");
+        currentTarget = null;
+      }
+    }
+
+    function renderStep(idx: number) {
+      const s = STEPS[idx];
+      if (!s) return;
+      clearHighlight();
+
+      iconEl!.textContent = s.icon;
+      counterEl!.textContent = `${idx + 1} of ${STEPS.length}`;
+      titleEl!.textContent = s.title;
+      bodyEl!.textContent = s.body;
+      card!.setAttribute("data-pos", s.position);
+      nextBtn!.textContent = idx === STEPS.length - 1 ? "Got it" : "Next →";
+
+      // Highlight the target (if present in the DOM)
+      const target = document.querySelector<HTMLElement>(s.targetSelector);
+      if (target) {
+        target.classList.add("coach-highlight");
+        currentTarget = target;
+      }
+    }
+
+    function dismiss() {
+      clearHighlight();
+      localStorage.setItem(STORAGE_KEY, "1");
+      overlay!.hidden = true;
+    }
+
+    function next() {
+      stepIdx += 1;
+      if (stepIdx >= STEPS.length) {
+        dismiss();
+      } else {
+        renderStep(stepIdx);
+      }
+    }
+
+    nextBtn.addEventListener("click", next);
+    skipBtn.addEventListener("click", dismiss);
+    backdrop?.addEventListener("click", () => { /* tap-through dismiss */ next(); });
+    document.addEventListener("keydown", (e) => {
+      if (overlay.hidden) return;
+      if (e.key === "Escape") dismiss();
+      else if (e.key === "Enter" || e.key === "ArrowRight") next();
+    });
+
+    // Wait a moment for the map's elements to render, then start.
+    function tryStart(attempt = 0) {
+      const ready =
+        document.querySelector(".chip-rail") &&
+        document.querySelector(".lounge-map");
+      if (ready) {
+        stepIdx = 0;
+        renderStep(0);
+        overlay!.hidden = false;
+      } else if (attempt < 30) {
+        setTimeout(() => tryStart(attempt + 1), 200);
+      }
+    }
+    tryStart();
+  }
+
+  document.addEventListener("astro:page-load", setupCoachMarks);
+  setupCoachMarks();
+</script>
