@@ -37,3 +37,7 @@ The Next Cigar photos/
 # CMS uploads stay tracked (they're how the editor saves images)
 !public/uploads/
 outreach/
+
+# Gemini / AI source files dropped at project root — not for production
+Gemini_Generated_Image_*.png
+/5.png

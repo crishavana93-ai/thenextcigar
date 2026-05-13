@@ -1,6 +1,6 @@
 {
   "name": "The Next Cigar",
-  "short_name": "TNC",
+  "short_name": "The Next Cigar",
   "description": "Modern editorial for the cigar aficionado — culture, craft, and The Lounge, a vetted IRL network for cigar travelers.",
   "id": "/",
   "start_url": "/",
@@ -13,9 +13,9 @@
   "categories": ["lifestyle", "news", "social"],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/favicon.png",
+      "sizes": "96x96",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
