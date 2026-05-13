@@ -16,19 +16,38 @@
   <!-- Top thin red accent bar -->
   <rect x="0" y="0" width="1200" height="6" fill="#ff2e2e" />
 
-  <!-- Wordmark area -->
-  <text x="600" y="290" font-family="Inter, system-ui, sans-serif" font-size="160" font-weight="800" letter-spacing="-4" text-anchor="middle" fill="#f4f4f4">TNext</text>
+  <!-- Wordmark — Georgia serif, heavy weight to match the new brand logo -->
+  <text x="600" y="290"
+        font-family="Georgia, 'Playfair Display', serif"
+        font-size="190"
+        font-weight="900"
+        letter-spacing="-4"
+        text-anchor="middle"
+        fill="#f5efe0">TNext</text>
 
   <!-- Dividing line + smoke -->
-  <line x1="350" y1="340" x2="540" y2="340" stroke="#f4f4f4" stroke-width="3" />
-  <path d="M580 318 c -8 12, 12 22, 4 36 c -8 14, 12 20, 4 32" stroke="#ff2e2e" stroke-width="6" stroke-linecap="round" fill="none" />
-  <line x1="660" y1="340" x2="850" y2="340" stroke="#f4f4f4" stroke-width="3" />
+  <line x1="320" y1="350" x2="555" y2="350" stroke="#f5efe0" stroke-width="3" stroke-linecap="round" />
+  <path d="M600 322 c -10 14, 16 24, 0 40 c -14 16, 16 24, 0 40"
+        stroke="#ff2e2e" stroke-width="7" stroke-linecap="round" fill="none" />
+  <line x1="645" y1="350" x2="880" y2="350" stroke="#f5efe0" stroke-width="3" stroke-linecap="round" />
 
   <!-- CIGAR -->
-  <text x="600" y="410" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="500" letter-spacing="20" text-anchor="middle" fill="#f4f4f4">CIGAR</text>
+  <text x="600" y="440"
+        font-family="Helvetica Neue, Inter, system-ui, sans-serif"
+        font-size="54"
+        font-weight="600"
+        letter-spacing="22"
+        text-anchor="middle"
+        fill="#f5efe0">CIGAR</text>
 
   <!-- Tagline -->
-  <text x="600" y="500" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="400" letter-spacing="2" text-anchor="middle" fill="#999999">Modern editorial for the cigar aficionado</text>
+  <text x="600" y="520"
+        font-family="Helvetica Neue, Inter, system-ui, sans-serif"
+        font-size="26"
+        font-weight="400"
+        letter-spacing="2"
+        text-anchor="middle"
+        fill="#999999">Modern editorial for the cigar aficionado</text>
 
   <!-- Footer accent -->
   <rect x="0" y="624" width="1200" height="6" fill="#ff2e2e" />

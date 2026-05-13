@@ -1,12 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="TNext Cigars mark">
-  <!-- Compact brand mark — used at small sizes (header on mobile, app icon, etc.) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="TNext Cigar mark">
+  <!-- Compact brand mark — used at small sizes (mobile header, app icon, favicon companion). -->
+  <!-- TN ligature -->
+  <text x="32" y="34"
+        font-family="Georgia, 'Playfair Display', 'Times New Roman', serif"
+        font-weight="900"
+        font-size="30"
+        letter-spacing="-0.04em"
+        text-anchor="middle"
+        fill="currentColor">TN</text>
   <!-- Hairline left -->
-  <line x1="6" y1="32" x2="22" y2="32" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="8" y1="46" x2="26" y2="46" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
   <!-- Smoke wisp -->
-  <path d="M27 18
-           c -3 5, 5 8, 0 14
-           c -5 6, 5 8, 0 14"
-        stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M32 39
+           c -3 4, 4 6, 0 10
+           c -4 4, 4 6, 0 10"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
   <!-- Hairline right -->
-  <line x1="42" y1="32" x2="58" y2="32" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="38" y1="46" x2="56" y2="46" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>

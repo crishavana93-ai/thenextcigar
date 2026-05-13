@@ -12,8 +12,8 @@ const { active = "dashboard" } = Astro.props as Props;
 
 <header class="lounge-header">
   <div class="container-wide flex items-center justify-between py-4">
-    <a href="/lounge/app/" class="lounge-header__brand">
-      <span class="lounge-header__mark">TNC</span>
+    <a href="/lounge/app/" class="lounge-header__brand" aria-label="TNext Cigar — The Lounge">
+      <img src="/logo-light.svg" alt="TNext Cigar" class="lounge-header__logo" />
       <span class="lounge-header__sub">The Lounge</span>
     </a>
 
@@ -47,23 +47,24 @@ const { active = "dashboard" } = Astro.props as Props;
   }
   .lounge-header__brand {
     display: inline-flex;
-    align-items: baseline;
-    gap: 0.65rem;
+    align-items: center;
+    gap: 0.75rem;
     color: var(--color-text-on-dark);
     text-decoration: none;
   }
-  .lounge-header__mark {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
+  .lounge-header__logo {
+    height: 2.1rem;
+    width: auto;
+    display: block;
   }
   .lounge-header__sub {
-    font-size: 0.7rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.24em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--color-accent);
+    padding-left: 0.65rem;
+    border-left: 1px solid rgba(255,255,255,0.18);
   }
   .lounge-header__nav {
     display: none;

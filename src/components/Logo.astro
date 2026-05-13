@@ -1,35 +1,37 @@
 ---
 interface Props {
-  /** "wordmark" = full TNext Cigar logo, "mark" = compact smoke-wisp glyph */
+  /** "wordmark" = full TNext Cigar logo, "mark" = compact TN + smoke glyph for tight spaces */
   variant?: "wordmark" | "mark";
+  /** Optional class list applied to the rendered element */
   class?: string;
+  /** "light" forces the cream/red logo variant for use on dark backgrounds */
+  tone?: "dark" | "light";
 }
 
-const { variant = "mark", class: className = "" } = Astro.props;
+const { variant = "mark", class: className = "", tone = "dark" } = Astro.props;
 
-// Import the SVG inline so it inherits currentColor and can be styled
-const logoUrl = variant === "wordmark" ? "/logo.svg" : "/logo-mark.svg";
+const wordmarkUrl = tone === "light" ? "/logo-light.svg" : "/logo.svg";
 ---
 
 {variant === "wordmark" ? (
-  <img
-    src={logoUrl}
-    alt="TNext Cigar"
-    class={className}
-    width="800"
-    height="320"
-    style="color: currentColor;"
-  />
+  <img src={wordmarkUrl} alt="TNext Cigar" class={className} width="900" height="380" />
 ) : (
   <svg viewBox="0 0 64 64" fill="none" class={className} aria-label="TNext Cigar">
-    <line x1="6" y1="32" x2="22" y2="32" stroke="currentColor" stroke-width="1.5" />
-    <path
-      d="M27 18 c -3 5, 5 8, 0 14 c -5 6, 5 8, 0 14"
-      stroke="currentColor"
-      stroke-width="3"
-      stroke-linecap="round"
-      fill="none"
-    />
-    <line x1="42" y1="32" x2="58" y2="32" stroke="currentColor" stroke-width="1.5" />
+    <text x="32" y="34"
+          font-family="Georgia, 'Playfair Display', 'Times New Roman', serif"
+          font-weight="900"
+          font-size="30"
+          letter-spacing="-0.04em"
+          text-anchor="middle"
+          fill={tone === "light" ? "#f5efe0" : "currentColor"}>TN</text>
+    <line x1="8" y1="46" x2="26" y2="46"
+          stroke={tone === "light" ? "#f5efe0" : "currentColor"}
+          stroke-width="2" stroke-linecap="round" />
+    <path d="M32 39 c -3 4, 4 6, 0 10 c -4 4, 4 6, 0 10"
+          stroke={tone === "light" ? "#ff2e2e" : "currentColor"}
+          stroke-width="2.5" stroke-linecap="round" fill="none" />
+    <line x1="38" y1="46" x2="56" y2="46"
+          stroke={tone === "light" ? "#f5efe0" : "currentColor"}
+          stroke-width="2" stroke-linecap="round" />
   </svg>
 )}

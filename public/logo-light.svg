@@ -5,31 +5,26 @@
         font-family: "Georgia", "Playfair Display", "Times New Roman", serif;
         font-weight: 900;
         letter-spacing: -0.02em;
-        fill: #1a1d2e;
+        fill: #f5efe0;
       }
       .tnc-tag {
         font-family: "Helvetica Neue", "Inter", system-ui, -apple-system, sans-serif;
         font-weight: 600;
         letter-spacing: 0.34em;
-        fill: #1a1d2e;
+        fill: #f5efe0;
       }
-      .tnc-line { stroke: #1a1d2e; }
-      .tnc-smoke { stroke: #1a1d2e; }
+      .tnc-line { stroke: #f5efe0; }
+      .tnc-smoke { stroke: #ff2e2e; }
     </style>
-    <filter id="tnc-shadow" x="-5%" y="-5%" width="110%" height="115%">
-      <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#000" flood-opacity="0.18" />
-    </filter>
   </defs>
 
   <!-- TNext wordmark -->
-  <g filter="url(#tnc-shadow)">
-    <text x="450" y="200" class="tnc-word" font-size="220" text-anchor="middle">TNext</text>
-  </g>
+  <text x="450" y="200" class="tnc-word" font-size="220" text-anchor="middle">TNext</text>
 
   <!-- Hairline left -->
   <line x1="180" y1="262" x2="425" y2="262" class="tnc-line" stroke-width="3" stroke-linecap="round"/>
 
-  <!-- Smoke wisp glyph -->
+  <!-- Smoke wisp (accent red on dark background) -->
   <path d="M450 232
            c -14 14, 18 26, 0 44
            c -16 18, 16 26, 0 44"
