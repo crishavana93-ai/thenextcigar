@@ -1,38 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380" fill="none" role="img" aria-label="TNext Cigar">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" fill="none" role="img" aria-label="TNext Cigars">
   <defs>
     <style>
       .tnc-word {
-        font-family: "Georgia", "Playfair Display", "Times New Roman", serif;
+        font-family: "Helvetica Neue", "Inter", "Arial", system-ui, -apple-system, sans-serif;
         font-weight: 900;
-        letter-spacing: -0.02em;
-        fill: #f5efe0;
+        letter-spacing: -0.06em;
       }
       .tnc-tag {
-        font-family: "Helvetica Neue", "Inter", system-ui, -apple-system, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.34em;
-        fill: #f5efe0;
+        font-family: "Helvetica Neue", "Inter", "Arial", system-ui, -apple-system, sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.38em;
       }
-      .tnc-line { stroke: #f5efe0; }
-      .tnc-smoke { stroke: #ff2e2e; }
     </style>
   </defs>
 
-  <!-- TNext wordmark -->
-  <text x="450" y="200" class="tnc-word" font-size="220" text-anchor="middle">TNext</text>
+  <text x="500" y="225" class="tnc-word" font-size="240" text-anchor="middle" fill="#f5efe0">TNext</text>
 
-  <!-- Hairline left -->
-  <line x1="180" y1="262" x2="425" y2="262" class="tnc-line" stroke-width="3" stroke-linecap="round"/>
+  <line x1="240" y1="305" x2="465" y2="305" stroke="#f5efe0" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- Smoke wisp (accent red on dark background) -->
-  <path d="M450 232
-           c -14 14, 18 26, 0 44
-           c -16 18, 16 26, 0 44"
-        class="tnc-smoke" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <g stroke="#f5efe0" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M484 278 C 472 290, 472 304, 484 316 C 496 328, 496 342, 484 354"/>
+    <path d="M516 278 C 528 290, 528 304, 516 316 C 504 328, 504 342, 516 354"/>
+  </g>
 
-  <!-- Hairline right -->
-  <line x1="475" y1="262" x2="720" y2="262" class="tnc-line" stroke-width="3" stroke-linecap="round"/>
+  <line x1="535" y1="305" x2="760" y2="305" stroke="#f5efe0" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- CIGAR tag -->
-  <text x="450" y="348" class="tnc-tag" font-size="58" text-anchor="middle">CIGAR</text>
+  <text x="500" y="402" class="tnc-tag" font-size="56" text-anchor="middle" fill="#f5efe0">CIGARS</text>
 </svg>

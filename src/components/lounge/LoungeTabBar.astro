@@ -1,0 +1,162 @@
+---
+/**
+ * Bottom tab bar — primary mobile navigation for the Lounge app.
+ *
+ * Shows up to 1024px wide; above that the desktop top-nav in LoungeHeader takes over.
+ * Five destinations: Home / Map / Members / Travel / Inbox.
+ * Profile is reached via the top-right avatar in the header (Hodinkee pattern).
+ *
+ * Inbox badge live-counts pending `introductions` rows where to_member_id = me.
+ */
+interface Props {
+  active?: "home" | "map" | "members" | "travel" | "inbox";
+}
+const { active = "home" } = Astro.props as Props;
+---
+
+<nav class="lounge-tabbar" aria-label="Primary navigation">
+  <a href="/lounge/app/" class:list={["lounge-tab", active === "home" && "is-active"]}>
+    <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+    </svg>
+    <span class="lounge-tab__label">Home</span>
+  </a>
+
+  <a href="/lounge/app/map/" class:list={["lounge-tab", active === "map" && "is-active"]}>
+    <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+    </svg>
+    <span class="lounge-tab__label">Map</span>
+  </a>
+
+  <a href="/lounge/app/directory/" class:list={["lounge-tab", active === "members" && "is-active"]}>
+    <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+    <span class="lounge-tab__label">Members</span>
+  </a>
+
+  <a href="/lounge/app/travel/" class:list={["lounge-tab", active === "travel" && "is-active"]}>
+    <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2 3 8l5 4.5L6 18l2 1 2-3 4 4 1.8-1.3Z" />
+    </svg>
+    <span class="lounge-tab__label">Travel</span>
+  </a>
+
+  <a href="/lounge/app/inbox/" class:list={["lounge-tab", active === "inbox" && "is-active"]}>
+    <span class="lounge-tab__icon-wrap">
+      <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z" />
+      </svg>
+      <span id="lounge-tab-inbox-badge" class="lounge-tab__badge" hidden>0</span>
+    </span>
+    <span class="lounge-tab__label">Inbox</span>
+  </a>
+</nav>
+
+<style>
+  /* Mobile / tablet: bottom tab bar. Desktop ≥1024px: hidden, top-nav takes over. */
+  .lounge-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    display: flex;
+    background: rgba(26, 29, 46, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(201, 169, 97, 0.18);
+    padding: 6px 4px calc(8px + env(safe-area-inset-bottom)) 4px;
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.18);
+  }
+  @media (min-width: 1024px) {
+    .lounge-tabbar { display: none; }
+  }
+
+  .lounge-tab {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px 4px;
+    text-decoration: none;
+    color: #9a9a9a;
+    min-height: 52px;
+    border-radius: 6px;
+    transition: color 0.18s ease, background 0.18s ease;
+  }
+  .lounge-tab:active { background: rgba(255, 255, 255, 0.06); }
+  .lounge-tab.is-active { color: #c9a961; }
+
+  .lounge-tab__icon-wrap { position: relative; display: inline-flex; }
+  .lounge-tab__icon { width: 22px; height: 22px; display: block; }
+  .lounge-tab__label {
+    font-family: var(--font-display, "Inter", sans-serif);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.2;
+  }
+
+  /* Inbox badge */
+  .lounge-tab__badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ff2e2e;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    letter-spacing: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+
+  /* On the map page (full-bleed dark canvas) the bar already sits on dark background — fine.
+     On the other pages (cream/white surfaces) it still floats above content; reserve scroll
+     space at the bottom of each page via the .lounge-page-bottom-pad helper below. */
+</style>
+
+{/* Global helper: every Lounge page should reserve space for the bar so content doesn't hide behind it. */}
+<style is:global>
+  @media (max-width: 1023.98px) {
+    .lounge-app,
+    .lounge-map-app {
+      padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    }
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../lib/supabase";
+
+  async function refreshInboxBadge() {
+    const badge = document.getElementById("lounge-tab-inbox-badge");
+    if (!badge) return;
+    const user = await getCurrentUser();
+    if (!user) return;
+    const supabase = getSupabase();
+    const { count } = await supabase
+      .from("introductions")
+      .select("id", { count: "exact", head: true })
+      .eq("to_member_id", user.id)
+      .is("accepted", null);
+    if (count && count > 0) {
+      badge.textContent = String(count);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  }
+  document.addEventListener("astro:page-load", refreshInboxBadge);
+  refreshInboxBadge();
+</script>

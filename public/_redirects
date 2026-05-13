@@ -20,3 +20,26 @@
 # Webflow template pages — drop them
 /template-pages/start-here / 301
 /template-pages/style-guide / 301
+
+# ── Subdomain split ─────────────────────────────────────────────────────────
+# lounge.thenextcigar.com is the dedicated Lounge app domain. The root and
+# any short paths there get rewritten to /lounge/app/* on the same Pages
+# deployment so members get the right URLs + their own PWA identity. The
+# `200` status is a rewrite (URL bar stays on the subdomain).
+https://lounge.thenextcigar.com/                /lounge/app/                  200
+https://lounge.thenextcigar.com/login           /lounge/login/                200
+https://lounge.thenextcigar.com/login/          /lounge/login/                200
+https://lounge.thenextcigar.com/signup          /lounge/signup/               200
+https://lounge.thenextcigar.com/signup/         /lounge/signup/               200
+https://lounge.thenextcigar.com/map             /lounge/app/map/              200
+https://lounge.thenextcigar.com/map/            /lounge/app/map/              200
+https://lounge.thenextcigar.com/members         /lounge/app/directory/        200
+https://lounge.thenextcigar.com/members/        /lounge/app/directory/        200
+https://lounge.thenextcigar.com/travel          /lounge/app/travel/           200
+https://lounge.thenextcigar.com/travel/         /lounge/app/travel/           200
+https://lounge.thenextcigar.com/inbox           /lounge/app/inbox/            200
+https://lounge.thenextcigar.com/inbox/          /lounge/app/inbox/            200
+https://lounge.thenextcigar.com/profile         /lounge/app/profile/          200
+https://lounge.thenextcigar.com/profile/        /lounge/app/profile/          200
+https://lounge.thenextcigar.com/member          /lounge/app/member/           200
+https://lounge.thenextcigar.com/member/         /lounge/app/member/           200

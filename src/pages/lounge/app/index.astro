@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
 ---
 
 <BaseLayout
@@ -19,82 +20,49 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     </div>
 
     <div id="lounge-content" hidden>
-      <section class="container-wide pt-8 md:pt-12 pb-5 reveal">
-        <p class="section-eyebrow">Welcome back</p>
-        <h1 class="font-display text-2xl md:text-4xl leading-[1.1] tracking-tight mt-2">
-          Hello, <span id="dash-name">…</span>.
-        </h1>
-        <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-sm">
-          Jump in — your map, your members, your trips. Below.
-        </p>
-      </section>
-
-      <section class="container-wide pb-12">
-        <div class="lounge-dash-grid">
-          {/* Profile card */}
-          <a href="/lounge/app/profile/" class="lounge-dash-card lounge-dash-card--primary">
-            <p class="lounge-dash-card__eyebrow">Live this week</p>
-            <h2 class="lounge-dash-card__title">Set up your profile</h2>
-            <p class="lounge-dash-card__body">
-              Display name, city, bio, photo. The first 60 seconds that locals see when
-              they decide whether to welcome you to their lounge.
+      {/* Region A — sticky status strip with avatar + city + check-in CTA */}
+      <section class="container-wide pt-6 pb-3 reveal">
+        <div class="feed-status">
+          <a href="/lounge/app/profile/" class="feed-status__avatar" id="feed-avatar">…</a>
+          <div class="feed-status__info">
+            <p class="feed-status__hi">Hi, <span id="dash-name">there</span></p>
+            <p class="feed-status__sub">
+              <span id="dash-city">your city</span>
+              <span id="dash-founding" class="feed-status__chip" hidden>Founding</span>
             </p>
-            <span class="lounge-dash-card__cta">Edit profile →</span>
-          </a>
-
-          {/* Members directory (live as of Week 2) */}
-          <a href="/lounge/app/directory/" class="lounge-dash-card lounge-dash-card--primary">
-            <p class="lounge-dash-card__eyebrow">Live this week</p>
-            <h2 class="lounge-dash-card__title">Browse the directory</h2>
-            <p class="lounge-dash-card__body">
-              See every founding-cohort member, filter by city, find the locals who've
-              opted in to host visitors. Request an introduction in one tap.
-            </p>
-            <span class="lounge-dash-card__cta">Open members →</span>
-          </a>
-
-          {/* Check-in (live as of Week 3) */}
-          <a href="/lounge/app/map/" class="lounge-dash-card lounge-dash-card--primary">
-            <p class="lounge-dash-card__eyebrow">Live this week</p>
-            <h2 class="lounge-dash-card__title">Check in at a lounge</h2>
-            <p class="lounge-dash-card__body">
-              26 partner venues across 13 cities. Tap a pin, see who's there
-              right now, check in for 4 hours. No public broadcast.
-            </p>
-            <span class="lounge-dash-card__cta">Open the map →</span>
-          </a>
-
-          {/* Travel mode (live as of Week 4) */}
-          <a href="/lounge/app/travel/" class="lounge-dash-card lounge-dash-card--primary">
-            <p class="lounge-dash-card__eyebrow">Live this week</p>
-            <h2 class="lounge-dash-card__title">Travel mode</h2>
-            <p class="lounge-dash-card__body">
-              Declare your next trip. See which members are coming to your city.
-              Request introductions in a tap — smooth, no awkward DMs.
-            </p>
-            <span class="lounge-dash-card__cta">Open travel →</span>
-          </a>
+          </div>
+          <a href="/lounge/app/map/" class="lbtn lbtn-secondary lbtn-sm">I'm at a lounge</a>
         </div>
       </section>
 
+      {/* Region B — Live now horizontal strip of currently-checked-in members */}
+      <section class="container-wide pb-3">
+        <div class="feed-section-head">
+          <p class="lounge-label lounge-label--gold" id="live-now-label">Live now</p>
+          <a href="/lounge/app/map/" class="feed-section-head__link">Open map →</a>
+        </div>
+        <div id="live-now-strip" class="live-strip">
+          <div class="live-strip__empty">
+            <p>Nobody's checked in right now.</p>
+            <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
+          </div>
+        </div>
+      </section>
+
+      {/* Region C — From the network — chronological activity feed */}
       <section class="container-wide pb-24">
-        <div class="lounge-dash-meta">
-          <p class="lounge-dash-meta__row">
-            <span class="lounge-dash-meta__label">Member since</span>
-            <span id="dash-joined">—</span>
-          </p>
-          <p class="lounge-dash-meta__row">
-            <span class="lounge-dash-meta__label">City</span>
-            <span id="dash-city">—</span>
-          </p>
-          <p class="lounge-dash-meta__row" id="dash-founding-row" hidden>
-            <span class="lounge-dash-meta__label">Status</span>
-            <span class="lounge-dash-meta__badge">Founding Member</span>
-          </p>
+        <div class="feed-section-head">
+          <p class="lounge-label">From the network</p>
+        </div>
+        <div id="feed-list" class="feed-list"></div>
+        <div id="feed-empty" hidden class="feed-empty">
+          <p class="feed-empty__line">The feed will fill up as members check in, declare trips, and join.</p>
+          <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Explore the map</a>
         </div>
       </section>
     </div>
   </main>
+  <LoungeTabBar active="home" />
 </BaseLayout>
 
 <style>
@@ -209,10 +177,438 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     padding: 0.3rem 0.65rem;
     border-radius: 3px;
   }
+
+  /* ═════════════════════════════════════════════════════════════════════
+   * Home feed (P1 #6 redesign)
+   * Status strip + Live-now horizontal carousel + chronological feed.
+   * ═════════════════════════════════════════════════════════════════════ */
+
+  /* Status strip */
+  .feed-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border-radius: 10px;
+  }
+  .feed-status__avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--color-bg);
+    border: 2px solid var(--color-gold, #c9a961);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+  .feed-status__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .feed-status__avatar .feed-avatar__initials {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--color-gold, #c9a961);
+  }
+  .feed-status__info { flex-grow: 1; min-width: 0; }
+  .feed-status__hi {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.2;
+  }
+  .feed-status__sub {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feed-status__chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal, #1a1d2e);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Section heads */
+  .feed-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 20px 0 10px;
+  }
+  .feed-section-head__link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-gold, #c9a961);
+    text-decoration: none;
+  }
+  .feed-section-head__link:hover { color: var(--color-gold-hover, #b69649); }
+
+  /* Live-now horizontal strip */
+  .live-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .live-strip::-webkit-scrollbar { display: none; }
+  .live-card {
+    flex-shrink: 0;
+    width: 110px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border-radius: 10px;
+    padding: 12px 8px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .live-card:hover { border-color: var(--color-gold, #c9a961); transform: translateY(-1px); }
+  .live-card__avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--color-bg);
+    border: 2px solid var(--color-gold, #c9a961);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .live-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .live-card__avatar .feed-avatar__initials {
+    font-family: var(--font-display);
+    font-size: 16px; font-weight: 800;
+    color: var(--color-gold, #c9a961);
+  }
+  .live-card__name {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .live-card__you {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-charcoal, #1a1d2e);
+    background: var(--color-gold, #c9a961);
+    padding: 1px 5px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+  .live-card__venue {
+    font-size: 11px;
+    color: var(--color-burgundy);
+    line-height: 1.15;
+    text-align: center;
+    max-width: 96px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .live-card__city {
+    font-size: 9px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .live-strip__empty {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px;
+    background: var(--color-bg-soft);
+    border: 1px dashed var(--color-gold-soft);
+    border-radius: 10px;
+  }
+  .live-strip__empty p { margin: 0; font-size: 13px; color: var(--color-text-soft); }
+
+  /* Chronological feed */
+  .feed-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .feed-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    text-decoration: none;
+    color: var(--color-text);
+    transition: background 0.15s ease;
+  }
+  .feed-row:last-child { border-bottom: none; }
+  .feed-row:hover { background: rgba(201, 169, 97, 0.04); }
+  .feed-row--intro { background: rgba(201, 169, 97, 0.06); padding-left: 12px; padding-right: 12px; border-left: 3px solid var(--color-gold); border-radius: 6px; margin-bottom: 6px; }
+
+  .feed-row__avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-bg-soft);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .feed-row__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .feed-row__avatar .feed-avatar__initials {
+    font-family: var(--font-display);
+    font-size: 13px; font-weight: 800;
+    color: var(--color-gold, #c9a961);
+  }
+  .feed-row__body { flex-grow: 1; min-width: 0; }
+  .feed-row__line {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--color-text);
+  }
+  .feed-row__line strong { font-weight: 700; }
+  .feed-row__muted { color: var(--color-text-muted); font-weight: 400; }
+  .feed-row__meta {
+    margin: 2px 0 0 0;
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+  .feed-row__pill {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  .feed-empty {
+    padding: 24px;
+    text-align: center;
+    background: var(--color-bg-soft);
+    border: 1px dashed var(--color-gold-soft);
+    border-radius: 10px;
+  }
+  .feed-empty__line {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: var(--color-text-soft);
+  }
 </style>
 
 <script>
-  import { getCurrentUser, getCurrentProfile, touchActive } from "../../../lib/supabase";
+  import { getCurrentUser, getCurrentProfile, getSupabase, touchActive } from "../../../lib/supabase";
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+  }
+  function timeAgo(iso: string): string {
+    const sec = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    const d = Math.floor(hr / 24);
+    if (d < 7) return `${d}d ago`;
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  function dateRange(arrive: string, depart: string): string {
+    const a = new Date(arrive + "T00:00:00");
+    const d = new Date(depart + "T00:00:00");
+    const sameMonth = a.getMonth() === d.getMonth() && a.getFullYear() === d.getFullYear();
+    if (sameMonth) {
+      return `${a.toLocaleDateString("en-US", { month: "short" })} ${a.getDate()}–${d.getDate()}`;
+    }
+    const fmt = (x: Date) => x.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return `${fmt(a)} – ${fmt(d)}`;
+  }
+  function avatarHtml(profile: { display_name?: string | null; avatar_url?: string | null } | null): string {
+    if (!profile) return `<span class="feed-avatar__initials">?</span>`;
+    if (profile.avatar_url) return `<img src="${escapeHtml(profile.avatar_url)}" alt="" />`;
+    return `<span class="feed-avatar__initials">${initials(profile.display_name || null)}</span>`;
+  }
+
+  async function loadAndRenderFeed(userId: string): Promise<void> {
+    const supabase = getSupabase();
+    const now = new Date().toISOString();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const today = now.slice(0, 10);
+
+    const [
+      { data: checkins },
+      { data: trips },
+      { data: joins },
+      { data: introsToMe },
+    ] = await Promise.all([
+      supabase
+        .from("checkins")
+        .select("id, member_id, checked_in_at, expires_at, message, profile:member_id(display_name, avatar_url), lounge:lounge_id(name, city)")
+        .gt("expires_at", now)
+        .order("checked_in_at", { ascending: false })
+        .limit(40),
+      supabase
+        .from("travel_plans")
+        .select("id, member_id, city, country_code, arrive_date, depart_date, notes, created_at, profile:member_id(display_name, avatar_url)")
+        .gte("depart_date", today)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url, city, joined_at, is_founding")
+        .gte("joined_at", sevenDaysAgo)
+        .order("joined_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("introductions")
+        .select("id, from_member_id, intro_message, context, accepted, created_at, profile:from_member_id(display_name, avatar_url)")
+        .eq("to_member_id", userId)
+        .is("accepted", null)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
+
+    // ── LIVE NOW strip ─────────────────────────────────────────────────────
+    const liveStrip = document.getElementById("live-now-strip") as HTMLElement;
+    const liveLabel = document.getElementById("live-now-label") as HTMLElement;
+    const liveRows = (checkins as any[]) || [];
+    if (liveLabel) liveLabel.textContent = `Live now · ${liveRows.length} checked in`;
+    if (liveStrip) {
+      if (liveRows.length === 0) {
+        liveStrip.innerHTML = `
+          <div class="live-strip__empty">
+            <p>Nobody's checked in right now.</p>
+            <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
+          </div>`;
+      } else {
+        liveStrip.innerHTML = liveRows.map((c) => {
+          const name = escapeHtml(c.profile?.display_name || "Member");
+          const venue = escapeHtml(c.lounge?.name || "");
+          const city = escapeHtml(c.lounge?.city || "");
+          const meTag = c.member_id === userId ? '<span class="live-card__you">you</span>' : "";
+          return `
+            <a class="live-card" href="/lounge/app/map/${c.lounge?.city ? `?city=${encodeURIComponent(c.lounge.city)}` : ""}">
+              <div class="live-card__avatar">${avatarHtml(c.profile)}</div>
+              <div class="live-card__name">${name}${meTag}</div>
+              <div class="live-card__venue">${venue}</div>
+              <div class="live-card__city">${city}</div>
+            </a>`;
+        }).join("");
+      }
+    }
+
+    // ── FEED — union of entry types, sorted by recency ────────────────────
+    type Entry = { ts: string; html: string };
+    const entries: Entry[] = [];
+
+    for (const c of ((checkins as any[]) || []).slice(0, 12)) {
+      if (c.member_id === userId) continue;
+      const name = escapeHtml(c.profile?.display_name || "Member");
+      const venue = c.lounge?.name ? `${escapeHtml(c.lounge.name)}${c.lounge.city ? ` <span class="feed-row__muted">· ${escapeHtml(c.lounge.city)}</span>` : ""}` : "the lounge";
+      entries.push({
+        ts: c.checked_in_at,
+        html: `
+          <a class="feed-row" href="/lounge/app/member/?id=${c.member_id}">
+            <div class="feed-row__avatar">${avatarHtml(c.profile)}</div>
+            <div class="feed-row__body">
+              <p class="feed-row__line"><strong>${name}</strong> checked in at ${venue}</p>
+              <p class="feed-row__meta">${timeAgo(c.checked_in_at)}</p>
+            </div>
+          </a>`,
+      });
+    }
+
+    for (const t of ((trips as any[]) || [])) {
+      if (t.member_id === userId) continue;
+      const name = escapeHtml(t.profile?.display_name || "Member");
+      const city = escapeHtml(t.city);
+      const range = dateRange(t.arrive_date, t.depart_date);
+      entries.push({
+        ts: t.created_at,
+        html: `
+          <a class="feed-row" href="/lounge/app/member/?id=${t.member_id}">
+            <div class="feed-row__avatar">${avatarHtml(t.profile)}</div>
+            <div class="feed-row__body">
+              <p class="feed-row__line"><strong>${name}</strong> is coming to ${city} — ${range}</p>
+              <p class="feed-row__meta">${timeAgo(t.created_at)}</p>
+            </div>
+          </a>`,
+      });
+    }
+
+    for (const j of ((joins as any[]) || [])) {
+      if (j.id === userId) continue;
+      const name = escapeHtml(j.display_name || "Member");
+      const city = j.city ? `from ${escapeHtml(j.city)}` : "";
+      const foundingPill = j.is_founding ? '<span class="feed-row__pill">Founding</span>' : "";
+      entries.push({
+        ts: j.joined_at,
+        html: `
+          <a class="feed-row" href="/lounge/app/member/?id=${j.id}">
+            <div class="feed-row__avatar">${avatarHtml(j)}</div>
+            <div class="feed-row__body">
+              <p class="feed-row__line"><strong>${name}</strong> just joined ${city} ${foundingPill}</p>
+              <p class="feed-row__meta">${timeAgo(j.joined_at)}</p>
+            </div>
+          </a>`,
+      });
+    }
+
+    for (const i of ((introsToMe as any[]) || [])) {
+      const name = escapeHtml(i.profile?.display_name || "Member");
+      entries.push({
+        ts: i.created_at,
+        html: `
+          <a class="feed-row feed-row--intro" href="/lounge/app/inbox/">
+            <div class="feed-row__avatar">${avatarHtml(i.profile)}</div>
+            <div class="feed-row__body">
+              <p class="feed-row__line"><strong>${name}</strong> asked to meet you</p>
+              <p class="feed-row__meta">Tap to accept or decline · ${timeAgo(i.created_at)}</p>
+            </div>
+          </a>`,
+      });
+    }
+
+    entries.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+
+    const feedList = document.getElementById("feed-list") as HTMLElement;
+    const feedEmpty = document.getElementById("feed-empty") as HTMLElement;
+    if (feedList && feedEmpty) {
+      if (entries.length === 0) {
+        feedList.innerHTML = "";
+        feedEmpty.hidden = false;
+      } else {
+        feedEmpty.hidden = true;
+        feedList.innerHTML = entries.slice(0, 30).map((e) => e.html).join("");
+      }
+    }
+  }
 
   async function init() {
     const user = await getCurrentUser();
@@ -223,7 +619,6 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
 
     const profile = await getCurrentProfile();
     if (!profile) {
-      // Profile row missing — should never happen (trigger creates one); send to profile setup
       window.location.href = "/lounge/app/profile/?setup=1";
       return;
     }
@@ -231,27 +626,20 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     // Touch last_active_at in the background
     touchActive().catch(() => {});
 
-    // Populate dashboard
+    // Region A — status strip
     const nameEl = document.getElementById("dash-name");
     if (nameEl) nameEl.textContent = profile.display_name || "Member";
-
-    const joinedEl = document.getElementById("dash-joined");
-    if (joinedEl && profile.joined_at) {
-      joinedEl.textContent = new Date(profile.joined_at).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      });
-    }
-
     const cityEl = document.getElementById("dash-city");
-    if (cityEl) cityEl.textContent = profile.city || "Not set";
-
+    if (cityEl) cityEl.textContent = profile.city || "Set your city";
     if (profile.is_founding) {
-      const row = document.getElementById("dash-founding-row");
-      if (row) row.hidden = false;
+      const chip = document.getElementById("dash-founding");
+      if (chip) chip.hidden = false;
     }
+    const avEl = document.getElementById("feed-avatar");
+    if (avEl) avEl.innerHTML = avatarHtml(profile as any);
 
-    // Swap loading shell for real content
+    await loadAndRenderFeed(user.id);
+
     const guard = document.getElementById("lounge-guard");
     const content = document.getElementById("lounge-content");
     if (guard) guard.style.display = "none";

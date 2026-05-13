@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 ---
 
 <BaseLayout
@@ -58,6 +59,7 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       </section>
     </div>
   </main>
+  <LoungeTabBar active="inbox" />
 </BaseLayout>
 
 <style>

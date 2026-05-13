@@ -1,0 +1,39 @@
+{
+  "name": "The Lounge",
+  "short_name": "Lounge",
+  "description": "A private network for cigar smokers who travel. Find your people in the next city.",
+  "id": "/lounge/app/",
+  "start_url": "/lounge/app/",
+  "scope": "/lounge/app/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1A1D2E",
+  "background_color": "#1A1D2E",
+  "lang": "en",
+  "categories": ["lifestyle", "social", "travel"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Map", "short_name": "Map", "url": "/lounge/app/map/", "description": "Members and partner lounges near you" },
+    { "name": "Members", "short_name": "Members", "url": "/lounge/app/directory/", "description": "Browse the founding cohort" },
+    { "name": "Inbox", "short_name": "Inbox", "url": "/lounge/app/inbox/", "description": "Incoming introductions" }
+  ]
+}

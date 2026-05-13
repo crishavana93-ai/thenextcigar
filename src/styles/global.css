@@ -60,6 +60,15 @@
   --color-burgundy: #6e2620;
   --color-burgundy-soft: #8a3530;
 
+  /* === Gold — premium-cigar signal. Reserved for Founding badges,
+        primary CTAs on dark surfaces, active states, hairlines. === */
+  --color-gold: #c9a961;
+  --color-gold-hover: #b69649;
+  --color-gold-soft: rgba(201, 169, 97, 0.18);
+
+  /* === Brand charcoal (warmer than --color-dark) === */
+  --color-charcoal: #1a1d2e;
+
   /* legacy */
   --color-cream: #fcf8de;
   --color-cream-soft: #fdfae8;
@@ -586,3 +595,171 @@ header, footer { position: relative; z-index: 10; }
   transition: color 200ms;
 }
 .modal-close:hover { color: var(--color-text); }
+
+/* ============================================================================
+ * Lounge — shared button system (P0 redesign)
+ * Replaces every page-local CTA class with one ladder of three tiers + one
+ * destructive. Pill shapes (999px radius) are out; 6px radius reads tailored.
+ * No uppercase, no letter-spacing on labels — that single change makes the
+ * app feel half a volume quieter.
+ *
+ * NAMESPACED `.lbtn` (Lounge button) to avoid colliding with the public site's
+ * existing `.btn` class that uses the older pill system.
+ * ============================================================================ */
+.lbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.15rem;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.lbtn:disabled, .lbtn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Primary — Gold-on-charcoal. Max 1 per screen. */
+.lbtn-primary {
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+  border-color: var(--color-gold);
+}
+.lbtn-primary:hover { background: var(--color-gold-hover); border-color: var(--color-gold-hover); color: var(--color-charcoal); }
+.lbtn-primary:active { background: var(--color-gold-hover); }
+
+/* Secondary — outlined gold */
+.lbtn-secondary {
+  background: transparent;
+  color: var(--color-gold);
+  border-color: var(--color-gold);
+}
+.lbtn-secondary:hover { background: var(--color-gold-soft); color: var(--color-gold); }
+
+/* Ghost — quietest. Decline, cancel, back, remove. */
+.lbtn-ghost {
+  background: transparent;
+  color: var(--color-text-soft);
+  border-color: var(--color-border);
+}
+.lbtn-ghost:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+
+/* Ghost on dark backgrounds (map, sheets sitting on dark) */
+.lbtn-ghost--on-dark {
+  color: #d8d6cf;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.lbtn-ghost--on-dark:hover { color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+
+/* Destructive — for sign-out, decline confirmations, delete trip */
+.lbtn-destructive {
+  background: transparent;
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.lbtn-destructive:hover { background: rgba(255, 46, 46, 0.08); color: var(--color-accent); }
+
+/* Size variants */
+.lbtn-sm { padding: 0.5rem 0.85rem; font-size: 0.78rem; min-height: 36px; }
+.lbtn-lg { padding: 0.9rem 1.4rem; font-size: 0.95rem; min-height: 52px; }
+.lbtn-block { width: 100%; }
+
+/* ============================================================================
+ * Lounge — shared typography helpers (P1 type scale consolidation)
+ * One Label style used for section eyebrows ONLY. Everything else sentence case.
+ * ============================================================================ */
+.lounge-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+  margin: 0;
+}
+.lounge-label--gold { color: var(--color-gold); }
+.lounge-label--muted { color: var(--color-text-muted); }
+
+.lounge-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  margin: 0;
+}
+@media (min-width: 768px) {
+  .lounge-h1 { font-size: 32px; line-height: 36px; }
+}
+
+/* ============================================================================
+ * Lounge — compatibility layer
+ * Existing per-page button classes (.lounge-auth__button, .profile-form__submit,
+ * .lounge-mem-cta, etc.) get retargeted to the new gold-on-charcoal pill so
+ * we don't have to refactor every page in one pass. New code should use .lbtn.
+ * ============================================================================ */
+.lounge-auth__button,
+.profile-form__submit,
+.lounge-mem-cta,
+.lounge-mem-intro-form__submit,
+.lounge-travel-form__submit,
+.lounge-inbox-btn--accept,
+.btn-pill--primary {
+  background: var(--color-gold) !important;
+  color: var(--color-charcoal) !important;
+  border: 1px solid var(--color-gold) !important;
+  border-radius: 6px !important;
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  padding: 0.7rem 1.15rem !important;
+  min-height: 44px !important;
+}
+.lounge-auth__button:hover,
+.profile-form__submit:hover,
+.lounge-mem-cta:hover,
+.lounge-mem-intro-form__submit:hover,
+.lounge-travel-form__submit:hover,
+.lounge-inbox-btn--accept:hover,
+.btn-pill--primary:hover {
+  background: var(--color-gold-hover) !important;
+  border-color: var(--color-gold-hover) !important;
+}
+
+.lounge-inbox-btn--decline,
+.btn-pill--ghost {
+  background: transparent !important;
+  color: var(--color-text-soft) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 6px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.lounge-inbox-btn--decline:hover,
+.btn-pill--ghost:hover {
+  color: var(--color-text) !important;
+  border-color: var(--color-text-muted) !important;
+}
+
+/* Accents that overused red — now gold by default for ownership cues */
+.lounge-dash-card--primary { border-left-color: var(--color-gold) !important; }
+.lounge-dash-card__cta { color: var(--color-gold) !important; letter-spacing: 0 !important; text-transform: none !important; font-weight: 600 !important; }
+.lounge-dash-card__eyebrow { color: var(--color-burgundy) !important; }
+.lounge-tab.is-active,
+.lounge-nav-link.is-active { border-bottom-color: var(--color-gold) !important; color: var(--color-gold) !important; }

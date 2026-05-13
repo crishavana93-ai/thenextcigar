@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
 ---
 
 <BaseLayout
@@ -23,33 +25,42 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
         crossorigin=""
       />
 
-      {/* Filter bar */}
-      <div class="lounge-map-filters" aria-label="Map filters">
-        <select id="filter-city" class="lounge-map-filter">
-          <option value="">All cities</option>
-        </select>
-        <div class="lounge-map-toggles">
-          <label class="lounge-map-toggle">
-            <input type="checkbox" id="filter-members" checked />
-            <span>Show members</span>
-          </label>
-          <label class="lounge-map-toggle">
-            <input type="checkbox" id="filter-lounges" checked />
-            <span>Show lounges</span>
-          </label>
-        </div>
-        <p class="lounge-map-summary" id="map-summary">—</p>
+      {/* Filter chip rail (Sniffies-style, mobile-native — no native <select>) */}
+      <div class="chip-rail" role="toolbar" aria-label="Map filters">
+        <button id="chip-city" class="chip chip--city" type="button">
+          <span id="chip-city-label">All cities</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+        </button>
+        <button id="chip-members" class="chip is-active" type="button" data-filter="members">
+          <span class="chip__dot" aria-hidden="true"></span>
+          Members
+        </button>
+        <button id="chip-lounges" class="chip is-active" type="button" data-filter="lounges">
+          Venues
+        </button>
+        <button id="chip-hosts" class="chip" type="button" data-filter="hosts">
+          Hosts
+        </button>
       </div>
 
-      {/* Active check-in banner */}
-      <div id="my-active-banner" class="lounge-map-banner" hidden>
-        <div class="lounge-map-banner__info">
-          <span class="lounge-map-banner__eyebrow">Checked in at</span>
-          <strong id="my-active-venue" class="lounge-map-banner__venue">—</strong>
-          <span id="my-active-expires" class="lounge-map-banner__expires">—</span>
+      {/* Active check-in banner (gold, ownership not alarm) */}
+      <div id="my-active-banner" class="active-banner" hidden>
+        <div class="active-banner__info">
+          <span class="active-banner__eyebrow">Checked in at</span>
+          <strong id="my-active-venue" class="active-banner__venue">—</strong>
+          <span id="my-active-expires" class="active-banner__expires">—</span>
         </div>
-        <button id="my-active-checkout" class="btn-pill btn-pill--ghost" type="button">Check out</button>
+        <button id="my-active-checkout" class="lbtn lbtn-ghost lbtn-ghost--on-dark lbtn-sm" type="button">Check out</button>
       </div>
+
+      {/* City picker sheet — opens when the City chip is tapped */}
+      <div id="city-picker-overlay" class="picker-overlay" hidden></div>
+      <aside id="city-picker" class="picker-sheet" hidden aria-modal="true" role="dialog">
+        <div class="picker-sheet__handle"></div>
+        <p class="lounge-label lounge-label--gold">Filter by city</p>
+        <input id="city-picker-search" class="picker-sheet__search" type="search" placeholder="Search cities" autocomplete="off" />
+        <ul id="city-picker-list" class="picker-sheet__list"></ul>
+      </aside>
 
       {/* Map */}
       <div id="lounge-map" class="lounge-map"></div>
@@ -96,8 +107,15 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
           </div>
         </div>
       </aside>
+
+      {/* Sniffies-style Cruiser Card carousel — horizontally scrollable bottom strip of active members */}
+      <div id="lounge-cruiser" class="cruiser-strip" hidden>
+        <div id="cruiser-track" class="cruiser-strip__track"></div>
+      </div>
     </div>
   </main>
+  <LoungeTabBar active="map" />
+  <IntroSheet />
 </BaseLayout>
 
 <script
@@ -123,58 +141,246 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     text-transform: uppercase; color: var(--color-accent);
   }
 
-  /* Filter bar */
-  .lounge-map-filters {
-    display: flex; flex-wrap: wrap; align-items: center;
-    gap: 0.85rem;
-    padding: 0.8rem 1rem;
+  /* ── Filter chip rail ─────────────────────────────────────────────────── */
+  .chip-rail {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     background: rgba(0,0,0,0.55);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    position: sticky; top: 70px; z-index: 40;
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(201, 169, 97, 0.12);
+    position: sticky;
+    top: 70px;
+    z-index: 40;
   }
-  .lounge-map-filter {
-    background: rgba(255,255,255,0.06);
-    color: #f3efe6;
-    border: 1px solid rgba(255,255,255,0.12);
-    padding: 0.45rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    min-width: 12rem;
-  }
-  .lounge-map-filter:focus {
-    outline: 2px solid var(--color-accent); outline-offset: 1px;
-  }
-  .lounge-map-toggles { display: flex; gap: 0.85rem; flex-wrap: wrap; }
-  .lounge-map-toggle {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    font-size: 0.74rem; color: rgba(255,255,255,0.78);
-    cursor: pointer;
-    user-select: none;
-  }
-  .lounge-map-toggle input { accent-color: var(--color-accent); }
-  .lounge-map-summary {
-    margin: 0 0 0 auto;
-    font-size: 0.68rem; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
-  }
+  .chip-rail::-webkit-scrollbar { display: none; }
 
-  /* Active banner */
-  .lounge-map-banner {
-    display: flex; align-items: center; gap: 0.85rem;
-    padding: 0.65rem 1rem;
-    background: var(--color-accent); color: #fff;
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    min-height: 32px;
   }
-  .lounge-map-banner__info { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; flex-grow: 1; }
-  .lounge-map-banner__eyebrow {
-    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em;
-    text-transform: uppercase; opacity: 0.82;
+  .chip:hover { background: rgba(255, 255, 255, 0.1); }
+  .chip:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+  .chip.is-active {
+    background: rgba(201, 169, 97, 0.16);
+    color: #c9a961;
+    border-color: rgba(201, 169, 97, 0.6);
   }
-  .lounge-map-banner__venue { font-size: 0.92rem; font-weight: 800; }
-  .lounge-map-banner__expires { font-size: 0.72rem; opacity: 0.78; }
+  .chip__dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #c9a961;
+  }
+  .chip:not(.is-active) .chip__dot { background: rgba(255, 255, 255, 0.4); }
+
+  /* ── Active check-in banner (gold = ownership, not alarm) ─────────────── */
+  .active-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(180deg, rgba(201, 169, 97, 0.96), rgba(182, 150, 73, 0.96));
+    color: #1a1d2e;
+  }
+  .active-banner__info { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; flex-grow: 1; }
+  .active-banner__eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; opacity: 0.7;
+  }
+  .active-banner__venue { font-size: 14px; font-weight: 800; }
+  .active-banner__expires { font-size: 12px; opacity: 0.78; }
+
+  /* ── City picker sheet ────────────────────────────────────────────────── */
+  .picker-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 70;
+    animation: pickerOverlayIn 0.18s ease-out;
+  }
+  @keyframes pickerOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .picker-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 71;
+    background: #f5efe0;
+    color: var(--color-text);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -12px 36px rgba(0,0,0,0.35);
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height: 70vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: pickerIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes pickerIn {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .picker-sheet__handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(0, 0, 0, 0.18);
+    margin: 0 auto;
+  }
+  .picker-sheet__search {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .picker-sheet__search:focus {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 1px;
+    border-color: var(--color-gold);
+  }
+  .picker-sheet__list {
+    list-style: none;
+    margin: 0; padding: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+  .picker-sheet__list button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .picker-sheet__list button:hover { background: rgba(201,169,97,0.08); }
+
+  /* ── Cruiser Card carousel ────────────────────────────────────────────── */
+  .cruiser-strip {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    z-index: 30;
+    padding: 10px 0 8px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0.85) 100%);
+    pointer-events: none;
+  }
+  @media (min-width: 1024px) {
+    .cruiser-strip { bottom: 0; padding-bottom: 14px; }
+  }
+  .cruiser-strip__track {
+    display: flex;
+    gap: 10px;
+    padding: 0 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    pointer-events: auto;
+  }
+  .cruiser-strip__track::-webkit-scrollbar { display: none; }
+
+  .cruiser-card {
+    flex-shrink: 0;
+    width: 96px;
+    background: rgba(26, 29, 46, 0.94);
+    border: 1px solid rgba(201, 169, 97, 0.3);
+    border-radius: 10px;
+    padding: 10px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: #f5efe0;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .cruiser-card:hover, .cruiser-card:focus {
+    border-color: var(--color-gold);
+    transform: translateY(-2px);
+  }
+  .cruiser-card__avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid var(--color-gold);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cruiser-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .cruiser-card__initials {
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 800; color: var(--color-gold);
+  }
+  .cruiser-card__name {
+    font-size: 12px; font-weight: 700;
+    color: #f5efe0;
+    line-height: 1.15;
+    text-align: center;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cruiser-card__you {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-gold);
+    background: rgba(201, 169, 97, 0.18);
+    padding: 1px 5px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+  .cruiser-card__venue {
+    font-size: 10px;
+    color: var(--color-gold);
+    line-height: 1.15;
+    text-align: center;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cruiser-card__city {
+    font-size: 9px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .cruiser-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 20px;
+    color: rgba(255,255,255,0.85);
+    pointer-events: auto;
+  }
+  .cruiser-empty__line { margin: 0; font-size: 13px; font-weight: 600; }
+  .cruiser-empty__hint { margin: 0; font-size: 11px; color: rgba(255,255,255,0.55); }
 
   /* Map itself */
   .lounge-map {
@@ -477,21 +683,90 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     }
   }
 
-  function populateCitySelect(): void {
-    const select = document.getElementById("filter-city") as HTMLSelectElement;
-    const cities = Array.from(new Set(allLounges.map((l) => l.city))).sort();
-    cities.forEach((c) => {
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
-      select.appendChild(opt);
-    });
+  // ── Filter chip state (replaces the old <select> + checkboxes) ─────────────
+  let filterCity = "";
+  const chipState = { members: true, lounges: true, hosts: false };
 
-    // Pre-select from URL or own city
+  function setChipsFromUrl(): void {
     const params = new URLSearchParams(window.location.search);
-    const urlCity = params.get("city");
-    const preselect = urlCity && cities.includes(urlCity) ? urlCity : (myCity && cities.includes(myCity) ? myCity : "");
-    if (preselect) select.value = preselect;
+    const urlCity = params.get("city") || "";
+    const cities = Array.from(new Set(allLounges.map((l) => l.city)));
+    if (urlCity && cities.includes(urlCity)) filterCity = urlCity;
+    else if (myCity && cities.includes(myCity)) filterCity = myCity;
+    updateChipUi();
+  }
+
+  function updateChipUi(): void {
+    const cityLabel = document.getElementById("chip-city-label");
+    if (cityLabel) cityLabel.textContent = filterCity || "All cities";
+    const cityChip = document.getElementById("chip-city");
+    cityChip?.classList.toggle("is-active", !!filterCity);
+
+    (["members", "lounges", "hosts"] as const).forEach((k) => {
+      const btn = document.getElementById(`chip-${k}`);
+      btn?.classList.toggle("is-active", chipState[k]);
+    });
+  }
+
+  function buildCityPicker(): void {
+    const overlay = document.getElementById("city-picker-overlay");
+    const sheet = document.getElementById("city-picker");
+    const search = document.getElementById("city-picker-search") as HTMLInputElement;
+    const list = document.getElementById("city-picker-list") as HTMLElement;
+    const chip = document.getElementById("chip-city");
+    if (!overlay || !sheet || !search || !list || !chip) return;
+
+    const cities = Array.from(new Set(allLounges.map((l) => l.city))).sort();
+
+    const openPicker = () => {
+      search.value = "";
+      renderPickerList(cities);
+      overlay.hidden = false;
+      sheet.hidden = false;
+      document.body.style.overflow = "hidden";
+      setTimeout(() => search.focus(), 240);
+    };
+    const closePicker = () => {
+      overlay.hidden = true;
+      sheet.hidden = true;
+      document.body.style.overflow = "";
+    };
+
+    function renderPickerList(rows: string[]): void {
+      const allRow = `<li><button type="button" data-city="">All cities</button></li>`;
+      list.innerHTML = allRow + rows.map((c) => `<li><button type="button" data-city="${c}">${c}</button></li>`).join("");
+      list.querySelectorAll("button").forEach((b) => {
+        b.addEventListener("click", () => {
+          filterCity = b.getAttribute("data-city") || "";
+          updateChipUi();
+          renderMembersAndVenues();
+          if (filterCity) flyToCity(filterCity);
+          closePicker();
+        });
+      });
+    }
+
+    chip.addEventListener("click", openPicker);
+    overlay.addEventListener("click", closePicker);
+    search.addEventListener("input", () => {
+      const needle = search.value.trim().toLowerCase();
+      if (!needle) return renderPickerList(cities);
+      renderPickerList(cities.filter((c) => c.toLowerCase().includes(needle)));
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !sheet.hidden) closePicker();
+    });
+  }
+
+  function wireFilterChips(): void {
+    (["members", "lounges", "hosts"] as const).forEach((k) => {
+      const btn = document.getElementById(`chip-${k}`);
+      btn?.addEventListener("click", () => {
+        chipState[k] = !chipState[k];
+        updateChipUi();
+        renderMembersAndVenues();
+      });
+    });
   }
 
   function flyToCity(city: string): void {
@@ -600,29 +875,19 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     viewEl.href = c.member_id === myUserId ? "/lounge/app/profile/" : `/lounge/app/member/?id=${c.member_id}`;
     const introBtn = document.getElementById("member-intro") as HTMLButtonElement;
     introBtn.hidden = c.member_id === myUserId;
-    introBtn.onclick = async () => {
-      const msg = prompt(
-        "Quick intro — what would you like to say?",
-        `Saw you at ${lounge?.name || "the lounge"}. Mind if I say hi?`
-      );
-      if (!msg || !msg.trim()) return;
-      introBtn.disabled = true;
-      introBtn.textContent = "Sending…";
-      try {
-        const supabase = getSupabase();
-        const { error } = await supabase.from("introductions").insert({
-          from_member_id: myUserId,
-          to_member_id: c.member_id,
-          context: "lounge_check_in",
-          intro_message: msg.trim().slice(0, 500),
-        });
-        if (error) throw error;
-        introBtn.textContent = "Intro sent ✓";
-      } catch (err: any) {
-        alert(err?.message || "Could not send intro.");
-        introBtn.disabled = false;
-        introBtn.textContent = "Request intro";
-      }
+    introBtn.onclick = () => {
+      const open = (window as any).loungeOpenIntroSheet as ((opts: any) => void) | undefined;
+      if (!open) return;
+      open({
+        toMemberId: c.member_id,
+        toName: c.profile?.display_name || "member",
+        context: "lounge_check_in",
+        prefill: `Saw you at ${lounge?.name || "the lounge"}. Mind if I say hi?`,
+        onSent: () => {
+          introBtn.disabled = true;
+          introBtn.textContent = "Intro sent ✓";
+        },
+      });
     };
   }
 
@@ -662,10 +927,9 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
   function renderMembersAndVenues(): void {
     if (!map) return;
     const L = (window as any).L;
-    const showLounges = (document.getElementById("filter-lounges") as HTMLInputElement)?.checked ?? true;
-    const showMembers = (document.getElementById("filter-members") as HTMLInputElement)?.checked ?? true;
-    const cityFilter = (document.getElementById("filter-city") as HTMLSelectElement)?.value || "";
-    const summaryEl = document.getElementById("map-summary") as HTMLElement;
+    const showLounges = chipState.lounges;
+    const showMembers = chipState.members;
+    const cityFilter = filterCity;
 
     // Clear all
     Object.values(venueMarkersById).forEach((m: any) => map.removeLayer(m));
@@ -692,7 +956,7 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       }
     }
 
-    // Member pins (avatar pins around their lounge)
+    // Member pins (avatar pins fanned out around the venue)
     if (showMembers) {
       for (const l of filteredLounges) {
         const active = activeByLoungeId[l.id] || [];
@@ -715,12 +979,66 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       }
     }
 
-    if (summaryEl) {
-      const venues = filteredLounges.length;
-      const venuesLabel = `${venues} venue${venues === 1 ? "" : "s"}`;
-      const membersLabel = `${memberCount} member${memberCount === 1 ? "" : "s"} here now`;
-      summaryEl.textContent = `${venuesLabel}  ·  ${membersLabel}`;
+    renderCruiserStrip(filteredLounges);
+  }
+
+  // ── Cruiser Card carousel (Sniffies-style horizontal strip) ────────────────
+  function renderCruiserStrip(filteredLounges: Lounge[]): void {
+    const strip = document.getElementById("lounge-cruiser") as HTMLElement | null;
+    const track = document.getElementById("cruiser-track") as HTMLElement | null;
+    if (!strip || !track) return;
+
+    // Build a flat list of (member, venue) currently checked in within the city filter
+    const items: { c: CheckinRow; l: Lounge }[] = [];
+    for (const l of filteredLounges) {
+      const active = activeByLoungeId[l.id] || [];
+      for (const c of active) items.push({ c, l });
     }
+    // Sort by recency (most recently checked in first — use expires_at as proxy)
+    items.sort((a, b) => new Date(b.c.expires_at).getTime() - new Date(a.c.expires_at).getTime());
+
+    if (items.length === 0) {
+      // Empty state: prompt the user to check in
+      track.innerHTML = `
+        <div class="cruiser-empty">
+          <p class="cruiser-empty__line">Nobody's checked in right now.</p>
+          <p class="cruiser-empty__hint">Be the first — tap a venue pin to check in.</p>
+        </div>`;
+      strip.hidden = false;
+      return;
+    }
+
+    strip.hidden = false;
+    track.innerHTML = items
+      .map(({ c, l }, i) => {
+        const name = escapeHtml(c.profile?.display_name || "Member");
+        const av = c.profile?.avatar_url
+          ? `<img src="${escapeHtml(c.profile.avatar_url)}" alt="" />`
+          : `<span class="cruiser-card__initials">${initials(c.profile?.display_name || null)}</span>`;
+        const youTag = c.member_id === myUserId ? `<span class="cruiser-card__you">you</span>` : "";
+        return `
+          <button class="cruiser-card" type="button" data-idx="${i}">
+            <div class="cruiser-card__avatar">${av}</div>
+            <div class="cruiser-card__name">${name}${youTag}</div>
+            <div class="cruiser-card__venue">${escapeHtml(l.name)}</div>
+            <div class="cruiser-card__city">${escapeHtml(l.city)}</div>
+          </button>`;
+      })
+      .join("");
+
+    track.querySelectorAll<HTMLButtonElement>(".cruiser-card").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-idx") || "0");
+        const item = items[idx];
+        if (!item) return;
+        if (map) map.flyTo([item.l.lat, item.l.lng], 14, { duration: 0.7 });
+        if (item.c.member_id === myUserId) {
+          showVenueSheet(item.l);
+        } else {
+          showMemberSheet(item.c, item.l);
+        }
+      });
+    });
   }
 
   function waitForLeaflet(): Promise<void> {
@@ -756,7 +1074,9 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     }
 
     await loadActive();
-    populateCitySelect();
+    setChipsFromUrl();
+    buildCityPicker();
+    wireFilterChips();
 
     await waitForLeaflet();
     const L = (window as any).L;
@@ -771,14 +1091,6 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     renderMembersAndVenues();
     renderMyActive();
 
-    // Wire filters
-    document.getElementById("filter-city")?.addEventListener("change", (e) => {
-      renderMembersAndVenues();
-      const city = (e.target as HTMLSelectElement).value;
-      if (city) flyToCity(city);
-    });
-    document.getElementById("filter-members")?.addEventListener("change", renderMembersAndVenues);
-    document.getElementById("filter-lounges")?.addEventListener("change", renderMembersAndVenues);
     document.getElementById("sheet-close")?.addEventListener("click", hideSheet);
 
     // Reveal

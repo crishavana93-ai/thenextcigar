@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
+import IntroSheet from "../../../components/lounge/IntroSheet.astro";
 ---
 
 <BaseLayout
@@ -23,22 +25,18 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
       </section>
 
       <section class="container-wide pt-2 pb-6 reveal">
-        <div class="lounge-mem-head">
-          <div class="lounge-mem-head__avatar" id="mem-avatar">?</div>
-          <div class="lounge-mem-head__info">
-            <p class="section-eyebrow" id="mem-eyebrow">Member</p>
-            <h1 class="font-display text-2xl md:text-4xl leading-[1.1] tracking-tight mt-1" id="mem-name">…</h1>
-            <p class="lounge-mem-head__city" id="mem-city">—</p>
-            <div class="lounge-mem-head__badges" id="mem-badges"></div>
-          </div>
+        <div class="lounge-mem-hero">
+          <div class="lounge-mem-hero__avatar" id="mem-avatar">?</div>
+          <h1 class="lounge-mem-hero__name" id="mem-name">…</h1>
+          <p class="lounge-mem-hero__city" id="mem-city">—</p>
+          <div class="lounge-mem-hero__badges" id="mem-badges"></div>
+          {/* Signal strip — shared context (same city, trip overlap, shared venue) */}
+          <div class="lounge-mem-signal" id="mem-signal" hidden></div>
         </div>
       </section>
 
-      <section class="container-wide pb-8">
-        <div class="lounge-mem-card">
-          <p class="lounge-mem-card__label">Bio</p>
-          <p class="lounge-mem-card__body" id="mem-bio">—</p>
-        </div>
+      <section class="container-wide pb-6">
+        <p class="lounge-mem-bio" id="mem-bio">—</p>
       </section>
 
       <section class="container-wide pb-24" id="mem-actions-section">
@@ -94,6 +92,8 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
       </p>
     </section>
   </main>
+  <LoungeTabBar active="members" />
+  <IntroSheet />
 </BaseLayout>
 
 <style>
@@ -123,6 +123,94 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
   }
   .lounge-mem-back:hover { color: var(--color-accent); }
 
+  /* ── Hero region — bigger avatar, centered, gold-accented ─────────────── */
+  .lounge-mem-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 16px 8px;
+    background:
+      radial-gradient(ellipse at top, rgba(201, 169, 97, 0.08) 0%, transparent 60%),
+      var(--color-bg);
+    border-radius: 12px;
+  }
+  .lounge-mem-hero__avatar {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: var(--color-bg-soft);
+    border: 3px solid var(--color-gold, #c9a961);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lounge-mem-hero__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .lounge-mem-hero__name {
+    margin: 8px 0 0 0;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--color-text);
+    text-align: center;
+  }
+  .lounge-mem-hero__city {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gold, #c9a961);
+  }
+  .lounge-mem-hero__badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  /* Signal-strip lozenges: shared context cues ("you're both in Stockholm") */
+  .lounge-mem-signal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(201, 169, 97, 0.22);
+    width: 100%;
+    max-width: 32rem;
+  }
+  .lounge-mem-signal__loz {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border: 1px solid rgba(201, 169, 97, 0.4);
+    color: var(--color-charcoal, #1a1d2e);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .lounge-mem-bio {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--color-text);
+    margin: 0 auto;
+    max-width: 56ch;
+    text-align: center;
+    white-space: pre-line;
+  }
+
+  /* Legacy classes (still rendered by the old `.lounge-mem-head` blocks elsewhere) */
   .lounge-mem-head {
     display: flex;
     gap: 1.75rem;
@@ -377,6 +465,10 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
     created_at: string;
   };
 
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   function initials(name: string | null): string {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
@@ -450,6 +542,68 @@ import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
         parts.push(`<span class="lounge-mem-head__badge">Joined ${d.toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>`);
       }
       badges.innerHTML = parts.join("");
+    }
+
+    // ── Signal strip (shared context) ──────────────────────────────────────
+    // Compute small lozenges describing what THIS viewer has in common with
+    // the member they're looking at. Surfaces:
+    //   - "You're both in <city>"
+    //   - "Your trips overlap" (Jun 8–12)
+    //   - "Both checked in at <venue> in the last 7 days"
+    const signalEl = document.getElementById("mem-signal");
+    if (signalEl && p.id !== user.id) {
+      const lozenges: string[] = [];
+
+      // Pull viewer's own profile to know their city
+      const { data: meProfile } = await supabase
+        .from("profiles")
+        .select("city")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (meProfile?.city && p.city && meProfile.city === p.city) {
+        lozenges.push(`<span class="lounge-mem-signal__loz">You're both in ${escapeHtml(p.city)}</span>`);
+      }
+
+      // Trip overlap — fetch both members' upcoming trips and intersect
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: tripsMine } = await supabase
+        .from("travel_plans")
+        .select("city, arrive_date, depart_date")
+        .eq("member_id", user.id)
+        .gte("depart_date", today);
+      const { data: tripsTheirs } = await supabase
+        .from("travel_plans")
+        .select("city, arrive_date, depart_date")
+        .eq("member_id", p.id)
+        .gte("depart_date", today);
+      const tripsMineRows = (tripsMine as any[]) || [];
+      const tripsTheirsRows = (tripsTheirs as any[]) || [];
+      outer: for (const a of tripsMineRows) {
+        for (const b of tripsTheirsRows) {
+          if (a.city.toLowerCase() === b.city.toLowerCase()) {
+            // Date overlap?
+            if (a.arrive_date <= b.depart_date && b.arrive_date <= a.depart_date) {
+              lozenges.push(`<span class="lounge-mem-signal__loz">Your trips overlap in ${escapeHtml(a.city)}</span>`);
+              break outer;
+            }
+          }
+        }
+      }
+      // Trips one-way (they're coming to your city)
+      if (meProfile?.city) {
+        const matching = tripsTheirsRows.find((t) => t.city.toLowerCase() === meProfile.city.toLowerCase());
+        if (matching && !lozenges.some((l) => l.includes("trips overlap"))) {
+          const d1 = new Date(matching.arrive_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          const d2 = new Date(matching.depart_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          lozenges.push(`<span class="lounge-mem-signal__loz">Coming to your city ${d1}–${d2}</span>`);
+        }
+      }
+
+      if (lozenges.length > 0) {
+        signalEl.innerHTML = lozenges.join("");
+        signalEl.hidden = false;
+      }
     }
 
     // Action section

@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
 ---
 
 <BaseLayout
@@ -97,6 +99,8 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       </section>
     </div>
   </main>
+  <LoungeTabBar active="travel" />
+  <IntroSheet />
 </BaseLayout>
 
 <style>
@@ -491,36 +495,28 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       })
       .join("");
 
-    // Wire intro buttons
+    // Wire intro buttons — open the global IntroSheet (no more prompt())
     listEl.querySelectorAll(".lounge-travel-other__intro-btn").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
+      btn.addEventListener("click", (e) => {
         const el = e.currentTarget as HTMLButtonElement;
         const memberId = el.getAttribute("data-member-id");
-        const city = el.getAttribute("data-city");
+        const city = el.getAttribute("data-city") || "the same city";
         if (!memberId) return;
-        const msg = prompt(
-          `Quick intro message — what would you like to tell them? (max 500 chars)`,
-          `Hi! Saw you're heading to ${city || "the same city"}. I'd love to swap recommendations or share a smoke.`
-        );
-        if (!msg || !msg.trim()) return;
-        el.disabled = true;
-        el.textContent = "Sending…";
-        try {
-          const supabase = getSupabase();
-          const { error } = await supabase.from("introductions").insert({
-            from_member_id: myUserId,
-            to_member_id: memberId,
-            context: "travel_plan",
-            intro_message: msg.trim().slice(0, 500),
-          });
-          if (error) throw error;
-          await loadIntros();
-          renderFeed();
-        } catch (err: any) {
-          alert(err?.message || "Could not send intro request.");
-          el.disabled = false;
-          el.textContent = "Request intro";
-        }
+        // Find the row's member display name (already rendered as data on the row)
+        const row = el.closest(".lounge-travel-other");
+        const toName = row?.querySelector(".lounge-travel-other__name a")?.textContent?.trim() || "member";
+        const open = (window as any).loungeOpenIntroSheet as ((opts: any) => void) | undefined;
+        if (!open) return;
+        open({
+          toMemberId: memberId,
+          toName,
+          context: "travel_plan",
+          prefill: `Hi! Saw you're heading to ${city}. I'd love to swap recommendations or share a smoke.`,
+          onSent: async () => {
+            await loadIntros();
+            renderFeed();
+          },
+        });
       });
     });
   }

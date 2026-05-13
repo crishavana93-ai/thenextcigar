@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 ---
 
 <BaseLayout
@@ -60,6 +61,7 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
       </section>
     </div>
   </main>
+  <LoungeTabBar active="members" />
 </BaseLayout>
 
 <style>
@@ -185,6 +187,25 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     border-radius: 50%;
     object-fit: cover;
   }
+  /* Recency rings — gold = active now, gold-soft = today, none = older */
+  .lounge-dir-card__avatar { position: relative; }
+  .lounge-dir-card__avatar--now { border: 2px solid var(--color-gold, #c9a961); }
+  .lounge-dir-card__avatar--today { border: 2px solid rgba(201, 169, 97, 0.5); }
+  .lounge-dir-card__avatar--week { border: 2px solid rgba(201, 169, 97, 0.18); }
+  .lounge-dir-card__avatar--older { border: 1px solid var(--color-border); }
+  .lounge-dir-card__dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2px solid var(--color-bg-soft);
+  }
+  /* Visual hierarchy — Founding gets a stronger gold left border, Host gets burgundy */
+  .lounge-dir-card--founding { border-left: 3px solid var(--color-gold, #c9a961); }
+  .lounge-dir-card--host { border-left: 3px solid var(--color-burgundy); }
   .lounge-dir-card__name {
     font-family: var(--font-display);
     font-size: 1.15rem;
@@ -229,9 +250,9 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     color: var(--color-text-muted);
   }
   .lounge-dir-card__badge--founding {
-    background: var(--color-accent);
-    color: #fff;
-    border-color: var(--color-accent);
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal, #1a1d2e);
+    border-color: var(--color-gold, #c9a961);
   }
   .lounge-dir-card__badge--host {
     background: var(--color-burgundy);
@@ -274,7 +295,19 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     is_host: boolean | null;
     is_founding: boolean | null;
     joined_at: string | null;
+    last_active_at: string | null;
   };
+
+  type Recency = "now" | "today" | "week" | "older";
+  function recencyTier(lastActive: string | null): Recency {
+    if (!lastActive) return "older";
+    const ageMs = Date.now() - new Date(lastActive).getTime();
+    const hour = 60 * 60 * 1000;
+    if (ageMs < hour) return "now";
+    if (ageMs < 24 * hour) return "today";
+    if (ageMs < 7 * 24 * hour) return "week";
+    return "older";
+  }
 
   let all: ProfileRow[] = [];
 
@@ -317,16 +350,22 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
         const avatar = p.avatar_url
           ? `<img src="${escapeHtml(p.avatar_url)}" alt="" loading="lazy" />`
           : initials(p.display_name);
+        const tier = recencyTier(p.last_active_at);
         const badges: string[] = [];
         if (p.is_founding)
           badges.push(`<span class="lounge-dir-card__badge lounge-dir-card__badge--founding">Founding</span>`);
         if (p.is_host)
           badges.push(`<span class="lounge-dir-card__badge lounge-dir-card__badge--host">Host</span>`);
 
+        const hierarchy = p.is_founding ? "lounge-dir-card--founding" : p.is_host ? "lounge-dir-card--host" : "";
+
         return `
-          <a class="lounge-dir-card" href="/lounge/app/member/?id=${p.id}">
+          <a class="lounge-dir-card ${hierarchy}" href="/lounge/app/member/?id=${p.id}">
             <div class="lounge-dir-card__top">
-              <div class="lounge-dir-card__avatar">${avatar}</div>
+              <div class="lounge-dir-card__avatar lounge-dir-card__avatar--${tier}">
+                ${avatar}
+                ${tier === "now" ? '<span class="lounge-dir-card__dot" aria-label="Active now"></span>' : ""}
+              </div>
               <div>
                 <h2 class="lounge-dir-card__name">${name}</h2>
                 <p class="lounge-dir-card__city">${city}</p>
@@ -369,8 +408,8 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at")
-      .order("joined_at", { ascending: false });
+      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at, last_active_at")
+      .order("last_active_at", { ascending: false, nullsFirst: false });
 
     if (error) {
       console.error("[Lounge directory] failed to load profiles:", error);

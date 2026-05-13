@@ -1,37 +1,24 @@
 ---
 interface Props {
-  /** "wordmark" = full TNext Cigar logo, "mark" = compact TN + smoke glyph for tight spaces */
+  /** "wordmark" = full TNext Cigars logo, "mark" = compact smoke glyph for tight spaces */
   variant?: "wordmark" | "mark";
   /** Optional class list applied to the rendered element */
   class?: string;
-  /** "light" forces the cream/red logo variant for use on dark backgrounds */
+  /** "light" forces the cream/dark-background variant */
   tone?: "dark" | "light";
 }
 
 const { variant = "mark", class: className = "", tone = "dark" } = Astro.props;
-
 const wordmarkUrl = tone === "light" ? "/logo-light.svg" : "/logo.svg";
 ---
 
 {variant === "wordmark" ? (
-  <img src={wordmarkUrl} alt="TNext Cigar" class={className} width="900" height="380" />
+  <img src={wordmarkUrl} alt="TNext Cigars" class={className} width="1000" height="460" />
 ) : (
-  <svg viewBox="0 0 64 64" fill="none" class={className} aria-label="TNext Cigar">
-    <text x="32" y="34"
-          font-family="Georgia, 'Playfair Display', 'Times New Roman', serif"
-          font-weight="900"
-          font-size="30"
-          letter-spacing="-0.04em"
-          text-anchor="middle"
-          fill={tone === "light" ? "#f5efe0" : "currentColor"}>TN</text>
-    <line x1="8" y1="46" x2="26" y2="46"
-          stroke={tone === "light" ? "#f5efe0" : "currentColor"}
-          stroke-width="2" stroke-linecap="round" />
-    <path d="M32 39 c -3 4, 4 6, 0 10 c -4 4, 4 6, 0 10"
-          stroke={tone === "light" ? "#ff2e2e" : "currentColor"}
-          stroke-width="2.5" stroke-linecap="round" fill="none" />
-    <line x1="38" y1="46" x2="56" y2="46"
-          stroke={tone === "light" ? "#f5efe0" : "currentColor"}
-          stroke-width="2" stroke-linecap="round" />
+  <svg viewBox="0 0 64 64" fill="none" class={className} aria-label="TNext Cigars">
+    <g stroke={tone === "light" ? "#f5efe0" : "currentColor"} stroke-width="3" stroke-linecap="round" fill="none">
+      <path d="M28 14 C 22 22, 22 30, 28 38 C 34 46, 34 54, 28 60"/>
+      <path d="M36 14 C 42 22, 42 30, 36 38 C 30 46, 30 54, 36 60"/>
+    </g>
   </svg>
 )}

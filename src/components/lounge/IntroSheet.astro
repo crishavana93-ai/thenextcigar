@@ -1,0 +1,348 @@
+---
+/**
+ * IntroSheet — global bottom-sheet form for "Request an introduction."
+ *
+ * Replaces every window.prompt() in the Lounge app (map, travel, anywhere).
+ * Renders hidden by default; pages summon it via:
+ *
+ *    window.loungeOpenIntroSheet({
+ *      toMemberId: "uuid",
+ *      toName: "Lasse F.",
+ *      context: "lounge_check_in" | "travel_plan" | "host_intro" | "manual",
+ *      prefill: "Optional pre-filled message",
+ *      onSent: () => {}     // called after a successful insert into introductions
+ *    });
+ *
+ * Writes to the same `introductions` table the existing intro forms use.
+ * Include this component once per page that needs it (map, travel, member).
+ */
+---
+
+<div id="lounge-intro-sheet-overlay" class="intro-overlay" hidden aria-hidden="true"></div>
+
+<aside
+  id="lounge-intro-sheet"
+  class="intro-sheet"
+  hidden
+  aria-modal="true"
+  aria-labelledby="intro-sheet-title"
+  role="dialog">
+  <div class="intro-sheet__handle" aria-hidden="true"></div>
+  <button id="intro-sheet-close" class="intro-sheet__close" type="button" aria-label="Close">×</button>
+
+  <p class="lounge-label lounge-label--gold">Request an introduction</p>
+  <h2 id="intro-sheet-title" class="intro-sheet__title">To <span id="intro-sheet-name">—</span></h2>
+
+  <form id="intro-sheet-form" class="intro-sheet__form">
+    <label class="intro-sheet__field">
+      <span class="intro-sheet__field-label">Why are you reaching out?</span>
+      <select name="context" id="intro-sheet-context" required>
+        <option value="manual">Just saying hi</option>
+        <option value="lounge_check_in">We're at the same lounge</option>
+        <option value="travel_plan">I'm travelling to their city</option>
+        <option value="host_intro">I'd like to host them</option>
+      </select>
+    </label>
+
+    <label class="intro-sheet__field">
+      <span class="intro-sheet__field-label">Your message <span class="intro-sheet__counter" id="intro-sheet-counter">0 / 500</span></span>
+      <textarea
+        id="intro-sheet-textarea"
+        name="intro_message"
+        required
+        rows="4"
+        maxlength="500"
+        placeholder="A line or two about why you'd like to meet. Real names go further than &quot;hi&quot;."></textarea>
+    </label>
+
+    <div class="intro-sheet__actions">
+      <button type="button" id="intro-sheet-cancel" class="lbtn lbtn-ghost">Cancel</button>
+      <button type="submit" id="intro-sheet-submit" class="lbtn lbtn-primary">Send request</button>
+    </div>
+
+    <p id="intro-sheet-status" class="intro-sheet__status" hidden></p>
+  </form>
+</aside>
+
+<style>
+  .intro-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    animation: introOverlayIn 0.18s ease-out;
+  }
+  @keyframes introOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .intro-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: var(--color-cream, #f5efe0);
+    color: var(--color-text, #1a1d2e);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height: 88vh;
+    overflow-y: auto;
+    animation: introSheetIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @media (min-width: 768px) {
+    .intro-sheet {
+      left: 50%;
+      right: auto;
+      bottom: 5vh;
+      transform: translateX(-50%);
+      width: 32rem;
+      max-width: calc(100vw - 2rem);
+      border-radius: 12px;
+      max-height: 80vh;
+    }
+  }
+  @keyframes introSheetIn {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @media (min-width: 768px) {
+    @keyframes introSheetIn {
+      from { transform: translate(-50%, 40px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+  }
+
+  .intro-sheet__handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.18);
+    margin: 0 auto 12px;
+  }
+  @media (min-width: 768px) {
+    .intro-sheet__handle { display: none; }
+  }
+
+  .intro-sheet__close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    font-size: 1.6rem;
+    color: var(--color-text-muted, #6b6663);
+    cursor: pointer;
+    line-height: 1;
+    border-radius: 999px;
+  }
+  .intro-sheet__close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--color-text);
+  }
+
+  .intro-sheet__title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 4px 0 16px;
+    color: var(--color-text);
+  }
+
+  .intro-sheet__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .intro-sheet__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .intro-sheet__field-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-muted, #6b6663);
+  }
+  .intro-sheet__counter {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+  .intro-sheet__field select,
+  .intro-sheet__field textarea {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--color-border, #e0d8c4);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--color-text);
+    font-family: inherit;
+    resize: vertical;
+  }
+  .intro-sheet__field select:focus,
+  .intro-sheet__field textarea:focus {
+    outline: 2px solid var(--color-gold, #c9a961);
+    outline-offset: 1px;
+    border-color: var(--color-gold);
+  }
+
+  .intro-sheet__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .intro-sheet__actions .lbtn { flex: 1 1 0; }
+
+  .intro-sheet__status {
+    margin: 0;
+    padding: 10px 12px;
+    background: var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border-left: 3px solid var(--color-gold);
+    border-radius: 4px;
+    font-size: 0.86rem;
+    color: var(--color-text);
+  }
+  .intro-sheet__status.is-error {
+    background: #fde9e9;
+    border-color: #c62828;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../lib/supabase";
+
+  type IntroOpts = {
+    toMemberId: string;
+    toName?: string;
+    context?: "manual" | "lounge_check_in" | "travel_plan" | "host_intro";
+    prefill?: string;
+    onSent?: () => void;
+  };
+
+  // Global handler — single source of truth for opening the intro sheet.
+  // Each page that needs it just imports nothing; they call window.loungeOpenIntroSheet.
+  function setupIntroSheet() {
+    const overlay = document.getElementById("lounge-intro-sheet-overlay") as HTMLElement | null;
+    const sheet = document.getElementById("lounge-intro-sheet") as HTMLElement | null;
+    const nameEl = document.getElementById("intro-sheet-name") as HTMLElement | null;
+    const contextEl = document.getElementById("intro-sheet-context") as HTMLSelectElement | null;
+    const textarea = document.getElementById("intro-sheet-textarea") as HTMLTextAreaElement | null;
+    const counter = document.getElementById("intro-sheet-counter") as HTMLElement | null;
+    const status = document.getElementById("intro-sheet-status") as HTMLElement | null;
+    const form = document.getElementById("intro-sheet-form") as HTMLFormElement | null;
+    const submitBtn = document.getElementById("intro-sheet-submit") as HTMLButtonElement | null;
+    const cancelBtn = document.getElementById("intro-sheet-cancel") as HTMLButtonElement | null;
+    const closeBtn = document.getElementById("intro-sheet-close") as HTMLButtonElement | null;
+
+    if (!overlay || !sheet || !form || !textarea || !contextEl) return;
+
+    let currentToMemberId: string | null = null;
+    let currentOnSent: (() => void) | null = null;
+
+    function open(opts: IntroOpts) {
+      currentToMemberId = opts.toMemberId;
+      currentOnSent = opts.onSent || null;
+      if (nameEl) nameEl.textContent = opts.toName || "member";
+      if (contextEl) contextEl.value = opts.context || "manual";
+      if (textarea) {
+        textarea.value = opts.prefill || "";
+        if (counter) counter.textContent = `${textarea.value.length} / 500`;
+      }
+      if (status) {
+        status.hidden = true;
+        status.classList.remove("is-error");
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send request";
+      }
+      overlay!.hidden = false;
+      sheet!.hidden = false;
+      document.body.style.overflow = "hidden";
+      // Focus textarea after the animation so the keyboard pops on mobile
+      setTimeout(() => textarea?.focus(), 280);
+    }
+
+    function close() {
+      overlay!.hidden = true;
+      sheet!.hidden = true;
+      document.body.style.overflow = "";
+      currentToMemberId = null;
+      currentOnSent = null;
+    }
+
+    overlay.addEventListener("click", close);
+    closeBtn?.addEventListener("click", close);
+    cancelBtn?.addEventListener("click", close);
+
+    textarea.addEventListener("input", () => {
+      if (counter) counter.textContent = `${textarea.value.length} / 500`;
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentToMemberId) return;
+      if (!textarea.value.trim()) {
+        textarea.focus();
+        return;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending…";
+      }
+      try {
+        const user = await getCurrentUser();
+        if (!user) throw new Error("Not signed in.");
+        const supabase = getSupabase();
+        const { error } = await supabase.from("introductions").insert({
+          from_member_id: user.id,
+          to_member_id: currentToMemberId,
+          context: contextEl.value,
+          intro_message: textarea.value.trim().slice(0, 500),
+        });
+        if (error) throw error;
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.textContent = "Request sent. You'll get an email when they respond.";
+        }
+        const cb = currentOnSent;
+        // Close after a short delay so the success state is seen
+        setTimeout(() => {
+          close();
+          if (cb) cb();
+        }, 1100);
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err?.message || "Could not send. Try again.";
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Send request";
+        }
+      }
+    });
+
+    // Esc closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !sheet!.hidden) close();
+    });
+
+    // Expose to page scripts
+    (window as any).loungeOpenIntroSheet = open;
+  }
+
+  document.addEventListener("astro:page-load", setupIntroSheet);
+  setupIntroSheet();
+</script>

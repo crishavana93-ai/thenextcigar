@@ -70,7 +70,8 @@ const { active = "dashboard" } = Astro.props as Props;
     display: none;
     gap: 1.5rem;
   }
-  @media (min-width: 768px) {
+  /* Top nav shows on desktop only; on mobile/tablet the bottom tab bar takes over. */
+  @media (min-width: 1024px) {
     .lounge-header__nav { display: flex; }
   }
   .lounge-nav-link {

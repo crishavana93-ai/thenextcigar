@@ -1,54 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#151515" />
-      <stop offset="1" stop-color="#0a0a0a" />
+      <stop offset="0" stop-color="#151515"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
     </linearGradient>
     <radialGradient id="glow" cx="0.5" cy="0.5" r="0.6">
-      <stop offset="0" stop-color="#ff2e2e" stop-opacity="0.18" />
-      <stop offset="1" stop-color="#ff2e2e" stop-opacity="0" />
+      <stop offset="0" stop-color="#ff2e2e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ff2e2e" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <rect width="1200" height="630" fill="url(#bg)" />
-  <ellipse cx="600" cy="400" rx="800" ry="400" fill="url(#glow)" />
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <ellipse cx="600" cy="400" rx="800" ry="400" fill="url(#glow)"/>
 
-  <!-- Top thin red accent bar -->
-  <rect x="0" y="0" width="1200" height="6" fill="#ff2e2e" />
+  <rect x="0" y="0" width="1200" height="6" fill="#ff2e2e"/>
 
-  <!-- Wordmark — Georgia serif, heavy weight to match the new brand logo -->
+  <!-- Wordmark -->
   <text x="600" y="290"
-        font-family="Georgia, 'Playfair Display', serif"
-        font-size="190"
-        font-weight="900"
-        letter-spacing="-4"
-        text-anchor="middle"
-        fill="#f5efe0">TNext</text>
+        font-family="Helvetica Neue, Inter, Arial, system-ui, sans-serif"
+        font-size="200" font-weight="900" letter-spacing="-12"
+        text-anchor="middle" fill="#f5efe0">TNext</text>
 
-  <!-- Dividing line + smoke -->
-  <line x1="320" y1="350" x2="555" y2="350" stroke="#f5efe0" stroke-width="3" stroke-linecap="round" />
-  <path d="M600 322 c -10 14, 16 24, 0 40 c -14 16, 16 24, 0 40"
-        stroke="#ff2e2e" stroke-width="7" stroke-linecap="round" fill="none" />
-  <line x1="645" y1="350" x2="880" y2="350" stroke="#f5efe0" stroke-width="3" stroke-linecap="round" />
+  <!-- Hairlines + double-stroke smoke -->
+  <line x1="280" y1="355" x2="560" y2="355" stroke="#f5efe0" stroke-width="3" stroke-linecap="round"/>
+  <g stroke="#ff2e2e" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M588 320 C 576 332, 576 346, 588 358 C 600 370, 600 384, 588 396"/>
+    <path d="M612 320 C 624 332, 624 346, 612 358 C 600 370, 600 384, 612 396"/>
+  </g>
+  <line x1="640" y1="355" x2="920" y2="355" stroke="#f5efe0" stroke-width="3" stroke-linecap="round"/>
 
-  <!-- CIGAR -->
-  <text x="600" y="440"
-        font-family="Helvetica Neue, Inter, system-ui, sans-serif"
-        font-size="54"
-        font-weight="600"
-        letter-spacing="22"
-        text-anchor="middle"
-        fill="#f5efe0">CIGAR</text>
+  <text x="600" y="450"
+        font-family="Helvetica Neue, Inter, Arial, system-ui, sans-serif"
+        font-size="54" font-weight="500" letter-spacing="22"
+        text-anchor="middle" fill="#f5efe0">CIGARS</text>
 
-  <!-- Tagline -->
-  <text x="600" y="520"
-        font-family="Helvetica Neue, Inter, system-ui, sans-serif"
-        font-size="26"
-        font-weight="400"
-        letter-spacing="2"
-        text-anchor="middle"
-        fill="#999999">Modern editorial for the cigar aficionado</text>
+  <text x="600" y="530"
+        font-family="Helvetica Neue, Inter, Arial, system-ui, sans-serif"
+        font-size="26" font-weight="400" letter-spacing="2"
+        text-anchor="middle" fill="#999999">Modern editorial for the cigar aficionado</text>
 
-  <!-- Footer accent -->
-  <rect x="0" y="624" width="1200" height="6" fill="#ff2e2e" />
+  <rect x="0" y="624" width="1200" height="6" fill="#ff2e2e"/>
 </svg>
