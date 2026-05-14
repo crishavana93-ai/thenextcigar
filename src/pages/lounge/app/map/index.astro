@@ -1230,19 +1230,22 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const filteredLounges = allLounges.filter((l) => !cityFilter || l.city === cityFilter);
     let memberCount = 0;
 
-    // Venue pins
+    // Venue pins — use venue photo when available, fall back to type glyph.
     if (showLounges) {
       for (const l of filteredLounges) {
         const hasActive = (activeByLoungeId[l.id]?.length || 0) > 0;
-        const glyph = venueGlyph(l.type);
+        const inner = l.photo_url
+          ? `<img src="${escapeHtml(l.photo_url)}" alt="" loading="lazy" onerror="this.parentElement.classList.remove('has-photo'); this.replaceWith();" />`
+          : venueGlyph(l.type);
+        const photoClass = l.photo_url ? " has-photo" : "";
         const icon = L.divIcon({
           className: "",
           html: `<div class="tnc-venue-pin-wrap">
-            <div class="tnc-venue-pin tnc-venue-pin--${l.type}${hasActive ? " tnc-venue-pin--has-active" : ""}">${glyph}</div>
+            <div class="tnc-venue-pin tnc-venue-pin--${l.type}${hasActive ? " tnc-venue-pin--has-active" : ""}${photoClass}">${inner}</div>
             <span class="tnc-venue-label">${escapeHtml(l.name)}</span>
           </div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11],
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
         const m = L.marker([l.lat, l.lng], { icon, zIndexOffset: 50 }).addTo(map);
         m.on("click", () => showVenueSheet(l));
@@ -1399,7 +1402,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const supabase = getSupabase();
     const { data: lounges, error } = await supabase
       .from("partner_lounges")
-      .select("id, slug, name, city, country, address, lat, lng, type, perks, website")
+      .select("id, slug, name, city, country, address, lat, lng, type, perks, website, photo_url")
       .not("verified_at", "is", null);
     if (error) {
       console.error("[Lounge map] failed to load lounges:", error);
