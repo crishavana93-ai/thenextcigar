@@ -99,6 +99,30 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
             </label>
           </div>
 
+          {/* Favorite brands (multi-select chips) */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Favorite brands <span class="profile-form__hint-inline">pick any that you reach for</span>
+            </label>
+            <div id="brands-chips" class="flavor-chips" role="group" aria-label="Favorite brands"></div>
+          </div>
+
+          {/* Flavor notes (multi-select chips) */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Flavor notes you love <span class="profile-form__hint-inline">pick a few</span>
+            </label>
+            <div id="notes-chips" class="flavor-chips" role="group" aria-label="Flavor notes"></div>
+          </div>
+
+          {/* Strength preference (single-select) */}
+          <div class="profile-form__row">
+            <label class="profile-form__label">
+              Strength preference
+            </label>
+            <div id="strength-chips" class="flavor-chips" role="radiogroup" aria-label="Strength preference"></div>
+          </div>
+
           {/* Host toggle */}
           <div class="profile-form__row">
             <label class="profile-form__toggle">
@@ -258,6 +282,36 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   }
   .profile-form__submit:hover { background: var(--color-accent-hover); }
   .profile-form__submit:disabled { opacity: 0.6; cursor: wait; }
+
+  /* Flavor profile chips */
+  .flavor-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .flavor-chip {
+    appearance: none;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .flavor-chip:hover {
+    border-color: var(--color-gold, #c9a961);
+    color: var(--color-text);
+  }
+  .flavor-chip.is-on {
+    background: var(--color-gold, #c9a961);
+    border-color: var(--color-gold);
+    color: var(--color-charcoal, #1a1d2e);
+  }
   .profile-form__status {
     margin-top: 1rem;
     padding: 0.85rem 1rem;
@@ -274,6 +328,82 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   import { getSupabase, getCurrentUser, getCurrentProfile } from "../../../lib/supabase";
 
   const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%23ededed'/><text x='50%' y='55%' font-family='Arial' font-size='32' fill='%23999' text-anchor='middle' dominant-baseline='middle' font-weight='800'>TNC</text></svg>";
+
+  // Curated brand list — keeps profiles clean (no "Fakeo Cigars" entries).
+  const BRANDS = [
+    "Cohiba", "Montecristo", "Partagás", "Hoyo de Monterrey", "Romeo y Julieta",
+    "H. Upmann", "Bolívar", "Trinidad", "Ramón Allones", "San Cristóbal",
+    "Davidoff", "Padrón", "Arturo Fuente", "Opus X", "My Father",
+    "Oliva", "Ashton", "Tatuaje", "Liga Privada", "Rocky Patel",
+    "Plasencia", "Camacho", "AVO", "Espinosa", "Alec Bradley",
+    "Crowned Heads", "E.P. Carrillo", "Drew Estate", "Joya de Nicaragua", "Punch",
+  ];
+
+  // Flavor descriptors — covers the common cigar tasting vocabulary.
+  const NOTES = [
+    "Earthy", "Creamy", "Woody", "Cedar", "Leather",
+    "Spicy", "Peppery", "Sweet", "Chocolate", "Coffee",
+    "Nutty", "Floral", "Citrus", "Hay", "Toast",
+  ];
+
+  const STRENGTHS = [
+    { value: "mild", label: "Mild" },
+    { value: "medium", label: "Medium" },
+    { value: "full", label: "Full" },
+    { value: "extra_full", label: "Extra full" },
+  ];
+
+  function renderMultiChips(
+    container: HTMLElement,
+    items: string[],
+    selected: Set<string>,
+  ): void {
+    container.innerHTML = items.map((it) => {
+      const on = selected.has(it) ? " is-on" : "";
+      return `<button type="button" class="flavor-chip${on}" data-value="${it}" role="checkbox" aria-checked="${selected.has(it)}">${it}</button>`;
+    }).join("");
+    container.querySelectorAll<HTMLButtonElement>(".flavor-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.value || "";
+        if (selected.has(v)) {
+          selected.delete(v);
+          btn.classList.remove("is-on");
+          btn.setAttribute("aria-checked", "false");
+        } else {
+          selected.add(v);
+          btn.classList.add("is-on");
+          btn.setAttribute("aria-checked", "true");
+        }
+      });
+    });
+  }
+
+  function renderSingleChips(
+    container: HTMLElement,
+    items: { value: string; label: string }[],
+    selected: { current: string | null },
+  ): void {
+    container.innerHTML = items.map((it) => {
+      const on = selected.current === it.value ? " is-on" : "";
+      return `<button type="button" class="flavor-chip${on}" data-value="${it.value}" role="radio" aria-checked="${selected.current === it.value}">${it.label}</button>`;
+    }).join("");
+    container.querySelectorAll<HTMLButtonElement>(".flavor-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.value || "";
+        // Toggle: tapping current selection clears it. Lets users unset.
+        if (selected.current === v) {
+          selected.current = null;
+        } else {
+          selected.current = v;
+        }
+        container.querySelectorAll<HTMLButtonElement>(".flavor-chip").forEach((b) => {
+          const on = b.dataset.value === selected.current;
+          b.classList.toggle("is-on", on);
+          b.setAttribute("aria-checked", String(on));
+        });
+      });
+    });
+  }
 
   async function init() {
     const user = await getCurrentUser();
@@ -298,6 +428,19 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     (form.elements.namedItem("country_code") as HTMLInputElement).value = profile.country_code || "";
     (form.elements.namedItem("bio") as HTMLTextAreaElement).value = profile.bio || "";
     (form.elements.namedItem("is_host") as HTMLInputElement).checked = !!profile.is_host;
+
+    // Flavor profile chip state — mutated in place by the chip handlers,
+    // read back into the update payload on submit.
+    const brandsSet = new Set<string>(((profile as any).favorite_brands as string[]) || []);
+    const notesSet = new Set<string>(((profile as any).flavor_notes as string[]) || []);
+    const strengthState = { current: ((profile as any).strength_preference as string | null) || null };
+
+    const brandsEl = document.getElementById("brands-chips") as HTMLElement | null;
+    const notesEl = document.getElementById("notes-chips") as HTMLElement | null;
+    const strengthEl = document.getElementById("strength-chips") as HTMLElement | null;
+    if (brandsEl) renderMultiChips(brandsEl, BRANDS, brandsSet);
+    if (notesEl) renderMultiChips(notesEl, NOTES, notesSet);
+    if (strengthEl) renderSingleChips(strengthEl, STRENGTHS, strengthState);
 
     // Avatar preview
     const avatarPreview = document.getElementById("avatar-preview") as HTMLImageElement;
@@ -358,6 +501,9 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
         country_code: String(data.get("country_code") || "").trim().toUpperCase() || null,
         bio: String(data.get("bio") || "").trim() || null,
         is_host: data.get("is_host") === "on",
+        favorite_brands: Array.from(brandsSet),
+        flavor_notes: Array.from(notesSet),
+        strength_preference: strengthState.current,
       };
 
       try {

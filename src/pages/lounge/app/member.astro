@@ -517,7 +517,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     const supabase = getSupabase();
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at")
+      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at, favorite_brands, flavor_notes, strength_preference")
       .eq("id", memberId)
       .maybeSingle();
 
@@ -573,10 +573,11 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     if (signalEl && p.id !== user.id) {
       const lozenges: string[] = [];
 
-      // Pull viewer's own profile to know their city
+      // Pull viewer's own profile so we can compute overlap signals
+      // (shared city, shared brands, shared flavor notes, same strength).
       const { data: meProfile } = await supabase
         .from("profiles")
-        .select("city")
+        .select("city, favorite_brands, flavor_notes, strength_preference")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -617,6 +618,42 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
           const d2 = new Date(matching.depart_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
           lozenges.push(`<span class="lounge-mem-signal__loz">Coming to your city ${d1}–${d2}</span>`);
         }
+      }
+
+      // Flavor profile overlaps. Cap each lozenge at 2–3 names so it stays
+      // readable. Only surface overlap when both sides have set the field
+      // (otherwise an empty array would "match" against everything).
+      const myBrands: string[] = ((meProfile as any)?.favorite_brands as string[]) || [];
+      const theirBrands: string[] = ((p as any).favorite_brands as string[]) || [];
+      if (myBrands.length && theirBrands.length) {
+        const shared = myBrands.filter((b) => theirBrands.includes(b));
+        if (shared.length > 0) {
+          const preview = shared.slice(0, 2).map(escapeHtml).join(" and ");
+          const more = shared.length > 2 ? ` +${shared.length - 2}` : "";
+          lozenges.push(`<span class="lounge-mem-signal__loz">You both love ${preview}${more}</span>`);
+        }
+      }
+
+      const myNotes: string[] = ((meProfile as any)?.flavor_notes as string[]) || [];
+      const theirNotes: string[] = ((p as any).flavor_notes as string[]) || [];
+      if (myNotes.length && theirNotes.length) {
+        const sharedNotes = myNotes.filter((n) => theirNotes.includes(n));
+        if (sharedNotes.length >= 2) {
+          const preview = sharedNotes.slice(0, 2).map((n) => escapeHtml(n.toLowerCase())).join(" and ");
+          lozenges.push(`<span class="lounge-mem-signal__loz">You share a love for ${preview} notes</span>`);
+        }
+      }
+
+      const myStrength = (meProfile as any)?.strength_preference as string | null;
+      const theirStrength = (p as any).strength_preference as string | null;
+      if (myStrength && theirStrength && myStrength === theirStrength) {
+        const label =
+          myStrength === "mild" ? "mild" :
+          myStrength === "medium" ? "medium-bodied" :
+          myStrength === "full" ? "full-bodied" :
+          myStrength === "extra_full" ? "extra full-bodied" :
+          myStrength;
+        lozenges.push(`<span class="lounge-mem-signal__loz">You both prefer ${label} cigars</span>`);
       }
 
       if (lozenges.length > 0) {
