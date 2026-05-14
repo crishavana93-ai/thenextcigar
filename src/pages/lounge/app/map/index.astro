@@ -539,36 +539,53 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     color: rgba(255,255,255,0.85) !important;
   }
 
-  /* Pins */
+  /* Pins — premium Airbnb-style. 36px circle with photo or type-glyph,
+     drop shadow, type-tinted ring. Photo when available; glyph fallback. */
   :global(.tnc-venue-pin-wrap) {
     position: relative;
-    width: 22px; height: 22px;
+    width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
   }
   :global(.tnc-venue-pin) {
-    width: 22px; height: 22px;
+    width: 36px; height: 36px;
     border-radius: 50%;
-    border: 1.5px solid #fff;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    border: 2px solid #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.4);
     display: flex; align-items: center; justify-content: center;
     color: #fff;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    background: #1a1d2e;
+  }
+  :global(.tnc-venue-pin:hover) {
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5);
+  }
+  :global(.tnc-venue-pin img) {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
   }
   :global(.tnc-venue-pin svg) {
-    width: 12px; height: 12px;
+    width: 18px; height: 18px;
     stroke: #fff;
     stroke-width: 2;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-  :global(.tnc-venue-pin--lounge) { background: #c8a052; }
-  :global(.tnc-venue-pin--retailer) { background: #4d7a5c; }
-  :global(.tnc-venue-pin--casadelhabano) { background: #c0392b; }
-  :global(.tnc-venue-pin--house) { background: #4a6fa5; }
-  :global(.tnc-venue-pin--pub) { background: #b07a3a; }
-  :global(.tnc-venue-pin--club) { background: #8e5da7; }
+  /* Type-tinted ring around the photo/glyph */
+  :global(.tnc-venue-pin--lounge) { border-color: #d4b876; background: #c8a052; }
+  :global(.tnc-venue-pin--retailer) { border-color: #6fa37e; background: #4d7a5c; }
+  :global(.tnc-venue-pin--casadelhabano) { border-color: #e87968; background: #c0392b; }
+  :global(.tnc-venue-pin--house) { border-color: #7196c5; background: #4a6fa5; }
+  :global(.tnc-venue-pin--pub) { border-color: #cf9a59; background: #b07a3a; }
+  :global(.tnc-venue-pin--club) { border-color: #b287cc; background: #8e5da7; }
+  /* When a photo is present, hide the colored bg so the image shows clean */
+  :global(.tnc-venue-pin.has-photo) { background: transparent; }
   :global(.tnc-venue-pin--has-active) {
-    box-shadow: 0 0 0 4px rgba(255,46,46,0.45), 0 1px 6px rgba(0,0,0,0.6);
+    box-shadow: 0 0 0 4px rgba(255,46,46,0.55), 0 3px 10px rgba(0,0,0,0.55);
   }
 
   /* Event pin — gold ring with calendar glyph, slightly bigger than venue pin
@@ -827,6 +844,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     type: string;
     perks: string | null;
     website: string | null;
+    photo_url: string | null;
   };
 
   type CheckinRow = {
