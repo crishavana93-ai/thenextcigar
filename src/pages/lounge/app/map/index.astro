@@ -76,6 +76,26 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         <button id="my-active-checkout" class="lbtn lbtn-ghost lbtn-ghost--on-dark lbtn-sm" type="button">Check out</button>
       </div>
 
+      {/* Nearby-venue detection banner — appears when device location is near a known venue */}
+      <div id="nearby-venue-banner" class="nearby-banner" hidden>
+        <div class="nearby-banner__info">
+          <span class="nearby-banner__eyebrow">You're near</span>
+          <strong id="nearby-venue-name" class="nearby-banner__venue">—</strong>
+          <span id="nearby-venue-distance" class="nearby-banner__distance">—</span>
+        </div>
+        <button id="nearby-venue-checkin" class="lbtn lbtn-sm" type="button">Check in</button>
+        <button id="nearby-venue-dismiss" class="nearby-banner__dismiss" type="button" aria-label="Dismiss">×</button>
+      </div>
+
+      {/* Find me FAB (mobile + desktop) — bottom-right, just above tab bar */}
+      <button id="map-find-me" class="map-find-me" type="button" aria-label="Find my location">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          <circle cx="12" cy="12" r="8" />
+        </svg>
+      </button>
+
       {/* City picker sheet — opens when the City chip is tapped */}
       <div id="city-picker-overlay" class="picker-overlay" hidden></div>
       <aside id="city-picker" class="picker-sheet" hidden aria-modal="true" role="dialog">
@@ -229,6 +249,82 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
   }
   .active-banner__venue { font-size: 14px; font-weight: 800; }
   .active-banner__expires { font-size: 12px; opacity: 0.78; }
+
+  /* ── Nearby-venue auto-detect banner (cream + gold border) ────────────── */
+  .nearby-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    background: rgba(245, 239, 224, 0.96);
+    color: #1a1d2e;
+    border-bottom: 2px solid var(--color-gold, #c9a961);
+    animation: nearbyBannerIn 0.28s ease-out;
+  }
+  @keyframes nearbyBannerIn {
+    from { transform: translateY(-8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .nearby-banner__info { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; flex-grow: 1; }
+  .nearby-banner__eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-text-muted, #6b6663);
+  }
+  .nearby-banner__venue { font-size: 14px; font-weight: 800; }
+  .nearby-banner__distance { font-size: 12px; color: var(--color-text-muted, #6b6663); }
+  .nearby-banner__dismiss {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    width: 28px; height: 28px;
+    border-radius: 999px;
+    line-height: 1;
+  }
+  .nearby-banner__dismiss:hover { background: rgba(0, 0, 0, 0.06); color: var(--color-text); }
+
+  /* ── Find me FAB ──────────────────────────────────────────────────────── */
+  .map-find-me {
+    position: fixed;
+    right: 18px;
+    bottom: calc(140px + env(safe-area-inset-bottom));
+    z-index: 80;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 17, 28, 0.92);
+    color: var(--color-gold, #c9a961);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(201, 169, 97, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .map-find-me:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(201, 169, 97, 0.55);
+  }
+  .map-find-me svg {
+    width: 22px; height: 22px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .map-find-me.is-loading svg { animation: findMeSpin 1s linear infinite; }
+  @keyframes findMeSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @media (min-width: 768px) {
+    .map-find-me {
+      bottom: 24px;
+      right: 24px;
+    }
+  }
+  /* Hide the travel FAB on the map — the find-me button takes its spot. */
+  body.is-map-page .trav-fab { display: none !important; }
 
   /* ── City picker sheet ────────────────────────────────────────────────── */
   .picker-overlay {
@@ -1224,6 +1320,90 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     // Clean up the subscription on page unload so we don't leak channels.
     window.addEventListener("beforeunload", () => {
       try { supabase.removeChannel(realtimeChannel); } catch {}
+    });
+
+    // ── Find me + nearby-venue auto-detection ─────────────────────────────
+    // Tag body so other Lounge FABs (travel) hide on the map.
+    document.body.classList.add("is-map-page");
+
+    const findMeBtn = document.getElementById("map-find-me") as HTMLButtonElement | null;
+    const nearbyBanner = document.getElementById("nearby-venue-banner") as HTMLElement | null;
+    const nearbyName = document.getElementById("nearby-venue-name") as HTMLElement | null;
+    const nearbyDistance = document.getElementById("nearby-venue-distance") as HTMLElement | null;
+    const nearbyCheckin = document.getElementById("nearby-venue-checkin") as HTMLButtonElement | null;
+    const nearbyDismiss = document.getElementById("nearby-venue-dismiss") as HTMLButtonElement | null;
+    let nearbyVenueId: string | null = null;
+
+    // Haversine distance in meters.
+    function distMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function showNearbyBanner(venue: Lounge, meters: number): void {
+      if (!nearbyBanner || !nearbyName || !nearbyDistance) return;
+      nearbyVenueId = venue.id;
+      nearbyName.textContent = venue.name;
+      nearbyDistance.textContent = meters < 50 ? "at this venue" : `~${Math.round(meters)}m away`;
+      nearbyBanner.hidden = false;
+    }
+    function hideNearbyBanner(): void {
+      if (nearbyBanner) nearbyBanner.hidden = true;
+      nearbyVenueId = null;
+    }
+
+    nearbyDismiss?.addEventListener("click", hideNearbyBanner);
+    nearbyCheckin?.addEventListener("click", async () => {
+      if (!nearbyVenueId) return;
+      const venue = allLounges.find((l) => l.id === nearbyVenueId);
+      if (!venue) return;
+      hideNearbyBanner();
+      showVenueSheet(venue);
+    });
+
+    findMeBtn?.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        alert("Location services aren't available on this device.");
+        return;
+      }
+      findMeBtn.classList.add("is-loading");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          findMeBtn.classList.remove("is-loading");
+          const { latitude, longitude } = pos.coords;
+          map.setView([latitude, longitude], 14);
+
+          // Find the closest partner venue within 250m
+          let closest: { venue: Lounge; meters: number } | null = null;
+          for (const v of allLounges) {
+            const m = distMeters(latitude, longitude, v.lat, v.lng);
+            if (m < 250 && (!closest || m < closest.meters)) {
+              closest = { venue: v, meters: m };
+            }
+          }
+          if (closest) {
+            showNearbyBanner(closest.venue, closest.meters);
+          } else {
+            hideNearbyBanner();
+          }
+        },
+        (err) => {
+          findMeBtn.classList.remove("is-loading");
+          let msg = "Couldn't get your location.";
+          if (err.code === err.PERMISSION_DENIED) {
+            msg = "Location permission denied. Enable it in your browser settings to find venues near you.";
+          } else if (err.code === err.POSITION_UNAVAILABLE) {
+            msg = "Your location isn't available right now.";
+          }
+          alert(msg);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+      );
     });
 
     document.getElementById("sheet-close")?.addEventListener("click", hideSheet);
