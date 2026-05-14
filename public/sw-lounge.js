@@ -6,7 +6,10 @@
 //
 // Scope is limited to /lounge/app/ (set via manifest scope + registration).
 
-const CACHE_NAME = "lounge-app-v1";
+// Bump this version any time the deployed app changes meaningfully (new
+// migrations, layout changes, big UI updates). Old caches are deleted on
+// activate, forcing a fresh fetch on next visit.
+const CACHE_NAME = "lounge-app-v3";
 const PRECACHE_URLS = [
   "/lounge/app/",
   "/lounge-app-icon-192.png",

@@ -102,6 +102,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 <script>
   import { getSupabase, getCurrentUser } from "../../lib/supabase";
 
+  const LAST_EMAIL_KEY = "lounge_last_email";
+
   async function setup() {
     // If already signed in, skip the form
     const user = await getCurrentUser();
@@ -114,6 +116,40 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const status = document.getElementById("login-status") as HTMLParagraphElement | null;
     if (!form || form.dataset.bound === "1") return;
     form.dataset.bound = "1";
+
+    // Pre-fill the email field if we've seen this device before. Most returning
+    // members are signing in from the same device — saves the typing-on-mobile
+    // friction. The form copy also adapts: "Welcome back, Cris" vs cold "Sign in".
+    const emailInput = form.querySelector("input[name=email]") as HTMLInputElement;
+    const titleEl = document.querySelector(".lounge-auth__title") as HTMLElement;
+    const eyebrowEl = document.querySelector(".lounge-auth__eyebrow") as HTMLElement;
+    const leadEl = document.querySelector(".lounge-auth__lead") as HTMLElement;
+    let savedEmail: string | null = null;
+    try {
+      savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
+    } catch {}
+    if (savedEmail) {
+      emailInput.value = savedEmail;
+      // Lowercase the first-name guess from the local part of the email
+      const localPart = savedEmail.split("@")[0]?.replace(/[._-].*/, "") || "";
+      const firstName = localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
+      if (firstName && firstName !== "Noreply" && eyebrowEl && titleEl && leadEl) {
+        eyebrowEl.textContent = "The Lounge · Welcome back";
+        titleEl.textContent = `Welcome back, ${firstName}.`;
+        leadEl.innerHTML = `Tap the button — we'll send a fresh magic link to <strong>${savedEmail}</strong>. <button type="button" id="login-change-email" style="background:none;border:none;color:var(--color-gold,#c9a961);text-decoration:underline;cursor:pointer;padding:0;font:inherit;">Use a different email</button>`;
+        // Wire the "different email" link
+        setTimeout(() => {
+          document.getElementById("login-change-email")?.addEventListener("click", () => {
+            try { localStorage.removeItem(LAST_EMAIL_KEY); } catch {}
+            emailInput.value = "";
+            emailInput.focus();
+            if (eyebrowEl) eyebrowEl.textContent = "The Lounge · Welcome back";
+            if (titleEl) titleEl.textContent = "Sign in.";
+            if (leadEl) leadEl.textContent = "Enter your email and we'll send a one-time magic link.";
+          });
+        }, 0);
+      }
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -130,6 +166,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           options: { emailRedirectTo: `${window.location.origin}/lounge/app/` },
         });
         if (error) throw error;
+        // Remember this email so the next visit is one-tap
+        try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
         if (status) {
           status.hidden = false;
           status.classList.remove("is-error");
