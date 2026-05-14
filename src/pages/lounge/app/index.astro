@@ -59,6 +59,21 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
         </div>
       </section>
 
+      {/* Region A2 — Personalized hero CTA. Resolves to the highest-priority
+          action for this member: upcoming trip, unread DMs, RSVP today,
+          haven't checked in this week, etc. Hidden if no relevant action. */}
+      <section id="hero-cta-section" class="container-wide pb-3" hidden>
+        <a id="hero-cta" class="hero-cta" href="#">
+          <div class="hero-cta__icon" id="hero-cta-icon"></div>
+          <div class="hero-cta__body">
+            <p class="hero-cta__kicker" id="hero-cta-kicker">FOR YOU</p>
+            <p class="hero-cta__title" id="hero-cta-title">—</p>
+            <p class="hero-cta__sub" id="hero-cta-sub">—</p>
+          </div>
+          <span class="hero-cta__arrow" aria-hidden="true">→</span>
+        </a>
+      </section>
+
       {/* Region B — Live now horizontal strip of currently-checked-in members */}
       <section class="container-wide pb-3">
         <div class="feed-section-head">
@@ -85,6 +100,15 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
           <a href="/lounge/app/events/" class="feed-section-head__link">All events →</a>
         </div>
         <div id="events-strip" class="events-strip"></div>
+      </section>
+
+      {/* Region B3 — Flavor matches. Hidden if no matches found. */}
+      <section id="match-section" class="container-wide pb-3" hidden>
+        <div class="feed-section-head">
+          <p class="lounge-label lounge-label--gold">Members you'd vibe with</p>
+          <a href="/lounge/app/directory/" class="feed-section-head__link">Browse all →</a>
+        </div>
+        <div id="match-strip" class="events-strip"></div>
       </section>
 
       {/* Region C — From the network — chronological activity feed */}
@@ -311,6 +335,118 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     padding-bottom: 4px;
   }
   .live-strip::-webkit-scrollbar { display: none; }
+
+  /* Hero CTA — personalized action card. Bigger, gold-accented, full width. */
+  .hero-cta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(201, 169, 97, 0.16), rgba(201, 169, 97, 0.06));
+    border: 1px solid rgba(201, 169, 97, 0.45);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .hero-cta:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-gold, #c9a961);
+  }
+  .hero-cta__icon {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal, #1a1d2e);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-cta__icon svg {
+    width: 22px; height: 22px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .hero-cta__body { flex: 1; min-width: 0; }
+  .hero-cta__kicker {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold, #c9a961);
+  }
+  .hero-cta__title {
+    margin: 4px 0 2px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-text);
+  }
+  .hero-cta__sub {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-text-soft);
+    line-height: 1.4;
+  }
+  .hero-cta__arrow {
+    flex-shrink: 0;
+    color: var(--color-gold, #c9a961);
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  /* Flavor match cards — denser version of the events-strip card */
+  .match-card {
+    flex: 0 0 200px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 14px;
+    text-decoration: none;
+    color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    transition: transform 0.15s ease;
+  }
+  .match-card:hover { transform: translateY(-2px); }
+  .match-card__avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--color-gold-soft, rgba(201, 169, 97, 0.35));
+    background: var(--color-bg);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+  }
+  .match-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .match-card__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .match-card__overlap {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--color-gold, #c9a961);
+    line-height: 1.35;
+  }
+  .match-card__city {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
 
   /* Upcoming events strip — horizontal scrollable cards, mirrors live-strip layout */
   .events-strip {
@@ -748,12 +884,225 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     await Promise.all([
       loadAndRenderFeed(user.id),
       loadUpcomingEvents(profile?.city || null),
+      loadHeroCta(user.id, profile),
+      loadFlavorMatches(user.id, profile),
     ]);
 
     const guard = document.getElementById("lounge-guard");
     const content = document.getElementById("lounge-content");
     if (guard) guard.style.display = "none";
     if (content) content.hidden = false;
+  }
+
+  // ── Hero CTA — picks the highest-priority action for THIS member right now
+  // ───────────────────────────────────────────────────────────────────────
+  // Priority order:
+  //   1. Unread direct messages
+  //   2. Trip in next 14 days with locals there
+  //   3. Event in your city in next 7 days you haven't RSVP'd
+  //   4. Haven't checked in in last 7 days
+  //   5. (Fallback) Cohort growth in your city
+  async function loadHeroCta(userId: string, profile: any): Promise<void> {
+    const section = document.getElementById("hero-cta-section") as HTMLElement;
+    const cta = document.getElementById("hero-cta") as HTMLAnchorElement;
+    const iconEl = document.getElementById("hero-cta-icon") as HTMLElement;
+    const kickerEl = document.getElementById("hero-cta-kicker") as HTMLElement;
+    const titleEl = document.getElementById("hero-cta-title") as HTMLElement;
+    const subEl = document.getElementById("hero-cta-sub") as HTMLElement;
+    if (!section || !cta) return;
+
+    const supabase = getSupabase();
+    const now = new Date();
+    const myCity = (profile?.city || "").trim();
+
+    const set = (href: string, kicker: string, title: string, sub: string, iconSvg: string) => {
+      cta.href = href;
+      iconEl.innerHTML = iconSvg;
+      kickerEl.textContent = kicker;
+      titleEl.textContent = title;
+      subEl.textContent = sub;
+      section.hidden = false;
+    };
+
+    // 1. Unread DMs
+    try {
+      const { count: unreadCount } = await supabase
+        .from("direct_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("recipient_id", userId)
+        .is("read_at", null);
+      if (unreadCount && unreadCount > 0) {
+        set(
+          "/lounge/app/messages/",
+          "Inbox",
+          `${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`,
+          "Tap to read and reply.",
+          `<svg viewBox="0 0 24 24"><path d="M4 4h16v12H5.5L4 17.5V4Z"/></svg>`,
+        );
+        return;
+      }
+    } catch {}
+
+    // 2. Your upcoming trip — show if leaving in 14 days
+    try {
+      const today = now.toISOString().slice(0, 10);
+      const horizon = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+      const { data: myTrips } = await supabase
+        .from("travel_plans")
+        .select("city, arrive_date, depart_date")
+        .eq("member_id", userId)
+        .gte("arrive_date", today)
+        .lte("arrive_date", horizon)
+        .order("arrive_date", { ascending: true })
+        .limit(1);
+      const trip = (myTrips as any[])?.[0];
+      if (trip) {
+        const days = Math.max(0, Math.round((new Date(trip.arrive_date + "T00:00:00").getTime() - Date.now()) / 86400000));
+        // Count locals (hosts) in destination city
+        const { count: hostCount } = await supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .ilike("city", trip.city)
+          .eq("is_host", true);
+        set(
+          `/lounge/app/directory/?city=${encodeURIComponent(trip.city)}`,
+          "Your trip",
+          `You're going to ${trip.city} in ${days === 0 ? "today" : days + " day" + (days === 1 ? "" : "s")}`,
+          hostCount && hostCount > 0
+            ? `${hostCount} host${hostCount === 1 ? "" : "s"} there. Send an intro before you land.`
+            : "Browse members in that city.",
+          `<svg viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.7c-.2.4 0 .8.3 1.1l5.4 4.3-1.5 4.5L4 18l2 2 2-1.8 4.5-1.5 4.3 5.4c.3.3.7.5 1.1.3l.7-.3c.4-.2.6-.6.5-1.1Z"/></svg>`,
+        );
+        return;
+      }
+    } catch {}
+
+    // 3. Event in your city in next 7 days (you haven't RSVP'd)
+    if (myCity) {
+      try {
+        const sevenDays = new Date(Date.now() + 7 * 86400000).toISOString();
+        const { data: events } = await supabase
+          .from("cigar_events")
+          .select("id, title, city, start_at")
+          .not("verified_at", "is", null)
+          .ilike("city", myCity)
+          .gte("start_at", now.toISOString())
+          .lte("start_at", sevenDays)
+          .order("start_at", { ascending: true })
+          .limit(1);
+        const ev = (events as any[])?.[0];
+        if (ev) {
+          // Check if user has already RSVP'd
+          const { data: myRsvp } = await supabase
+            .from("event_rsvps")
+            .select("id")
+            .eq("event_id", ev.id)
+            .eq("member_id", userId)
+            .maybeSingle();
+          if (!myRsvp) {
+            const d = new Date(ev.start_at);
+            const when = d.toLocaleDateString("en-US", { weekday: "long" });
+            set(
+              `/lounge/app/events/?id=${ev.id}`,
+              "Event this week",
+              ev.title,
+              `${when} in ${ev.city}. Tap to RSVP.`,
+              `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+            );
+            return;
+          }
+        }
+      } catch {}
+    }
+
+    // 4. Haven't checked in in 7 days — nudge to check in
+    try {
+      const sevenAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      const { count: recent } = await supabase
+        .from("checkins")
+        .select("id", { count: "exact", head: true })
+        .eq("member_id", userId)
+        .gte("checked_in_at", sevenAgo);
+      if (!recent || recent === 0) {
+        set(
+          "/lounge/app/map/",
+          "Where are you smoking?",
+          "Check in tonight",
+          "Members in your city see you and can drop by. 90 minutes of presence.",
+          `<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+        );
+        return;
+      }
+    } catch {}
+
+    // No CTA worth surfacing — hide the section.
+    section.hidden = true;
+  }
+
+  // ── Flavor matches — members in your city or coming to your city who share
+  // your favorite brands or flavor notes. Hides if you have no flavor data or
+  // no matches.
+  async function loadFlavorMatches(userId: string, profile: any): Promise<void> {
+    const section = document.getElementById("match-section") as HTMLElement;
+    const strip = document.getElementById("match-strip") as HTMLElement;
+    if (!section || !strip || !profile) return;
+
+    const myBrands: string[] = profile.favorite_brands || [];
+    const myNotes: string[] = profile.flavor_notes || [];
+    if (myBrands.length === 0 && myNotes.length === 0) {
+      section.hidden = true;
+      return;
+    }
+
+    const supabase = getSupabase();
+    // Pull up to 60 candidates with flavor data; we'll score client-side.
+    const { data: candidates } = await supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url, city, favorite_brands, flavor_notes")
+      .neq("id", userId)
+      .or(
+        `favorite_brands.ov.{${myBrands.map((b) => '"' + b.replace(/"/g, '\\"') + '"').join(",")}},` +
+        `flavor_notes.ov.{${myNotes.map((n) => '"' + n.replace(/"/g, '\\"') + '"').join(",")}}`
+      )
+      .limit(60);
+
+    type Match = { id: string; display_name: string; avatar_url: string | null; city: string | null; overlap: string };
+    const matches: Match[] = [];
+    for (const c of (candidates as any[]) || []) {
+      const sharedBrands = (c.favorite_brands || []).filter((b: string) => myBrands.includes(b));
+      const sharedNotes = (c.flavor_notes || []).filter((n: string) => myNotes.includes(n));
+      let overlap = "";
+      if (sharedBrands.length > 0) {
+        overlap = `Loves ${sharedBrands.slice(0, 2).join(" & ")}`;
+      } else if (sharedNotes.length >= 2) {
+        overlap = `${sharedNotes.slice(0, 2).join(" & ").toLowerCase()} notes`;
+      } else if (sharedNotes.length === 1) {
+        overlap = `${sharedNotes[0].toLowerCase()} notes`;
+      }
+      if (overlap) matches.push({ id: c.id, display_name: c.display_name, avatar_url: c.avatar_url, city: c.city, overlap });
+    }
+    if (matches.length === 0) {
+      section.hidden = true;
+      return;
+    }
+
+    section.hidden = false;
+    strip.innerHTML = matches
+      .slice(0, 12)
+      .map((m) => {
+        const av = m.avatar_url
+          ? `<img src="${escapeHtml(m.avatar_url)}" alt="" />`
+          : initials(m.display_name);
+        return `
+          <a class="match-card" href="/lounge/app/member/?id=${m.id}">
+            <div class="match-card__avatar">${av}</div>
+            <p class="match-card__name">${escapeHtml(m.display_name || "Member")}</p>
+            <p class="match-card__overlap">${escapeHtml(m.overlap)}</p>
+            ${m.city ? `<p class="match-card__city">${escapeHtml(m.city)}</p>` : ""}
+          </a>
+        `;
+      })
+      .join("");
   }
 
   // Upcoming events in the member's city — horizontal strip. Hides if none.
