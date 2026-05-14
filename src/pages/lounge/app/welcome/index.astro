@@ -522,6 +522,25 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     }
     myUserId = user.id;
 
+    // Apply a referral code captured from /lounge/signup?ref=CODE (stored in
+    // localStorage so it survives the magic-link round-trip). Fire-and-forget —
+    // failure is silent; the user can still complete onboarding.
+    try {
+      const ref = localStorage.getItem("lounge_referral_code");
+      if (ref) {
+        const supabase = getSupabase();
+        const { data: result } = await supabase.rpc("apply_referral_code", { p_code: ref });
+        // Whether it succeeded or not, clear so we don't retry on later visits.
+        localStorage.removeItem("lounge_referral_code");
+        if (result && (result as any).ok) {
+          console.log("[Lounge] referral code applied:", ref);
+        }
+      }
+    } catch (err) {
+      // RPC errors are non-fatal — onboarding continues regardless.
+      console.warn("[Lounge] could not apply referral code:", err);
+    }
+
     const profile = await getCurrentProfile();
     // If they already finished onboarding (has a city), skip the welcome entirely.
     if (profile?.city) {

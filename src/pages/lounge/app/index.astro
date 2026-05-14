@@ -702,6 +702,17 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   }
 
   async function init() {
+    // Capture referral code from ?ref=CODE on any /lounge/app/ entry — works
+    // even when a creator shares the bare lounge subdomain root instead of
+    // /signup. Stored in localStorage and applied by the welcome flow on
+    // first visit.
+    try {
+      const ref = new URLSearchParams(window.location.search).get("ref");
+      if (ref && /^[A-Za-z0-9_-]{2,32}$/.test(ref)) {
+        localStorage.setItem("lounge_referral_code", ref.toUpperCase());
+      }
+    } catch {}
+
     const user = await getCurrentUser();
     if (!user) {
       window.location.href = "/lounge/login/";

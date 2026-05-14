@@ -100,6 +100,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           <button id="tab-members" class="admin-tab is-active" type="button">Members</button>
           <button id="tab-venues" class="admin-tab" type="button">Venues</button>
           <button id="tab-events" class="admin-tab" type="button">Events</button>
+          <button id="tab-partners" class="admin-tab" type="button">Partners</button>
           <button id="tab-activity" class="admin-tab" type="button">Activity</button>
         </div>
       </section>
@@ -180,6 +181,53 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         <div class="admin-event-list">
           <p class="lounge-label">All events</p>
           <div id="events-list" class="admin-table"></div>
+        </div>
+      </section>
+
+      {/* Partners pane — creator codes + commission tracking */}
+      <section id="pane-partners" class="container-wide pb-24" hidden>
+        <div class="admin-event-create">
+          <p class="lounge-label">Create creator code</p>
+          <form id="code-create-form" class="admin-event-form">
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Creator (member)</span>
+                <select name="creator_id" id="code-create-creator" required>
+                  <option value="">— Select a member —</option>
+                </select>
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Code (uppercase)</span>
+                <input type="text" name="code" required maxlength="32" placeholder="LASSE15" style="text-transform: uppercase;" />
+              </label>
+            </div>
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Tier</span>
+                <select name="tier" id="code-create-tier" required>
+                  <option value="affiliate" data-mrate="0.25" data-arate="0.15">Affiliate — 25% / 15%</option>
+                  <option value="creator" data-mrate="0.35" data-arate="0.20">Creator — 35% / 20%</option>
+                  <option value="ambassador" data-mrate="0.45" data-arate="0.25">Ambassador — 45% / 25%</option>
+                </select>
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Notes (private)</span>
+                <input type="text" name="notes" maxlength="200" placeholder="e.g. Signed Jun 2026, 12mo trial" />
+              </label>
+            </div>
+            <button type="submit" class="lbtn lbtn-primary">Create code</button>
+            <p id="code-create-status" class="admin-event-form__status" hidden></p>
+          </form>
+        </div>
+
+        <div class="admin-event-list">
+          <p class="lounge-label">Active codes</p>
+          <div id="codes-list" class="admin-table"></div>
+        </div>
+
+        <div class="admin-event-list" style="margin-top: 28px;">
+          <p class="lounge-label">Pending payouts</p>
+          <div id="payouts-list" class="admin-table"></div>
         </div>
       </section>
 
@@ -737,7 +785,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function wireTabs() {
-    const tabs = ["members", "venues", "events", "activity"];
+    const tabs = ["members", "venues", "events", "partners", "activity"];
     const tabEls = tabs.map((t) => document.getElementById(`tab-${t}`) as HTMLButtonElement);
     const paneEls = tabs.map((t) => document.getElementById(`pane-${t}`) as HTMLElement);
     tabEls.forEach((btn, idx) => {
@@ -746,7 +794,175 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         paneEls.forEach((p, i) => (p.hidden = i !== idx));
         if (tabs[idx] === "activity") loadActivity();
         if (tabs[idx] === "events") loadEvents();
+        if (tabs[idx] === "partners") loadPartners();
       });
+    });
+  }
+
+  // ── Partners tab ────────────────────────────────────────────────────────
+  async function loadPartners() {
+    const supabase = getSupabase();
+    const codesList = document.getElementById("codes-list") as HTMLElement;
+    const payoutsList = document.getElementById("payouts-list") as HTMLElement;
+    if (!codesList) return;
+
+    // Populate member dropdown once
+    const creatorSel = document.getElementById("code-create-creator") as HTMLSelectElement;
+    if (creatorSel && creatorSel.options.length <= 1) {
+      const { data: members } = await supabase
+        .from("profiles")
+        .select("id, display_name, city")
+        .order("display_name");
+      for (const m of (members as any[]) || []) {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = `${m.display_name || "Member"} — ${m.city || "no city"}`;
+        creatorSel.appendChild(opt);
+      }
+    }
+
+    // Codes list with totals
+    const { data: codes } = await supabase
+      .from("creator_codes")
+      .select("id, code, tier, membership_rate, accessory_rate, active, created_at, creator:creator_id(display_name)")
+      .order("created_at", { ascending: false });
+    const codeRows = (codes as any[]) || [];
+
+    // Aggregate redemptions per code in one shot, then bucket client-side.
+    const { data: reds } = await supabase
+      .from("code_redemptions")
+      .select("code_id, event_type, commission_amount, paid_out_at, gross_amount");
+    const aggByCode: Record<string, { referred: number; ytd: number; pending: number }> = {};
+    for (const r of (reds as any[]) || []) {
+      const k = r.code_id;
+      if (!aggByCode[k]) aggByCode[k] = { referred: 0, ytd: 0, pending: 0 };
+      if (r.event_type === "signup") aggByCode[k].referred += 1;
+      aggByCode[k].ytd += Number(r.commission_amount) || 0;
+      if (!r.paid_out_at) aggByCode[k].pending += Number(r.commission_amount) || 0;
+    }
+
+    if (codeRows.length === 0) {
+      codesList.innerHTML = `<p style="color:var(--color-text-muted);padding:14px 0;font-size:0.9rem;">No creator codes yet. Create the first one above.</p>`;
+    } else {
+      codesList.innerHTML = codeRows
+        .map((c) => {
+          const agg = aggByCode[c.id] || { referred: 0, ytd: 0, pending: 0 };
+          const tierLabel = c.tier === "ambassador" ? "★ Ambassador" : c.tier === "creator" ? "Creator" : "Affiliate";
+          return `
+            <div class="admin-row" data-code-id="${c.id}">
+              <div class="admin-row__avatar" style="background:var(--color-gold-soft);color:var(--color-gold);font-size:11px;letter-spacing:.05em;">${escapeHtml(c.code.slice(0,3))}</div>
+              <div class="admin-row__main">
+                <p class="admin-row__name">${escapeHtml(c.code)} <span style="color:var(--color-text-muted);font-weight:500;">· ${escapeHtml(c.creator?.display_name || "—")}</span></p>
+                <p class="admin-row__meta">${tierLabel} · ${(c.membership_rate * 100).toFixed(0)}% mbr / ${(c.accessory_rate * 100).toFixed(0)}% acc · ${agg.referred} referred · $${agg.ytd.toFixed(2)} YTD · <strong style="color:${agg.pending > 0 ? 'var(--color-gold)' : 'var(--color-text-muted)'};">$${agg.pending.toFixed(2)} pending</strong></p>
+              </div>
+              <div class="admin-row__actions">
+                ${c.active
+                  ? `<button class="admin-row__btn" data-action="deactivate-code">Deactivate</button>`
+                  : `<button class="admin-row__btn" data-action="activate-code">Activate</button>`}
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      codesList.querySelectorAll<HTMLButtonElement>("[data-action='deactivate-code'], [data-action='activate-code']").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const row = btn.closest(".admin-row") as HTMLElement;
+          const id = row.dataset.codeId;
+          if (!id) return;
+          const active = btn.dataset.action === "activate-code";
+          btn.disabled = true;
+          const { error } = await supabase.from("creator_codes").update({ active }).eq("id", id);
+          if (error) { alert(error.message); btn.disabled = false; return; }
+          await loadPartners();
+        });
+      });
+    }
+
+    // Pending payouts list (unpaid redemptions, grouped by code, with mark-as-paid action)
+    const { data: pending } = await supabase
+      .from("code_redemptions")
+      .select("id, code_id, event_type, gross_amount, commission_amount, created_at, code:code_id(code, creator:creator_id(display_name))")
+      .is("paid_out_at", null)
+      .gt("commission_amount", 0)
+      .order("created_at", { ascending: false });
+    const pendingRows = (pending as any[]) || [];
+    if (pendingRows.length === 0) {
+      payoutsList.innerHTML = `<p style="color:var(--color-text-muted);padding:14px 0;font-size:0.9rem;">No commission events pending payout. Signup events have $0 commission and don't appear here.</p>`;
+    } else {
+      payoutsList.innerHTML = pendingRows
+        .map((r) => {
+          const when = new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+          const label = r.event_type === "membership_renew" ? "Membership" : r.event_type === "accessory_order" ? "Accessory order" : r.event_type;
+          return `
+            <div class="admin-row" data-red-id="${r.id}">
+              <div class="admin-row__avatar" style="background:var(--color-gold-soft);color:var(--color-gold);font-size:11px;">$$</div>
+              <div class="admin-row__main">
+                <p class="admin-row__name">$${Number(r.commission_amount).toFixed(2)} <span style="color:var(--color-text-muted);font-weight:500;">to ${escapeHtml(r.code?.creator?.display_name || "—")} via ${escapeHtml(r.code?.code || "—")}</span></p>
+                <p class="admin-row__meta">${label} · gross $${Number(r.gross_amount).toFixed(2)} · ${when}</p>
+              </div>
+              <div class="admin-row__actions">
+                <button class="admin-row__btn" data-action="mark-paid">Mark paid</button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+      payoutsList.querySelectorAll<HTMLButtonElement>("[data-action='mark-paid']").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const row = btn.closest(".admin-row") as HTMLElement;
+          const id = row.dataset.redId;
+          if (!id) return;
+          btn.disabled = true;
+          const { error } = await supabase
+            .from("code_redemptions")
+            .update({ paid_out_at: new Date().toISOString() })
+            .eq("id", id);
+          if (error) { alert(error.message); btn.disabled = false; return; }
+          await loadPartners();
+        });
+      });
+    }
+  }
+
+  function wireCodeCreate() {
+    const form = document.getElementById("code-create-form") as HTMLFormElement | null;
+    if (!form) return;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("code-create-status") as HTMLElement;
+      const submitBtn = form.querySelector("button[type='submit']") as HTMLButtonElement;
+      submitBtn.disabled = true; submitBtn.textContent = "Saving…";
+      const fd = new FormData(form);
+      const tierSel = document.getElementById("code-create-tier") as HTMLSelectElement;
+      const opt = tierSel.options[tierSel.selectedIndex];
+      const payload = {
+        creator_id: String(fd.get("creator_id") || ""),
+        code: String(fd.get("code") || "").trim().toUpperCase(),
+        tier: String(fd.get("tier") || ""),
+        membership_rate: Number(opt.dataset.mrate),
+        accessory_rate: Number(opt.dataset.arate),
+        notes: String(fd.get("notes") || "").trim() || null,
+        active: true,
+      };
+      if (!payload.creator_id || !payload.code) {
+        status.hidden = false; status.classList.add("is-error");
+        status.textContent = "Pick a creator and enter a code.";
+        submitBtn.disabled = false; submitBtn.textContent = "Create code";
+        return;
+      }
+      const supabase = getSupabase();
+      const { error } = await supabase.from("creator_codes").insert(payload);
+      if (error) {
+        status.hidden = false; status.classList.add("is-error");
+        status.textContent = error.message;
+      } else {
+        status.hidden = false; status.classList.remove("is-error");
+        status.textContent = `Code ${payload.code} created. Share link: lounge.thenextcigar.com/?ref=${payload.code}`;
+        form.reset();
+        await loadPartners();
+      }
+      submitBtn.disabled = false; submitBtn.textContent = "Create code";
     });
   }
 
@@ -890,6 +1106,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     await Promise.all([loadStats(), loadMembers(), loadVenues()]);
     wireTabs();
     wireEventCreate();
+    wireCodeCreate();
 
     // Wire filter inputs (members)
     document.getElementById("filter-members-search")?.addEventListener("input", renderMembers);
