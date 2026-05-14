@@ -143,7 +143,8 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   <LoungeTabBar />
 </BaseLayout>
 
-<style>
+<style is:global>
+  /* Global so dynamically-injected flavor chips (innerHTML) get the styling. */
   .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
   .lounge-app__guard {
     min-height: 60vh; display: flex; align-items: center; justify-content: center;

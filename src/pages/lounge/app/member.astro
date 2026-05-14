@@ -133,7 +133,8 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
   <IntroSheet />
 </BaseLayout>
 
-<style>
+<style is:global>
+  /* Global so dynamically-injected flavor chips, signal lozenges, and avatars get the styling. */
   .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
 
   .lounge-app__guard {

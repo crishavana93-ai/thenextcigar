@@ -279,8 +279,16 @@
   @media (min-width: 768px) {
     .trav-fab { display: none; }
   }
-  /* Hide on the travel page itself — the form is already visible there. */
-  body.is-travel-page .trav-fab { display: none; }
+  /* Hide on pages where the FAB would cover primary CTAs or composers.
+     - travel: form already visible
+     - map: find-me FAB takes that spot
+     - inbox: covers "Send a note" / Accept / Decline buttons
+     - messages: covers the send button at the bottom of the thread composer
+     - member detail: covers the "Request introduction" CTA */
+  body.is-travel-page .trav-fab,
+  body.is-inbox-page .trav-fab,
+  body.is-messages-page .trav-fab,
+  body.is-member-page .trav-fab { display: none; }
 </style>
 
 <button id="lounge-travel-fab" class="trav-fab" type="button" aria-label="Plan a trip" hidden>
@@ -340,10 +348,12 @@
     closeBtn?.addEventListener("click", close);
     cancelBtn?.addEventListener("click", close);
 
-    // Tag the body when we're on the travel page so the FAB hides via CSS.
-    if (window.location.pathname.includes("/lounge/app/travel")) {
-      document.body.classList.add("is-travel-page");
-    }
+    // Tag the body on pages where the FAB should hide via CSS.
+    const p = window.location.pathname;
+    if (p.includes("/lounge/app/travel")) document.body.classList.add("is-travel-page");
+    if (p.includes("/lounge/app/inbox")) document.body.classList.add("is-inbox-page");
+    if (p.includes("/lounge/app/messages")) document.body.classList.add("is-messages-page");
+    if (p.includes("/lounge/app/member")) document.body.classList.add("is-member-page");
 
     // Reveal FAB only after we know the user is signed in. Avoids showing it
     // on the login/marketing pages briefly while auth resolves.

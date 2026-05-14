@@ -91,7 +91,8 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   <LoungeTabBar active="inbox" />
 </BaseLayout>
 
-<style>
+<style is:global>
+  /* Global so dynamically-injected intro cards + avatars get the styling. */
   .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
 
   .lounge-app__guard {
