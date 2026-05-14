@@ -965,7 +965,9 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       console.error("[Lounge map] failed to load events:", error);
       return;
     }
-    allEvents = ((data as any[]) || []).filter((e) => e.venue && typeof e.venue.lat === "number");
+    allEvents = ((data as any[]) || []).filter(
+      (e) => e.venue && isValidCoord(e.venue.lat, e.venue.lng),
+    );
   }
 
   // ── Filter chip state (replaces the old <select> + checkboxes) ─────────────
@@ -1067,9 +1069,17 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     });
   }
 
+  function isValidCoord(lat: any, lng: any): boolean {
+    return typeof lat === "number" && typeof lng === "number" &&
+      !Number.isNaN(lat) && !Number.isNaN(lng) &&
+      lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+
   function flyToCity(city: string): void {
     if (!city || !map) return;
-    const lounge = allLounges.find((l) => l.city.toLowerCase() === city.toLowerCase());
+    const lounge = allLounges.find(
+      (l) => l.city.toLowerCase() === city.toLowerCase() && isValidCoord(l.lat, l.lng),
+    );
     if (lounge) map.flyTo([lounge.lat, lounge.lng], 12, { duration: 0.8 });
   }
 
@@ -1238,7 +1248,11 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     eventMarkerIds.forEach((m) => map.removeLayer(m));
     eventMarkerIds = [];
 
-    const filteredLounges = allLounges.filter((l) => !cityFilter || l.city === cityFilter);
+    // Defensive: drop any venue with bad coords so a single bad row doesn't
+    // crash the whole marker render (which then breaks pin click handlers).
+    const filteredLounges = allLounges
+      .filter((l) => !cityFilter || l.city === cityFilter)
+      .filter((l) => isValidCoord(l.lat, l.lng));
     let memberCount = 0;
 
     // Venue pins — use venue photo when available, fall back to type glyph.
@@ -1380,7 +1394,9 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         const idx = Number(btn.getAttribute("data-idx") || "0");
         const item = items[idx];
         if (!item) return;
-        if (map) map.flyTo([item.l.lat, item.l.lng], 14, { duration: 0.7 });
+        if (map && isValidCoord(item.l.lat, item.l.lng)) {
+          map.flyTo([item.l.lat, item.l.lng], 14, { duration: 0.7 });
+        }
         if (item.c.member_id === myUserId) {
           showVenueSheet(item.l);
         } else {
@@ -1568,8 +1584,13 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     if (guard) guard.style.display = "none";
     if (shell) shell.hidden = false;
 
-    // Make sure leaflet recalculates after reveal
-    setTimeout(() => map.invalidateSize(), 50);
+    // CRITICAL: invalidateSize() must run AFTER the container becomes visible
+    // and BEFORE any flyTo/setView, otherwise Leaflet's internal _size is 0
+    // and the interpolation math produces NaN coordinates (which then crash
+    // every marker click handler). Two invalidates: one sync now, one after
+    // requestAnimationFrame to catch any layout that's still settling.
+    map.invalidateSize();
+    requestAnimationFrame(() => map.invalidateSize());
 
     // Coach banner — when arriving from "Be the first" / Check-in CTAs.
     const params = new URLSearchParams(window.location.search);
@@ -1585,20 +1606,28 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       });
     }
 
-    // Open initial state
+    // Open initial state — use setView (instant, no animation) for the first
+    // positioning instead of flyTo (animated, can NaN if size races). Subsequent
+    // city changes via chip use the animated flyTo, which is safe by then.
     const urlCity = params.get("city");
     if (urlCity) {
-      flyToCity(urlCity);
+      const lounge = allLounges.find(
+        (l) => l.city.toLowerCase() === urlCity.toLowerCase() && isValidCoord(l.lat, l.lng),
+      );
+      if (lounge) map.setView([lounge.lat, lounge.lng], 12);
     } else {
       const mine = Object.values(activeByLoungeId).flat().find((c) => c.member_id === myUserId);
       if (mine) {
         const lounge = allLounges.find((l) => l.id === mine.lounge_id);
-        if (lounge) {
+        if (lounge && isValidCoord(lounge.lat, lounge.lng)) {
           map.setView([lounge.lat, lounge.lng], 13);
           showVenueSheet(lounge);
         }
       } else if (myCity) {
-        flyToCity(myCity);
+        const lounge = allLounges.find(
+          (l) => l.city.toLowerCase() === myCity.toLowerCase() && isValidCoord(l.lat, l.lng),
+        );
+        if (lounge) map.setView([lounge.lat, lounge.lng], 12);
       }
     }
   }
