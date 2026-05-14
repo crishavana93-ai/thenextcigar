@@ -70,6 +70,10 @@ const skipPublicChrome = bareChrome || isLoungeApp;
         <meta name="apple-mobile-web-app-title" content="The Lounge" />
         <meta name="application-name" content="The Lounge" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#1A1D2E" />
+        <link rel="apple-touch-icon" href="/lounge-app-icon-192.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/lounge-app-icon-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/lounge-app-icon-512.png" />
       </>
     ) : (
       <>
@@ -77,10 +81,10 @@ const skipPublicChrome = bareChrome || isLoungeApp;
         <meta name="apple-mobile-web-app-title" content="TNext Cigars" />
         <meta name="application-name" content="TNext Cigars" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
       </>
     )}
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Impact.com publisher verification (proves we own thenextcigar.com) -->
@@ -251,5 +255,19 @@ const skipPublicChrome = bareChrome || isLoungeApp;
         setup();
       })();
     </script>
+
+    {/* Service worker — required for the Lounge to install as a true PWA on
+        Android Chrome / Samsung Internet (instead of a browser shortcut). */}
+    {isLoungeApp && (
+      <script is:inline>
+        if ("serviceWorker" in navigator) {
+          window.addEventListener("load", () => {
+            navigator.serviceWorker
+              .register("/sw-lounge.js", { scope: "/lounge/app/" })
+              .catch((err) => console.warn("[Lounge] SW registration failed:", err));
+          });
+        }
+      </script>
+    )}
   </body>
 </html>
