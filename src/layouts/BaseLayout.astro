@@ -258,36 +258,59 @@ const skipPublicChrome = bareChrome || isLoungeApp;
 
     {/* Service worker — required for the Lounge to install as a true PWA on
         Android Chrome / Samsung Internet (instead of a browser shortcut).
-        Also auto-prompts users to reload when a new version of the app is
-        deployed (no more stale-cache complaints). */}
+        Includes a "version stamp" force-reset: bump the LOUNGE_APP_VERSION
+        constant on every meaningful deploy and any cached client will nuke
+        its SWs + caches on next load. */}
     {isLoungeApp && (
       <script is:inline>
-        if ("serviceWorker" in navigator) {
-          window.addEventListener("load", () => {
-            navigator.serviceWorker
-              .register("/sw-lounge.js", { scope: "/lounge/app/" })
-              .then((reg) => {
-                // Check for updates every 60s while the page is open
-                setInterval(() => reg.update().catch(() => {}), 60_000);
-                // When a new SW takes over, reload so the user gets fresh JS/HTML
-                reg.addEventListener("updatefound", () => {
-                  const newWorker = reg.installing;
-                  if (!newWorker) return;
-                  newWorker.addEventListener("statechange", () => {
-                    if (
-                      newWorker.state === "installed" &&
-                      navigator.serviceWorker.controller
-                    ) {
-                      // There's already a controlling SW + a new one ready.
-                      // Reload silently — the v3+ caches are bypass-safe.
-                      window.location.reload();
-                    }
+        // Bump this on any meaningful deploy to force ALL clients to clean state.
+        const LOUNGE_APP_VERSION = "2026-05-14-22:00";
+
+        (async function () {
+          try {
+            const stored = localStorage.getItem("lounge_app_version");
+            if (stored !== LOUNGE_APP_VERSION) {
+              // Out-of-date client. Wipe everything and reload.
+              if ("serviceWorker" in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+              }
+              if ("caches" in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => caches.delete(k).catch(() => {})));
+              }
+              localStorage.setItem("lounge_app_version", LOUNGE_APP_VERSION);
+              // Only reload if this was an upgrade (not first install where stored is null)
+              if (stored !== null) {
+                location.reload();
+                return;
+              }
+            }
+          } catch (err) {
+            console.warn("[Lounge] version-stamp reset failed:", err);
+          }
+
+          if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+              navigator.serviceWorker
+                .register("/sw-lounge.js", { scope: "/lounge/app/" })
+                .then((reg) => {
+                  // Check for updates every 60s
+                  setInterval(() => reg.update().catch(() => {}), 60_000);
+                  reg.addEventListener("updatefound", () => {
+                    const nw = reg.installing;
+                    if (!nw) return;
+                    nw.addEventListener("statechange", () => {
+                      if (nw.state === "installed" && navigator.serviceWorker.controller) {
+                        location.reload();
+                      }
+                    });
                   });
-                });
-              })
-              .catch((err) => console.warn("[Lounge] SW registration failed:", err));
-          });
-        }
+                })
+                .catch((err) => console.warn("[Lounge] SW registration failed:", err));
+            });
+          }
+        })();
       </script>
     )}
   </body>

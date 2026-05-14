@@ -689,28 +689,38 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     width: 100%; height: 100%; object-fit: cover;
   }
 
-  /* Bottom sheet */
+  /* Bottom sheet — full-width slide-up on mobile, anchored card on desktop. */
   .lounge-sheet {
-    position: fixed; left: 0; right: 0; bottom: 0;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    /* Explicit max-width so content can't blow the sheet wider than viewport */
+    max-width: 100vw;
+    box-sizing: border-box;
     background: #f5efe0;
     color: var(--color-text);
     border-top: 1px solid rgba(0,0,0,0.1);
     border-radius: 14px 14px 0 0;
     box-shadow: 0 -8px 30px rgba(0,0,0,0.35);
     padding: 1.2rem 1.25rem 1.4rem;
-    z-index: 60;
+    z-index: 1000;                        /* well above Leaflet panes (~400) */
     max-height: 65vh;
     overflow-y: auto;
+    overflow-x: hidden;                   /* belt-and-suspenders */
     animation: sheetUp 0.22s ease-out;
   }
   @media (min-width: 768px) {
     .lounge-sheet {
-      left: auto; right: 1.5rem; bottom: 1.5rem;
+      left: auto;
+      right: 1.5rem;
+      bottom: 1.5rem;
       width: 24rem;
+      max-width: calc(100vw - 3rem);      /* never overflow the viewport */
       border-radius: 12px;
       max-height: 70vh;
     }
   }
+  /* Word-break for very long unspaced addresses so they don't push the sheet wide */
+  .lounge-sheet h2, .lounge-sheet p { overflow-wrap: anywhere; word-break: break-word; }
   @keyframes sheetUp {
     from { transform: translateY(20px); opacity: 0; }
     to   { transform: translateY(0); opacity: 1; }
