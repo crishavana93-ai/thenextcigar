@@ -331,7 +331,8 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function applyFilter(): EventRow[] {
-    const cityFilter = ((document.getElementById("evt-city") as HTMLInputElement).value || "").trim();
+    const cityFilter = ((document.getElementById("evt-city") as HTMLInputElement).value || "")
+      .trim().toLowerCase();
     const when = (document.getElementById("evt-when") as HTMLSelectElement).value;
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -340,7 +341,9 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
 
     return allEvents.filter((e) => {
-      if (cityFilter && e.city !== cityFilter) return false;
+      // Case-insensitive AND substring match so "hav" or "havana" or "Havana"
+      // all hit "Havana", and "new york" hits "New York".
+      if (cityFilter && !e.city.toLowerCase().includes(cityFilter)) return false;
       const s = new Date(e.start_at);
       if (when === "this_month") return s >= startOfMonth && s <= endOfMonth;
       if (when === "next_month") return s >= startOfNextMonth && s <= endOfNextMonth;

@@ -210,9 +210,13 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function render() {
-    const city = ((document.getElementById("pl-city") as HTMLInputElement).value || "").trim();
+    const city = ((document.getElementById("pl-city") as HTMLInputElement).value || "")
+      .trim().toLowerCase();
     const type = (document.getElementById("pl-type") as HTMLSelectElement).value;
-    const list = all.filter((l) => (!city || l.city === city) && (!type || l.type === type));
+    // Case-insensitive substring match
+    const list = all.filter(
+      (l) => (!city || l.city.toLowerCase().includes(city)) && (!type || l.type === type),
+    );
 
     const grid = document.getElementById("pl-grid") as HTMLElement;
     const empty = document.getElementById("pl-empty") as HTMLElement;
