@@ -441,11 +441,26 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
   }
 
   /* Pins */
+  :global(.tnc-venue-pin-wrap) {
+    position: relative;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
   :global(.tnc-venue-pin) {
-    width: 14px; height: 14px;
+    width: 22px; height: 22px;
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 1.5px solid #fff;
     box-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  :global(.tnc-venue-pin svg) {
+    width: 12px; height: 12px;
+    stroke: #fff;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   :global(.tnc-venue-pin--lounge) { background: #c8a052; }
   :global(.tnc-venue-pin--retailer) { background: #4d7a5c; }
@@ -456,6 +471,25 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
   :global(.tnc-venue-pin--has-active) {
     box-shadow: 0 0 0 4px rgba(255,46,46,0.45), 0 1px 6px rgba(0,0,0,0.6);
   }
+  :global(.tnc-venue-label) {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 4px);
+    background: rgba(15, 17, 28, 0.92);
+    color: #f5efe0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(201, 169, 97, 0.35);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+  :global(body.is-zoomed-in .tnc-venue-label) { opacity: 1; }
 
   :global(.tnc-member-pin) {
     width: 38px; height: 38px;
@@ -669,6 +703,32 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
   }
+  function venueGlyph(type: string): string {
+    // Compact 16x16 SVG glyphs matching venue type. Stroke-only, white inherited.
+    switch (type) {
+      case "lounge":
+        // Smoke curl / leaf
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 14c0-3 4-3 4-6s-4-3-4-6"/><path d="M14 18c0-3 4-3 4-6"/></svg>`;
+      case "retailer":
+        // Storefront / shopping bag
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>`;
+      case "casadelhabano":
+        // Star (premium / certified)
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.5 6 .9-4.3 4.3 1 6L12 17l-5.3 2.7 1-6L3.4 9.4l6-.9L12 3Z"/></svg>`;
+      case "house":
+        // Home
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`;
+      case "pub":
+        // Beer mug
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h10v13H6z"/><path d="M16 10h3v6h-3"/><path d="M9 11v6"/><path d="M12 11v6"/></svg>`;
+      case "club":
+        // Music note
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>`;
+      default:
+        return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/></svg>`;
+    }
+  }
+
   function fmtRemaining(iso: string): string {
     const remaining = new Date(iso).getTime() - Date.now();
     if (remaining <= 0) return "expired";
@@ -968,11 +1028,15 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     if (showLounges) {
       for (const l of filteredLounges) {
         const hasActive = (activeByLoungeId[l.id]?.length || 0) > 0;
+        const glyph = venueGlyph(l.type);
         const icon = L.divIcon({
           className: "",
-          html: `<div class="tnc-venue-pin tnc-venue-pin--${l.type}${hasActive ? " tnc-venue-pin--has-active" : ""}"></div>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
+          html: `<div class="tnc-venue-pin-wrap">
+            <div class="tnc-venue-pin tnc-venue-pin--${l.type}${hasActive ? " tnc-venue-pin--has-active" : ""}">${glyph}</div>
+            <span class="tnc-venue-label">${escapeHtml(l.name)}</span>
+          </div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
         });
         const m = L.marker([l.lat, l.lng], { icon, zIndexOffset: 50 }).addTo(map);
         m.on("click", () => showVenueSheet(l));
@@ -1022,11 +1086,15 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     items.sort((a, b) => new Date(b.c.expires_at).getTime() - new Date(a.c.expires_at).getTime());
 
     if (items.length === 0) {
-      // Empty state: prompt the user to check in
+      // Empty state — gold-tinted on the dark map surface
       track.innerHTML = `
-        <div class="cruiser-empty">
-          <p class="cruiser-empty__line">Nobody's checked in right now.</p>
-          <p class="cruiser-empty__hint">Be the first — tap a venue pin to check in.</p>
+        <div class="lounge-empty lounge-empty--inline lounge-empty--on-dark" style="flex-grow:1;margin:0 14px;">
+          <div class="lounge-empty__art">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+          <h3 class="lounge-empty__title">Nobody's checked in yet. Tap a pin to be the first.</h3>
         </div>`;
       strip.hidden = false;
       return;
@@ -1111,6 +1179,14 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       maxZoom: 19,
       subdomains: "abcd",
     }).addTo(map);
+
+    // Toggle pin labels at zoom 11+
+    const updateZoomClass = () => {
+      const z = map.getZoom();
+      document.body.classList.toggle("is-zoomed-in", z >= 11);
+    };
+    map.on("zoomend", updateZoomClass);
+    updateZoomClass();
 
     renderMembersAndVenues();
     renderMyActive();
