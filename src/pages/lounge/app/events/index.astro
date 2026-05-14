@@ -25,9 +25,14 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         <div class="evt-filters">
           <label class="evt-filter">
             <span class="evt-filter__label">City</span>
-            <select id="evt-city" class="evt-filter__input">
-              <option value="">All cities</option>
-            </select>
+            <input
+              id="evt-city"
+              class="evt-filter__input"
+              list="evt-city-list"
+              type="search"
+              placeholder="All cities — type to filter"
+              autocomplete="off" />
+            <datalist id="evt-city-list"></datalist>
           </label>
           <label class="evt-filter">
             <span class="evt-filter__label">When</span>
@@ -326,7 +331,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function applyFilter(): EventRow[] {
-    const cityFilter = (document.getElementById("evt-city") as HTMLSelectElement).value;
+    const cityFilter = ((document.getElementById("evt-city") as HTMLInputElement).value || "").trim();
     const when = (document.getElementById("evt-when") as HTMLSelectElement).value;
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -364,13 +369,17 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         const venue = e.venue?.name || e.city;
         const count = attendeeCounts[e.id] || 0;
         const mine = myRsvps[e.id];
+        // Always show the going count so members can gauge interest, even
+        // when they've already RSVP'd. If they're going, surface that with
+        // the pill but also keep the count.
+        const countLabel = count > 0
+          ? `${count} going${mine === "going" ? " (incl. you)" : ""}`
+          : (mine === "going" ? "You're the first" : "");
         const pill = mine === "going"
-          ? `<span class="evt-card__pill evt-card__pill--going">You're going</span>`
+          ? `<span class="evt-card__pill evt-card__pill--going">You're going</span><span>${countLabel}</span>`
           : mine === "maybe"
-            ? `<span class="evt-card__pill">Maybe</span>`
-            : count > 0
-              ? `<span>${count} going</span>`
-              : "";
+            ? `<span class="evt-card__pill">Maybe</span><span>${countLabel}</span>`
+            : `<span>${countLabel}</span>`;
         return `
           <button type="button" class="evt-card" data-event-id="${e.id}">
             <p class="evt-card__date">${date}</p>
@@ -516,22 +525,18 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       .eq("status", "going");
     for (const c of (counts as any[]) || []) attendeeCounts[c.event_id] = (attendeeCounts[c.event_id] || 0) + 1;
 
-    // Populate city dropdown
-    const citySel = document.getElementById("evt-city") as HTMLSelectElement;
+    // Populate city datalist (typeahead source)
+    const cityInput = document.getElementById("evt-city") as HTMLInputElement;
+    const cityList = document.getElementById("evt-city-list") as HTMLDataListElement;
     const cities = Array.from(new Set(allEvents.map((e) => e.city))).sort();
-    for (const c of cities) {
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
-      citySel.appendChild(opt);
-    }
-    // Default to member's city if they have one and we have events there
+    cityList.innerHTML = cities.map((c) => `<option value="${c.replace(/"/g, "&quot;")}"></option>`).join("");
+    // Pre-fill with member's city if events exist there
     if (profile?.city && cities.includes(profile.city)) {
-      citySel.value = profile.city;
+      cityInput.value = profile.city;
     }
 
     // Filter change listeners
-    citySel.addEventListener("change", render);
+    cityInput.addEventListener("input", render);
     (document.getElementById("evt-when") as HTMLSelectElement).addEventListener("change", render);
 
     // Sheet wires

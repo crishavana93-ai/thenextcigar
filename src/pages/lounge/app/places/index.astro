@@ -26,9 +26,14 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         <div class="pl-filters">
           <label class="pl-filter">
             <span class="pl-filter__label">City</span>
-            <select id="pl-city" class="pl-filter__input">
-              <option value="">All cities</option>
-            </select>
+            <input
+              id="pl-city"
+              class="pl-filter__input"
+              list="pl-city-list"
+              type="search"
+              placeholder="All cities — type to filter"
+              autocomplete="off" />
+            <datalist id="pl-city-list"></datalist>
           </label>
           <label class="pl-filter">
             <span class="pl-filter__label">Type</span>
@@ -205,7 +210,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function render() {
-    const city = (document.getElementById("pl-city") as HTMLSelectElement).value;
+    const city = ((document.getElementById("pl-city") as HTMLInputElement).value || "").trim();
     const type = (document.getElementById("pl-type") as HTMLSelectElement).value;
     const list = all.filter((l) => (!city || l.city === city) && (!type || l.type === type));
 
@@ -261,20 +266,16 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       .order("name", { ascending: true });
     all = (lounges as Lounge[]) || [];
 
-    // Populate city dropdown
-    const citySel = document.getElementById("pl-city") as HTMLSelectElement;
+    // Populate city datalist (typeahead source)
+    const cityInput = document.getElementById("pl-city") as HTMLInputElement;
+    const cityList = document.getElementById("pl-city-list") as HTMLDataListElement;
     const cities = Array.from(new Set(all.map((l) => l.city))).sort();
-    for (const c of cities) {
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
-      citySel.appendChild(opt);
-    }
+    cityList.innerHTML = cities.map((c) => `<option value="${c.replace(/"/g, "&quot;")}"></option>`).join("");
     if (profile?.city && cities.includes(profile.city)) {
-      citySel.value = profile.city;
+      cityInput.value = profile.city;
     }
 
-    citySel.addEventListener("change", render);
+    cityInput.addEventListener("input", render);
     (document.getElementById("pl-type") as HTMLSelectElement).addEventListener("change", render);
 
     (document.getElementById("lounge-guard") as HTMLElement).style.display = "none";
