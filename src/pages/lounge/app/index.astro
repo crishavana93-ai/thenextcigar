@@ -12,11 +12,35 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   <LoungeHeader active="dashboard" />
 
   <main class="lounge-app">
-    {/* Auth guard renders a loading shell first; client-side script swaps in real content */}
-    <div id="lounge-guard" class="lounge-app__guard">
-      <div class="lounge-app__guard-inner">
-        <p class="lounge-app__guard-eyebrow">Loading the Lounge…</p>
+    {/* Auth guard — feed-shaped skeleton so the page looks alive before data lands */}
+    <div id="lounge-guard" class="lskel-page">
+      <p class="lskel-kicker">Loading the Lounge</p>
+
+      {/* Status strip skeleton */}
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--color-bg-soft);border:1px solid var(--color-gold-soft);border-radius:10px;margin-bottom:20px;">
+        <span class="lskel lskel--circle" style="width:48px;height:48px;"></span>
+        <span style="flex-grow:1;display:flex;flex-direction:column;gap:6px;">
+          <span class="lskel lskel--line-lg" style="width:55%;"></span>
+          <span class="lskel lskel--line" style="width:35%;"></span>
+        </span>
+        <span class="lskel lskel--pill" style="width:120px;"></span>
       </div>
+
+      {/* Live-now strip skeleton */}
+      <span class="lskel lskel--line" style="width:140px;margin:18px 0 10px;"></span>
+      <div class="lskel-strip">
+        <span class="lskel" style="width:110px;height:130px;"></span>
+        <span class="lskel" style="width:110px;height:130px;"></span>
+        <span class="lskel" style="width:110px;height:130px;"></span>
+        <span class="lskel" style="width:110px;height:130px;"></span>
+      </div>
+
+      {/* Feed rows skeleton */}
+      <span class="lskel lskel--line" style="width:160px;margin:24px 0 6px;"></span>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar"></span><span class="lskel-row__main"><span class="lskel lskel--line" style="width:80%;"></span><span class="lskel lskel--line" style="width:22%;"></span></span></div>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar"></span><span class="lskel-row__main"><span class="lskel lskel--line" style="width:65%;"></span><span class="lskel lskel--line" style="width:30%;"></span></span></div>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar"></span><span class="lskel-row__main"><span class="lskel lskel--line" style="width:75%;"></span><span class="lskel lskel--line" style="width:18%;"></span></span></div>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar"></span><span class="lskel-row__main"><span class="lskel lskel--line" style="width:60%;"></span><span class="lskel lskel--line" style="width:26%;"></span></span></div>
     </div>
 
     <div id="lounge-content" hidden>

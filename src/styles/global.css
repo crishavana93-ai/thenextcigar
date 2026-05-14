@@ -706,6 +706,97 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ============================================================================
+ * Lounge — skeleton loading primitives
+ * Pulsing gold-soft bones that match the eventual page layout.
+ * Use the primitive .lskel + sizing utilities for inline composition.
+ * ============================================================================ */
+.lskel {
+  display: block;
+  background: rgba(201, 169, 97, 0.10);
+  border-radius: 4px;
+  animation: lskelPulse 1.6s ease-in-out infinite;
+}
+@keyframes lskelPulse {
+  0%, 100% { background: rgba(201, 169, 97, 0.08); }
+  50%      { background: rgba(201, 169, 97, 0.22); }
+}
+/* Dark-surface variant (map screen, dark backdrops) */
+.lskel--on-dark {
+  background: rgba(255, 255, 255, 0.06);
+  animation-name: lskelPulseDark;
+}
+@keyframes lskelPulseDark {
+  0%, 100% { background: rgba(255, 255, 255, 0.05); }
+  50%      { background: rgba(255, 255, 255, 0.14); }
+}
+
+/* Common shapes */
+.lskel--circle    { border-radius: 50%; }
+.lskel--line      { height: 12px; }
+.lskel--line-sm   { height: 10px; }
+.lskel--line-lg   { height: 18px; }
+.lskel--line-xl   { height: 28px; }
+.lskel--card      { height: 120px; }
+.lskel--card-tall { height: 180px; }
+.lskel--pill      { height: 32px; border-radius: 999px; }
+
+/* Composed row (avatar + 2 lines) — used for feed / messages / inbox / directory */
+.lskel-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(201, 169, 97, 0.10);
+}
+.lskel-row:last-child { border-bottom: none; }
+.lskel-row__avatar { width: 40px; height: 40px; flex-shrink: 0; }
+.lskel-row__main {
+  flex-grow: 1;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+/* Horizontal strip of card-shaped bones (live-now strip / cruiser cards) */
+.lskel-strip {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.lskel-strip > .lskel { flex-shrink: 0; }
+
+/* Card grid for directory */
+.lskel-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+@media (min-width: 640px) { .lskel-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .lskel-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* Container — page-level wrapper for any of the above */
+.lskel-page {
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+.lskel-page--dark {
+  color: rgba(255, 255, 255, 0.5);
+  background: var(--color-charcoal, #1a1d2e);
+  min-height: 100vh;
+}
+
+/* Optional kicker label above the skeleton — quiets the loading state */
+.lskel-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(201, 169, 97, 0.5);
+  margin-bottom: 12px;
+}
+
+/* ============================================================================
  * Lounge — compatibility layer
  * Existing per-page button classes (.lounge-auth__button, .profile-form__submit,
  * .lounge-mem-cta, etc.) get retargeted to the new gold-on-charcoal pill so

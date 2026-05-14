@@ -12,10 +12,15 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   <LoungeHeader active="inbox" />
 
   <main class="lounge-app">
-    <div id="lounge-guard" class="lounge-app__guard">
-      <div class="lounge-app__guard-inner">
-        <p class="lounge-app__guard-eyebrow">Loading…</p>
-      </div>
+    <div id="lounge-guard" class="lskel-page">
+      <p class="lskel-kicker">Loading messages</p>
+      <span class="lskel lskel--line-xl" style="width:200px;margin-bottom:6px;"></span>
+      <span class="lskel lskel--line" style="width:320px;margin-bottom:20px;"></span>
+
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar" style="width:48px;height:48px;"></span><span class="lskel-row__main"><span class="lskel lskel--line-lg" style="width:40%;"></span><span class="lskel lskel--line" style="width:75%;"></span></span></div>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar" style="width:48px;height:48px;"></span><span class="lskel-row__main"><span class="lskel lskel--line-lg" style="width:32%;"></span><span class="lskel lskel--line" style="width:60%;"></span></span></div>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar" style="width:48px;height:48px;"></span><span class="lskel-row__main"><span class="lskel lskel--line-lg" style="width:48%;"></span><span class="lskel lskel--line" style="width:85%;"></span></span></div>
+      <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar" style="width:48px;height:48px;"></span><span class="lskel-row__main"><span class="lskel lskel--line-lg" style="width:36%;"></span><span class="lskel lskel--line" style="width:55%;"></span></span></div>
     </div>
 
     {/* MODE A — Conversation list (default) */}

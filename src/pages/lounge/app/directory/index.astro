@@ -12,9 +12,24 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   <LoungeHeader active="directory" />
 
   <main class="lounge-app">
-    <div id="lounge-guard" class="lounge-app__guard">
-      <div class="lounge-app__guard-inner">
-        <p class="lounge-app__guard-eyebrow">Loading members…</p>
+    <div id="lounge-guard" class="lskel-page">
+      <p class="lskel-kicker">Loading members</p>
+      <span class="lskel lskel--line-xl" style="width:280px;margin-bottom:10px;"></span>
+      <span class="lskel lskel--line" style="width:60%;margin-bottom:24px;"></span>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <span class="lskel lskel--pill" style="width:120px;"></span>
+        <span class="lskel lskel--pill" style="width:90px;"></span>
+        <span class="lskel lskel--pill" style="width:140px;"></span>
+      </div>
+
+      <div class="lskel-grid">
+        <span class="lskel lskel--card-tall"></span>
+        <span class="lskel lskel--card-tall"></span>
+        <span class="lskel lskel--card-tall"></span>
+        <span class="lskel lskel--card-tall"></span>
+        <span class="lskel lskel--card-tall"></span>
+        <span class="lskel lskel--card-tall"></span>
       </div>
     </div>
 

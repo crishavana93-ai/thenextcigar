@@ -12,10 +12,25 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   <LoungeHeader active="dashboard" />
 
   <main class="lounge-app">
-    <div id="lounge-guard" class="lounge-app__guard">
-      <div class="lounge-app__guard-inner">
-        <p class="lounge-app__guard-eyebrow">Checking access…</p>
+    <div id="lounge-guard" class="lskel-page">
+      <p class="lskel-kicker">Checking access</p>
+      <span class="lskel lskel--line-xl" style="width:280px;margin-bottom:8px;"></span>
+      <span class="lskel lskel--line" style="width:380px;margin-bottom:22px;"></span>
+
+      {/* Stats strip skeleton */}
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;background:var(--color-bg-soft);border:1px solid var(--color-gold-soft);border-radius:10px;margin-bottom:18px;">
+        {Array.from({length:8}).map(() => (
+          <div style="padding:10px;text-align:center;">
+            <span class="lskel" style="width:50%;height:24px;margin:0 auto 6px;"></span>
+            <span class="lskel" style="width:70%;height:10px;margin:0 auto;"></span>
+          </div>
+        ))}
       </div>
+
+      {/* Table rows skeleton */}
+      {Array.from({length:5}).map(() => (
+        <div class="lskel-row"><span class="lskel lskel--circle lskel-row__avatar"></span><span class="lskel-row__main"><span class="lskel lskel--line-lg" style="width:45%;"></span><span class="lskel lskel--line" style="width:65%;"></span></span><span class="lskel lskel--pill" style="width:120px;"></span></div>
+      ))}
     </div>
 
     {/* Denied state — non-admin tried to load /admin */}
