@@ -76,10 +76,9 @@ const { active = "dashboard" } = Astro.props as Props;
       </svg>
       <span>Admin</span>
     </a>
-    {/* Install app — hidden by default. Revealed when the browser fires the
-        beforeinstallprompt event (Chrome / Edge / Android), or shows iOS-specific
-        instructions on iPhone Safari (which doesn't fire that event). */}
-    <button id="lounge-menu-install" class="lounge-menu__item" role="menuitem" type="button" hidden>
+    {/* Install app — always shown unless we detect the user is already
+        running the installed PWA. Behaviour is platform-aware (see script). */}
+    <button id="lounge-menu-install" class="lounge-menu__item" role="menuitem" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -352,48 +351,74 @@ const { active = "dashboard" } = Astro.props as Props;
     const installBtn = document.getElementById("lounge-menu-install") as HTMLButtonElement | null;
     const installHint = document.getElementById("lounge-menu-install-hint");
     if (installBtn) {
-      // Already installed? Hide entirely.
+      // If running the installed PWA already, hide entirely.
       const standalone = window.matchMedia?.("(display-mode: standalone)").matches
         || (window.navigator as any).standalone === true;
       if (standalone) {
         installBtn.hidden = true;
       } else {
         let deferredPrompt: any = null;
+        const ua = window.navigator.userAgent;
+        const isIos = /iPhone|iPad|iPod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+        const isAndroid = /Android/i.test(ua);
+        const isChromiumDesktop = /Chrome|Chromium|Edg/i.test(ua) && !isAndroid && !isIos;
 
+        // Tailor the hint text to the platform so the user knows what to expect.
+        if (installHint) {
+          if (isIos) installHint.textContent = "tap Share → Add to Home Screen";
+          else if (isAndroid) installHint.textContent = "Chrome ⋮ → Install app";
+          else if (isChromiumDesktop) installHint.textContent = "address bar → install icon";
+          else installHint.textContent = "add to home screen";
+        }
+
+        // Capture the deferred prompt if/when the browser offers it.
         window.addEventListener("beforeinstallprompt", (e: any) => {
           e.preventDefault();
           deferredPrompt = e;
-          installBtn.hidden = false;
+          if (installHint) installHint.textContent = "tap to install";
         });
-
-        // iOS Safari fallback — no event, just sniff and show iOS instructions.
-        const ua = window.navigator.userAgent;
-        const isIos = /iPhone|iPad|iPod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
-        if (isIos) {
-          installBtn.hidden = false;
-          if (installHint) installHint.textContent = "tap Share → Add to Home Screen";
-        }
 
         installBtn.addEventListener("click", async () => {
           if (deferredPrompt) {
+            // Native install flow — fires the browser's own UI.
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === "accepted") {
-              installBtn.hidden = true;
-            }
+            if (outcome === "accepted") installBtn.hidden = true;
             deferredPrompt = null;
-          } else if (isIos) {
+            return;
+          }
+          // No native prompt available — guide the user per platform.
+          if (isIos) {
             alert(
-              "To install: tap the Share button (square + arrow) at the bottom of Safari, then 'Add to Home Screen'."
+              "To install on iPhone:\n\n" +
+              "1. Tap the Share button (square with arrow) at the bottom of Safari\n" +
+              "2. Scroll down and tap 'Add to Home Screen'\n" +
+              "3. Tap Add\n\n" +
+              "The Lounge will appear as an app icon on your home screen."
+            );
+          } else if (isAndroid) {
+            alert(
+              "To install on Android:\n\n" +
+              "1. Tap the three-dot menu (⋮) in Chrome's top-right\n" +
+              "2. Tap 'Install app' or 'Add to Home screen'\n" +
+              "3. Confirm Install\n\n" +
+              "The Lounge will appear as an app icon on your home screen."
+            );
+          } else if (isChromiumDesktop) {
+            alert(
+              "To install on desktop:\n\n" +
+              "Look for the install icon in the address bar (square with arrow, on the right side).\n" +
+              "Click it and confirm Install.\n\n" +
+              "Or open the Chrome menu (⋮) → Cast, save, and share → Install The Lounge."
             );
           } else {
             alert(
-              "Open this page in Chrome or Edge on a phone/laptop to install it as an app."
+              "Open this page in Chrome, Edge, or Safari to install The Lounge as an app on your device."
             );
           }
         });
 
-        // If install completes outside our flow (e.g. via the URL bar prompt),
+        // If install completes outside our flow (e.g. address-bar prompt),
         // hide the button.
         window.addEventListener("appinstalled", () => {
           installBtn.hidden = true;
