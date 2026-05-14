@@ -19,7 +19,7 @@ const { active = "dashboard" } = Astro.props as Props;
 
     <nav class="lounge-header__nav" aria-label="Lounge sections">
       <a href="/lounge/app/" class:list={["lounge-nav-link", active === "dashboard" && "is-active"]}>Home</a>
-      <a href="/lounge/app/directory/" class:list={["lounge-nav-link", active === "directory" && "is-active"]}>Members</a>
+      <a href="/lounge/app/directory/" class:list={["lounge-nav-link", active === "directory" && "is-active"]}>Discover</a>
       <a href="/lounge/app/map/" class:list={["lounge-nav-link", active === "map" && "is-active"]}>Map</a>
       <a href="/lounge/app/travel/" class:list={["lounge-nav-link", active === "travel" && "is-active"]}>Travel</a>
       <a href="/lounge/app/inbox/" class:list={["lounge-nav-link", active === "inbox" && "is-active"]}>

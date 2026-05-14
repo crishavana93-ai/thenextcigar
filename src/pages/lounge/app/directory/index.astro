@@ -35,20 +35,54 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
     <div id="lounge-content" hidden>
       <section class="container-wide pt-8 md:pt-12 pb-4 reveal">
-        <p class="section-eyebrow">The Lounge · Members</p>
+        <p class="section-eyebrow">The Lounge · Discover</p>
         <h1 class="font-display text-3xl md:text-5xl leading-[1.05] tracking-tight mt-2">
-          Founding cohort.
+          Who you should meet.
         </h1>
         <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-sm">
-          Real cigar smokers from real cities. Filter by city or hosts.
+          Members picked for you based on city, trips, and what you smoke.
         </p>
       </section>
 
-      <section class="container-wide pb-6">
-        <div class="lounge-dir-filters">
+      {/* Layer 1: Curated picks — horizontal cards with the reason on each */}
+      <section id="disc-picks-section" class="container-wide pb-3">
+        <div class="feed-section-head">
+          <p class="lounge-label lounge-label--gold">Members you should meet</p>
+        </div>
+        <div id="disc-picks" class="disc-strip">
+          <div class="lskel lskel--card-tall" style="flex: 0 0 200px; height: 180px;"></div>
+          <div class="lskel lskel--card-tall" style="flex: 0 0 200px; height: 180px;"></div>
+          <div class="lskel lskel--card-tall" style="flex: 0 0 200px; height: 180px;"></div>
+        </div>
+      </section>
+
+      {/* Layer 2: Live & near you */}
+      <section id="disc-live-section" class="container-wide pb-3" hidden>
+        <div class="feed-section-head">
+          <p class="lounge-label lounge-label--gold">Live near you</p>
+          <a href="/lounge/app/map/" class="feed-section-head__link">Open map →</a>
+        </div>
+        <div id="disc-live" class="disc-strip"></div>
+      </section>
+
+      {/* Layer 3: Active this week */}
+      <section id="disc-recent-section" class="container-wide pb-3" hidden>
+        <div class="feed-section-head">
+          <p class="lounge-label">Active this week</p>
+        </div>
+        <div id="disc-recent" class="disc-rows"></div>
+      </section>
+
+      {/* Layer 4: Search + full browse */}
+      <section class="container-wide pb-24">
+        <div class="feed-section-head" style="margin-top: 24px;">
+          <p class="lounge-label">Browse everyone</p>
+          <button id="disc-toggle-filters" class="feed-section-head__link" type="button">Filters ▾</button>
+        </div>
+        <div class="lounge-dir-filters" id="disc-filters">
           <label class="lounge-dir-filter">
-            <span>City</span>
-            <input id="filter-city" type="text" placeholder="e.g. Stockholm" />
+            <span>Search</span>
+            <input id="filter-city" type="search" placeholder="Name or city" autocomplete="off" />
           </label>
 
           <label class="lounge-dir-filter lounge-dir-filter--check">
@@ -63,9 +97,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
           <p id="filter-count" class="lounge-dir-count">—</p>
         </div>
-      </section>
 
-      <section class="container-wide pb-24">
         <div id="lounge-dir-grid" class="lounge-dir-grid"></div>
         <div id="lounge-dir-empty" hidden class="lounge-empty">
           <div class="lounge-empty__art">
@@ -100,6 +132,112 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--color-text-muted);
+  }
+
+  /* ── Discover surface (curated picks + live + recent) ─────────────────── */
+  .feed-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .feed-section-head__link {
+    background: none; border: none; padding: 0;
+    font: inherit; color: var(--color-gold, #c9a961);
+    text-decoration: underline; cursor: pointer;
+    font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .disc-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+  }
+  .disc-strip::-webkit-scrollbar { display: none; }
+  .disc-card {
+    flex: 0 0 200px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-gold, #c9a961);
+    border-radius: 10px;
+    padding: 14px;
+    text-decoration: none;
+    color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    transition: transform 0.15s ease;
+  }
+  .disc-card:hover { transform: translateY(-2px); }
+  .disc-card__avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--color-gold-soft, rgba(201, 169, 97, 0.45));
+    background: var(--color-bg);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+  }
+  .disc-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .disc-card__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.96rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .disc-card__reason {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--color-gold, #c9a961);
+    line-height: 1.35;
+    font-weight: 600;
+  }
+  .disc-card__city {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  .disc-rows {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .disc-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--color-text);
+  }
+  .disc-row__avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 0.8rem; font-weight: 800;
+    color: var(--color-text-muted);
+  }
+  .disc-row__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .disc-row__main { flex: 1; min-width: 0; }
+  .disc-row__name {
+    margin: 0; font-weight: 700; font-size: 0.92rem;
+    color: var(--color-text);
+  }
+  .disc-row__meta {
+    margin: 2px 0 0; font-size: 0.78rem; color: var(--color-text-muted);
+  }
+  .disc-strip__empty {
+    color: var(--color-text-muted); font-size: 0.86rem;
+    padding: 12px 0;
   }
 
   .lounge-dir-filters {
@@ -436,7 +574,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at, last_active_at")
+      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at, last_active_at, favorite_brands, flavor_notes, strength_preference")
       .order("last_active_at", { ascending: false, nullsFirst: false });
 
     if (error) {
@@ -453,10 +591,244 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     document.getElementById("filter-host")?.addEventListener("change", applyFilters);
     document.getElementById("filter-founding")?.addEventListener("change", applyFilters);
 
+    // Filters drawer toggle
+    const filtersEl = document.getElementById("disc-filters") as HTMLElement;
+    if (filtersEl) filtersEl.hidden = true;
+    document.getElementById("disc-toggle-filters")?.addEventListener("click", () => {
+      filtersEl.hidden = !filtersEl.hidden;
+    });
+
+    // Load discover layers in parallel
+    await Promise.all([
+      loadDiscoverPicks(user.id),
+      loadDiscoverLive(user.id),
+      loadDiscoverRecent(user.id),
+    ]);
+
     const guard = document.getElementById("lounge-guard");
     const content = document.getElementById("lounge-content");
     if (guard) guard.style.display = "none";
     if (content) content.hidden = false;
+  }
+
+  // ── Discover Layer 1: Members you should meet ─────────────────────────
+  async function loadDiscoverPicks(userId: string): Promise<void> {
+    const strip = document.getElementById("disc-picks") as HTMLElement;
+    if (!strip) return;
+    const supabase = getSupabase();
+
+    // Pull viewer's profile + city for matching
+    const me = all.find((p) => p.id === userId);
+    if (!me) {
+      strip.innerHTML = `<p class="disc-strip__empty">Sign in to get personalized picks.</p>`;
+      return;
+    }
+    const myBrands: string[] = ((me as any).favorite_brands as string[]) || [];
+    const myNotes: string[] = ((me as any).flavor_notes as string[]) || [];
+
+    // Build candidate pool with a "reason" attached
+    type Pick = {
+      id: string;
+      display_name: string;
+      avatar_url: string | null;
+      city: string | null;
+      reason: string;
+      score: number; // higher = better
+    };
+    const picks: Record<string, Pick> = {};
+    const now = Date.now();
+
+    // Source 1: members in my city, active in last 30 days
+    if (me.city) {
+      for (const p of all) {
+        if (p.id === userId || !p.city) continue;
+        if (p.city.toLowerCase() !== me.city.toLowerCase()) continue;
+        const lastActive = p.last_active_at ? new Date(p.last_active_at).getTime() : 0;
+        const daysAgo = (now - lastActive) / 86400000;
+        if (daysAgo > 30) continue;
+        picks[p.id] = {
+          id: p.id,
+          display_name: p.display_name || "Member",
+          avatar_url: p.avatar_url,
+          city: p.city,
+          reason: `Active in ${me.city} this week`,
+          score: 100 - daysAgo,
+        };
+      }
+    }
+
+    // Source 2: travel plans into my city in next 30 days
+    if (me.city) {
+      const today = new Date().toISOString().slice(0, 10);
+      const horizon = new Date(now + 30 * 86400000).toISOString().slice(0, 10);
+      const { data: incoming } = await supabase
+        .from("travel_plans")
+        .select("member_id, city, arrive_date, depart_date")
+        .ilike("city", me.city)
+        .gte("arrive_date", today)
+        .lte("arrive_date", horizon);
+      for (const t of (incoming as any[]) || []) {
+        if (t.member_id === userId) continue;
+        const p = all.find((x) => x.id === t.member_id);
+        if (!p) continue;
+        const days = Math.max(0, Math.round((new Date(t.arrive_date + "T00:00:00").getTime() - now) / 86400000));
+        picks[p.id] = {
+          id: p.id,
+          display_name: p.display_name || "Member",
+          avatar_url: p.avatar_url,
+          city: p.city,
+          reason: days === 0 ? `Visiting today` : `Visiting in ${days} day${days === 1 ? "" : "s"}`,
+          score: 200 - days, // visiting members rank higher than locals
+        };
+      }
+    }
+
+    // Source 3: flavor matches with score by overlap
+    if (myBrands.length > 0 || myNotes.length > 0) {
+      for (const p of all) {
+        if (p.id === userId) continue;
+        if (picks[p.id]) continue; // already has higher-priority reason
+        const theirBrands = ((p as any).favorite_brands as string[]) || [];
+        const theirNotes = ((p as any).flavor_notes as string[]) || [];
+        const sharedBrands = theirBrands.filter((b) => myBrands.includes(b));
+        const sharedNotes = theirNotes.filter((n) => myNotes.includes(n));
+        if (sharedBrands.length === 0 && sharedNotes.length < 2) continue;
+        const reason = sharedBrands.length > 0
+          ? `Loves ${sharedBrands.slice(0, 2).join(" & ")}`
+          : `${sharedNotes.slice(0, 2).join(" & ").toLowerCase()} notes`;
+        picks[p.id] = {
+          id: p.id,
+          display_name: p.display_name || "Member",
+          avatar_url: p.avatar_url,
+          city: p.city,
+          reason,
+          score: 50 + sharedBrands.length * 10 + sharedNotes.length * 5,
+        };
+      }
+    }
+
+    // Source 4: newcomers in my city (joined in last 30 days)
+    if (me.city) {
+      for (const p of all) {
+        if (p.id === userId || picks[p.id]) continue;
+        if (!p.city || p.city.toLowerCase() !== me.city.toLowerCase()) continue;
+        if (!p.joined_at) continue;
+        const daysAgo = (now - new Date(p.joined_at).getTime()) / 86400000;
+        if (daysAgo > 30) continue;
+        picks[p.id] = {
+          id: p.id,
+          display_name: p.display_name || "Member",
+          avatar_url: p.avatar_url,
+          city: p.city,
+          reason: `Just joined from ${p.city}`,
+          score: 40 - daysAgo,
+        };
+      }
+    }
+
+    const list = Object.values(picks).sort((a, b) => b.score - a.score).slice(0, 8);
+
+    if (list.length === 0) {
+      strip.innerHTML = `
+        <div class="disc-strip__empty" style="flex: 1;">
+          <p>No personalized picks yet — set your <a href="/lounge/app/profile/" style="color:var(--color-gold);text-decoration:underline;">flavor profile</a>
+          and a city to unlock matches.</p>
+        </div>
+      `;
+      return;
+    }
+
+    strip.innerHTML = list
+      .map((p) => {
+        const av = p.avatar_url
+          ? `<img src="${escapeHtml(p.avatar_url)}" alt="" />`
+          : initialsOf(p.display_name);
+        return `
+          <a class="disc-card" href="/lounge/app/member/?id=${p.id}">
+            <div class="disc-card__avatar">${av}</div>
+            <p class="disc-card__name">${escapeHtml(p.display_name)}</p>
+            <p class="disc-card__reason">${escapeHtml(p.reason)}</p>
+            ${p.city ? `<p class="disc-card__city">${escapeHtml(p.city)}</p>` : ""}
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  // ── Discover Layer 2: Live near you (currently checked in) ────────────
+  async function loadDiscoverLive(userId: string): Promise<void> {
+    const section = document.getElementById("disc-live-section") as HTMLElement;
+    const strip = document.getElementById("disc-live") as HTMLElement;
+    if (!section || !strip) return;
+    const me = all.find((p) => p.id === userId);
+    const supabase = getSupabase();
+    const nowIso = new Date().toISOString();
+    let query = supabase
+      .from("checkins")
+      .select("id, member_id, message, profile:member_id(display_name, avatar_url, city), lounge:lounge_id(name, city)")
+      .gt("expires_at", nowIso)
+      .neq("member_id", userId);
+    if (me?.city) query = query.eq("profile.city", me.city);
+    const { data: checkins } = await query.limit(8);
+    const rows = ((checkins as any[]) || []).filter((c) => c.profile && c.lounge);
+    if (rows.length === 0) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    strip.innerHTML = rows
+      .map((c: any) => {
+        const av = c.profile.avatar_url
+          ? `<img src="${escapeHtml(c.profile.avatar_url)}" alt="" />`
+          : initialsOf(c.profile.display_name);
+        return `
+          <a class="disc-card" href="/lounge/app/member/?id=${c.member_id}">
+            <div class="disc-card__avatar">${av}</div>
+            <p class="disc-card__name">${escapeHtml(c.profile.display_name || "Member")}</p>
+            <p class="disc-card__reason">At ${escapeHtml(c.lounge.name)}</p>
+            <p class="disc-card__city">${escapeHtml(c.lounge.city)}</p>
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  // ── Discover Layer 3: Active this week ────────────────────────────────
+  async function loadDiscoverRecent(userId: string): Promise<void> {
+    const section = document.getElementById("disc-recent-section") as HTMLElement;
+    const rowsEl = document.getElementById("disc-recent") as HTMLElement;
+    if (!section || !rowsEl) return;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const recent = all.filter(
+      (p) => p.id !== userId && p.joined_at && p.joined_at > sevenDaysAgo,
+    ).slice(0, 6);
+    if (recent.length === 0) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    rowsEl.innerHTML = recent
+      .map((p) => {
+        const av = p.avatar_url
+          ? `<img src="${escapeHtml(p.avatar_url)}" alt="" />`
+          : initialsOf(p.display_name);
+        const joined = p.joined_at ? new Date(p.joined_at) : null;
+        const daysAgo = joined ? Math.round((Date.now() - joined.getTime()) / 86400000) : 0;
+        return `
+          <a class="disc-row" href="/lounge/app/member/?id=${p.id}">
+            <div class="disc-row__avatar">${av}</div>
+            <div class="disc-row__main">
+              <p class="disc-row__name">${escapeHtml(p.display_name || "Member")} ${p.is_founding ? `<span style="color:var(--color-gold);font-size:10px;font-weight:800;letter-spacing:0.1em;">★ FOUNDING</span>` : ""}</p>
+              <p class="disc-row__meta">Joined ${daysAgo === 0 ? "today" : daysAgo + " day" + (daysAgo === 1 ? "" : "s") + " ago"}${p.city ? " · " + escapeHtml(p.city) : ""}</p>
+            </div>
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  function initialsOf(name: string | null): string {
+    return `<span style="font-size: 1.1rem;">${initials(name)}</span>`;
   }
 
   document.addEventListener("astro:page-load", init);

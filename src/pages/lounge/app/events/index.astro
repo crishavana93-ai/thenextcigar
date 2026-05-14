@@ -90,6 +90,32 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   </div>
   <a id="evt-sheet-external" href="#" target="_blank" rel="noopener" class="evt-sheet__external" hidden>Open external link →</a>
   <p id="evt-rsvp-status" class="evt-sheet__status" hidden></p>
+
+  {/* Event chat — only visible when user has RSVP'd. Realtime. Auto-hides 48h after event ends. */}
+  <div id="evt-chat" class="evt-chat" hidden>
+    <div class="evt-chat__head">
+      <p class="lounge-label lounge-label--gold">Chat with attendees</p>
+      <p class="evt-chat__hint" id="evt-chat-hint">Only people going to this event can read or post.</p>
+    </div>
+    <div id="evt-chat-thread" class="evt-chat__thread"></div>
+    <form id="evt-chat-form" class="evt-chat__form">
+      <textarea
+        id="evt-chat-input"
+        name="body"
+        rows="1"
+        maxlength="1500"
+        placeholder="Say something to the people going…"
+        autocomplete="off"></textarea>
+      <button type="submit" id="evt-chat-send" class="lbtn lbtn-primary lbtn-sm" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+          <path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>
+        </svg>
+      </button>
+    </form>
+    <p id="evt-chat-locked" class="evt-chat__locked" hidden>
+      Chat closed — event ended over 48 hours ago.
+    </p>
+  </div>
 </aside>
 
 <style is:global>
@@ -287,6 +313,88 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     font-size: 0.86rem;
   }
   .evt-sheet__status.is-error { background: #fde9e9; border-color: #c62828; }
+
+  /* Event chat thread inside the sheet */
+  .evt-chat {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex; flex-direction: column;
+  }
+  .evt-chat__head { margin-bottom: 8px; }
+  .evt-chat__hint {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+  .evt-chat__thread {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 0;
+    margin-bottom: 8px;
+  }
+  .evt-chat__msg {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    padding: 8px 12px;
+    max-width: 85%;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    align-self: flex-start;
+  }
+  .evt-chat__msg--mine {
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal, #1a1d2e);
+    align-self: flex-end;
+  }
+  .evt-chat__msg__author {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--color-text-muted);
+  }
+  .evt-chat__msg--mine .evt-chat__msg__author { color: rgba(26, 29, 46, 0.65); }
+  .evt-chat__empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.84rem;
+    padding: 16px 0;
+  }
+  .evt-chat__form {
+    display: flex; gap: 6px; align-items: flex-end;
+  }
+  .evt-chat__form textarea {
+    flex: 1;
+    min-height: 38px;
+    max-height: 100px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border, #e0d8c4);
+    border-radius: 8px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 0.92rem;
+    resize: none;
+  }
+  .evt-chat__form textarea:focus {
+    outline: 2px solid var(--color-gold, #c9a961);
+    outline-offset: 1px;
+    border-color: var(--color-gold);
+  }
+  .evt-chat__form .lbtn {
+    height: 38px;
+    padding: 0 12px;
+  }
+  .evt-chat__locked {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.86rem;
+    padding: 12px 0;
+    font-style: italic;
+  }
 </style>
 
 <script>
@@ -310,6 +418,8 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   let myRsvps: Record<string, RsvpRow["status"]> = {};
   let attendeeCounts: Record<string, number> = {};
   let currentEventId: string | null = null;
+  let chatChannel: any = null;
+  let chatProfileCache: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
   let myUserId = "";
 
   function escapeHtml(s: string): string {
@@ -430,6 +540,10 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     (document.getElementById("evt-overlay") as HTMLElement).hidden = false;
     (document.getElementById("evt-sheet") as HTMLElement).hidden = false;
     document.body.style.overflow = "hidden";
+
+    // Wire up the chat once the sheet is open. Fire-and-forget — the function
+    // handles its own visibility (hides for non-RSVP'd members).
+    setupEventChat(ev).catch((err) => console.warn("[Lounge] event chat setup failed:", err));
   }
 
   function closeSheet() {
@@ -437,6 +551,144 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     (document.getElementById("evt-sheet") as HTMLElement).hidden = true;
     document.body.style.overflow = "";
     currentEventId = null;
+    // Clean up the realtime chat channel so we don't leak subscriptions
+    if (chatChannel) {
+      try { getSupabase().removeChannel(chatChannel); } catch {}
+      chatChannel = null;
+    }
+  }
+
+  // ── Event chat ─────────────────────────────────────────────────────────
+  // Visible only when the user has an active RSVP (going or maybe). Auto-hides
+  // 48h after the event ends.
+  async function setupEventChat(event: EventRow) {
+    const wrap = document.getElementById("evt-chat") as HTMLElement;
+    const thread = document.getElementById("evt-chat-thread") as HTMLElement;
+    const form = document.getElementById("evt-chat-form") as HTMLFormElement;
+    const input = document.getElementById("evt-chat-input") as HTMLTextAreaElement;
+    const lockedEl = document.getElementById("evt-chat-locked") as HTMLElement;
+    if (!wrap || !thread || !form || !input) return;
+
+    // Visibility: only RSVP'd members see the chat
+    const myRsvp = myRsvps[event.id];
+    if (myRsvp !== "going" && myRsvp !== "maybe") {
+      wrap.hidden = true;
+      return;
+    }
+
+    // Check the 48h-after-end window
+    const endTs = event.end_at
+      ? new Date(event.end_at).getTime()
+      : new Date(event.start_at).getTime() + 3 * 60 * 60 * 1000; // assume 3h if no end
+    const closed = endTs + 48 * 60 * 60 * 1000 < Date.now();
+
+    wrap.hidden = false;
+    form.hidden = closed;
+    lockedEl.hidden = !closed;
+
+    // Initial load
+    await loadChatMessages(event.id);
+
+    // Realtime subscription for new messages in this event
+    if (chatChannel) {
+      try { getSupabase().removeChannel(chatChannel); } catch {}
+    }
+    chatChannel = getSupabase()
+      .channel(`event-chat-${event.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "event_chat_messages", filter: `event_id=eq.${event.id}` },
+        () => loadChatMessages(event.id),
+      )
+      .subscribe();
+
+    // Compose handler
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const body = input.value.trim();
+      if (!body || closed) return;
+      const sendBtn = document.getElementById("evt-chat-send") as HTMLButtonElement;
+      sendBtn.disabled = true;
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.from("event_chat_messages").insert({
+          event_id: event.id,
+          member_id: myUserId,
+          body: body.slice(0, 1500),
+        });
+        if (error) throw error;
+        input.value = "";
+        input.style.height = "auto";
+        await loadChatMessages(event.id);
+      } catch (err: any) {
+        alert(err?.message || "Could not send. The chat may have closed.");
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+
+    // Auto-resize textarea
+    input.oninput = () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(100, input.scrollHeight) + "px";
+    };
+
+    // Cmd/Ctrl+Enter sends
+    input.onkeydown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    };
+  }
+
+  async function loadChatMessages(eventId: string) {
+    const thread = document.getElementById("evt-chat-thread") as HTMLElement;
+    if (!thread) return;
+    const supabase = getSupabase();
+    const { data: msgs } = await supabase
+      .from("event_chat_messages")
+      .select("id, member_id, body, created_at")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    const rows = (msgs as any[]) || [];
+
+    // Fetch missing profile names + avatars
+    const missingIds = Array.from(new Set(rows.map((r) => r.member_id))).filter(
+      (id) => !chatProfileCache[id],
+    );
+    if (missingIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", missingIds);
+      for (const p of (profs as any[]) || []) {
+        chatProfileCache[p.id] = { display_name: p.display_name, avatar_url: p.avatar_url };
+      }
+    }
+
+    if (rows.length === 0) {
+      thread.innerHTML = `<p class="evt-chat__empty">No messages yet. Say hi to the people going.</p>`;
+      return;
+    }
+
+    thread.innerHTML = rows
+      .map((m) => {
+        const mine = m.member_id === myUserId;
+        const prof = chatProfileCache[m.member_id];
+        const author = mine ? "You" : (prof?.display_name || "Member");
+        return `
+          <div class="evt-chat__msg ${mine ? "evt-chat__msg--mine" : ""}">
+            <span class="evt-chat__msg__author">${escapeHtml(author)}</span>
+            ${escapeHtml(m.body)}
+          </div>
+        `;
+      })
+      .join("");
+
+    // Scroll to bottom
+    thread.scrollTop = thread.scrollHeight;
   }
 
   async function setRsvp(status: "going" | "maybe") {
