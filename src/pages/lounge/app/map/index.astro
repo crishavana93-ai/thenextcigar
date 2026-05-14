@@ -487,9 +487,16 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.12s ease;
+    visibility: hidden;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 0.12s ease, visibility 0.12s ease;
   }
-  :global(body.is-zoomed-in .tnc-venue-label) { opacity: 1; }
+  :global(body.is-zoomed-in .tnc-venue-label) {
+    opacity: 1;
+    visibility: visible;
+  }
 
   :global(.tnc-member-pin) {
     width: 38px; height: 38px;

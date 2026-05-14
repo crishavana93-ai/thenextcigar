@@ -78,11 +78,11 @@ import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
                 </label>
                 <div class="lounge-travel-form__dates">
                   <label class="lounge-travel-form__label">
-                    Arrive
+                    In town from
                     <input type="date" name="arrive_date" required />
                   </label>
                   <label class="lounge-travel-form__label">
-                    Depart
+                    Until
                     <input type="date" name="depart_date" required />
                   </label>
                 </div>
@@ -573,7 +573,7 @@ import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
         if (status) {
           status.hidden = false;
           status.classList.add("is-error");
-          status.textContent = "Depart date must be on or after arrive date.";
+          status.textContent = "End date must be on or after start date.";
         }
         submitBtn.disabled = false;
         submitBtn.textContent = "Add trip →";

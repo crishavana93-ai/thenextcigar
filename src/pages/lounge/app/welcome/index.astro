@@ -20,7 +20,7 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
         <img src="/logo-light.png" alt="" class="welcome-logo" />
         <p class="welcome-eyebrow">Welcome to The Lounge</p>
         <h1 class="welcome-hero-title">
-          Hello, <span id="hero-name">there</span>.
+          Hello <span id="hero-name">There</span>!
         </h1>
         <div class="welcome-rule"></div>
         <p class="welcome-hero-sub">
@@ -404,7 +404,7 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
       const firstName = (profile?.display_name || "")
         .split(/[\s.,]+/)[0]
         ?.replace(/[^a-zA-Z]/g, "") || "";
-      heroName.textContent = firstName && firstName !== "New" ? firstName : "there";
+      heroName.textContent = firstName && firstName !== "New" ? firstName : "There";
     }
 
     await preloadCohortStats();
