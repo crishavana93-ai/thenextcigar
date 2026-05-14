@@ -117,6 +117,81 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
       {/* Venues pane */}
       <section id="pane-venues" class="container-wide pb-24" hidden>
+        <div class="admin-event-create">
+          <p class="lounge-label">Add a venue</p>
+          <p style="margin: 4px 0 12px; font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.45;">
+            Paste lat/lng from Google Maps (right-click the venue pin → copy coordinates).
+            "Publish" makes it appear on the map immediately. Save as draft to fix details first.
+          </p>
+          <form id="venue-create-form" class="admin-event-form">
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Name</span>
+                <input type="text" name="name" required maxlength="120" placeholder="Macanudo Copenhagen" />
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Slug (kebab-case, unique)</span>
+                <input type="text" name="slug" required maxlength="80" placeholder="copenhagen-macanudo" pattern="[a-z0-9-]+" />
+              </label>
+            </div>
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">City</span>
+                <input type="text" name="city" required maxlength="60" placeholder="Copenhagen" />
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Country</span>
+                <input type="text" name="country" required maxlength="60" placeholder="Denmark" />
+              </label>
+            </div>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Address</span>
+              <input type="text" name="address" maxlength="200" placeholder="Pilestræde 28, 1112 København" />
+            </label>
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Lat (decimal)</span>
+                <input type="text" name="lat" required placeholder="55.6797" pattern="-?\d+(\.\d+)?" />
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Lng (decimal)</span>
+                <input type="text" name="lng" required placeholder="12.5808" pattern="-?\d+(\.\d+)?" />
+              </label>
+            </div>
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Type</span>
+                <select name="type" required>
+                  <option value="lounge">Lounge</option>
+                  <option value="retailer">Retailer (tobacconist)</option>
+                  <option value="casadelhabano">Casa del Habano</option>
+                  <option value="house">Brand flagship (Davidoff, etc.)</option>
+                  <option value="club">Members club</option>
+                  <option value="pub">Pub / bar</option>
+                </select>
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Website (optional)</span>
+                <input type="url" name="website" placeholder="https://example.com" />
+              </label>
+            </div>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Photo URL (optional) <em style="font-style:normal;font-weight:500;opacity:0.7;">— square 200×200, shows as the pin</em></span>
+              <input type="url" name="photo_url" placeholder="https://venue-site.com/hero.jpg" />
+            </label>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Perks / notes (optional)</span>
+              <textarea name="perks" rows="2" maxlength="200" placeholder="Walk-in humidor. Cigars from $8. Open Mon-Sat."></textarea>
+            </label>
+            <label class="admin-event-form__toggle">
+              <input type="checkbox" name="verify_now" checked />
+              <span><strong>Publish immediately</strong> — venue appears on the map right away.</span>
+            </label>
+            <button type="submit" class="lbtn lbtn-primary">Add venue</button>
+            <p id="venue-create-status" class="admin-event-form__status" hidden></p>
+          </form>
+        </div>
+
         <div class="admin-filter-row">
           <input id="filter-venues-search" type="search" placeholder="Search by name or city" class="admin-search" />
           <label class="admin-toggle"><input type="checkbox" id="filter-venues-pending" /><span>Pending only</span></label>
@@ -925,6 +1000,65 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     }
   }
 
+  // ── Add Venue form ──────────────────────────────────────────────────────
+  function wireVenueCreate() {
+    const form = document.getElementById("venue-create-form") as HTMLFormElement | null;
+    if (!form) return;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("venue-create-status") as HTMLElement;
+      const submitBtn = form.querySelector("button[type='submit']") as HTMLButtonElement;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving…";
+      const fd = new FormData(form);
+      const lat = parseFloat(String(fd.get("lat") || ""));
+      const lng = parseFloat(String(fd.get("lng") || ""));
+      if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        status.hidden = false;
+        status.classList.add("is-error");
+        status.textContent = "Lat must be -90..90 and lng must be -180..180. Paste decimal coords from Google Maps.";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Add venue";
+        return;
+      }
+      const verifyNow = fd.get("verify_now") === "on";
+      const payload: Record<string, any> = {
+        slug: String(fd.get("slug") || "").trim().toLowerCase(),
+        name: String(fd.get("name") || "").trim(),
+        city: String(fd.get("city") || "").trim(),
+        country: String(fd.get("country") || "").trim(),
+        address: String(fd.get("address") || "").trim() || null,
+        lat,
+        lng,
+        type: String(fd.get("type") || "lounge"),
+        website: String(fd.get("website") || "").trim() || null,
+        photo_url: String(fd.get("photo_url") || "").trim() || null,
+        perks: String(fd.get("perks") || "").trim() || null,
+        verified_at: verifyNow ? new Date().toISOString() : null,
+      };
+      const supabase = getSupabase();
+      const { error } = await supabase.from("partner_lounges").insert(payload);
+      if (error) {
+        status.hidden = false;
+        status.classList.add("is-error");
+        status.textContent =
+          error.code === "23505"
+            ? "That slug is already taken. Pick a more specific one (e.g. copenhagen-macanudo-bredgade)."
+            : error.message;
+      } else {
+        status.hidden = false;
+        status.classList.remove("is-error");
+        status.textContent = verifyNow
+          ? `Venue "${payload.name}" added and live on the map.`
+          : `Venue "${payload.name}" saved as draft. Toggle Pending Only filter below to find it.`;
+        form.reset();
+        await loadVenues();
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add venue";
+    });
+  }
+
   function wireCodeCreate() {
     const form = document.getElementById("code-create-form") as HTMLFormElement | null;
     if (!form) return;
@@ -1107,6 +1241,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     wireTabs();
     wireEventCreate();
     wireCodeCreate();
+    wireVenueCreate();
 
     // Wire filter inputs (members)
     document.getElementById("filter-members-search")?.addEventListener("input", renderMembers);
