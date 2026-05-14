@@ -1198,6 +1198,34 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     renderMembersAndVenues();
     renderMyActive();
 
+    // ── Realtime — live pin updates as members check in / out ─────────────
+    // Subscribes to INSERT, UPDATE, and DELETE on `checkins`. On any change,
+    // re-fetch + re-render. Debounced so a burst (e.g. server side trigger
+    // fanout) doesn't cause flicker. Falls back to the existing data the
+    // user already has if Realtime can't connect — nothing else breaks.
+    let realtimeDebounce: number | null = null;
+    function scheduleRealtimeRefresh(): void {
+      if (realtimeDebounce !== null) return;
+      realtimeDebounce = window.setTimeout(async () => {
+        realtimeDebounce = null;
+        await loadActive();
+        renderMembersAndVenues();
+        renderMyActive();
+      }, 350);
+    }
+    const realtimeChannel = supabase
+      .channel("lounge-map-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "checkins" },
+        scheduleRealtimeRefresh,
+      )
+      .subscribe();
+    // Clean up the subscription on page unload so we don't leak channels.
+    window.addEventListener("beforeunload", () => {
+      try { supabase.removeChannel(realtimeChannel); } catch {}
+    });
+
     document.getElementById("sheet-close")?.addEventListener("click", hideSheet);
 
     // Reveal

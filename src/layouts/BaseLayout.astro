@@ -4,6 +4,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SubscribeModal from "../components/SubscribeModal.astro";
 import CookieBanner from "../components/CookieBanner.astro";
+import TravelSheet from "../components/lounge/TravelSheet.astro";
 // ClientRouter (view transitions) was removed 2026-05-10 because it was
 // preventing MailerLite forms, Astro <Image> components, and the Snipcart
 // cart from re-mounting on client-side navigation — symptom: forms invisible
@@ -153,6 +154,9 @@ const skipPublicChrome = bareChrome || isLoungeApp;
 
     <SubscribeModal />
     <CookieBanner />
+
+    {/* Travel sheet + FAB — only on Lounge app pages (excluding /travel itself, handled in component). */}
+    {isLoungeApp && <TravelSheet />}
 
     <!-- Snipcart configuration (replace data-api-key with your real public key) -->
     <div

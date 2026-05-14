@@ -1,0 +1,430 @@
+---
+/**
+ * TravelSheet — global bottom-sheet form for "I'm visiting…"
+ *
+ * Members can declare a trip from anywhere in the app via the floating FAB on
+ * mobile, or by calling:
+ *
+ *    window.loungeOpenTravelSheet({
+ *      prefillCity?: string,
+ *      onSaved?: () => void
+ *    });
+ *
+ * Writes a row to `travel_plans`. Same insert shape as the /travel page form.
+ * Include once per page that needs it.
+ */
+---
+
+<div id="lounge-travel-sheet-overlay" class="trav-overlay" hidden aria-hidden="true"></div>
+
+<aside
+  id="lounge-travel-sheet"
+  class="trav-sheet"
+  hidden
+  aria-modal="true"
+  aria-labelledby="trav-sheet-title"
+  role="dialog">
+  <div class="trav-sheet__handle" aria-hidden="true"></div>
+  <button id="trav-sheet-close" class="trav-sheet__close" type="button" aria-label="Close">×</button>
+
+  <p class="lounge-label lounge-label--gold">Travel mode</p>
+  <h2 id="trav-sheet-title" class="trav-sheet__title">I'm visiting…</h2>
+  <p class="trav-sheet__sub">Local members in that city see you're coming. Smooth introductions before you land.</p>
+
+  <form id="trav-sheet-form" class="trav-sheet__form">
+    <label class="trav-sheet__field">
+      <span class="trav-sheet__field-label">City</span>
+      <input
+        id="trav-sheet-city"
+        type="text"
+        name="city"
+        required
+        placeholder="e.g. Havana"
+        autocomplete="off" />
+    </label>
+
+    <label class="trav-sheet__field">
+      <span class="trav-sheet__field-label">Country code <em>(optional)</em></span>
+      <input
+        type="text"
+        name="country_code"
+        maxlength="2"
+        placeholder="CU"
+        autocomplete="off"
+        style="text-transform: uppercase;" />
+    </label>
+
+    <div class="trav-sheet__row">
+      <label class="trav-sheet__field">
+        <span class="trav-sheet__field-label">In town from</span>
+        <input type="date" name="arrive_date" required />
+      </label>
+      <label class="trav-sheet__field">
+        <span class="trav-sheet__field-label">Until</span>
+        <input type="date" name="depart_date" required />
+      </label>
+    </div>
+
+    <label class="trav-sheet__field">
+      <span class="trav-sheet__field-label">Notes <em>(optional, max 280)</em></span>
+      <textarea
+        name="notes"
+        rows="3"
+        maxlength="280"
+        placeholder="Up for meeting members. Open to host recommendations."></textarea>
+    </label>
+
+    <div class="trav-sheet__actions">
+      <button type="button" id="trav-sheet-cancel" class="lbtn lbtn-ghost">Cancel</button>
+      <button type="submit" id="trav-sheet-submit" class="lbtn lbtn-primary">Add trip</button>
+    </div>
+
+    <p id="trav-sheet-status" class="trav-sheet__status" hidden></p>
+  </form>
+</aside>
+
+<style>
+  .trav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    animation: travOverlayIn 0.18s ease-out;
+  }
+  @keyframes travOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .trav-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    background: var(--color-cream, #f5efe0);
+    color: var(--color-text, #1a1d2e);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height: 92vh;
+    overflow-y: auto;
+    animation: travSheetIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @media (min-width: 768px) {
+    .trav-sheet {
+      left: 50%; right: auto;
+      bottom: 5vh;
+      transform: translateX(-50%);
+      width: 32rem;
+      max-width: calc(100vw - 2rem);
+      border-radius: 12px;
+      max-height: 86vh;
+    }
+  }
+  @keyframes travSheetIn {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @media (min-width: 768px) {
+    @keyframes travSheetIn {
+      from { transform: translate(-50%, 40px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+  }
+
+  .trav-sheet__handle {
+    width: 36px; height: 4px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.18);
+    margin: 0 auto 12px;
+  }
+  @media (min-width: 768px) {
+    .trav-sheet__handle { display: none; }
+  }
+
+  .trav-sheet__close {
+    position: absolute;
+    top: 12px; right: 14px;
+    width: 36px; height: 36px;
+    border: none; background: transparent;
+    font-size: 1.6rem;
+    color: var(--color-text-muted, #6b6663);
+    cursor: pointer;
+    line-height: 1;
+    border-radius: 999px;
+  }
+  .trav-sheet__close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--color-text);
+  }
+
+  .trav-sheet__title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 4px 0 6px;
+    color: var(--color-text);
+  }
+  .trav-sheet__sub {
+    margin: 0 0 14px;
+    font-size: 0.86rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  .trav-sheet__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .trav-sheet__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .trav-sheet__field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .trav-sheet__field-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted, #6b6663);
+  }
+  .trav-sheet__field-label em {
+    font-style: normal;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.7;
+  }
+  .trav-sheet__field input,
+  .trav-sheet__field textarea {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--color-border, #e0d8c4);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--color-text);
+    font-family: inherit;
+    resize: vertical;
+  }
+  .trav-sheet__field input:focus,
+  .trav-sheet__field textarea:focus {
+    outline: 2px solid var(--color-gold, #c9a961);
+    outline-offset: 1px;
+    border-color: var(--color-gold);
+  }
+
+  .trav-sheet__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .trav-sheet__actions .lbtn { flex: 1 1 0; }
+
+  .trav-sheet__status {
+    margin: 0;
+    padding: 10px 12px;
+    background: var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border-left: 3px solid var(--color-gold);
+    border-radius: 4px;
+    font-size: 0.86rem;
+    color: var(--color-text);
+  }
+  .trav-sheet__status.is-error {
+    background: #fde9e9;
+    border-color: #c62828;
+  }
+
+  /* ── Floating Action Button (mobile-only summon) ─────────────────────── */
+  .trav-fab {
+    position: fixed;
+    right: 18px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    z-index: 90;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-gold, #c9a961);
+    color: var(--color-charcoal, #1a1d2e);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 0 4px rgba(201, 169, 97, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .trav-fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(201, 169, 97, 0.25);
+  }
+  .trav-fab:active {
+    transform: translateY(0);
+  }
+  .trav-fab svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Hide on desktop — Travel tab is already prominent in nav. */
+  @media (min-width: 768px) {
+    .trav-fab { display: none; }
+  }
+  /* Hide on the travel page itself — the form is already visible there. */
+  body.is-travel-page .trav-fab { display: none; }
+</style>
+
+<button id="lounge-travel-fab" class="trav-fab" type="button" aria-label="Plan a trip" hidden>
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.7c-.2.4 0 .8.3 1.1l5.4 4.3-1.5 4.5L4 18l2 2 2-1.8 4.5-1.5 4.3 5.4c.3.3.7.5 1.1.3l.7-.3c.4-.2.6-.6.5-1.1Z" />
+  </svg>
+</button>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../lib/supabase";
+
+  type TravelOpts = {
+    prefillCity?: string;
+    onSaved?: () => void;
+  };
+
+  function setupTravelSheet() {
+    const overlay = document.getElementById("lounge-travel-sheet-overlay") as HTMLElement | null;
+    const sheet = document.getElementById("lounge-travel-sheet") as HTMLElement | null;
+    const form = document.getElementById("trav-sheet-form") as HTMLFormElement | null;
+    const cityEl = document.getElementById("trav-sheet-city") as HTMLInputElement | null;
+    const submitBtn = document.getElementById("trav-sheet-submit") as HTMLButtonElement | null;
+    const cancelBtn = document.getElementById("trav-sheet-cancel") as HTMLButtonElement | null;
+    const closeBtn = document.getElementById("trav-sheet-close") as HTMLButtonElement | null;
+    const status = document.getElementById("trav-sheet-status") as HTMLElement | null;
+    const fab = document.getElementById("lounge-travel-fab") as HTMLButtonElement | null;
+
+    if (!overlay || !sheet || !form || !cityEl) return;
+
+    let currentOnSaved: (() => void) | null = null;
+
+    function open(opts: TravelOpts = {}) {
+      currentOnSaved = opts.onSaved || null;
+      if (cityEl) cityEl.value = opts.prefillCity || "";
+      if (status) {
+        status.hidden = true;
+        status.classList.remove("is-error");
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Add trip";
+      }
+      overlay!.hidden = false;
+      sheet!.hidden = false;
+      document.body.style.overflow = "hidden";
+      setTimeout(() => cityEl?.focus(), 280);
+    }
+
+    function close() {
+      overlay!.hidden = true;
+      sheet!.hidden = true;
+      document.body.style.overflow = "";
+      currentOnSaved = null;
+    }
+
+    overlay.addEventListener("click", close);
+    closeBtn?.addEventListener("click", close);
+    cancelBtn?.addEventListener("click", close);
+
+    // Tag the body when we're on the travel page so the FAB hides via CSS.
+    if (window.location.pathname.includes("/lounge/app/travel")) {
+      document.body.classList.add("is-travel-page");
+    }
+
+    // Reveal FAB only after we know the user is signed in. Avoids showing it
+    // on the login/marketing pages briefly while auth resolves.
+    (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user && fab) fab.hidden = false;
+      } catch {}
+    })();
+
+    fab?.addEventListener("click", () => open({}));
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const city = String(fd.get("city") || "").trim();
+      const country_code = (String(fd.get("country_code") || "").trim().toUpperCase() || null) as string | null;
+      const arrive_date = String(fd.get("arrive_date") || "");
+      const depart_date = String(fd.get("depart_date") || "");
+      const notes = String(fd.get("notes") || "").trim() || null;
+
+      if (!city || !arrive_date || !depart_date) return;
+      if (depart_date < arrive_date) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = "End date must be on or after start date.";
+        }
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving…";
+      }
+
+      try {
+        const user = await getCurrentUser();
+        if (!user) throw new Error("Not signed in.");
+        const supabase = getSupabase();
+        const { error } = await supabase.from("travel_plans").insert({
+          member_id: user.id,
+          city,
+          country_code,
+          arrive_date,
+          depart_date,
+          notes,
+        });
+        if (error) throw error;
+
+        if (status) {
+          status.hidden = false;
+          status.classList.remove("is-error");
+          status.innerHTML = `Trip to <strong>${city.replace(/</g, "&lt;")}</strong> saved. Locals get pinged.`;
+        }
+        form.reset();
+        const cb = currentOnSaved;
+        setTimeout(() => {
+          close();
+          if (cb) cb();
+        }, 1300);
+      } catch (err: any) {
+        if (status) {
+          status.hidden = false;
+          status.classList.add("is-error");
+          status.textContent = err?.message || "Could not save. Try again.";
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Add trip";
+        }
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !sheet!.hidden) close();
+    });
+
+    (window as any).loungeOpenTravelSheet = open;
+  }
+
+  document.addEventListener("astro:page-load", setupTravelSheet);
+  setupTravelSheet();
+</script>
