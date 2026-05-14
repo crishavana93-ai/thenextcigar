@@ -78,6 +78,15 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
         </div>
       </section>
 
+      {/* Region B2 — Upcoming events in member's city. Hidden if there are none. */}
+      <section id="events-section" class="container-wide pb-3" hidden>
+        <div class="feed-section-head">
+          <p class="lounge-label lounge-label--gold">Upcoming in <span id="events-city">your city</span></p>
+          <a href="/lounge/app/events/" class="feed-section-head__link">All events →</a>
+        </div>
+        <div id="events-strip" class="events-strip"></div>
+      </section>
+
       {/* Region C — From the network — chronological activity feed */}
       <section class="container-wide pb-24">
         <div class="feed-section-head">
@@ -302,6 +311,45 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     padding-bottom: 4px;
   }
   .live-strip::-webkit-scrollbar { display: none; }
+
+  /* Upcoming events strip — horizontal scrollable cards, mirrors live-strip layout */
+  .events-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+    margin-top: 6px;
+  }
+  .events-strip::-webkit-scrollbar { display: none; }
+  .events-strip__card {
+    flex: 0 0 240px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-gold, #c9a961);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: var(--color-text);
+    display: flex; flex-direction: column; gap: 4px;
+    transition: transform 0.15s ease;
+  }
+  .events-strip__card:hover { transform: translateY(-1px); }
+  .events-strip__date {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-gold, #c9a961);
+  }
+  .events-strip__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.96rem; font-weight: 700;
+    line-height: 1.25;
+  }
+  .events-strip__venue {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+  }
   .live-card {
     flex-shrink: 0;
     width: 110px;
@@ -686,12 +734,74 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     const avEl = document.getElementById("feed-avatar");
     if (avEl) avEl.innerHTML = avatarHtml(profile as any);
 
-    await loadAndRenderFeed(user.id);
+    await Promise.all([
+      loadAndRenderFeed(user.id),
+      loadUpcomingEvents(profile?.city || null),
+    ]);
 
     const guard = document.getElementById("lounge-guard");
     const content = document.getElementById("lounge-content");
     if (guard) guard.style.display = "none";
     if (content) content.hidden = false;
+  }
+
+  // Upcoming events in the member's city — horizontal strip. Hides if none.
+  async function loadUpcomingEvents(myCity: string | null): Promise<void> {
+    const section = document.getElementById("events-section") as HTMLElement | null;
+    const strip = document.getElementById("events-strip") as HTMLElement | null;
+    const cityEl = document.getElementById("events-city") as HTMLElement | null;
+    if (!section || !strip) return;
+
+    const supabase = getSupabase();
+    const nowIso = new Date().toISOString();
+
+    // Try city-specific first; if none, fall back to any upcoming events globally.
+    let q = supabase
+      .from("cigar_events")
+      .select("id, title, city, start_at, venue:venue_id(name)")
+      .not("verified_at", "is", null)
+      .gte("start_at", nowIso)
+      .order("start_at", { ascending: true })
+      .limit(8);
+    if (myCity) q = q.ilike("city", myCity);
+    let { data: events } = await q;
+
+    let scope = "your city";
+    if (myCity) scope = myCity;
+    if (!events || events.length === 0) {
+      // Fallback: show any upcoming globally
+      const { data: anywhere } = await supabase
+        .from("cigar_events")
+        .select("id, title, city, start_at, venue:venue_id(name)")
+        .not("verified_at", "is", null)
+        .gte("start_at", nowIso)
+        .order("start_at", { ascending: true })
+        .limit(6);
+      events = anywhere || [];
+      scope = "the network";
+    }
+
+    if (events.length === 0) {
+      section.hidden = true;
+      return;
+    }
+    if (cityEl) cityEl.textContent = scope;
+    section.hidden = false;
+
+    strip.innerHTML = events
+      .map((e: any) => {
+        const d = new Date(e.start_at);
+        const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase();
+        const venueName = e.venue?.name || e.city;
+        return `
+          <a class="events-strip__card" href="/lounge/app/events/?id=${e.id}">
+            <p class="events-strip__date">${dateStr}</p>
+            <h3 class="events-strip__title">${escapeHtml(e.title)}</h3>
+            <p class="events-strip__venue">${escapeHtml(venueName)}${e.city !== venueName ? " · " + escapeHtml(e.city) : ""}</p>
+          </a>
+        `;
+      })
+      .join("");
   }
 
   document.addEventListener("astro:page-load", init);

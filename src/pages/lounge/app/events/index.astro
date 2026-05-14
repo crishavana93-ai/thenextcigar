@@ -1,0 +1,562 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+---
+
+<BaseLayout title="Events — The Lounge" noIndex>
+  <LoungeHeader active="map" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <p class="lounge-app__guard-eyebrow">Loading…</p>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-6 pb-3 reveal">
+        <p class="lounge-label">Cigar events</p>
+        <h1 class="lounge-h1" style="margin-top: 4px;">What's on this month.</h1>
+        <p class="lounge-sub" style="margin-top: 6px;">
+          Brand launches, lounge nights, member-hosted smokes. Tap to RSVP — we'll remind you the morning of.
+        </p>
+      </section>
+
+      <section class="container-wide pb-3">
+        <div class="evt-filters">
+          <label class="evt-filter">
+            <span class="evt-filter__label">City</span>
+            <select id="evt-city" class="evt-filter__input">
+              <option value="">All cities</option>
+            </select>
+          </label>
+          <label class="evt-filter">
+            <span class="evt-filter__label">When</span>
+            <select id="evt-when" class="evt-filter__input">
+              <option value="upcoming">Upcoming</option>
+              <option value="this_month">This month</option>
+              <option value="next_month">Next month</option>
+              <option value="my_rsvps">My RSVPs</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div id="evt-skeleton" class="evt-grid">
+          <div class="lskel-card"></div>
+          <div class="lskel-card"></div>
+          <div class="lskel-card"></div>
+        </div>
+        <div id="evt-grid" class="evt-grid" hidden></div>
+        <div id="evt-empty" hidden class="lounge-empty">
+          <div class="lounge-empty__art">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <p class="lounge-empty__kicker">Calendar's open</p>
+          <h3 class="lounge-empty__title">No events match this filter.</h3>
+          <p class="lounge-empty__body">Try a different city or check back soon. New events show up here the moment they're approved.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <LoungeTabBar />
+</BaseLayout>
+
+{/* Event detail sheet */}
+<div id="evt-overlay" class="evt-overlay" hidden></div>
+<aside id="evt-sheet" class="evt-sheet" hidden aria-modal="true" role="dialog">
+  <div class="evt-sheet__handle"></div>
+  <button id="evt-sheet-close" class="evt-sheet__close" type="button" aria-label="Close">×</button>
+  <p class="lounge-label lounge-label--gold" id="evt-sheet-eyebrow">Event</p>
+  <h2 class="evt-sheet__title" id="evt-sheet-title">—</h2>
+  <p class="evt-sheet__when" id="evt-sheet-when">—</p>
+  <p class="evt-sheet__venue" id="evt-sheet-venue"></p>
+  <p class="evt-sheet__description" id="evt-sheet-description"></p>
+  <p class="evt-sheet__count" id="evt-sheet-count"></p>
+  <div class="evt-sheet__actions">
+    <button id="evt-rsvp-going" class="lbtn lbtn-primary" type="button">I'm going</button>
+    <button id="evt-rsvp-maybe" class="lbtn lbtn-ghost" type="button">Maybe</button>
+  </div>
+  <a id="evt-sheet-external" href="#" target="_blank" rel="noopener" class="evt-sheet__external" hidden>Open external link →</a>
+  <p id="evt-rsvp-status" class="evt-sheet__status" hidden></p>
+</aside>
+
+<style is:global>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+  .lounge-app__guard { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  .evt-filters {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .evt-filter {
+    display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px;
+  }
+  .evt-filter__label {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .evt-filter__input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 6px;
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+
+  .evt-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 768px) {
+    .evt-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1100px) {
+    .evt-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .evt-card {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-gold, #c9a961);
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .evt-card:hover {
+    transform: translateY(-1px);
+    border-left-color: var(--color-gold-hover, #b69649);
+  }
+  .evt-card__date {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-gold, #c9a961);
+  }
+  .evt-card__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--color-text);
+  }
+  .evt-card__venue {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--color-text-soft);
+    line-height: 1.4;
+  }
+  .evt-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+  .evt-card__pill {
+    display: inline-block;
+    background: rgba(201, 169, 97, 0.15);
+    color: var(--color-gold, #c9a961);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .evt-card__pill--going {
+    background: rgba(45, 106, 79, 0.18);
+    color: #2d6a4f;
+  }
+
+  /* Sheet */
+  .evt-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+  }
+  .evt-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    background: var(--color-cream, #f5efe0);
+    color: var(--color-text);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  @media (min-width: 768px) {
+    .evt-sheet {
+      left: 50%; right: auto;
+      bottom: 5vh;
+      transform: translateX(-50%);
+      width: 32rem;
+      max-width: calc(100vw - 2rem);
+      border-radius: 12px;
+      max-height: 80vh;
+    }
+  }
+  .evt-sheet__handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(0, 0, 0, 0.18);
+    margin: 0 auto 12px;
+  }
+  @media (min-width: 768px) { .evt-sheet__handle { display: none; } }
+  .evt-sheet__close {
+    position: absolute; top: 12px; right: 14px;
+    width: 36px; height: 36px;
+    border: none; background: transparent;
+    font-size: 1.6rem;
+    color: var(--color-text-muted);
+    cursor: pointer; line-height: 1;
+    border-radius: 999px;
+  }
+  .evt-sheet__title {
+    font-family: var(--font-display);
+    font-size: 1.5rem; font-weight: 800;
+    margin: 8px 0 6px;
+    line-height: 1.2;
+  }
+  .evt-sheet__when {
+    margin: 0; font-size: 0.92rem; font-weight: 700;
+    color: var(--color-gold, #c9a961);
+  }
+  .evt-sheet__venue {
+    margin: 6px 0 0; font-size: 0.92rem; color: var(--color-text-soft);
+  }
+  .evt-sheet__description {
+    margin: 14px 0 8px; font-size: 0.95rem; line-height: 1.55;
+    color: var(--color-text);
+    white-space: pre-line;
+  }
+  .evt-sheet__count {
+    margin: 6px 0 14px;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+  .evt-sheet__actions {
+    display: flex; gap: 10px; margin-top: 6px;
+  }
+  .evt-sheet__actions .lbtn { flex: 1 1 0; }
+  .evt-sheet__external {
+    display: inline-block; margin-top: 12px;
+    color: var(--color-gold, #c9a961);
+    text-decoration: underline;
+    font-weight: 600;
+  }
+  .evt-sheet__status {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    background: var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border-left: 3px solid var(--color-gold);
+    border-radius: 4px;
+    font-size: 0.86rem;
+  }
+  .evt-sheet__status.is-error { background: #fde9e9; border-color: #c62828; }
+</style>
+
+<script>
+  import { getSupabase, getCurrentUser, getCurrentProfile } from "../../../../lib/supabase";
+
+  type EventRow = {
+    id: string;
+    title: string;
+    description: string | null;
+    city: string;
+    country: string | null;
+    start_at: string;
+    end_at: string | null;
+    venue_id: string | null;
+    external_url: string | null;
+    venue?: { name: string; city: string } | null;
+  };
+  type RsvpRow = { event_id: string; member_id: string; status: "going" | "maybe" | "not_going" };
+
+  let allEvents: EventRow[] = [];
+  let myRsvps: Record<string, RsvpRow["status"]> = {};
+  let attendeeCounts: Record<string, number> = {};
+  let currentEventId: string | null = null;
+  let myUserId = "";
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function fmtCardDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase();
+  }
+  function fmtSheetWhen(startIso: string, endIso: string | null): string {
+    const start = new Date(startIso);
+    const startStr = start.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+    const startTime = start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (!endIso) return `${startStr} · ${startTime}`;
+    const end = new Date(endIso);
+    const endTime = end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return `${startStr} · ${startTime} – ${endTime}`;
+  }
+
+  function applyFilter(): EventRow[] {
+    const cityFilter = (document.getElementById("evt-city") as HTMLSelectElement).value;
+    const when = (document.getElementById("evt-when") as HTMLSelectElement).value;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59);
+
+    return allEvents.filter((e) => {
+      if (cityFilter && e.city !== cityFilter) return false;
+      const s = new Date(e.start_at);
+      if (when === "this_month") return s >= startOfMonth && s <= endOfMonth;
+      if (when === "next_month") return s >= startOfNextMonth && s <= endOfNextMonth;
+      if (when === "my_rsvps") return myRsvps[e.id] === "going" || myRsvps[e.id] === "maybe";
+      return s >= now;
+    });
+  }
+
+  function render() {
+    const grid = document.getElementById("evt-grid") as HTMLElement;
+    const empty = document.getElementById("evt-empty") as HTMLElement;
+    const skeleton = document.getElementById("evt-skeleton") as HTMLElement;
+    skeleton.hidden = true;
+
+    const list = applyFilter();
+    if (list.length === 0) {
+      grid.hidden = true;
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    grid.hidden = false;
+    grid.innerHTML = list
+      .map((e) => {
+        const date = fmtCardDate(e.start_at);
+        const venue = e.venue?.name || e.city;
+        const count = attendeeCounts[e.id] || 0;
+        const mine = myRsvps[e.id];
+        const pill = mine === "going"
+          ? `<span class="evt-card__pill evt-card__pill--going">You're going</span>`
+          : mine === "maybe"
+            ? `<span class="evt-card__pill">Maybe</span>`
+            : count > 0
+              ? `<span>${count} going</span>`
+              : "";
+        return `
+          <button type="button" class="evt-card" data-event-id="${e.id}">
+            <p class="evt-card__date">${date}</p>
+            <h2 class="evt-card__title">${escapeHtml(e.title)}</h2>
+            <p class="evt-card__venue">${escapeHtml(venue)} · ${escapeHtml(e.city)}</p>
+            <div class="evt-card__footer">${pill}<span style="opacity:0.5;">View →</span></div>
+          </button>
+        `;
+      })
+      .join("");
+    grid.querySelectorAll<HTMLButtonElement>(".evt-card").forEach((card) => {
+      card.addEventListener("click", () => openSheet(card.dataset.eventId!));
+    });
+  }
+
+  function openSheet(eventId: string) {
+    const ev = allEvents.find((e) => e.id === eventId);
+    if (!ev) return;
+    currentEventId = eventId;
+    (document.getElementById("evt-sheet-title") as HTMLElement).textContent = ev.title;
+    (document.getElementById("evt-sheet-when") as HTMLElement).textContent = fmtSheetWhen(ev.start_at, ev.end_at);
+    const venueEl = document.getElementById("evt-sheet-venue") as HTMLElement;
+    venueEl.textContent = ev.venue?.name
+      ? `${ev.venue.name} · ${ev.city}${ev.country ? ", " + ev.country : ""}`
+      : `${ev.city}${ev.country ? ", " + ev.country : ""}`;
+    (document.getElementById("evt-sheet-description") as HTMLElement).textContent = ev.description || "";
+    const count = attendeeCounts[ev.id] || 0;
+    (document.getElementById("evt-sheet-count") as HTMLElement).textContent =
+      count === 0 ? "Be the first to RSVP." : `${count} member${count === 1 ? "" : "s"} going.`;
+    const extEl = document.getElementById("evt-sheet-external") as HTMLAnchorElement;
+    if (ev.external_url) {
+      extEl.href = ev.external_url;
+      extEl.hidden = false;
+    } else {
+      extEl.hidden = true;
+    }
+    // Reflect existing RSVP state on buttons
+    const goingBtn = document.getElementById("evt-rsvp-going") as HTMLButtonElement;
+    const maybeBtn = document.getElementById("evt-rsvp-maybe") as HTMLButtonElement;
+    goingBtn.textContent = myRsvps[ev.id] === "going" ? "Going ✓" : "I'm going";
+    maybeBtn.textContent = myRsvps[ev.id] === "maybe" ? "Maybe ✓" : "Maybe";
+    const status = document.getElementById("evt-rsvp-status") as HTMLElement;
+    status.hidden = true;
+
+    (document.getElementById("evt-overlay") as HTMLElement).hidden = false;
+    (document.getElementById("evt-sheet") as HTMLElement).hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeSheet() {
+    (document.getElementById("evt-overlay") as HTMLElement).hidden = true;
+    (document.getElementById("evt-sheet") as HTMLElement).hidden = true;
+    document.body.style.overflow = "";
+    currentEventId = null;
+  }
+
+  async function setRsvp(status: "going" | "maybe") {
+    if (!currentEventId) return;
+    const supabase = getSupabase();
+    const eventId = currentEventId;
+    const statusEl = document.getElementById("evt-rsvp-status") as HTMLElement;
+    try {
+      const existing = myRsvps[eventId];
+      if (existing === status) {
+        // Toggle off — delete the RSVP
+        const { error } = await supabase
+          .from("event_rsvps")
+          .delete()
+          .eq("event_id", eventId)
+          .eq("member_id", myUserId);
+        if (error) throw error;
+        delete myRsvps[eventId];
+      } else {
+        const { error } = await supabase
+          .from("event_rsvps")
+          .upsert(
+            { event_id: eventId, member_id: myUserId, status },
+            { onConflict: "event_id,member_id" },
+          );
+        if (error) throw error;
+        myRsvps[eventId] = status;
+      }
+      // Refresh attendee count for this event
+      await reloadAttendeeCount(eventId);
+      // Re-open with fresh data so buttons + count update
+      openSheet(eventId);
+      render();
+      statusEl.hidden = false;
+      statusEl.classList.remove("is-error");
+      statusEl.textContent = myRsvps[eventId] === "going"
+        ? "You're going. Reminder lands the morning of."
+        : myRsvps[eventId] === "maybe" ? "Marked maybe."
+        : "RSVP cleared.";
+    } catch (err: any) {
+      statusEl.hidden = false;
+      statusEl.classList.add("is-error");
+      statusEl.textContent = err?.message || "Couldn't save your RSVP.";
+    }
+  }
+
+  async function reloadAttendeeCount(eventId: string) {
+    const supabase = getSupabase();
+    const { count } = await supabase
+      .from("event_rsvps")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .eq("status", "going");
+    attendeeCounts[eventId] = count || 0;
+  }
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    myUserId = user.id;
+    const profile = await getCurrentProfile();
+    const supabase = getSupabase();
+
+    // Fetch events (verified only, future + last 24h)
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: evts } = await supabase
+      .from("cigar_events")
+      .select("id, title, description, city, country, start_at, end_at, venue_id, external_url, venue:venue_id(name, city)")
+      .not("verified_at", "is", null)
+      .gte("start_at", cutoff)
+      .order("start_at", { ascending: true })
+      .limit(200);
+    allEvents = (evts as any[]) || [];
+
+    // Fetch all my RSVPs
+    const { data: rsvps } = await supabase
+      .from("event_rsvps")
+      .select("event_id, status")
+      .eq("member_id", myUserId);
+    for (const r of (rsvps as any[]) || []) myRsvps[r.event_id] = r.status;
+
+    // Fetch attendee counts (going) per event
+    const { data: counts } = await supabase
+      .from("event_rsvps")
+      .select("event_id")
+      .eq("status", "going");
+    for (const c of (counts as any[]) || []) attendeeCounts[c.event_id] = (attendeeCounts[c.event_id] || 0) + 1;
+
+    // Populate city dropdown
+    const citySel = document.getElementById("evt-city") as HTMLSelectElement;
+    const cities = Array.from(new Set(allEvents.map((e) => e.city))).sort();
+    for (const c of cities) {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      citySel.appendChild(opt);
+    }
+    // Default to member's city if they have one and we have events there
+    if (profile?.city && cities.includes(profile.city)) {
+      citySel.value = profile.city;
+    }
+
+    // Filter change listeners
+    citySel.addEventListener("change", render);
+    (document.getElementById("evt-when") as HTMLSelectElement).addEventListener("change", render);
+
+    // Sheet wires
+    document.getElementById("evt-overlay")?.addEventListener("click", closeSheet);
+    document.getElementById("evt-sheet-close")?.addEventListener("click", closeSheet);
+    document.getElementById("evt-rsvp-going")?.addEventListener("click", () => setRsvp("going"));
+    document.getElementById("evt-rsvp-maybe")?.addEventListener("click", () => setRsvp("maybe"));
+    document.addEventListener("keydown", (e) => {
+      const sheet = document.getElementById("evt-sheet") as HTMLElement;
+      if (e.key === "Escape" && !sheet.hidden) closeSheet();
+    });
+
+    // If ?id=<uuid> in URL, deep-link open
+    const params = new URLSearchParams(window.location.search);
+    const linkId = params.get("id");
+    if (linkId && allEvents.find((e) => e.id === linkId)) {
+      setTimeout(() => openSheet(linkId), 200);
+    }
+
+    // Reveal
+    (document.getElementById("lounge-guard") as HTMLElement).style.display = "none";
+    (document.getElementById("lounge-content") as HTMLElement).hidden = false;
+    render();
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

@@ -99,6 +99,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         <div class="admin-tabs" role="tablist">
           <button id="tab-members" class="admin-tab is-active" type="button">Members</button>
           <button id="tab-venues" class="admin-tab" type="button">Venues</button>
+          <button id="tab-events" class="admin-tab" type="button">Events</button>
           <button id="tab-activity" class="admin-tab" type="button">Activity</button>
         </div>
       </section>
@@ -120,6 +121,66 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           <label class="admin-toggle"><input type="checkbox" id="filter-venues-pending" /><span>Pending only</span></label>
         </div>
         <div id="venues-list" class="admin-table"></div>
+      </section>
+
+      {/* Events pane */}
+      <section id="pane-events" class="container-wide pb-24" hidden>
+        <div class="admin-event-create">
+          <p class="lounge-label">Create event</p>
+          <form id="event-create-form" class="admin-event-form">
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Title</span>
+              <input type="text" name="title" required maxlength="120" placeholder="Cohiba Behike tasting" />
+            </label>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">City</span>
+              <input type="text" name="city" required maxlength="60" placeholder="Copenhagen" />
+            </label>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Country (optional)</span>
+              <input type="text" name="country" maxlength="60" placeholder="Denmark" />
+            </label>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Venue (optional)</span>
+              <select name="venue_id" id="event-create-venue">
+                <option value="">— No specific venue —</option>
+              </select>
+            </label>
+            <div class="admin-event-form__cols">
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Starts</span>
+                <input type="datetime-local" name="start_at" required />
+              </label>
+              <label class="admin-event-form__row">
+                <span class="admin-event-form__label">Ends (optional)</span>
+                <input type="datetime-local" name="end_at" />
+              </label>
+            </div>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">Description</span>
+              <textarea name="description" rows="3" maxlength="800" placeholder="What members can expect."></textarea>
+            </label>
+            <label class="admin-event-form__row">
+              <span class="admin-event-form__label">External link (optional)</span>
+              <input type="url" name="external_url" placeholder="https://…" />
+            </label>
+            <label class="admin-event-form__toggle">
+              <input type="checkbox" name="is_official" />
+              <span>Mark as official (brand event, festival, etc.)</span>
+            </label>
+            <label class="admin-event-form__toggle">
+              <input type="checkbox" name="verify_now" checked />
+              <span><strong>Publish immediately</strong> — fires the new-event email to members in this city.</span>
+            </label>
+            <button type="submit" class="lbtn lbtn-primary">Create event</button>
+            <p id="event-create-status" class="admin-event-form__status" hidden></p>
+          </form>
+        </div>
+
+        <div class="admin-event-list">
+          <p class="lounge-label">All events</p>
+          <div id="events-list" class="admin-table"></div>
+        </div>
       </section>
 
       {/* Activity pane */}
@@ -258,6 +319,59 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     user-select: none;
   }
   .admin-toggle input { accent-color: var(--color-gold); }
+
+  /* Event creation form */
+  .admin-event-create {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 28px;
+  }
+  .admin-event-form {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-top: 8px;
+  }
+  .admin-event-form__row {
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .admin-event-form__cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .admin-event-form__label {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .admin-event-form__row input,
+  .admin-event-form__row textarea,
+  .admin-event-form__row select {
+    width: 100%;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .admin-event-form__toggle {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 0.86rem; color: var(--color-text);
+    padding: 6px 0;
+  }
+  .admin-event-form__toggle input { margin-top: 3px; accent-color: var(--color-gold); }
+  .admin-event-form__status {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    background: var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+    border-left: 3px solid var(--color-gold);
+    border-radius: 4px;
+    font-size: 0.86rem;
+  }
+  .admin-event-form__status.is-error { background: #fde9e9; border-color: #c62828; }
+  .admin-event-list .lounge-label { margin-bottom: 8px; }
 
   /* Table */
   .admin-table { display: flex; flex-direction: column; }
@@ -623,7 +737,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function wireTabs() {
-    const tabs = ["members", "venues", "activity"];
+    const tabs = ["members", "venues", "events", "activity"];
     const tabEls = tabs.map((t) => document.getElementById(`tab-${t}`) as HTMLButtonElement);
     const paneEls = tabs.map((t) => document.getElementById(`pane-${t}`) as HTMLElement);
     tabEls.forEach((btn, idx) => {
@@ -631,7 +745,133 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         tabEls.forEach((b, i) => b.classList.toggle("is-active", i === idx));
         paneEls.forEach((p, i) => (p.hidden = i !== idx));
         if (tabs[idx] === "activity") loadActivity();
+        if (tabs[idx] === "events") loadEvents();
       });
+    });
+  }
+
+  // ── Events tab ──────────────────────────────────────────────────────────
+  async function loadEvents() {
+    const supabase = getSupabase();
+    const list = document.getElementById("events-list") as HTMLElement;
+    if (!list) return;
+
+    // Populate venue dropdown once
+    const venueSel = document.getElementById("event-create-venue") as HTMLSelectElement;
+    if (venueSel && venueSel.options.length <= 1) {
+      const { data: venues } = await supabase
+        .from("partner_lounges")
+        .select("id, name, city")
+        .not("verified_at", "is", null)
+        .order("city")
+        .order("name");
+      for (const v of (venues as any[]) || []) {
+        const opt = document.createElement("option");
+        opt.value = v.id;
+        opt.textContent = `${v.name} — ${v.city}`;
+        venueSel.appendChild(opt);
+      }
+    }
+
+    // Load events (all, including unverified)
+    const { data: events } = await supabase
+      .from("cigar_events")
+      .select("id, title, city, start_at, verified_at, venue:venue_id(name)")
+      .order("start_at", { ascending: false })
+      .limit(100);
+    const rows = (events as any[]) || [];
+    if (rows.length === 0) {
+      list.innerHTML = `<p style="color:var(--color-text-muted);padding:14px 0;font-size:0.9rem;">No events yet. Create one above.</p>`;
+      return;
+    }
+    list.innerHTML = rows
+      .map((e) => {
+        const when = new Date(e.start_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        const venue = e.venue?.name || e.city;
+        const verified = !!e.verified_at;
+        return `
+          <div class="admin-row" data-event-id="${e.id}">
+            <div class="admin-row__avatar" style="background:var(--color-gold-soft);color:var(--color-gold);font-size:11px;">EV</div>
+            <div class="admin-row__main">
+              <p class="admin-row__name">${escapeHtml(e.title)}</p>
+              <p class="admin-row__meta">${when} · ${escapeHtml(venue)}${e.city !== venue ? ` · ${escapeHtml(e.city)}` : ""}</p>
+            </div>
+            <div class="admin-row__actions">
+              ${verified
+                ? `<span class="admin-row__pill admin-row__pill--on">Live</span>`
+                : `<button class="admin-row__btn" data-action="verify-event">Publish</button>`}
+              <button class="admin-row__btn admin-row__btn--destructive" data-action="delete-event">Delete</button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    list.querySelectorAll<HTMLButtonElement>("[data-action='verify-event']").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const row = btn.closest(".admin-row") as HTMLElement;
+        const id = row.dataset.eventId;
+        if (!id) return;
+        btn.disabled = true; btn.textContent = "…";
+        const { error } = await supabase
+          .from("cigar_events")
+          .update({ verified_at: new Date().toISOString() })
+          .eq("id", id);
+        if (error) { alert(error.message); btn.disabled = false; btn.textContent = "Publish"; return; }
+        await loadEvents();
+      });
+    });
+    list.querySelectorAll<HTMLButtonElement>("[data-action='delete-event']").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Delete this event? All RSVPs will be removed too.")) return;
+        const row = btn.closest(".admin-row") as HTMLElement;
+        const id = row.dataset.eventId;
+        if (!id) return;
+        const { error } = await supabase.from("cigar_events").delete().eq("id", id);
+        if (error) { alert(error.message); return; }
+        await loadEvents();
+      });
+    });
+  }
+
+  function wireEventCreate() {
+    const form = document.getElementById("event-create-form") as HTMLFormElement | null;
+    if (!form) return;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("event-create-status") as HTMLElement;
+      const submitBtn = form.querySelector("button[type='submit']") as HTMLButtonElement;
+      submitBtn.disabled = true; submitBtn.textContent = "Saving…";
+      const fd = new FormData(form);
+      const verifyNow = fd.get("verify_now") === "on";
+      const payload: Record<string, any> = {
+        title: String(fd.get("title") || "").trim(),
+        city: String(fd.get("city") || "").trim(),
+        country: String(fd.get("country") || "").trim() || null,
+        venue_id: String(fd.get("venue_id") || "") || null,
+        start_at: new Date(String(fd.get("start_at"))).toISOString(),
+        end_at: fd.get("end_at") ? new Date(String(fd.get("end_at"))).toISOString() : null,
+        description: String(fd.get("description") || "").trim() || null,
+        external_url: String(fd.get("external_url") || "").trim() || null,
+        is_official: fd.get("is_official") === "on",
+        verified_at: verifyNow ? new Date().toISOString() : null,
+      };
+      const supabase = getSupabase();
+      const { error } = await supabase.from("cigar_events").insert(payload);
+      if (error) {
+        status.hidden = false;
+        status.classList.add("is-error");
+        status.textContent = error.message;
+      } else {
+        status.hidden = false;
+        status.classList.remove("is-error");
+        status.textContent = verifyNow
+          ? "Event created and published. New-event emails are being sent."
+          : "Event saved as draft. Click Publish in the list to send notifications.";
+        form.reset();
+        await loadEvents();
+      }
+      submitBtn.disabled = false; submitBtn.textContent = "Create event";
     });
   }
 
@@ -649,6 +889,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
     await Promise.all([loadStats(), loadMembers(), loadVenues()]);
     wireTabs();
+    wireEventCreate();
 
     // Wire filter inputs (members)
     document.getElementById("filter-members-search")?.addEventListener("input", renderMembers);

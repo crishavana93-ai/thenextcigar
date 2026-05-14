@@ -1,0 +1,287 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+---
+
+<BaseLayout title="Places — The Lounge" noIndex>
+  <LoungeHeader active="map" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <p class="lounge-app__guard-eyebrow">Loading…</p>
+    </div>
+
+    <div id="lounge-content" hidden>
+      <section class="container-wide pt-6 pb-3 reveal">
+        <p class="lounge-label">Places</p>
+        <h1 class="lounge-h1" style="margin-top: 4px;">Vetted cigar spots worldwide.</h1>
+        <p class="lounge-sub" style="margin-top: 6px;">
+          Every Casa del Habano, Davidoff Flagship, and notable independent lounge.
+          Filter by city, type, or open on the map.
+        </p>
+      </section>
+
+      <section class="container-wide pb-3">
+        <div class="pl-filters">
+          <label class="pl-filter">
+            <span class="pl-filter__label">City</span>
+            <select id="pl-city" class="pl-filter__input">
+              <option value="">All cities</option>
+            </select>
+          </label>
+          <label class="pl-filter">
+            <span class="pl-filter__label">Type</span>
+            <select id="pl-type" class="pl-filter__input">
+              <option value="">All types</option>
+              <option value="casadelhabano">Casa del Habano</option>
+              <option value="house">Brand flagship</option>
+              <option value="lounge">Lounge</option>
+              <option value="retailer">Retailer</option>
+              <option value="club">Club</option>
+              <option value="pub">Pub</option>
+            </select>
+          </label>
+          <p id="pl-count" class="pl-count" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div id="pl-skeleton" class="pl-grid">
+          <div class="lskel-card"></div>
+          <div class="lskel-card"></div>
+          <div class="lskel-card"></div>
+        </div>
+        <div id="pl-grid" class="pl-grid" hidden></div>
+        <div id="pl-empty" hidden class="lounge-empty">
+          <div class="lounge-empty__art">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+          <p class="lounge-empty__kicker">No matches</p>
+          <h3 class="lounge-empty__title">Nothing in this filter.</h3>
+          <p class="lounge-empty__body">Try a different city or clear the type filter.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <LoungeTabBar />
+</BaseLayout>
+
+<style is:global>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+  .lounge-app__guard { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  .pl-filters {
+    display: flex; flex-wrap: wrap; align-items: end; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .pl-filter {
+    display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px;
+  }
+  .pl-filter__label {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .pl-filter__input {
+    appearance: none; -webkit-appearance: none;
+    width: 100%; padding: 0.6rem 0.85rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 6px;
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  .pl-count {
+    margin: 0;
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-text-muted);
+    margin-left: auto;
+  }
+
+  .pl-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media (min-width: 768px) { .pl-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .pl-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .pl-card {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+    text-align: left;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .pl-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-gold, #c9a961);
+  }
+  .pl-card__type {
+    font-size: 0.66rem; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold, #c9a961);
+  }
+  .pl-card__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .pl-card__city {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-text-soft);
+  }
+  .pl-card__address {
+    margin: 4px 0 0;
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+  }
+  .pl-card__actions {
+    display: flex; gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .pl-card__action {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--color-gold, #c9a961);
+    text-decoration: none;
+    border: 1px solid rgba(201, 169, 97, 0.4);
+    padding: 4px 9px;
+    border-radius: 999px;
+    transition: background 0.12s ease;
+  }
+  .pl-card__action:hover {
+    background: rgba(201, 169, 97, 0.14);
+  }
+</style>
+
+<script>
+  import { getSupabase, getCurrentUser, getCurrentProfile } from "../../../../lib/supabase";
+
+  type Lounge = {
+    id: string;
+    name: string;
+    city: string;
+    country: string | null;
+    address: string | null;
+    lat: number;
+    lng: number;
+    type: string;
+    website: string | null;
+  };
+
+  let all: Lounge[] = [];
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function typeLabel(t: string): string {
+    return ({
+      casadelhabano: "Casa del Habano",
+      house: "Brand flagship",
+      lounge: "Lounge",
+      retailer: "Retailer",
+      club: "Club",
+      pub: "Pub",
+    } as Record<string, string>)[t] || t;
+  }
+
+  function render() {
+    const city = (document.getElementById("pl-city") as HTMLSelectElement).value;
+    const type = (document.getElementById("pl-type") as HTMLSelectElement).value;
+    const list = all.filter((l) => (!city || l.city === city) && (!type || l.type === type));
+
+    const grid = document.getElementById("pl-grid") as HTMLElement;
+    const empty = document.getElementById("pl-empty") as HTMLElement;
+    const skel = document.getElementById("pl-skeleton") as HTMLElement;
+    const count = document.getElementById("pl-count") as HTMLElement;
+    skel.hidden = true;
+    count.textContent = `${list.length} place${list.length === 1 ? "" : "s"}`;
+
+    if (list.length === 0) {
+      grid.hidden = true;
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    grid.hidden = false;
+    grid.innerHTML = list
+      .map((l) => {
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`;
+        const loungeMapUrl = `/lounge/app/map/?city=${encodeURIComponent(l.city)}`;
+        return `
+          <article class="pl-card">
+            <p class="pl-card__type">${typeLabel(l.type)}</p>
+            <h2 class="pl-card__name">${escapeHtml(l.name)}</h2>
+            <p class="pl-card__city">${escapeHtml(l.city)}${l.country ? ` · ${escapeHtml(l.country)}` : ""}</p>
+            ${l.address ? `<p class="pl-card__address">${escapeHtml(l.address)}</p>` : ""}
+            <div class="pl-card__actions">
+              <a class="pl-card__action" href="${loungeMapUrl}">Open on map</a>
+              <a class="pl-card__action" href="${mapUrl}" target="_blank" rel="noopener">Directions</a>
+              ${l.website ? `<a class="pl-card__action" href="${escapeHtml(l.website)}" target="_blank" rel="noopener">Website</a>` : ""}
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    const profile = await getCurrentProfile();
+    const supabase = getSupabase();
+
+    const { data: lounges } = await supabase
+      .from("partner_lounges")
+      .select("id, name, city, country, address, lat, lng, type, website")
+      .not("verified_at", "is", null)
+      .order("city", { ascending: true })
+      .order("name", { ascending: true });
+    all = (lounges as Lounge[]) || [];
+
+    // Populate city dropdown
+    const citySel = document.getElementById("pl-city") as HTMLSelectElement;
+    const cities = Array.from(new Set(all.map((l) => l.city))).sort();
+    for (const c of cities) {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      citySel.appendChild(opt);
+    }
+    if (profile?.city && cities.includes(profile.city)) {
+      citySel.value = profile.city;
+    }
+
+    citySel.addEventListener("change", render);
+    (document.getElementById("pl-type") as HTMLSelectElement).addEventListener("change", render);
+
+    (document.getElementById("lounge-guard") as HTMLElement).style.display = "none";
+    (document.getElementById("lounge-content") as HTMLElement).hidden = false;
+    render();
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>
