@@ -673,20 +673,28 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
   }
 
   :global(.tnc-member-pin) {
-    width: 38px; height: 38px;
+    width: 38px !important;
+    height: 38px !important;
     border-radius: 50%;
     border: 2px solid #fff;
     background: var(--color-burgundy, #6E2620);
     box-shadow: 0 2px 10px rgba(0,0,0,0.6);
-    overflow: hidden;
+    overflow: hidden !important;
     display: flex; align-items: center; justify-content: center;
     color: #f5efe0;
     font-family: var(--font-display, Georgia);
     font-size: 0.78rem;
     font-weight: 800;
+    box-sizing: border-box;
   }
   :global(.tnc-member-pin img) {
-    width: 100%; height: 100%; object-fit: cover;
+    width: 38px !important;
+    height: 38px !important;
+    max-width: 38px;
+    max-height: 38px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
   }
 
   /* Bottom sheet — full-width slide-up on mobile, anchored card on desktop. */

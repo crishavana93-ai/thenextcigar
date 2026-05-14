@@ -528,12 +528,22 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       .eq("status", "going");
     for (const c of (counts as any[]) || []) attendeeCounts[c.event_id] = (attendeeCounts[c.event_id] || 0) + 1;
 
-    // Populate city datalist (typeahead source)
+    // Populate city datalist (typeahead source). Pull from ALL partner_lounges
+    // cities (~209) plus event cities, so a member can search any city even
+    // if no events exist there yet.
     const cityInput = document.getElementById("evt-city") as HTMLInputElement;
     const cityList = document.getElementById("evt-city-list") as HTMLDataListElement;
-    const cities = Array.from(new Set(allEvents.map((e) => e.city))).sort();
-    cityList.innerHTML = cities.map((c) => `<option value="${c.replace(/"/g, "&quot;")}"></option>`).join("");
-    // Pre-fill with member's city if events exist there
+    const { data: venueCitiesData } = await supabase
+      .from("partner_lounges")
+      .select("city")
+      .not("verified_at", "is", null);
+    const venueCities = ((venueCitiesData as any[]) || []).map((v) => v.city);
+    const eventCities = allEvents.map((e) => e.city);
+    const cities = Array.from(new Set([...venueCities, ...eventCities])).sort();
+    cityList.innerHTML = cities
+      .map((c) => `<option value="${c.replace(/"/g, "&quot;")}"></option>`)
+      .join("");
+    // Pre-fill with member's city if it's in the list
     if (profile?.city && cities.includes(profile.city)) {
       cityInput.value = profile.city;
     }

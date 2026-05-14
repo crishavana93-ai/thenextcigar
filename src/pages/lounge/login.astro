@@ -21,7 +21,35 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
         </label>
 
-        <button type="submit" class="lounge-auth__button">Send magic link →</button>
+        <button type="submit" class="lounge-auth__button">Send sign-in code →</button>
+
+        <p class="lounge-auth__hint" style="margin: 12px 0 0; font-size: 0.8rem; color: var(--color-text-muted); text-align: center;">
+          We'll email you a 6-digit code. Tap the code in your email and it
+          auto-fills here — no jumping between apps.
+        </p>
+      </form>
+
+      {/* Code-entry form — shown after the email is sent */}
+      <form id="login-code-form" class="lounge-auth__form" hidden>
+        <label class="lounge-auth__label">
+          6-digit code <span style="color:var(--color-text-muted); font-weight:500;">— check your email</span>
+          <input
+            type="text"
+            name="token"
+            required
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="123456"
+            style="font-size: 1.4rem; letter-spacing: 0.4em; text-align: center; font-family: var(--font-display); font-weight: 800;" />
+        </label>
+
+        <button type="submit" class="lounge-auth__button">Sign in →</button>
+
+        <button type="button" id="login-resend" class="lounge-auth__resend" style="background:none; border:none; color:var(--color-gold,#c9a961); text-decoration:underline; cursor:pointer; padding:8px 0; font:inherit; margin-top: 8px;">
+          Resend the code
+        </button>
       </form>
 
       <p id="login-status" class="lounge-auth__status" hidden></p>
@@ -151,6 +179,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       }
     }
 
+    let lastEmailSent = "";
+
+    async function sendCode(email: string) {
+      const supabase = getSupabase();
+      // signInWithOtp + shouldCreateUser=false → emails BOTH the magic link AND
+      // a 6-digit OTP code in the same message. The user can either click the
+      // link OR copy the code into the form below.
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/lounge/app/`,
+        },
+      });
+      if (error) throw error;
+      lastEmailSent = email;
+      try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const data = new FormData(form);
@@ -160,20 +206,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       btn.disabled = true;
       btn.textContent = "Sending…";
       try {
-        const supabase = getSupabase();
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: `${window.location.origin}/lounge/app/` },
-        });
-        if (error) throw error;
-        // Remember this email so the next visit is one-tap
-        try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
+        await sendCode(email);
         if (status) {
           status.hidden = false;
           status.classList.remove("is-error");
-          status.innerHTML = `Magic link sent to <strong>${email}</strong>. Check your inbox to sign in.`;
+          status.innerHTML = `Sent. Open the email from <strong>The Lounge</strong> on this device and copy the 6-digit code.`;
         }
         form.style.display = "none";
+        const codeForm = document.getElementById("login-code-form") as HTMLFormElement;
+        codeForm.hidden = false;
+        (codeForm.querySelector("input[name=token]") as HTMLInputElement).focus();
       } catch (err: any) {
         if (status) {
           status.hidden = false;
@@ -181,9 +223,61 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           status.textContent = err.message || "Sign-in failed. Try again, or email guatabeycigars@gmail.com.";
         }
         btn.disabled = false;
-        btn.textContent = "Send magic link →";
+        btn.textContent = "Send sign-in code →";
       }
     });
+
+    // Wire the code-entry form
+    const codeForm = document.getElementById("login-code-form") as HTMLFormElement | null;
+    if (codeForm) {
+      codeForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const token = (codeForm.querySelector("input[name=token]") as HTMLInputElement).value.trim();
+        if (!/^\d{6}$/.test(token)) return;
+        const btn = codeForm.querySelector("button[type=submit]") as HTMLButtonElement;
+        btn.disabled = true;
+        btn.textContent = "Signing in…";
+        try {
+          const supabase = getSupabase();
+          const { error } = await supabase.auth.verifyOtp({
+            email: lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "",
+            token,
+            type: "email",
+          });
+          if (error) throw error;
+          // Signed in — go to the app
+          window.location.href = "/lounge/app/";
+        } catch (err: any) {
+          if (status) {
+            status.hidden = false;
+            status.classList.add("is-error");
+            status.textContent = err.message || "Invalid or expired code. Tap Resend below.";
+          }
+          btn.disabled = false;
+          btn.textContent = "Sign in →";
+        }
+      });
+
+      // Resend button
+      document.getElementById("login-resend")?.addEventListener("click", async () => {
+        const email = lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "";
+        if (!email) return;
+        try {
+          await sendCode(email);
+          if (status) {
+            status.hidden = false;
+            status.classList.remove("is-error");
+            status.textContent = "Fresh code sent. Codes expire after a few minutes.";
+          }
+        } catch (err: any) {
+          if (status) {
+            status.hidden = false;
+            status.classList.add("is-error");
+            status.textContent = err.message || "Couldn't resend. Try again.";
+          }
+        }
+      });
+    }
   }
 
   document.addEventListener("astro:page-load", setup);
