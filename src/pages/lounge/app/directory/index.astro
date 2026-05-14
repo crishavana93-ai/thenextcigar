@@ -67,11 +67,16 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
       <section class="container-wide pb-24">
         <div id="lounge-dir-grid" class="lounge-dir-grid"></div>
-        <div id="lounge-dir-empty" hidden class="lounge-dir-empty">
-          <p class="lounge-dir-empty__eyebrow">No matches</p>
-          <p class="lounge-dir-empty__body">
-            Adjust your filters, or invite a friend to join.
-          </p>
+        <div id="lounge-dir-empty" hidden class="lounge-empty">
+          <div class="lounge-empty__art">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <p class="lounge-empty__kicker">No matches</p>
+          <h3 class="lounge-empty__title">Nobody fits those filters yet.</h3>
+          <p class="lounge-empty__body">Loosen the filters, or invite a friend in your city — the cohort grows one cigar at a time.</p>
         </div>
       </section>
     </div>

@@ -52,8 +52,15 @@ import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
             <div class="lounge-travel-card">
               <p class="lounge-travel-card__eyebrow">Your upcoming trips</p>
               <div id="my-trips-list" class="lounge-travel-list"></div>
-              <div id="my-trips-empty" hidden class="lounge-travel-empty">
-                <p>No trips declared yet.</p>
+              <div id="my-trips-empty" hidden class="lounge-empty">
+                <div class="lounge-empty__art">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2 3 8l5 4.5L6 18l2 1 2-3 4 4 1.8-1.3Z" />
+                  </svg>
+                </div>
+                <p class="lounge-empty__kicker">No trips yet</p>
+                <h3 class="lounge-empty__title">Where are you going next?</h3>
+                <p class="lounge-empty__body">Declare a trip and hosts in that city get a quiet ping. The introductions start before you land.</p>
               </div>
             </div>
 
@@ -101,9 +108,16 @@ import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
               </div>
               <p id="feed-count" class="lounge-travel-count">—</p>
               <div id="feed-list" class="lounge-travel-feed"></div>
-              <div id="feed-empty" hidden class="lounge-travel-empty">
-                <p class="lounge-travel-empty__eyebrow">No upcoming trips</p>
-                <p>When members declare trips, they'll show here.</p>
+              <div id="feed-empty" hidden class="lounge-empty">
+                <div class="lounge-empty__art">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                </div>
+                <p class="lounge-empty__kicker">No visitors inbound</p>
+                <h3 class="lounge-empty__title">Nobody's coming to your city yet.</h3>
+                <p class="lounge-empty__body">When members declare trips, they'll show up here. Adjust the city filter to see other destinations.</p>
               </div>
             </div>
           </div>

@@ -66,8 +66,13 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
           <a href="/lounge/app/map/" class="feed-section-head__link">Open map →</a>
         </div>
         <div id="live-now-strip" class="live-strip">
-          <div class="live-strip__empty">
-            <p>Nobody's checked in right now.</p>
+          <div class="lounge-empty lounge-empty--inline" style="flex-grow:1;">
+            <div class="lounge-empty__art">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+            </div>
+            <h3 class="lounge-empty__title">Nobody's checked in right now.</h3>
             <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
           </div>
         </div>
@@ -79,9 +84,17 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
           <p class="lounge-label">From the network</p>
         </div>
         <div id="feed-list" class="feed-list"></div>
-        <div id="feed-empty" hidden class="feed-empty">
-          <p class="feed-empty__line">The feed will fill up as members check in, declare trips, and join.</p>
-          <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Explore the map</a>
+        <div id="feed-empty" hidden class="lounge-empty">
+          <div class="lounge-empty__art">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+              <path d="M28 14 C 22 22, 22 30, 28 38 C 34 46, 34 54, 28 60" fill="none"/>
+              <path d="M36 14 C 42 22, 42 30, 36 38 C 30 46, 30 54, 36 60" fill="none"/>
+            </svg>
+          </div>
+          <p class="lounge-empty__kicker">Nothing here yet</p>
+          <h3 class="lounge-empty__title">The feed wakes up when members do.</h3>
+          <p class="lounge-empty__body">Check in at a venue, declare a trip, or invite a friend — the network feed fills up as soon as things happen.</p>
+          <a href="/lounge/app/map/" class="lounge-empty__cta lbtn lbtn-primary lbtn-sm">Explore the map</a>
         </div>
       </section>
     </div>
@@ -526,8 +539,13 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     if (liveStrip) {
       if (liveRows.length === 0) {
         liveStrip.innerHTML = `
-          <div class="live-strip__empty">
-            <p>Nobody's checked in right now.</p>
+          <div class="lounge-empty lounge-empty--inline" style="flex-grow:1;">
+            <div class="lounge-empty__art">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+            </div>
+            <h3 class="lounge-empty__title">Nobody's checked in right now.</h3>
             <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
           </div>`;
       } else {

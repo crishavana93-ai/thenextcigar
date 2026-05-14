@@ -797,6 +797,95 @@ header, footer { position: relative; z-index: 10; }
 }
 
 /* ============================================================================
+ * Lounge — warm empty state
+ * Cream-card + smoke-curl illustration + headline + body + CTA. Used wherever
+ * a query returns zero rows (feed, directory, inbox, etc.).
+ * ============================================================================ */
+.lounge-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 24px;
+  background: var(--color-bg-soft);
+  border: 1px dashed rgba(201, 169, 97, 0.3);
+  border-radius: 12px;
+  text-align: center;
+  margin: 8px 0;
+}
+.lounge-empty__art {
+  width: 52px;
+  height: 52px;
+  color: var(--color-gold, #c9a961);
+  opacity: 0.55;
+  margin-bottom: 2px;
+}
+.lounge-empty__art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.lounge-empty__kicker {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.lounge-empty__title {
+  margin: 0;
+  font-family: Georgia, "Playfair Display", serif;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--color-text);
+  max-width: 28rem;
+}
+.lounge-empty__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-soft);
+  max-width: 32rem;
+}
+.lounge-empty__body a {
+  color: var(--color-gold);
+  text-decoration: underline;
+}
+.lounge-empty__cta {
+  margin-top: 4px;
+}
+
+/* Compact horizontal variant — used inside the Live-Now strip on Home and the
+   Cruiser carousel on the map. Same warmth, less vertical real estate. */
+.lounge-empty--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  text-align: left;
+  margin: 0;
+}
+.lounge-empty--inline .lounge-empty__art {
+  width: 36px; height: 36px; margin: 0;
+}
+.lounge-empty--inline .lounge-empty__title {
+  font-size: 14px; flex-grow: 1;
+}
+.lounge-empty--inline .lounge-empty__body { display: none; }
+.lounge-empty--inline .lounge-empty__kicker { display: none; }
+
+/* Dark variant — for the Cruiser carousel sitting on the dark map */
+.lounge-empty--on-dark {
+  background: rgba(26, 29, 46, 0.94);
+  border-color: rgba(201, 169, 97, 0.25);
+}
+.lounge-empty--on-dark .lounge-empty__title { color: #f5efe0; }
+.lounge-empty--on-dark .lounge-empty__body { color: rgba(245, 239, 224, 0.7); }
+.lounge-empty--on-dark .lounge-empty__kicker { color: rgba(245, 239, 224, 0.5); }
+
+/* ============================================================================
  * Lounge — compatibility layer
  * Existing per-page button classes (.lounge-auth__button, .profile-form__submit,
  * .lounge-mem-cta, etc.) get retargeted to the new gold-on-charcoal pill so
