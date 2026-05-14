@@ -54,17 +54,35 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       <section class="container-wide pb-24">
         <div id="received-pane" class="lounge-inbox-pane">
           <div id="received-list" class="lounge-inbox-list"></div>
-          <div id="received-empty" hidden class="lounge-inbox-empty">
-            <p class="lounge-inbox-empty__eyebrow">All caught up</p>
-            <p>No incoming introduction requests right now.</p>
+          <div id="received-empty" hidden class="lounge-empty">
+            <div class="lounge-empty__art">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+                <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z" />
+              </svg>
+            </div>
+            <p class="lounge-empty__kicker">All caught up</p>
+            <h3 class="lounge-empty__title">No incoming introductions.</h3>
+            <p class="lounge-empty__body">When a member asks to meet you, the request shows up here with Accept and Decline.</p>
           </div>
         </div>
 
         <div id="sent-pane" class="lounge-inbox-pane" hidden>
           <div id="sent-list" class="lounge-inbox-list"></div>
-          <div id="sent-empty" hidden class="lounge-inbox-empty">
-            <p class="lounge-inbox-empty__eyebrow">Nothing sent yet</p>
-            <p>Browse the <a href="/lounge/app/directory/">members directory</a> or the <a href="/lounge/app/map/">map</a> and reach out to someone.</p>
+          <div id="sent-empty" hidden class="lounge-empty">
+            <div class="lounge-empty__art">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M22 2 11 13" />
+                <path d="M22 2 15 22l-4-9-9-4 20-7Z" />
+              </svg>
+            </div>
+            <p class="lounge-empty__kicker">Your move</p>
+            <h3 class="lounge-empty__title">No intros sent yet.</h3>
+            <p class="lounge-empty__body">Find someone on the map or in the directory and send your first hello.</p>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 6px; flex-wrap: wrap;">
+              <a href="/lounge/app/map/" class="lbtn lbtn-sm">Open the map</a>
+              <a href="/lounge/app/directory/" class="lbtn lbtn-ghost lbtn-sm">Browse members</a>
+            </div>
           </div>
         </div>
       </section>
