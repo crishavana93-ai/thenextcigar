@@ -55,7 +55,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
               <span id="dash-founding" class="feed-status__chip" hidden>Founding</span>
             </p>
           </div>
-          <a href="/lounge/app/map/" class="lbtn lbtn-secondary lbtn-sm">I'm at a lounge</a>
+          <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-secondary lbtn-sm">I'm at a lounge</a>
         </div>
       </section>
 
@@ -88,7 +88,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
               </svg>
             </div>
             <h3 class="lounge-empty__title">Nobody's checked in right now.</h3>
-            <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
+            <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
           </div>
         </div>
       </section>
@@ -731,7 +731,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
               </svg>
             </div>
             <h3 class="lounge-empty__title">Nobody's checked in right now.</h3>
-            <a href="/lounge/app/map/" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
+            <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
           </div>`;
       } else {
         liveStrip.innerHTML = liveRows.map((c) => {

@@ -79,6 +79,17 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         <button id="my-active-checkout" class="lbtn lbtn-ghost lbtn-ghost--on-dark lbtn-sm" type="button">Check out</button>
       </div>
 
+      {/* Check-in coach banner — appears when user arrives from "Be the first" CTA */}
+      <div id="checkin-coach-banner" class="nearby-banner" hidden>
+        <div class="nearby-banner__info">
+          <span class="nearby-banner__eyebrow">To check in</span>
+          <strong class="nearby-banner__venue">Tap any venue pin on the map</strong>
+          <span class="nearby-banner__distance">A bottom sheet opens with a Check in button.</span>
+        </div>
+        <button id="checkin-coach-locate" class="lbtn lbtn-sm" type="button">Find me</button>
+        <button id="checkin-coach-dismiss" class="nearby-banner__dismiss" type="button" aria-label="Dismiss">×</button>
+      </div>
+
       {/* Nearby-venue detection banner — appears when device location is near a known venue */}
       <div id="nearby-venue-banner" class="nearby-banner" hidden>
         <div class="nearby-banner__info">
@@ -1560,8 +1571,21 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     // Make sure leaflet recalculates after reveal
     setTimeout(() => map.invalidateSize(), 50);
 
-    // Open initial state
+    // Coach banner — when arriving from "Be the first" / Check-in CTAs.
     const params = new URLSearchParams(window.location.search);
+    if (params.get("checkin") === "1") {
+      const coach = document.getElementById("checkin-coach-banner") as HTMLElement;
+      if (coach) coach.hidden = false;
+      document.getElementById("checkin-coach-dismiss")?.addEventListener("click", () => {
+        coach.hidden = true;
+      });
+      document.getElementById("checkin-coach-locate")?.addEventListener("click", () => {
+        coach.hidden = true;
+        findMeBtn?.click();
+      });
+    }
+
+    // Open initial state
     const urlCity = params.get("city");
     if (urlCity) {
       flyToCity(urlCity);
