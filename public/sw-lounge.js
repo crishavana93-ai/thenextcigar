@@ -9,7 +9,7 @@
 // Bump this version any time the deployed app changes meaningfully (new
 // migrations, layout changes, big UI updates). Old caches are deleted on
 // activate, forcing a fresh fetch on next visit.
-const CACHE_NAME = "lounge-app-v3";
+const CACHE_NAME = "lounge-app-v5";
 const PRECACHE_URLS = [
   "/lounge/app/",
   "/lounge-app-icon-192.png",

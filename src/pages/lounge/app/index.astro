@@ -892,6 +892,27 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     const content = document.getElementById("lounge-content");
     if (guard) guard.style.display = "none";
     if (content) content.hidden = false;
+
+    // Re-fetch the hero CTA + feed whenever the user comes back to this page
+    // (e.g. after reading messages in /inbox, the unread count should drop to 0
+    // without needing a full reload). visibilitychange covers tab switches +
+    // PWA foreground; pageshow covers bfcache restores from browser back.
+    let refreshing = false;
+    const refresh = async () => {
+      if (refreshing) return;
+      if (document.visibilityState !== "visible") return;
+      refreshing = true;
+      try {
+        await Promise.all([
+          loadHeroCta(user.id, profile),
+          loadAndRenderFeed(user.id),
+        ]);
+      } finally {
+        refreshing = false;
+      }
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("pageshow", refresh);
   }
 
   // ── Hero CTA — picks the highest-priority action for THIS member right now

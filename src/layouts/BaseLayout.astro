@@ -257,13 +257,34 @@ const skipPublicChrome = bareChrome || isLoungeApp;
     </script>
 
     {/* Service worker — required for the Lounge to install as a true PWA on
-        Android Chrome / Samsung Internet (instead of a browser shortcut). */}
+        Android Chrome / Samsung Internet (instead of a browser shortcut).
+        Also auto-prompts users to reload when a new version of the app is
+        deployed (no more stale-cache complaints). */}
     {isLoungeApp && (
       <script is:inline>
         if ("serviceWorker" in navigator) {
           window.addEventListener("load", () => {
             navigator.serviceWorker
               .register("/sw-lounge.js", { scope: "/lounge/app/" })
+              .then((reg) => {
+                // Check for updates every 60s while the page is open
+                setInterval(() => reg.update().catch(() => {}), 60_000);
+                // When a new SW takes over, reload so the user gets fresh JS/HTML
+                reg.addEventListener("updatefound", () => {
+                  const newWorker = reg.installing;
+                  if (!newWorker) return;
+                  newWorker.addEventListener("statechange", () => {
+                    if (
+                      newWorker.state === "installed" &&
+                      navigator.serviceWorker.controller
+                    ) {
+                      // There's already a controlling SW + a new one ready.
+                      // Reload silently — the v3+ caches are bypass-safe.
+                      window.location.reload();
+                    }
+                  });
+                });
+              })
               .catch((err) => console.warn("[Lounge] SW registration failed:", err));
           });
         }
