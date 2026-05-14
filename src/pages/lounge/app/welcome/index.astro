@@ -1,0 +1,483 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Welcome to The Lounge"
+  description="One-time onboarding for new members."
+  noIndex
+>
+  {/* No header / no tab bar — this is a single-purpose onboarding canvas. */}
+
+  <main class="welcome-app">
+    <div id="welcome-guard" class="welcome-guard">
+      <p class="welcome-guard__line">Loading…</p>
+    </div>
+
+    {/* STEP 1 — HERO */}
+    <section id="step-hero" class="welcome-step welcome-step--dark" hidden>
+      <div class="welcome-step__inner">
+        <img src="/logo-light.png" alt="" class="welcome-logo" />
+        <p class="welcome-eyebrow">Welcome to The Lounge</p>
+        <h1 class="welcome-hero-title">
+          Hello, <span id="hero-name">there</span>.
+        </h1>
+        <div class="welcome-rule"></div>
+        <p class="welcome-hero-sub">
+          <strong id="hero-count">A growing cohort</strong> of cigar smokers across
+          <strong id="hero-cities">cities all over the world</strong>.
+        </p>
+        <p class="welcome-hero-line">Let's get you on the map.</p>
+
+        <button id="hero-continue" class="lbtn lbtn-primary lbtn-lg" type="button">
+          Continue
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+          </svg>
+        </button>
+
+        <p class="welcome-progress">Step 1 of 3</p>
+      </div>
+    </section>
+
+    {/* STEP 2 — MINIMAL PROFILE (city + display name) */}
+    <section id="step-profile" class="welcome-step welcome-step--cream" hidden>
+      <div class="welcome-step__inner">
+        <p class="welcome-eyebrow welcome-eyebrow--burgundy">Your profile</p>
+        <h2 class="welcome-step-title">Two quick things.</h2>
+        <p class="welcome-step-body">
+          How others see you, and where the map should center.
+        </p>
+
+        <form id="profile-form" class="welcome-form" autocomplete="off">
+          <label class="welcome-field">
+            <span class="welcome-field__label">How do you go by?</span>
+            <input id="name-input" type="text" required maxlength="40"
+              placeholder="e.g. Cris O." />
+            <span class="welcome-field__hint">First name + initial is the convention. You can change this later.</span>
+          </label>
+
+          <label class="welcome-field">
+            <span class="welcome-field__label">Your home city</span>
+            <input id="city-input" type="text" required list="city-suggestions"
+              placeholder="e.g. Stockholm" autocomplete="off" />
+            <datalist id="city-suggestions"></datalist>
+            <span class="welcome-field__hint">This is where the map drops you in. Type your city even if it isn't on the list.</span>
+          </label>
+
+          <button type="submit" class="lbtn lbtn-primary lbtn-lg" id="profile-submit">
+            Continue
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+          <p id="profile-status" class="welcome-status" hidden></p>
+        </form>
+
+        <p class="welcome-progress">Step 2 of 3</p>
+      </div>
+    </section>
+
+    {/* STEP 3 — HOST PREFERENCE */}
+    <section id="step-host" class="welcome-step welcome-step--cream" hidden>
+      <div class="welcome-step__inner">
+        <p class="welcome-eyebrow welcome-eyebrow--burgundy">Hosting</p>
+        <h2 class="welcome-step-title">Open to hosting visitors?</h2>
+        <p class="welcome-step-body">
+          Members travelling through your city may ask for a recommendation, a smoke,
+          or an introduction. You can change this anytime.
+        </p>
+
+        <div class="welcome-tiles">
+          <button class="welcome-tile" type="button" data-host="true">
+            <span class="welcome-tile__icon">●</span>
+            <span class="welcome-tile__title">Yes, I host</span>
+            <span class="welcome-tile__body">I'd welcome members passing through. Trip pings come to my email.</span>
+          </button>
+          <button class="welcome-tile" type="button" data-host="false">
+            <span class="welcome-tile__icon welcome-tile__icon--muted">○</span>
+            <span class="welcome-tile__title">Not right now</span>
+            <span class="welcome-tile__body">I'd rather not be pinged about travellers. I can flip this on later.</span>
+          </button>
+        </div>
+
+        <p class="welcome-status" id="host-status" hidden></p>
+        <p class="welcome-progress">Step 3 of 3</p>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  /* Skip the global skip-to-content padding from BaseLayout — welcome is its own surface. */
+  html, body { background: #1a1d2e; }
+
+  .welcome-app {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1d2e;
+  }
+  .welcome-guard {
+    color: rgba(245, 239, 224, 0.6);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  /* Steps */
+  .welcome-step {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px calc(32px + env(safe-area-inset-bottom));
+    animation: welcomeIn 0.3s ease-out;
+  }
+  @keyframes welcomeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .welcome-step--dark {
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(201, 169, 97, 0.14) 0%, transparent 55%),
+      #1a1d2e;
+    color: #f5efe0;
+  }
+  .welcome-step--cream {
+    background: #f5efe0;
+    color: #1a1d2e;
+  }
+  .welcome-step__inner {
+    width: 100%;
+    max-width: 460px;
+    text-align: center;
+  }
+
+  /* Hero */
+  .welcome-logo {
+    width: 200px;
+    max-width: 70%;
+    height: auto;
+    margin: 0 auto 28px;
+    display: block;
+  }
+  .welcome-eyebrow {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #c9a961;
+  }
+  .welcome-eyebrow--burgundy { color: #6e2620; }
+
+  .welcome-hero-title {
+    margin: 0;
+    font-family: Georgia, 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #f5efe0;
+  }
+  @media (min-width: 768px) {
+    .welcome-hero-title { font-size: 56px; }
+  }
+  .welcome-rule {
+    width: 60px;
+    height: 2px;
+    background: #c9a961;
+    margin: 22px auto;
+    opacity: 0.8;
+  }
+  .welcome-hero-sub {
+    margin: 0 auto;
+    max-width: 380px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(245, 239, 224, 0.78);
+  }
+  .welcome-hero-sub strong { color: #c9a961; font-weight: 700; }
+  .welcome-hero-line {
+    margin: 18px 0 36px 0;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-style: italic;
+    color: rgba(245, 239, 224, 0.92);
+  }
+
+  /* Cream step titles */
+  .welcome-step-title {
+    margin: 0;
+    font-family: Georgia, 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #1a1d2e;
+  }
+  .welcome-step-body {
+    margin: 12px auto 28px;
+    max-width: 420px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(26, 29, 46, 0.72);
+  }
+
+  /* Form */
+  .welcome-form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    text-align: left;
+    margin: 16px 0 24px;
+  }
+  .welcome-field { display: flex; flex-direction: column; gap: 6px; }
+  .welcome-field__label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(26, 29, 46, 0.66);
+  }
+  .welcome-field input {
+    padding: 14px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 8px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    color: #1a1d2e;
+  }
+  .welcome-field input:focus {
+    outline: 2px solid #c9a961;
+    outline-offset: 1px;
+    border-color: #c9a961;
+  }
+  .welcome-field__hint {
+    font-size: 12px;
+    color: rgba(26, 29, 46, 0.55);
+    line-height: 1.4;
+  }
+  .welcome-form .lbtn-lg { margin-top: 6px; align-self: center; }
+
+  /* Host tiles */
+  .welcome-tiles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 8px 0 18px;
+    text-align: left;
+  }
+  @media (min-width: 540px) {
+    .welcome-tiles { flex-direction: row; }
+  }
+  .welcome-tile {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 22px 18px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    color: #1a1d2e;
+    transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  }
+  .welcome-tile:hover {
+    border-color: #c9a961;
+    transform: translateY(-1px);
+  }
+  .welcome-tile:disabled { opacity: 0.6; cursor: wait; }
+  .welcome-tile__icon {
+    font-size: 22px;
+    color: #c9a961;
+    line-height: 1;
+  }
+  .welcome-tile__icon--muted { color: rgba(26, 29, 46, 0.3); }
+  .welcome-tile__title {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .welcome-tile__body {
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(26, 29, 46, 0.66);
+  }
+
+  /* Footer + status */
+  .welcome-progress {
+    margin: 36px 0 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+  .welcome-step--dark .welcome-progress { color: #c9a961; }
+  .welcome-step--cream .welcome-progress { color: rgba(26, 29, 46, 0.5); }
+  .welcome-status {
+    margin: 12px 0 0 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: rgba(255, 46, 46, 0.08);
+    border-left: 3px solid #c62828;
+    font-size: 13px;
+    color: #1a1d2e;
+    text-align: left;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getCurrentProfile, getSupabase } from "../../../../lib/supabase";
+
+  let myUserId = "";
+
+  function showStep(id: "hero" | "profile" | "host") {
+    ["hero", "profile", "host"].forEach((s) => {
+      const el = document.getElementById(`step-${s}`) as HTMLElement | null;
+      if (el) el.hidden = s !== id;
+    });
+    window.scrollTo(0, 0);
+  }
+
+  async function preloadCohortStats() {
+    const supabase = getSupabase();
+    const [{ count: members }, { data: cities }] = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("partner_lounges").select("city").not("verified_at", "is", null),
+    ]);
+    const uniqueCities = new Set((cities || []).map((c: any) => c.city));
+    const cityList = Array.from(uniqueCities).sort();
+
+    // Populate city autocomplete
+    const datalist = document.getElementById("city-suggestions") as HTMLDataListElement | null;
+    if (datalist) {
+      datalist.innerHTML = cityList.map((c) => `<option value="${c}"></option>`).join("");
+    }
+
+    // Hero copy
+    const c = members || 0;
+    const heroCount = document.getElementById("hero-count");
+    if (heroCount) {
+      heroCount.textContent =
+        c === 0 ? "The founding cohort" : c === 1 ? "1 founding member" : `${c} founding members`;
+    }
+    const heroCities = document.getElementById("hero-cities");
+    if (heroCities) {
+      const n = cityList.length;
+      heroCities.textContent =
+        n === 0 ? "cities all over the world" : n === 1 ? "1 city" : `${n} cities`;
+    }
+  }
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    myUserId = user.id;
+
+    const profile = await getCurrentProfile();
+    // If they already finished onboarding (has a city), skip the welcome entirely.
+    if (profile?.city) {
+      window.location.href = "/lounge/app/";
+      return;
+    }
+
+    // Pre-fill name + load cohort stats in parallel
+    const nameInput = document.getElementById("name-input") as HTMLInputElement;
+    if (nameInput && profile?.display_name && profile.display_name !== "New Member") {
+      nameInput.value = profile.display_name;
+    }
+    const heroName = document.getElementById("hero-name");
+    if (heroName) {
+      const firstName = (profile?.display_name || "")
+        .split(/[\s.,]+/)[0]
+        ?.replace(/[^a-zA-Z]/g, "") || "";
+      heroName.textContent = firstName && firstName !== "New" ? firstName : "there";
+    }
+
+    await preloadCohortStats();
+
+    // Hide guard, show hero
+    (document.getElementById("welcome-guard") as HTMLElement).hidden = true;
+    showStep("hero");
+    wireSteps();
+  }
+
+  function wireSteps() {
+    // Step 1 → 2
+    document.getElementById("hero-continue")?.addEventListener("click", () => {
+      showStep("profile");
+      // Focus the first empty field
+      const nameInput = document.getElementById("name-input") as HTMLInputElement;
+      const cityInput = document.getElementById("city-input") as HTMLInputElement;
+      if (nameInput && !nameInput.value) nameInput.focus();
+      else if (cityInput) cityInput.focus();
+    });
+
+    // Step 2 → 3 (save name + city)
+    const profileForm = document.getElementById("profile-form") as HTMLFormElement;
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById("profile-submit") as HTMLButtonElement;
+      const status = document.getElementById("profile-status") as HTMLElement;
+      const name = (document.getElementById("name-input") as HTMLInputElement).value.trim();
+      const city = (document.getElementById("city-input") as HTMLInputElement).value.trim();
+      if (!name || !city) return;
+      submitBtn.disabled = true;
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase
+          .from("profiles")
+          .update({ display_name: name, city })
+          .eq("id", myUserId);
+        if (error) throw error;
+        showStep("host");
+      } catch (err: any) {
+        status.hidden = false;
+        status.textContent = err?.message || "Could not save. Try again.";
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Step 3 → map
+    document.querySelectorAll<HTMLButtonElement>(".welcome-tile").forEach((tile) => {
+      tile.addEventListener("click", async () => {
+        const isHost = tile.dataset.host === "true";
+        const allTiles = document.querySelectorAll<HTMLButtonElement>(".welcome-tile");
+        allTiles.forEach((t) => (t.disabled = true));
+        const status = document.getElementById("host-status") as HTMLElement;
+        try {
+          const supabase = getSupabase();
+          const { error } = await supabase
+            .from("profiles")
+            .update({ is_host: isHost })
+            .eq("id", myUserId);
+          if (error) throw error;
+          // Drop into the map at their city — coach marks fire on first visit
+          const city = (document.getElementById("city-input") as HTMLInputElement).value.trim();
+          const cityParam = city ? `?city=${encodeURIComponent(city)}` : "";
+          window.location.href = `/lounge/app/map/${cityParam}`;
+        } catch (err: any) {
+          status.hidden = false;
+          status.textContent = err?.message || "Could not save. Try again.";
+          allTiles.forEach((t) => (t.disabled = false));
+        }
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>

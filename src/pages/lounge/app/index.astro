@@ -619,7 +619,12 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
 
     const profile = await getCurrentProfile();
     if (!profile) {
-      window.location.href = "/lounge/app/profile/?setup=1";
+      window.location.href = "/lounge/app/welcome/";
+      return;
+    }
+    // First-time member — profile row exists but city not set yet → route through welcome
+    if (!profile.city) {
+      window.location.href = "/lounge/app/welcome/";
       return;
     }
 
