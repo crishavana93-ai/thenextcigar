@@ -374,6 +374,15 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
   let myUserId = "";
   let pollTimer: any = null;
+  let realtimeChannel: any = null;
+
+  // Clean up the realtime channel + poll on full page navigation away.
+  window.addEventListener("beforeunload", () => {
+    try {
+      if (realtimeChannel) getSupabase().removeChannel(realtimeChannel);
+    } catch {}
+    if (pollTimer) clearInterval(pollTimer);
+  });
 
   function escapeHtml(s: string): string {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -630,9 +639,33 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       }
     });
 
-    // Poll every 8 seconds while thread is open
+    // Realtime subscription — when a new message lands for this conversation,
+    // refetch + render immediately. Replaces the 8s poll for an instant feel.
+    if (realtimeChannel) {
+      try { supabase.removeChannel(realtimeChannel); } catch {}
+    }
+    realtimeChannel = supabase
+      .channel(`dm-${myUserId}-${otherId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "direct_messages" },
+        (payload: any) => {
+          const m = payload.new;
+          // Only react to messages that belong to THIS thread.
+          if (
+            (m.sender_id === myUserId && m.recipient_id === otherId) ||
+            (m.sender_id === otherId && m.recipient_id === myUserId)
+          ) {
+            loadThread();
+          }
+        },
+      )
+      .subscribe();
+
+    // Belt-and-suspenders poll every 15 seconds in case Realtime drops the
+    // connection (rare, but happens on slow mobile networks).
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(() => loadThread(), 8000);
+    pollTimer = setInterval(() => loadThread(), 15000);
 
     (document.getElementById("msg-thread-mode") as HTMLElement).hidden = false;
   }
