@@ -32,12 +32,18 @@ const {
 
 const siteName = "The Next Cigar";
 
-// Auto-detect the Lounge MEMBER APP (not the marketing/auth pages) so it
-// renders with its own LoungeHeader + bottom tab bar and no public-site
-// header bleeding through. The /lounge/ marketing page and /lounge/signup
-// + /lounge/login pages still get the public header so visitors can find
-// their way back to the magazine.
-const isLoungeApp = Astro.url.pathname.startsWith("/lounge/app");
+// Auto-detect Lounge surfaces so they render without the public magazine
+// header + footer bleeding through. Covers:
+//   • the member app           (/lounge/app/**)
+//   • the dedicated auth pages (/lounge/login, /lounge/signup)
+// Visitors on these pages are already inside The Lounge — either signed-in
+// members or someone mid-onboarding — so the magazine chrome is noise.
+// The /lounge/ marketing landing page still keeps the public chrome.
+const path = Astro.url.pathname;
+const isLoungeApp =
+  path.startsWith("/lounge/app") ||
+  path.startsWith("/lounge/login") ||
+  path.startsWith("/lounge/signup");
 const skipPublicChrome = bareChrome || isLoungeApp;
 ---
 
