@@ -74,11 +74,46 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
           <p id="profile-status" class="welcome-status" hidden></p>
         </form>
 
-        <p class="welcome-progress">Step 2 of 3</p>
+        <p class="welcome-progress">Step 2 of 4</p>
       </div>
     </section>
 
-    {/* STEP 3 — HOST PREFERENCE */}
+    {/* STEP 3 — FLAVOR PROFILE */}
+    <section id="step-flavor" class="welcome-step welcome-step--cream" hidden>
+      <div class="welcome-step__inner">
+        <p class="welcome-eyebrow welcome-eyebrow--burgundy">What you smoke</p>
+        <h2 class="welcome-step-title">Pick a few favorites.</h2>
+        <p class="welcome-step-body">
+          Helps members find people who share their taste. You can change all of this later in your profile.
+          Skip if you'd rather fill it in another time.
+        </p>
+
+        <div class="welcome-flavor-group">
+          <p class="welcome-flavor-group__label">Favorite brands</p>
+          <div id="welcome-brands-chips" class="flavor-chips"></div>
+        </div>
+
+        <div class="welcome-flavor-group">
+          <p class="welcome-flavor-group__label">Flavor notes you love</p>
+          <div id="welcome-notes-chips" class="flavor-chips"></div>
+        </div>
+
+        <div class="welcome-flavor-group">
+          <p class="welcome-flavor-group__label">Strength preference</p>
+          <div id="welcome-strength-chips" class="flavor-chips"></div>
+        </div>
+
+        <div class="welcome-flavor-actions">
+          <button type="button" id="flavor-skip" class="lbtn lbtn-ghost">Skip for now</button>
+          <button type="button" id="flavor-save" class="lbtn lbtn-primary">Save and continue →</button>
+        </div>
+
+        <p class="welcome-status" id="flavor-status" hidden></p>
+        <p class="welcome-progress">Step 3 of 4</p>
+      </div>
+    </section>
+
+    {/* STEP 4 — HOST PREFERENCE */}
     <section id="step-host" class="welcome-step welcome-step--cream" hidden>
       <div class="welcome-step__inner">
         <p class="welcome-eyebrow welcome-eyebrow--burgundy">Hosting</p>
@@ -102,7 +137,7 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
         </div>
 
         <p class="welcome-status" id="host-status" hidden></p>
-        <p class="welcome-progress">Step 3 of 3</p>
+        <p class="welcome-progress">Step 4 of 4</p>
       </div>
     </section>
   </main>
@@ -334,6 +369,52 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     color: #1a1d2e;
     text-align: left;
   }
+
+  /* Flavor-step chips (reuses the look from /profile) */
+  .welcome-flavor-group {
+    text-align: left;
+    margin: 18px 0 0;
+  }
+  .welcome-flavor-group__label {
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(26, 29, 46, 0.7);
+  }
+  .flavor-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+  .flavor-chip {
+    appearance: none;
+    background: rgba(26, 29, 46, 0.04);
+    border: 1px solid rgba(26, 29, 46, 0.18);
+    color: #1a1d2e;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .flavor-chip:hover { border-color: #c9a961; }
+  .flavor-chip.is-on {
+    background: #c9a961;
+    border-color: #c9a961;
+    color: #1a1d2e;
+  }
+  .welcome-flavor-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 </style>
 
 <script>
@@ -341,12 +422,66 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
 
   let myUserId = "";
 
-  function showStep(id: "hero" | "profile" | "host") {
-    ["hero", "profile", "host"].forEach((s) => {
+  function showStep(id: "hero" | "profile" | "flavor" | "host") {
+    ["hero", "profile", "flavor", "host"].forEach((s) => {
       const el = document.getElementById(`step-${s}`) as HTMLElement | null;
       if (el) el.hidden = s !== id;
     });
     window.scrollTo(0, 0);
+  }
+
+  // Same curated lists as the /profile editor.
+  const WELCOME_BRANDS = [
+    "Cohiba", "Montecristo", "Partagás", "Hoyo de Monterrey", "Romeo y Julieta",
+    "H. Upmann", "Bolívar", "Trinidad", "Ramón Allones", "San Cristóbal",
+    "Davidoff", "Padrón", "Arturo Fuente", "Opus X", "My Father",
+    "Oliva", "Ashton", "Tatuaje", "Liga Privada", "Rocky Patel",
+    "Plasencia", "Camacho", "AVO", "Espinosa", "Alec Bradley",
+    "Crowned Heads", "E.P. Carrillo", "Drew Estate", "Joya de Nicaragua", "Punch",
+  ];
+  const WELCOME_NOTES = [
+    "Earthy", "Creamy", "Woody", "Cedar", "Leather",
+    "Spicy", "Peppery", "Sweet", "Chocolate", "Coffee",
+    "Nutty", "Floral", "Citrus", "Hay", "Toast",
+  ];
+  const WELCOME_STRENGTHS = [
+    { value: "mild", label: "Mild" },
+    { value: "medium", label: "Medium" },
+    { value: "full", label: "Full" },
+    { value: "extra_full", label: "Extra full" },
+  ];
+
+  const welcomeBrandsSet = new Set<string>();
+  const welcomeNotesSet = new Set<string>();
+  const welcomeStrengthState: { current: string | null } = { current: null };
+
+  function renderWelcomeMultiChips(container: HTMLElement, items: string[], selected: Set<string>) {
+    container.innerHTML = items.map((it) => {
+      const on = selected.has(it) ? " is-on" : "";
+      return `<button type="button" class="flavor-chip${on}" data-value="${it}">${it}</button>`;
+    }).join("");
+    container.querySelectorAll<HTMLButtonElement>(".flavor-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.value || "";
+        if (selected.has(v)) { selected.delete(v); btn.classList.remove("is-on"); }
+        else { selected.add(v); btn.classList.add("is-on"); }
+      });
+    });
+  }
+  function renderWelcomeSingleChips(container: HTMLElement, items: { value: string; label: string }[], state: { current: string | null }) {
+    container.innerHTML = items.map((it) => {
+      const on = state.current === it.value ? " is-on" : "";
+      return `<button type="button" class="flavor-chip${on}" data-value="${it.value}">${it.label}</button>`;
+    }).join("");
+    container.querySelectorAll<HTMLButtonElement>(".flavor-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.value || "";
+        state.current = state.current === v ? null : v;
+        container.querySelectorAll<HTMLButtonElement>(".flavor-chip").forEach((b) => {
+          b.classList.toggle("is-on", b.dataset.value === state.current);
+        });
+      });
+    });
   }
 
   async function preloadCohortStats() {
@@ -443,7 +578,16 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
           .update({ display_name: name, city })
           .eq("id", myUserId);
         if (error) throw error;
-        showStep("host");
+
+        // Render flavor chips lazily here so the data is up to date when the step opens.
+        const brandsEl = document.getElementById("welcome-brands-chips") as HTMLElement | null;
+        const notesEl = document.getElementById("welcome-notes-chips") as HTMLElement | null;
+        const strengthEl = document.getElementById("welcome-strength-chips") as HTMLElement | null;
+        if (brandsEl) renderWelcomeMultiChips(brandsEl, WELCOME_BRANDS, welcomeBrandsSet);
+        if (notesEl) renderWelcomeMultiChips(notesEl, WELCOME_NOTES, welcomeNotesSet);
+        if (strengthEl) renderWelcomeSingleChips(strengthEl, WELCOME_STRENGTHS, welcomeStrengthState);
+
+        showStep("flavor");
       } catch (err: any) {
         status.hidden = false;
         status.textContent = err?.message || "Could not save. Try again.";
@@ -451,7 +595,36 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
       }
     });
 
-    // Step 3 → map
+    // Step 3 (flavor) → 4 (host). "Skip for now" just advances without saving.
+    document.getElementById("flavor-skip")?.addEventListener("click", () => {
+      showStep("host");
+    });
+    document.getElementById("flavor-save")?.addEventListener("click", async () => {
+      const saveBtn = document.getElementById("flavor-save") as HTMLButtonElement;
+      const status = document.getElementById("flavor-status") as HTMLElement;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving…";
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            favorite_brands: Array.from(welcomeBrandsSet),
+            flavor_notes: Array.from(welcomeNotesSet),
+            strength_preference: welcomeStrengthState.current,
+          })
+          .eq("id", myUserId);
+        if (error) throw error;
+        showStep("host");
+      } catch (err: any) {
+        status.hidden = false;
+        status.textContent = err?.message || "Could not save. Try again.";
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save and continue →";
+      }
+    });
+
+    // Step 4 → map
     document.querySelectorAll<HTMLButtonElement>(".welcome-tile").forEach((tile) => {
       tile.addEventListener("click", async () => {
         const isHost = tile.dataset.host === "true";

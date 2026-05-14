@@ -58,6 +58,24 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
         <p class="lounge-mem-bio" id="mem-bio">—</p>
       </section>
 
+      {/* Flavor profile — what they smoke, shown as read-only chips */}
+      <section class="container-wide pb-6" id="mem-flavor-section" hidden>
+        <div class="lounge-mem-flavor">
+          <div class="lounge-mem-flavor__group" id="mem-flavor-brands-group" hidden>
+            <p class="lounge-mem-flavor__label">Brands</p>
+            <div class="lounge-mem-flavor__chips" id="mem-flavor-brands"></div>
+          </div>
+          <div class="lounge-mem-flavor__group" id="mem-flavor-notes-group" hidden>
+            <p class="lounge-mem-flavor__label">Flavor notes</p>
+            <div class="lounge-mem-flavor__chips" id="mem-flavor-notes"></div>
+          </div>
+          <div class="lounge-mem-flavor__group" id="mem-flavor-strength-group" hidden>
+            <p class="lounge-mem-flavor__label">Strength</p>
+            <div class="lounge-mem-flavor__chips" id="mem-flavor-strength"></div>
+          </div>
+        </div>
+      </section>
+
       <section class="container-wide pb-24" id="mem-actions-section">
         <div id="mem-self-notice" hidden class="lounge-mem-self">
           <p class="lounge-mem-self__row">This is your own profile.</p>
@@ -227,6 +245,45 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     max-width: 56ch;
     text-align: center;
     white-space: pre-line;
+  }
+
+  /* Flavor profile section — read-only chips for visitor */
+  .lounge-mem-flavor {
+    max-width: 56ch;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .lounge-mem-flavor__group { text-align: left; }
+  .lounge-mem-flavor__label {
+    margin: 0 0 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .lounge-mem-flavor__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .lounge-mem-flavor__chip {
+    display: inline-block;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .lounge-mem-flavor__chip--strength {
+    background: rgba(201, 169, 97, 0.16);
+    border-color: rgba(201, 169, 97, 0.45);
+    color: var(--color-text);
   }
 
   /* Legacy classes (still rendered by the old `.lounge-mem-head` blocks elsewhere) */
@@ -549,6 +606,50 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     if (cityEl) cityEl.textContent = p.city ? `${p.city}${p.country_code ? ` · ${p.country_code}` : ""}` : "City not set";
     const bioEl = document.getElementById("mem-bio");
     if (bioEl) bioEl.textContent = p.bio || "This member hasn't written a bio yet.";
+
+    // Flavor profile — render brands / notes / strength as read-only chips.
+    // Whole section hides if the member hasn't filled any of these.
+    const flavorSection = document.getElementById("mem-flavor-section");
+    const brandsGroup = document.getElementById("mem-flavor-brands-group");
+    const brandsList = document.getElementById("mem-flavor-brands");
+    const notesGroup = document.getElementById("mem-flavor-notes-group");
+    const notesList = document.getElementById("mem-flavor-notes");
+    const strengthGroup = document.getElementById("mem-flavor-strength-group");
+    const strengthList = document.getElementById("mem-flavor-strength");
+
+    const theirBrandsAll = (((p as any).favorite_brands as string[]) || []);
+    const theirNotesAll = (((p as any).flavor_notes as string[]) || []);
+    const theirStrength = ((p as any).strength_preference as string | null) || null;
+
+    const hasAnyFlavor = theirBrandsAll.length > 0 || theirNotesAll.length > 0 || !!theirStrength;
+    if (flavorSection) flavorSection.hidden = !hasAnyFlavor;
+    if (hasAnyFlavor) {
+      if (brandsGroup && brandsList) {
+        brandsGroup.hidden = theirBrandsAll.length === 0;
+        brandsList.innerHTML = theirBrandsAll
+          .map((b) => `<span class="lounge-mem-flavor__chip">${escapeHtml(b)}</span>`)
+          .join("");
+      }
+      if (notesGroup && notesList) {
+        notesGroup.hidden = theirNotesAll.length === 0;
+        notesList.innerHTML = theirNotesAll
+          .map((n) => `<span class="lounge-mem-flavor__chip">${escapeHtml(n)}</span>`)
+          .join("");
+      }
+      if (strengthGroup && strengthList) {
+        strengthGroup.hidden = !theirStrength;
+        if (theirStrength) {
+          const label =
+            theirStrength === "mild" ? "Mild" :
+            theirStrength === "medium" ? "Medium" :
+            theirStrength === "full" ? "Full" :
+            theirStrength === "extra_full" ? "Extra full" :
+            theirStrength;
+          strengthList.innerHTML =
+            `<span class="lounge-mem-flavor__chip lounge-mem-flavor__chip--strength">${escapeHtml(label)}</span>`;
+        }
+      }
+    }
 
     // Badges
     const badges = document.getElementById("mem-badges");
