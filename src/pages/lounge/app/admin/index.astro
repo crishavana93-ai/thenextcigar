@@ -1,0 +1,651 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+---
+
+<BaseLayout
+  title="Admin — The Lounge"
+  description="Founder admin dashboard."
+  noIndex
+>
+  <LoungeHeader active="dashboard" />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <div class="lounge-app__guard-inner">
+        <p class="lounge-app__guard-eyebrow">Checking access…</p>
+      </div>
+    </div>
+
+    {/* Denied state — non-admin tried to load /admin */}
+    <div id="admin-denied" hidden>
+      <section class="container-wide py-24 text-center">
+        <p class="lounge-label">Restricted</p>
+        <h1 class="lounge-h1" style="margin-top:8px;">Admin only.</h1>
+        <p style="margin-top:8px;color:var(--color-text-soft);max-width:32rem;margin-left:auto;margin-right:auto;">
+          This page is for the founder. If you think you should have access, email
+          <a href="mailto:guatabeycigars@gmail.com" style="color:var(--color-gold);">guatabeycigars@gmail.com</a>.
+        </p>
+        <a href="/lounge/app/" class="lbtn lbtn-secondary lbtn-sm" style="margin-top:18px;">Back to the app</a>
+      </section>
+    </div>
+
+    {/* Granted state */}
+    <div id="admin-content" hidden>
+      <section class="container-wide pt-8 pb-3 reveal">
+        <p class="lounge-label lounge-label--gold">The Lounge · Admin</p>
+        <h1 class="lounge-h1" style="margin-top:8px;">Cohort dashboard.</h1>
+        <p style="margin-top:6px;font-size:13px;color:var(--color-text-soft);">
+          Cris-only. Verify venues, mark Founding members, see what's happening this week.
+        </p>
+      </section>
+
+      {/* Stats strip */}
+      <section class="container-wide pb-6">
+        <div class="admin-stats">
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-members">—</p>
+            <p class="admin-stat__label">Members</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-active">—</p>
+            <p class="admin-stat__label">Active 7d</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-founding">—</p>
+            <p class="admin-stat__label">Founding</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-hosts">—</p>
+            <p class="admin-stat__label">Hosts</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-venues">—</p>
+            <p class="admin-stat__label">Venues</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-venues-pending">—</p>
+            <p class="admin-stat__label">Pending</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-checkins">—</p>
+            <p class="admin-stat__label">Active check-ins</p>
+          </div>
+          <div class="admin-stat">
+            <p class="admin-stat__value" id="stat-intros">—</p>
+            <p class="admin-stat__label">Intros sent</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs */}
+      <section class="container-wide pb-3">
+        <div class="admin-tabs" role="tablist">
+          <button id="tab-members" class="admin-tab is-active" type="button">Members</button>
+          <button id="tab-venues" class="admin-tab" type="button">Venues</button>
+          <button id="tab-activity" class="admin-tab" type="button">Activity</button>
+        </div>
+      </section>
+
+      {/* Members pane */}
+      <section id="pane-members" class="container-wide pb-24">
+        <div class="admin-filter-row">
+          <input id="filter-members-search" type="search" placeholder="Search by name, city, email" class="admin-search" />
+          <label class="admin-toggle"><input type="checkbox" id="filter-founding-only" /><span>Founding only</span></label>
+          <label class="admin-toggle"><input type="checkbox" id="filter-host-only" /><span>Hosts only</span></label>
+        </div>
+        <div id="members-list" class="admin-table"></div>
+      </section>
+
+      {/* Venues pane */}
+      <section id="pane-venues" class="container-wide pb-24" hidden>
+        <div class="admin-filter-row">
+          <input id="filter-venues-search" type="search" placeholder="Search by name or city" class="admin-search" />
+          <label class="admin-toggle"><input type="checkbox" id="filter-venues-pending" /><span>Pending only</span></label>
+        </div>
+        <div id="venues-list" class="admin-table"></div>
+      </section>
+
+      {/* Activity pane */}
+      <section id="pane-activity" class="container-wide pb-24" hidden>
+        <div class="admin-activity-grid">
+          <div>
+            <p class="lounge-label">Recent check-ins</p>
+            <div id="activity-checkins" class="admin-activity"></div>
+          </div>
+          <div>
+            <p class="lounge-label">Recent intros</p>
+            <div id="activity-intros" class="admin-activity"></div>
+          </div>
+          <div>
+            <p class="lounge-label">Recent trips</p>
+            <div id="activity-trips" class="admin-activity"></div>
+          </div>
+          <div>
+            <p class="lounge-label">Recent signups</p>
+            <div id="activity-signups" class="admin-activity"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <LoungeTabBar />
+</BaseLayout>
+
+<style>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+  .lounge-app__guard {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  /* Stats strip */
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-gold-soft);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  @media (min-width: 640px) {
+    .admin-stats { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .admin-stats { grid-template-columns: repeat(8, 1fr); gap: 0; }
+  }
+  .admin-stat {
+    padding: 10px;
+    text-align: center;
+    border-right: 1px solid var(--color-border);
+  }
+  .admin-stat:last-child { border-right: none; }
+  @media (max-width: 1023.98px) {
+    .admin-stat { border: 1px solid var(--color-border); border-radius: 6px; }
+  }
+  .admin-stat__value {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-text);
+  }
+  .admin-stat__label {
+    margin: 4px 0 0 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Tabs */
+  .admin-tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid var(--color-gold-soft);
+    margin-bottom: 16px;
+  }
+  .admin-tab {
+    background: transparent; border: none;
+    padding: 10px 4px;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .admin-tab:hover { color: var(--color-text); }
+  .admin-tab.is-active {
+    color: var(--color-gold);
+    border-bottom-color: var(--color-gold);
+  }
+
+  /* Filter row */
+  .admin-filter-row {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .admin-search {
+    flex-grow: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--color-text);
+  }
+  .admin-search:focus {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 1px;
+    border-color: var(--color-gold);
+  }
+  .admin-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-soft);
+    cursor: pointer;
+    user-select: none;
+  }
+  .admin-toggle input { accent-color: var(--color-gold); }
+
+  /* Table */
+  .admin-table { display: flex; flex-direction: column; }
+  .admin-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--color-gold-soft);
+  }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-row__avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 13px; font-weight: 800; color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+  .admin-row__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .admin-row__main { min-width: 0; }
+  .admin-row__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 700;
+    color: var(--color-text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .admin-row__meta {
+    margin: 2px 0 0 0;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .admin-row__actions {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .admin-flag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .admin-flag:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+  .admin-flag.is-on { background: var(--color-gold); color: var(--color-charcoal); border-color: var(--color-gold); }
+  .admin-flag.is-on-burgundy { background: var(--color-burgundy); color: #fff; border-color: var(--color-burgundy); }
+  .admin-flag:disabled { opacity: 0.55; cursor: wait; }
+
+  /* Activity */
+  .admin-activity-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 768px) {
+    .admin-activity-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .admin-activity { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .admin-activity-row {
+    padding: 10px 12px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-text);
+  }
+  .admin-activity-row__meta {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+  }
+  .admin-activity-empty {
+    padding: 14px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+</style>
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+
+  const ADMIN_EMAILS = ["guatabeycigars@gmail.com"];
+
+  type Profile = {
+    id: string;
+    display_name: string | null;
+    city: string | null;
+    country_code: string | null;
+    avatar_url: string | null;
+    is_host: boolean | null;
+    is_founding: boolean | null;
+    joined_at: string | null;
+    last_active_at: string | null;
+  };
+  type Venue = {
+    id: string;
+    slug: string;
+    name: string;
+    city: string;
+    country: string;
+    type: string;
+    verified_at: string | null;
+    perks: string | null;
+    website: string | null;
+  };
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+  }
+  function avatarHtml(p: { display_name?: string | null; avatar_url?: string | null }): string {
+    if (p.avatar_url) return `<img src="${escapeHtml(p.avatar_url)}" alt="" />`;
+    return initials(p.display_name || null);
+  }
+  function timeAgo(iso: string): string {
+    const sec = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    if (sec < 60) return `${sec}s ago`;
+    const m = Math.floor(sec / 60);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `${d}d ago`;
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  let allMembers: Profile[] = [];
+  let allVenues: Venue[] = [];
+
+  async function loadStats() {
+    const supabase = getSupabase();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const nowIso = new Date().toISOString();
+
+    const [m, a, f, h, v, vp, c, i] = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).gte("last_active_at", sevenDaysAgo),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_founding", true),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_host", true),
+      supabase.from("partner_lounges").select("id", { count: "exact", head: true }),
+      supabase.from("partner_lounges").select("id", { count: "exact", head: true }).is("verified_at", null),
+      supabase.from("checkins").select("id", { count: "exact", head: true }).gt("expires_at", nowIso),
+      supabase.from("introductions").select("id", { count: "exact", head: true }),
+    ]);
+    const set = (id: string, n: number | null | undefined) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(n ?? 0);
+    };
+    set("stat-members", m.count);
+    set("stat-active", a.count);
+    set("stat-founding", f.count);
+    set("stat-hosts", h.count);
+    set("stat-venues", v.count);
+    set("stat-venues-pending", vp.count);
+    set("stat-checkins", c.count);
+    set("stat-intros", i.count);
+  }
+
+  async function loadMembers() {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, display_name, city, country_code, avatar_url, is_host, is_founding, joined_at, last_active_at")
+      .order("joined_at", { ascending: false });
+    allMembers = (data as Profile[]) || [];
+    renderMembers();
+  }
+
+  function renderMembers() {
+    const list = document.getElementById("members-list") as HTMLElement;
+    const search = (document.getElementById("filter-members-search") as HTMLInputElement).value.toLowerCase().trim();
+    const foundingOnly = (document.getElementById("filter-founding-only") as HTMLInputElement).checked;
+    const hostOnly = (document.getElementById("filter-host-only") as HTMLInputElement).checked;
+
+    const rows = allMembers.filter((p) => {
+      if (foundingOnly && !p.is_founding) return false;
+      if (hostOnly && !p.is_host) return false;
+      if (search) {
+        const blob = `${p.display_name || ""} ${p.city || ""} ${p.country_code || ""}`.toLowerCase();
+        if (!blob.includes(search)) return false;
+      }
+      return true;
+    });
+
+    if (rows.length === 0) {
+      list.innerHTML = `<p class="admin-activity-empty">No members match.</p>`;
+      return;
+    }
+
+    list.innerHTML = rows.map((p) => {
+      const name = escapeHtml(p.display_name || "Member");
+      const city = p.city ? escapeHtml(p.city) + (p.country_code ? ` · ${escapeHtml(p.country_code)}` : "") : "—";
+      const joined = p.joined_at ? `joined ${timeAgo(p.joined_at)}` : "";
+      const active = p.last_active_at ? `· active ${timeAgo(p.last_active_at)}` : "· never active";
+      return `
+        <div class="admin-row" data-id="${p.id}">
+          <div class="admin-row__avatar">${avatarHtml(p)}</div>
+          <div class="admin-row__main">
+            <p class="admin-row__name"><a href="/lounge/app/member/?id=${p.id}" target="_blank" style="color:inherit;text-decoration:none;">${name}</a></p>
+            <p class="admin-row__meta">${city} · ${joined} ${active}</p>
+          </div>
+          <div class="admin-row__actions">
+            <button class="admin-flag ${p.is_founding ? "is-on" : ""}" data-action="toggle-founding" data-id="${p.id}">${p.is_founding ? "★ Founding" : "Mark Founding"}</button>
+            <button class="admin-flag ${p.is_host ? "is-on-burgundy" : ""}" data-action="toggle-host" data-id="${p.id}">${p.is_host ? "✓ Host" : "Mark Host"}</button>
+          </div>
+        </div>`;
+    }).join("");
+
+    list.querySelectorAll<HTMLButtonElement>(".admin-flag").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        if (!action || !id) return;
+        const member = allMembers.find((m) => m.id === id);
+        if (!member) return;
+        const field = action === "toggle-founding" ? "is_founding" : "is_host";
+        const currentValue = action === "toggle-founding" ? member.is_founding : member.is_host;
+        btn.disabled = true;
+        try {
+          const supabase = getSupabase();
+          const { error } = await supabase
+            .from("profiles")
+            .update({ [field]: !currentValue })
+            .eq("id", id);
+          if (error) throw error;
+          if (action === "toggle-founding") member.is_founding = !currentValue;
+          else member.is_host = !currentValue;
+          renderMembers();
+          loadStats();
+        } catch (err: any) {
+          alert(err?.message || "Could not update. Run 004_admin_policies.sql in Supabase?");
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function loadVenues() {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from("partner_lounges")
+      .select("id, slug, name, city, country, type, verified_at, perks, website")
+      .order("city", { ascending: true });
+    allVenues = (data as Venue[]) || [];
+    renderVenues();
+  }
+
+  function renderVenues() {
+    const list = document.getElementById("venues-list") as HTMLElement;
+    const search = (document.getElementById("filter-venues-search") as HTMLInputElement).value.toLowerCase().trim();
+    const pendingOnly = (document.getElementById("filter-venues-pending") as HTMLInputElement).checked;
+
+    const rows = allVenues.filter((v) => {
+      if (pendingOnly && v.verified_at) return false;
+      if (search) {
+        const blob = `${v.name} ${v.city} ${v.country} ${v.slug}`.toLowerCase();
+        if (!blob.includes(search)) return false;
+      }
+      return true;
+    });
+
+    if (rows.length === 0) {
+      list.innerHTML = `<p class="admin-activity-empty">No venues match.</p>`;
+      return;
+    }
+
+    list.innerHTML = rows.map((v) => {
+      const verifiedLabel = v.verified_at ? "✓ Verified" : "Pending";
+      const typeLabel = escapeHtml(v.type.charAt(0).toUpperCase() + v.type.slice(1));
+      return `
+        <div class="admin-row" data-id="${v.id}">
+          <div class="admin-row__avatar" style="background:var(--color-gold-soft);color:var(--color-gold);font-size:11px;">${typeLabel.slice(0, 1)}</div>
+          <div class="admin-row__main">
+            <p class="admin-row__name">${escapeHtml(v.name)}</p>
+            <p class="admin-row__meta">${escapeHtml(v.city)} · ${escapeHtml(v.country)} · ${typeLabel.toLowerCase()}${v.website ? ` · <a href="${escapeHtml(v.website)}" target="_blank" style="color:var(--color-gold);">site →</a>` : ""}</p>
+          </div>
+          <div class="admin-row__actions">
+            <button class="admin-flag ${v.verified_at ? "is-on" : ""}" data-action="toggle-verified" data-id="${v.id}">${verifiedLabel}</button>
+          </div>
+        </div>`;
+    }).join("");
+
+    list.querySelectorAll<HTMLButtonElement>('.admin-flag[data-action="toggle-verified"]').forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        if (!id) return;
+        const venue = allVenues.find((v) => v.id === id);
+        if (!venue) return;
+        const next = venue.verified_at ? null : new Date().toISOString();
+        btn.disabled = true;
+        try {
+          const supabase = getSupabase();
+          const { error } = await supabase
+            .from("partner_lounges")
+            .update({ verified_at: next })
+            .eq("id", id);
+          if (error) throw error;
+          venue.verified_at = next;
+          renderVenues();
+          loadStats();
+        } catch (err: any) {
+          alert(err?.message || "Could not update. Run 004_admin_policies.sql in Supabase?");
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function loadActivity() {
+    const supabase = getSupabase();
+    const [ck, ci, ct, cp] = await Promise.all([
+      supabase.from("checkins")
+        .select("id, checked_in_at, message, profile:member_id(display_name), lounge:lounge_id(name, city)")
+        .order("checked_in_at", { ascending: false }).limit(10),
+      supabase.from("introductions")
+        .select("id, context, intro_message, accepted, created_at, from_p:from_member_id(display_name), to_p:to_member_id(display_name)")
+        .order("created_at", { ascending: false }).limit(10),
+      supabase.from("travel_plans")
+        .select("id, city, arrive_date, depart_date, notes, created_at, profile:member_id(display_name)")
+        .order("created_at", { ascending: false }).limit(10),
+      supabase.from("profiles")
+        .select("id, display_name, city, joined_at, is_founding")
+        .order("joined_at", { ascending: false }).limit(10),
+    ]);
+
+    function renderRows(elId: string, rows: any[] | null, fmt: (r: any) => string) {
+      const el = document.getElementById(elId)!;
+      if (!rows || rows.length === 0) {
+        el.innerHTML = `<p class="admin-activity-empty">Nothing yet.</p>`;
+        return;
+      }
+      el.innerHTML = rows.map((r) => `<div class="admin-activity-row">${fmt(r)}</div>`).join("");
+    }
+
+    renderRows("activity-checkins", ck.data, (r) =>
+      `<strong>${escapeHtml(r.profile?.display_name || "Member")}</strong> at ${escapeHtml(r.lounge?.name || "—")}${r.lounge?.city ? ` · ${escapeHtml(r.lounge.city)}` : ""}<div class="admin-activity-row__meta">${timeAgo(r.checked_in_at)}${r.message ? ` · "${escapeHtml(r.message)}"` : ""}</div>`);
+    renderRows("activity-intros", ci.data, (r) => {
+      const status = r.accepted === true ? "accepted" : r.accepted === false ? "declined" : "pending";
+      return `<strong>${escapeHtml(r.from_p?.display_name || "?")}</strong> → ${escapeHtml(r.to_p?.display_name || "?")} <em>(${status})</em><div class="admin-activity-row__meta">${timeAgo(r.created_at)} · ${escapeHtml(r.context)}</div>`;
+    });
+    renderRows("activity-trips", ct.data, (r) =>
+      `<strong>${escapeHtml(r.profile?.display_name || "Member")}</strong> → ${escapeHtml(r.city)}<div class="admin-activity-row__meta">${r.arrive_date} – ${r.depart_date} · added ${timeAgo(r.created_at)}</div>`);
+    renderRows("activity-signups", cp.data, (r) =>
+      `<strong>${escapeHtml(r.display_name || "Member")}</strong>${r.is_founding ? ' <span style="color:var(--color-gold);font-size:10px;font-weight:800;letter-spacing:0.1em;">★ FOUNDING</span>' : ""}<div class="admin-activity-row__meta">${r.city || "no city"} · ${r.joined_at ? timeAgo(r.joined_at) : "—"}</div>`);
+  }
+
+  function wireTabs() {
+    const tabs = ["members", "venues", "activity"];
+    const tabEls = tabs.map((t) => document.getElementById(`tab-${t}`) as HTMLButtonElement);
+    const paneEls = tabs.map((t) => document.getElementById(`pane-${t}`) as HTMLElement);
+    tabEls.forEach((btn, idx) => {
+      btn.addEventListener("click", () => {
+        tabEls.forEach((b, i) => b.classList.toggle("is-active", i === idx));
+        paneEls.forEach((p, i) => (p.hidden = i !== idx));
+        if (tabs[idx] === "activity") loadActivity();
+      });
+    });
+  }
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+    if (!ADMIN_EMAILS.includes((user.email || "").toLowerCase())) {
+      (document.getElementById("lounge-guard") as HTMLElement).style.display = "none";
+      (document.getElementById("admin-denied") as HTMLElement).hidden = false;
+      return;
+    }
+
+    await Promise.all([loadStats(), loadMembers(), loadVenues()]);
+    wireTabs();
+
+    // Wire filter inputs (members)
+    document.getElementById("filter-members-search")?.addEventListener("input", renderMembers);
+    document.getElementById("filter-founding-only")?.addEventListener("change", renderMembers);
+    document.getElementById("filter-host-only")?.addEventListener("change", renderMembers);
+    // Wire filter inputs (venues)
+    document.getElementById("filter-venues-search")?.addEventListener("input", renderVenues);
+    document.getElementById("filter-venues-pending")?.addEventListener("change", renderVenues);
+
+    (document.getElementById("lounge-guard") as HTMLElement).style.display = "none";
+    (document.getElementById("admin-content") as HTMLElement).hidden = false;
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>
