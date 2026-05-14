@@ -61,6 +61,17 @@ const { active = "dashboard" } = Astro.props as Props;
       </svg>
       <span>Admin</span>
     </a>
+    {/* Install app — hidden by default. Revealed when the browser fires the
+        beforeinstallprompt event (Chrome / Edge / Android), or shows iOS-specific
+        instructions on iPhone Safari (which doesn't fire that event). */}
+    <button id="lounge-menu-install" class="lounge-menu__item" role="menuitem" type="button" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+      <span>Install app</span>
+      <span class="lounge-menu__hint" id="lounge-menu-install-hint">add to home screen</span>
+    </button>
     <a href="https://thenextcigar.com/" class="lounge-menu__item" role="menuitem" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -313,6 +324,65 @@ const { active = "dashboard" } = Astro.props as Props;
       const ADMIN_EMAILS = ["guatabeycigars@gmail.com"];
       if (user && ADMIN_EMAILS.includes((user.email || "").toLowerCase())) {
         adminLink.hidden = false;
+      }
+    }
+
+    // ── PWA install prompt ────────────────────────────────────────────────
+    // Chrome / Edge / Android Chrome fire `beforeinstallprompt` when the page
+    // is installable. We stash the event and reveal the menu item. On click,
+    // we replay the saved prompt() — the browser then shows the install UI.
+    //
+    // iOS Safari does NOT fire this event (Apple's choice). For Safari we
+    // detect the UA and show a small set of instructions instead.
+    const installBtn = document.getElementById("lounge-menu-install") as HTMLButtonElement | null;
+    const installHint = document.getElementById("lounge-menu-install-hint");
+    if (installBtn) {
+      // Already installed? Hide entirely.
+      const standalone = window.matchMedia?.("(display-mode: standalone)").matches
+        || (window.navigator as any).standalone === true;
+      if (standalone) {
+        installBtn.hidden = true;
+      } else {
+        let deferredPrompt: any = null;
+
+        window.addEventListener("beforeinstallprompt", (e: any) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          installBtn.hidden = false;
+        });
+
+        // iOS Safari fallback — no event, just sniff and show iOS instructions.
+        const ua = window.navigator.userAgent;
+        const isIos = /iPhone|iPad|iPod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+        if (isIos) {
+          installBtn.hidden = false;
+          if (installHint) installHint.textContent = "tap Share → Add to Home Screen";
+        }
+
+        installBtn.addEventListener("click", async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === "accepted") {
+              installBtn.hidden = true;
+            }
+            deferredPrompt = null;
+          } else if (isIos) {
+            alert(
+              "To install: tap the Share button (square + arrow) at the bottom of Safari, then 'Add to Home Screen'."
+            );
+          } else {
+            alert(
+              "Open this page in Chrome or Edge on a phone/laptop to install it as an app."
+            );
+          }
+        });
+
+        // If install completes outside our flow (e.g. via the URL bar prompt),
+        // hide the button.
+        window.addEventListener("appinstalled", () => {
+          installBtn.hidden = true;
+        });
       }
     }
   }

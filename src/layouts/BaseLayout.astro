@@ -152,7 +152,8 @@ const skipPublicChrome = bareChrome || isLoungeApp;
 
     {!skipPublicChrome && <Footer />}
 
-    <SubscribeModal />
+    {/* SubscribeModal is for the public magazine only — Lounge has its own onboarding flow. */}
+    {!isLoungeApp && <SubscribeModal />}
     <CookieBanner />
 
     {/* Travel sheet + FAB — only on Lounge app pages (excluding /travel itself, handled in component). */}
