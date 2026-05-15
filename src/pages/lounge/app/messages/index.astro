@@ -543,13 +543,26 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     }
     wrap.innerHTML = html;
 
-    // Mark unread messages addressed to me as read
+    // Mark unread messages addressed to me as read.
+    // Uses the mark_messages_read RPC (migration 019) which is SECURITY DEFINER
+    // and only touches read_at — safer than a raw UPDATE and required because
+    // direct_messages historically had no UPDATE RLS policy, so the previous
+    // .update() call silently no-op'd and the home-page unread badge never cleared.
     const unreadIds = rows.filter((m) => m.recipient_id === myUserId && !m.read_at).map((m) => m.id);
     if (unreadIds.length > 0) {
-      await supabase
-        .from("direct_messages")
-        .update({ read_at: new Date().toISOString() })
-        .in("id", unreadIds);
+      const { error: rpcErr } = await supabase.rpc("mark_messages_read", {
+        message_ids: unreadIds,
+      });
+      if (rpcErr) {
+        // Fallback: try the direct update. Only works once migration 019's
+        // UPDATE policy is in place — otherwise it silently no-ops (the
+        // original bug). Logging so we can diagnose if migration didn't run.
+        console.warn("[messages] mark_messages_read RPC failed, falling back:", rpcErr.message);
+        await supabase
+          .from("direct_messages")
+          .update({ read_at: new Date().toISOString() })
+          .in("id", unreadIds);
+      }
     }
 
     // Scroll to bottom if new messages arrived (or initial)
