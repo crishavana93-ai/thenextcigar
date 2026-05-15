@@ -1,0 +1,354 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+---
+
+<BaseLayout title="Creator dashboard — The Lounge" noIndex>
+  <LoungeHeader />
+
+  <main class="lounge-app">
+    <div id="lounge-guard" class="lounge-app__guard">
+      <p class="lounge-app__guard-eyebrow">Loading…</p>
+    </div>
+
+    {/* Shown if the signed-in member doesn't have a creator code */}
+    <div id="not-a-creator" hidden class="lounge-app__guard">
+      <div class="lounge-empty" style="max-width: 32rem; margin: 4rem auto;">
+        <div class="lounge-empty__art">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="8" r="7" />
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+          </svg>
+        </div>
+        <p class="lounge-empty__kicker">Creator Partnership</p>
+        <h3 class="lounge-empty__title">You don't have a creator code yet.</h3>
+        <p class="lounge-empty__body">
+          The Lounge partners with cigar creators who have an engaged audience.
+          If you have 1K+ followers on Instagram, YouTube, or TikTok, reach out
+          and we'll set you up with a code that earns commission on every
+          membership and accessory order your audience makes.
+        </p>
+        <a href="mailto:contact@thenextcigar.com?subject=Creator partnership inquiry" class="lbtn lbtn-primary">
+          Email Cris →
+        </a>
+      </div>
+    </div>
+
+    <div id="dashboard" hidden>
+      <section class="container-wide pt-8 md:pt-12 pb-4 reveal">
+        <p class="section-eyebrow">Creator Partnership · Dashboard</p>
+        <h1 class="font-display text-3xl md:text-5xl leading-[1.05] tracking-tight mt-2">
+          Your numbers.
+        </h1>
+        <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-sm">
+          Live commission tracking on every membership and accessory order
+          attributed to your code.
+        </p>
+      </section>
+
+      <section class="container-wide pb-3">
+        <div class="cd-code-card">
+          <p class="cd-code-card__label">Your share link</p>
+          <div class="cd-code-card__row">
+            <input id="cd-share-url" type="text" readonly class="cd-code-card__url" />
+            <button id="cd-copy" type="button" class="lbtn lbtn-sm">Copy</button>
+          </div>
+          <p class="cd-code-card__hint">
+            Code <strong id="cd-code-string">—</strong>
+            &nbsp;·&nbsp; Tier <strong id="cd-code-tier">—</strong>
+            &nbsp;·&nbsp; Membership commission <strong id="cd-code-mrate">—</strong>
+            &nbsp;·&nbsp; Accessory commission <strong id="cd-code-arate">—</strong>
+          </p>
+        </div>
+      </section>
+
+      <section class="container-wide pb-3">
+        <div class="cd-stats">
+          <div class="cd-stat">
+            <p class="cd-stat__label">Members referred</p>
+            <p class="cd-stat__value" id="cd-referrals">—</p>
+            <p class="cd-stat__delta" id="cd-referrals-delta">—</p>
+          </div>
+          <div class="cd-stat">
+            <p class="cd-stat__label">Total earnings YTD</p>
+            <p class="cd-stat__value" id="cd-earnings">$0.00</p>
+            <p class="cd-stat__delta" id="cd-earnings-delta">—</p>
+          </div>
+          <div class="cd-stat cd-stat--accent">
+            <p class="cd-stat__label">Pending payout</p>
+            <p class="cd-stat__value" id="cd-pending">$0.00</p>
+            <p class="cd-stat__delta">Paid out monthly</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="container-wide pb-3">
+        <div class="feed-section-head">
+          <p class="lounge-label">Recent activity</p>
+        </div>
+        <div id="cd-activity" class="cd-activity">
+          <p class="cd-activity__empty">No activity yet. Share your link to start earning.</p>
+        </div>
+      </section>
+
+      <section class="container-wide pb-24">
+        <div class="cd-callout">
+          <p class="lounge-label lounge-label--gold">How it pays</p>
+          <p style="margin: 10px 0 0; font-size: 0.9rem; line-height: 1.55;">
+            Membership commission is recurring — you earn on every renewal for the
+            lifetime of the member, not just the first payment. Accessory
+            commission is one-time per order. Payouts are processed monthly
+            on the 1st via your preferred method (bank, PayPal, or store credit).
+            Email <a href="mailto:contact@thenextcigar.com" style="color: var(--color-gold);">contact@thenextcigar.com</a>
+            to set up your payout method or upgrade your tier.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <LoungeTabBar />
+</BaseLayout>
+
+<style is:global>
+  .lounge-app { min-height: calc(100vh - 80px); background: var(--color-bg); }
+  .lounge-app__guard {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+  }
+  .lounge-app__guard-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+
+  /* Share link card */
+  .cd-code-card {
+    background: linear-gradient(135deg, rgba(201, 169, 97, 0.14), rgba(201, 169, 97, 0.04));
+    border: 1px solid rgba(201, 169, 97, 0.4);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .cd-code-card__label {
+    margin: 0 0 8px;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--color-gold, #c9a961);
+  }
+  .cd-code-card__row {
+    display: flex; gap: 8px; align-items: stretch;
+  }
+  .cd-code-card__url {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 0.84rem;
+    color: var(--color-text);
+  }
+  .cd-code-card__hint {
+    margin: 12px 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+    line-height: 1.5;
+  }
+
+  /* Stats row */
+  .cd-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media (min-width: 640px) {
+    .cd-stats { grid-template-columns: repeat(3, 1fr); }
+  }
+  .cd-stat {
+    padding: 18px 20px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+  }
+  .cd-stat--accent {
+    background: linear-gradient(135deg, rgba(201, 169, 97, 0.16), rgba(201, 169, 97, 0.04));
+    border-color: rgba(201, 169, 97, 0.45);
+  }
+  .cd-stat__label {
+    margin: 0;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--color-text-muted);
+  }
+  .cd-stat__value {
+    margin: 6px 0 0;
+    font-family: var(--font-display);
+    font-size: 2.2rem; font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.1;
+  }
+  .cd-stat__delta {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+  }
+
+  /* Activity list */
+  .cd-activity {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .cd-activity__row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.86rem;
+  }
+  .cd-activity__type {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+    background: rgba(201, 169, 97, 0.18);
+    color: var(--color-gold, #c9a961);
+  }
+  .cd-activity__amt {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+  .cd-activity__when {
+    font-size: 0.74rem;
+    color: var(--color-text-muted);
+  }
+  .cd-activity__empty {
+    color: var(--color-text-muted);
+    font-size: 0.88rem;
+    padding: 18px 0;
+    text-align: center;
+  }
+
+  .cd-callout {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+  }
+</style>
+
+<script>
+  import { getSupabase, getCurrentUser } from "../../../../lib/supabase";
+
+  async function init() {
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = "/lounge/login/";
+      return;
+    }
+
+    const supabase = getSupabase();
+
+    // Look up this user's creator code (if any)
+    const { data: codes } = await supabase
+      .from("creator_codes")
+      .select("id, code, tier, membership_rate, accessory_rate, active")
+      .eq("creator_id", user.id)
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const code = (codes as any[])?.[0];
+
+    const guard = document.getElementById("lounge-guard") as HTMLElement;
+    guard.style.display = "none";
+
+    if (!code) {
+      (document.getElementById("not-a-creator") as HTMLElement).hidden = false;
+      return;
+    }
+
+    (document.getElementById("dashboard") as HTMLElement).hidden = false;
+
+    // Populate share link + code info
+    const shareUrl = `https://lounge.thenextcigar.com/?ref=${code.code}`;
+    (document.getElementById("cd-share-url") as HTMLInputElement).value = shareUrl;
+    (document.getElementById("cd-code-string") as HTMLElement).textContent = code.code;
+    (document.getElementById("cd-code-tier") as HTMLElement).textContent =
+      code.tier.charAt(0).toUpperCase() + code.tier.slice(1);
+    (document.getElementById("cd-code-mrate") as HTMLElement).textContent =
+      `${Math.round(Number(code.membership_rate) * 100)}%`;
+    (document.getElementById("cd-code-arate") as HTMLElement).textContent =
+      `${Math.round(Number(code.accessory_rate) * 100)}%`;
+
+    document.getElementById("cd-copy")?.addEventListener("click", async () => {
+      const input = document.getElementById("cd-share-url") as HTMLInputElement;
+      try {
+        await navigator.clipboard.writeText(input.value);
+        const btn = document.getElementById("cd-copy") as HTMLButtonElement;
+        const orig = btn.textContent;
+        btn.textContent = "Copied ✓";
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      } catch {
+        input.select();
+        document.execCommand("copy");
+      }
+    });
+
+    // Aggregate stats from code_redemptions
+    const { data: reds } = await supabase
+      .from("code_redemptions")
+      .select("event_type, gross_amount, commission_amount, paid_out_at, created_at")
+      .eq("code_id", code.id);
+    const rows = ((reds as any[]) || []);
+
+    let referrals = 0;
+    let earningsYtd = 0;
+    let pending = 0;
+    const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+    const thirtyDaysAgo = Date.now() - 30 * 86400000;
+    let referrals30 = 0;
+    let earnings30 = 0;
+
+    for (const r of rows) {
+      const created = new Date(r.created_at).getTime();
+      if (r.event_type === "signup") referrals++;
+      if (r.event_type === "signup" && created > thirtyDaysAgo) referrals30++;
+      const c = Number(r.commission_amount) || 0;
+      if (created >= yearStart) earningsYtd += c;
+      if (created > thirtyDaysAgo) earnings30 += c;
+      if (!r.paid_out_at) pending += c;
+    }
+
+    (document.getElementById("cd-referrals") as HTMLElement).textContent = String(referrals);
+    (document.getElementById("cd-referrals-delta") as HTMLElement).textContent =
+      referrals30 > 0 ? `+${referrals30} this month` : "No new this month";
+    (document.getElementById("cd-earnings") as HTMLElement).textContent = `$${earningsYtd.toFixed(2)}`;
+    (document.getElementById("cd-earnings-delta") as HTMLElement).textContent =
+      earnings30 > 0 ? `+$${earnings30.toFixed(2)} this month` : "No new this month";
+    (document.getElementById("cd-pending") as HTMLElement).textContent = `$${pending.toFixed(2)}`;
+
+    // Recent activity (last 20 events)
+    const recent = rows.slice().sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ).slice(0, 20);
+    const activityEl = document.getElementById("cd-activity") as HTMLElement;
+    if (recent.length === 0) {
+      activityEl.innerHTML = `<p class="cd-activity__empty">No activity yet. Share your link to start earning.</p>`;
+    } else {
+      activityEl.innerHTML = recent.map((r) => {
+        const when = new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        const typeLabel = r.event_type === "membership_renew" ? "Membership"
+          : r.event_type === "accessory_order" ? "Order"
+          : "Signup";
+        const amt = Number(r.commission_amount) || 0;
+        return `
+          <div class="cd-activity__row">
+            <span class="cd-activity__type">${typeLabel}</span>
+            <span class="cd-activity__when">${when}</span>
+            <span class="cd-activity__amt">${amt > 0 ? `+$${amt.toFixed(2)}` : '—'}</span>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+
+  document.addEventListener("astro:page-load", init);
+  init();
+</script>
