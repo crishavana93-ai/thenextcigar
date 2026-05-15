@@ -99,6 +99,10 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         <div class="admin-tabs" role="tablist">
           <button id="tab-members" class="admin-tab is-active" type="button">Members</button>
           <button id="tab-venues" class="admin-tab" type="button">Venues</button>
+          <button id="tab-submissions" class="admin-tab" type="button">
+            Submissions
+            <span id="submissions-pending-badge" class="admin-tab__badge" hidden></span>
+          </button>
           <button id="tab-events" class="admin-tab" type="button">Events</button>
           <button id="tab-partners" class="admin-tab" type="button">Partners</button>
           <button id="tab-activity" class="admin-tab" type="button">Activity</button>
@@ -197,6 +201,29 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           <label class="admin-toggle"><input type="checkbox" id="filter-venues-pending" /><span>Pending only</span></label>
         </div>
         <div id="venues-list" class="admin-table"></div>
+      </section>
+
+      {/* Submissions pane — community-submitted cigar shops */}
+      <section id="pane-submissions" class="container-wide pb-24" hidden>
+        <div class="admin-filter-row">
+          <label class="admin-toggle">
+            <input type="radio" name="submissions-filter" value="pending" checked />
+            <span>Pending</span>
+          </label>
+          <label class="admin-toggle">
+            <input type="radio" name="submissions-filter" value="all" />
+            <span>All</span>
+          </label>
+          <label class="admin-toggle">
+            <input type="radio" name="submissions-filter" value="converted" />
+            <span>Converted</span>
+          </label>
+          <label class="admin-toggle">
+            <input type="radio" name="submissions-filter" value="rejected" />
+            <span>Rejected</span>
+          </label>
+        </div>
+        <div id="submissions-list" class="admin-table"></div>
       </section>
 
       {/* Events pane */}
@@ -495,6 +522,89 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
   .admin-event-form__status.is-error { background: #fde9e9; border-color: #c62828; }
   .admin-event-list .lounge-label { margin-bottom: 8px; }
+
+  /* Tab badge (pending count) */
+  .admin-tab__badge {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    min-width: 18px; height: 18px;
+    margin-left: 6px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--color-gold, #c9a961);
+    color: #1a1d2e;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  /* Submission rows */
+  .submission-row {
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--color-gold-soft, rgba(201, 169, 97, 0.18));
+  }
+  .submission-row__head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; margin-bottom: 6px;
+  }
+  .submission-row__name {
+    margin: 0;
+    font-family: Georgia, serif;
+    font-size: 1.02rem;
+    color: var(--color-text, #1a1d2e);
+  }
+  .submission-row__loc {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+  }
+  .submission-row__addr {
+    margin: 4px 0;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+  .submission-row__notes {
+    margin: 6px 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--color-gold, #c9a961);
+    background: rgba(201, 169, 97, 0.06);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #555;
+  }
+  .submission-row__from {
+    margin: 6px 0 10px;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  .submission-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .admin-badge {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .admin-badge--gold {
+    background: rgba(201, 169, 97, 0.18);
+    color: #8a6f24;
+  }
+  .admin-badge--green {
+    background: rgba(74, 156, 95, 0.16);
+    color: #2c6b3f;
+  }
+  .admin-badge--red {
+    background: rgba(198, 58, 42, 0.14);
+    color: #a3261c;
+  }
 
   /* Table */
   .admin-table { display: flex; flex-direction: column; }
@@ -860,16 +970,179 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
 
   function wireTabs() {
-    const tabs = ["members", "venues", "events", "partners", "activity"];
+    const tabs = ["members", "venues", "submissions", "events", "partners", "activity"];
     const tabEls = tabs.map((t) => document.getElementById(`tab-${t}`) as HTMLButtonElement);
     const paneEls = tabs.map((t) => document.getElementById(`pane-${t}`) as HTMLElement);
     tabEls.forEach((btn, idx) => {
+      if (!btn) return;
       btn.addEventListener("click", () => {
-        tabEls.forEach((b, i) => b.classList.toggle("is-active", i === idx));
-        paneEls.forEach((p, i) => (p.hidden = i !== idx));
+        tabEls.forEach((b, i) => b?.classList.toggle("is-active", i === idx));
+        paneEls.forEach((p, i) => { if (p) p.hidden = i !== idx; });
         if (tabs[idx] === "activity") loadActivity();
         if (tabs[idx] === "events") loadEvents();
         if (tabs[idx] === "partners") loadPartners();
+        if (tabs[idx] === "submissions") loadSubmissions();
+      });
+    });
+
+    // Auto-open submissions tab if ?tab=submissions in URL (from email link)
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
+    if (urlTab && tabs.includes(urlTab)) {
+      const idx = tabs.indexOf(urlTab);
+      tabEls[idx]?.click();
+    }
+
+    // Wire submissions filter radios
+    document.querySelectorAll('input[name="submissions-filter"]').forEach((r) =>
+      r.addEventListener("change", () => loadSubmissions()),
+    );
+
+    // Show pending-count badge on the tab on load
+    updateSubmissionsBadge();
+  }
+
+  async function updateSubmissionsBadge() {
+    const supabase = getSupabase();
+    const { count } = await supabase
+      .from("community_submissions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+    const badge = document.getElementById("submissions-pending-badge") as HTMLElement | null;
+    if (!badge) return;
+    if (count && count > 0) {
+      badge.textContent = String(count);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  // ── Submissions tab ─────────────────────────────────────────────────────
+  function escapeHtmlSubmission(s: string | null | undefined): string {
+    if (!s) return "";
+    return String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  async function loadSubmissions() {
+    const supabase = getSupabase();
+    const list = document.getElementById("submissions-list") as HTMLElement;
+    if (!list) return;
+
+    const filter = (document.querySelector(
+      'input[name="submissions-filter"]:checked',
+    ) as HTMLInputElement)?.value || "pending";
+
+    list.innerHTML = '<p style="padding:16px;color:var(--color-text-muted);">Loading…</p>';
+
+    let q = supabase.from("community_submissions")
+      .select("id, shop_name, address, city, country, can_smoke, notes, submitter_email, submitter_name, status, created_at, reviewer_note, converted_to_lounge_id")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (filter !== "all") q = q.eq("status", filter);
+
+    const { data, error } = await q;
+    if (error) {
+      list.innerHTML = `<p style="padding:16px;color:#c63a2a;">Couldn't load: ${escapeHtmlSubmission(error.message)}</p>`;
+      return;
+    }
+    if (!data || data.length === 0) {
+      list.innerHTML = `<p style="padding:24px;text-align:center;color:var(--color-text-muted);">No ${filter === "all" ? "" : filter + " "}submissions yet.</p>`;
+      return;
+    }
+
+    list.innerHTML = data.map((s: any) => {
+      const smokeLabel = ({
+        yes: "✓ Can smoke on-site",
+        outside: "○ Outside only",
+        no: "✗ Retail only",
+        unknown: "? Not sure",
+      } as Record<string, string>)[s.can_smoke] || s.can_smoke;
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        (s.shop_name + " " + (s.address || "") + " " + s.city + " " + s.country).trim(),
+      )}`;
+      const statusBadge = ({
+        pending: '<span class="admin-badge admin-badge--gold">Pending</span>',
+        approved: '<span class="admin-badge admin-badge--green">Approved</span>',
+        rejected: '<span class="admin-badge admin-badge--red">Rejected</span>',
+        converted: '<span class="admin-badge admin-badge--green">Converted ✓</span>',
+      } as Record<string, string>)[s.status] || s.status;
+
+      const date = new Date(s.created_at).toLocaleDateString();
+      const submitter = s.submitter_name
+        ? `${escapeHtmlSubmission(s.submitter_name)} (${escapeHtmlSubmission(s.submitter_email || "")})`
+        : escapeHtmlSubmission(s.submitter_email || "anonymous");
+
+      const actions = s.status === "pending"
+        ? `<div class="submission-actions">
+             <button class="lbtn lbtn-primary lbtn-sm" data-act="convert" data-id="${s.id}">Approve & add to map</button>
+             <button class="lbtn lbtn-secondary lbtn-sm" data-act="reject" data-id="${s.id}">Reject</button>
+             <a href="${mapsUrl}" target="_blank" rel="noopener" class="lbtn lbtn-ghost lbtn-sm">Verify on Google</a>
+           </div>`
+        : s.status === "converted" && s.converted_to_lounge_id
+          ? `<div class="submission-actions"><a href="/lounge/app/map/?city=${encodeURIComponent(s.city)}" class="lbtn lbtn-ghost lbtn-sm">See on map →</a></div>`
+          : "";
+
+      return `
+        <article class="submission-row">
+          <header class="submission-row__head">
+            <div>
+              <h3 class="submission-row__name">${escapeHtmlSubmission(s.shop_name)}</h3>
+              <p class="submission-row__loc">${escapeHtmlSubmission(s.city)}, ${escapeHtmlSubmission(s.country)} · ${smokeLabel} · ${date}</p>
+            </div>
+            ${statusBadge}
+          </header>
+          ${s.address ? `<p class="submission-row__addr">${escapeHtmlSubmission(s.address)}</p>` : ""}
+          ${s.notes ? `<p class="submission-row__notes">"${escapeHtmlSubmission(s.notes)}"</p>` : ""}
+          <p class="submission-row__from">Submitted by ${submitter}</p>
+          ${actions}
+        </article>
+      `;
+    }).join("");
+
+    // Wire action buttons
+    list.querySelectorAll<HTMLButtonElement>("button[data-act]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id!;
+        const act = btn.dataset.act!;
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = "Working…";
+
+        if (act === "convert") {
+          const { data: newId, error } = await supabase.rpc(
+            "convert_submission_to_lounge",
+            { submission_id: id },
+          );
+          if (error) {
+            alert(`Couldn't convert: ${error.message}`);
+            btn.disabled = false;
+            btn.textContent = originalText;
+            return;
+          }
+          // Reload list + venue stats + badge
+          await loadSubmissions();
+          await updateSubmissionsBadge();
+        } else if (act === "reject") {
+          const note = window.prompt("Reason (optional, just for your records):") || null;
+          const { error } = await supabase
+            .from("community_submissions")
+            .update({
+              status: "rejected",
+              reviewed_at: new Date().toISOString(),
+              reviewer_note: note,
+            })
+            .eq("id", id);
+          if (error) {
+            alert(`Couldn't reject: ${error.message}`);
+            btn.disabled = false;
+            btn.textContent = originalText;
+            return;
+          }
+          await loadSubmissions();
+          await updateSubmissionsBadge();
+        }
       });
     });
   }

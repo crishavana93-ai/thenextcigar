@@ -52,6 +52,19 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       </section>
 
       <section class="container-wide pb-24">
+        <a href="/lounge/app/submit-shop/" class="pl-contrib">
+          <span class="pl-contrib__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </span>
+          <span class="pl-contrib__body">
+            <strong>Know a shop missing from the map?</strong>
+            <span>Submit it — local picks fill in the gaps Google misses (especially in Germany, Spain, Italy).</span>
+          </span>
+          <span class="pl-contrib__chev" aria-hidden="true">→</span>
+        </a>
+
         <div id="pl-skeleton" class="pl-grid">
           <div class="lskel-card"></div>
           <div class="lskel-card"></div>
@@ -175,6 +188,45 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
   .pl-card__action:hover {
     background: rgba(201, 169, 97, 0.14);
+  }
+  .pl-contrib {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    margin: 0 0 18px;
+    border-radius: 12px;
+    background: rgba(201, 169, 97, 0.08);
+    border: 1px dashed rgba(201, 169, 97, 0.45);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.14s ease, border-color 0.14s ease;
+  }
+  .pl-contrib:hover {
+    background: rgba(201, 169, 97, 0.14);
+    border-color: rgba(201, 169, 97, 0.7);
+  }
+  .pl-contrib__icon {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(201, 169, 97, 0.18);
+    color: var(--color-gold, #c9a961);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pl-contrib__icon svg { width: 18px; height: 18px; }
+  .pl-contrib__body {
+    flex: 1; display: flex; flex-direction: column; gap: 3px;
+    font-size: 0.86rem; line-height: 1.4;
+  }
+  .pl-contrib__body strong {
+    font-family: Georgia, serif;
+    font-size: 0.96rem;
+    color: var(--color-text, #1a1d2e);
+  }
+  .pl-contrib__body span { color: var(--color-text-soft); }
+  .pl-contrib__chev {
+    font-size: 1.1rem;
+    color: var(--color-gold, #c9a961);
+    flex-shrink: 0;
   }
 </style>
 

@@ -117,6 +117,9 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         <p class="lounge-label lounge-label--gold">Filter by city</p>
         <input id="city-picker-search" class="picker-sheet__search" type="search" placeholder="Search cities" autocomplete="off" />
         <ul id="city-picker-list" class="picker-sheet__list"></ul>
+        <a href="/lounge/app/submit-shop/" class="picker-sheet__contrib">
+          <span>Don't see a shop you know? <strong>Submit it →</strong></span>
+        </a>
       </aside>
 
       {/* Map */}
@@ -410,6 +413,21 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     cursor: pointer;
   }
   .picker-sheet__list button:hover { background: rgba(201,169,97,0.08); }
+  .picker-sheet__contrib {
+    display: block;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(201, 169, 97, 0.10);
+    border: 1px dashed rgba(201, 169, 97, 0.45);
+    color: var(--color-text, #1a1d2e);
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.85rem;
+    transition: background 0.14s ease;
+  }
+  .picker-sheet__contrib:hover { background: rgba(201, 169, 97, 0.18); }
+  .picker-sheet__contrib strong { color: var(--color-gold, #c9a961); }
 
   /* ── Cruiser Card carousel ────────────────────────────────────────────── */
   .cruiser-strip {
