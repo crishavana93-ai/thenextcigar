@@ -65,7 +65,7 @@ const productCount = comingSoon.length;
           </p>
         </div>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
         {comingSoon.map((p, i) => (
           <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
         ))}

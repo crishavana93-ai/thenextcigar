@@ -382,7 +382,7 @@ header, footer { position: relative; z-index: 10; }
 .card-image {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 1 / 1;
   background: var(--color-surface);
   border-radius: 4px;
 }
