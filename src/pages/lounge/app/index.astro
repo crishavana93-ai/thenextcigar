@@ -985,10 +985,14 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
           .select("id", { count: "exact", head: true })
           .ilike("city", trip.city)
           .eq("is_host", true);
+        const whenLabel =
+          days === 0 ? "today"
+          : days === 1 ? "tomorrow"
+          : `in ${days} days`;
         set(
           `/lounge/app/directory/?city=${encodeURIComponent(trip.city)}`,
           "Your trip",
-          `You're going to ${trip.city} in ${days === 0 ? "today" : days + " day" + (days === 1 ? "" : "s")}`,
+          `You're going to ${trip.city} ${whenLabel}`,
           hostCount && hostCount > 0
             ? `${hostCount} host${hostCount === 1 ? "" : "s"} there. Send an intro before you land.`
             : "Browse members in that city.",

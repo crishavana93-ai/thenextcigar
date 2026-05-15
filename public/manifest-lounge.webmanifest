@@ -33,7 +33,7 @@
   ],
   "shortcuts": [
     { "name": "Map", "short_name": "Map", "url": "/lounge/app/map/", "description": "Members and partner lounges near you" },
-    { "name": "Members", "short_name": "Members", "url": "/lounge/app/directory/", "description": "Browse the founding cohort" },
+    { "name": "Discover", "short_name": "Discover", "url": "/lounge/app/directory/", "description": "Curated members you'd vibe with" },
     { "name": "Inbox", "short_name": "Inbox", "url": "/lounge/app/inbox/", "description": "Incoming introductions" }
   ]
 }

@@ -1,0 +1,123 @@
+<!--
+  Supabase Auth → Email Templates → "Magic Link"
+  Paste this into the HTML body field.
+
+  Why this fixes the bug: signInWithOtp() sends BOTH a magic link AND a 6-digit
+  token, but the template only renders {{ .ConfirmationURL }} by default. The
+  user never sees a code, only a link. Adding {{ .Token }} below gives them
+  both options — tap the link, OR copy the code into the OTP form.
+
+  Variables Supabase substitutes:
+    {{ .ConfirmationURL }}  → the full magic-link URL
+    {{ .Token }}             → the 6-digit OTP code (for copy-paste login)
+    {{ .Email }}             → the recipient's email
+    {{ .SiteURL }}           → your project's Site URL
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in to The Lounge</title>
+</head>
+<body style="margin:0;padding:0;background:#f5efe0;font-family:Georgia,'Times New Roman',serif;color:#1a1d2e;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5efe0;">
+    <tr>
+      <td align="center" style="padding:32px 16px 0 16px;">
+
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+
+          <!-- Dark header band with logo -->
+          <tr>
+            <td align="center" style="background:#1a1d2e;padding:28px 24px 24px 24px;">
+              <img
+                src="https://lounge.thenextcigar.com/lounge-app-icon-192.png"
+                alt="The Lounge"
+                width="64" height="64"
+                style="display:block;width:64px;height:64px;border-radius:12px;border:0;outline:none;"
+              />
+              <p style="margin:14px 0 0 0;color:#c9a961;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;">The Lounge</p>
+              <p style="margin:4px 0 0 0;color:rgba(245,239,224,0.55);font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">The Next Cigar · Members</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px 32px 28px 32px;">
+              <p style="margin:0 0 18px 0;font-family:Georgia,serif;font-size:18px;font-weight:700;color:#1a1d2e;">Sign in to The Lounge</p>
+
+              <p style="margin:0 0 24px 0;font-family:Georgia,serif;font-size:15px;line-height:1.65;color:#333;">
+                Two ways to get in — use whichever works on the device you're on right now:
+              </p>
+
+              <!-- Option 1: 6-digit code (the fix) -->
+              <p style="margin:0 0 8px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#6b6663;">Option 1 — Code</p>
+              <p style="margin:0 0 6px 0;font-family:Georgia,serif;font-size:14px;line-height:1.55;color:#444;">
+                Paste this 6-digit code into the sign-in form:
+              </p>
+              <div style="background:#f5efe0;border:1px solid #ebe3cf;border-radius:10px;padding:18px 24px;text-align:center;margin:8px 0 28px 0;">
+                <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:30px;font-weight:700;letter-spacing:0.32em;color:#1a1d2e;">{{ .Token }}</p>
+              </div>
+
+              <!-- Option 2: magic link -->
+              <p style="margin:0 0 8px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#6b6663;">Option 2 — Tap to sign in</p>
+              <p style="margin:0 0 14px 0;font-family:Georgia,serif;font-size:14px;line-height:1.55;color:#444;">
+                If you're on a phone or tablet, tap below instead:
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px 0;">
+                <tr>
+                  <td bgcolor="#c9a961" style="border-radius:8px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:13px 28px;background:#c9a961;color:#1a1d2e;font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.06em;text-decoration:none;border-radius:8px;">
+                      Sign in to The Lounge →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:18px 0 0 0;font-family:Georgia,serif;font-size:12px;color:#888;line-height:1.55;">
+                This code and link expire in 1 hour. If you didn't request this, you can ignore the email — no account changes were made.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Quiet divider -->
+          <tr>
+            <td style="padding:0 32px;">
+              <div style="border-top:1px solid #ebe3cf;"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:22px 32px 30px 32px;">
+              <p style="margin:0 0 8px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#6b6663;line-height:1.6;">
+                The Lounge is a private network for cigar smokers who travel.
+              </p>
+              <p style="margin:0 0 12px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#6b6663;line-height:1.6;">
+                <a href="https://lounge.thenextcigar.com/lounge/app/" style="color:#c9a961;text-decoration:none;">Open the app</a>
+                &nbsp;·&nbsp;
+                <a href="https://thenextcigar.com/" style="color:#c9a961;text-decoration:none;">Read the magazine</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:contact@thenextcigar.com" style="color:#c9a961;text-decoration:none;">Reply to Cris</a>
+              </p>
+              <p style="margin:0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;color:#a8a39c;letter-spacing:0.06em;">
+                The Next Cigar · Stockholm, Sweden
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+        <p style="margin:18px 0 32px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:9px;color:#a8a39c;letter-spacing:0.2em;text-transform:uppercase;">
+          T N E X T &nbsp; · &nbsp; C I G A R S
+        </p>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
