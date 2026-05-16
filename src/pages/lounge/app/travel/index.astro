@@ -637,11 +637,27 @@ import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
     }
     emptyEl.hidden = true;
 
+    // Inline avatar styles — scoped CSS can't reach runtime-injected
+    // innerHTML elements (Astro gotcha). Without this, profile photos
+    // render at their natural resolution (sometimes 1000x1500+) and blow
+    // out the layout. Constrain to 42x42 circle.
+    const avatarBoxStyle =
+      "display:inline-flex;align-items:center;justify-content:center;" +
+      "width:42px;height:42px;min-width:42px;min-height:42px;" +
+      "max-width:42px;max-height:42px;" +
+      "border-radius:50%;overflow:hidden;flex-shrink:0;" +
+      "background:var(--color-bg-soft);" +
+      "border:1px solid var(--color-border);" +
+      "font-size:13px;font-weight:700;color:var(--color-text-muted);" +
+      "line-height:1;";
+    const avatarImgStyle =
+      "width:100%;height:100%;object-fit:cover;display:block;";
+
     listEl.innerHTML = others
       .map((t) => {
         const name = escapeHtml(t.profile?.display_name || "Member");
         const avatar = t.profile?.avatar_url
-          ? `<img src="${escapeHtml(t.profile.avatar_url)}" alt="" />`
+          ? `<img src="${escapeHtml(t.profile.avatar_url)}" alt="" style="${avatarImgStyle}" />`
           : initials(t.profile?.display_name || null);
         const notes = t.notes ? `<p class="lounge-travel-other__notes">${escapeHtml(t.notes)}</p>` : "";
         const intro = hasIntroTo(t.member_id);
@@ -653,14 +669,14 @@ import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
           cta = `<button class="lounge-travel-other__intro-btn" type="button" data-member-id="${t.member_id}" data-city="${escapeHtml(t.city)}" data-arrive="${t.arrive_date}">Request intro</button>`;
         }
         return `
-          <div class="lounge-travel-other">
-            <div class="lounge-travel-other__avatar">${avatar}</div>
-            <div>
-              <p class="lounge-travel-other__name">
+          <div class="lounge-travel-other" style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">
+            <div style="${avatarBoxStyle}">${avatar}</div>
+            <div style="flex:1;min-width:0;">
+              <p class="lounge-travel-other__name" style="margin:0;font-weight:700;">
                 <a href="/lounge/app/member/?id=${t.member_id}">${name}</a>
               </p>
-              <p class="lounge-travel-other__city">${escapeHtml(t.city)}${t.country_code ? ` · ${escapeHtml(t.country_code)}` : ""}</p>
-              <p class="lounge-travel-other__dates">${fmtDateRange(t.arrive_date, t.depart_date)}</p>
+              <p class="lounge-travel-other__city" style="margin:2px 0 0;font-size:0.82rem;color:var(--color-text-muted);">${escapeHtml(t.city)}${t.country_code ? ` · ${escapeHtml(t.country_code)}` : ""}</p>
+              <p class="lounge-travel-other__dates" style="margin:2px 0 0;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-muted);">${fmtDateRange(t.arrive_date, t.depart_date)}</p>
               ${notes}
             </div>
             ${cta}
