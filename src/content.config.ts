@@ -12,10 +12,27 @@ const blog = defineCollection({
       updatedAt: z.coerce.date().optional().nullable(),
       category: z.string().nullable().default(null),
       author: z.string().nullable().default(null),
-      // image() resolves relative paths from the .mdx file (existing posts),
-      // OR a string starting with "/" (absolute path for CMS-uploaded media)
-      cover: z.union([image(), z.string()]).optional().nullable(),
-      thumbnail: z.union([image(), z.string()]).optional().nullable(),
+      // Cover/thumbnail accept three shapes, validated in order:
+      //   1. An http(s) URL (Unsplash, AliExpress CDN, etc.)
+      //   2. An absolute path served from /public (CMS-uploaded media at
+      //      /uploads/foo.jpg — these are NOT image() assets, they're
+      //      static files Astro should not try to import-process)
+      //   3. A relative path resolved by image() (./images/foo.jpg —
+      //      gets Astro image-optimization pipeline)
+      // Order matters: image() will eagerly accept anything string-like
+      // and then crash at build with [ImageNotFound] when it tries to
+      // import a public/ path. Filtering URL/absolute strings out FIRST
+      // routes them safely through z.string().
+      cover: z.union([
+        z.string().regex(/^(https?:\/\/|\/)/),
+        image(),
+        z.string(),
+      ]).optional().nullable(),
+      thumbnail: z.union([
+        z.string().regex(/^(https?:\/\/|\/)/),
+        image(),
+        z.string(),
+      ]).optional().nullable(),
       featured: z.boolean().default(false),
       sidebarFeatured: z.boolean().default(false),
       isPremium: z.boolean().default(false),
@@ -52,7 +69,11 @@ const blog = defineCollection({
           metaTitle: z.string().optional().nullable(),
           metaDescription: z.string().optional().nullable(),
           focusKeyword: z.string().optional().nullable(),
-          ogImage: z.union([image(), z.string()]).optional().nullable(),
+          ogImage: z.union([
+            z.string().regex(/^(https?:\/\/|\/)/),
+            image(),
+            z.string(),
+          ]).optional().nullable(),
           canonicalUrl: z.string().optional().nullable(),
           noIndex: z.boolean().default(false).optional(),
         })
@@ -114,8 +135,18 @@ const products = defineCollection({
       // Type — drives fulfillment / shipping
       type: z.enum(["digital", "merch", "accessory"]).default("accessory"),
       // Imagery
-      cover: z.union([image(), z.string()]),
-      gallery: z.array(z.union([image(), z.string()])).optional(),
+      cover: z.union([
+        z.string().regex(/^(https?:\/\/|\/)/),
+        image(),
+        z.string(),
+      ]),
+      gallery: z.array(
+        z.union([
+          z.string().regex(/^(https?:\/\/|\/)/),
+          image(),
+          z.string(),
+        ]),
+      ).optional(),
       // Categorization
       category: z.string().optional().nullable(),
       featured: z.boolean().default(false),
