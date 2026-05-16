@@ -12,45 +12,61 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <p class="lounge-auth__eyebrow">The Lounge · Welcome back</p>
       <h1 class="lounge-auth__title">Sign in.</h1>
       <p class="lounge-auth__lead">
-        Enter your email and we'll send a one-time magic link. Same email you used to join.
+        Email + password. Or use the older magic-link option below if you haven't set a password yet.
       </p>
 
-      <form id="login-form" class="lounge-auth__form">
+      {/* ── Primary: email + password login ─────────────────────────────── */}
+      <form id="login-pw-form" class="lounge-auth__form">
         <label class="lounge-auth__label">
           Email
           <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
         </label>
 
-        <button type="submit" class="lounge-auth__button">Send sign-in code →</button>
-
-        <p class="lounge-auth__hint" style="margin: 12px 0 0; font-size: 0.8rem; color: var(--color-text-muted); text-align: center;">
-          We'll email you a 6-digit code. Tap the code in your email and it
-          auto-fills here — no jumping between apps.
-        </p>
-      </form>
-
-      {/* Code-entry form — shown after the email is sent */}
-      <form id="login-code-form" class="lounge-auth__form" hidden>
         <label class="lounge-auth__label">
-          6-digit code <span style="color:var(--color-text-muted); font-weight:500;">— check your email</span>
-          <input
-            type="text"
-            name="token"
-            required
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            maxlength="6"
-            pattern="[0-9]{6}"
-            placeholder="123456"
-            style="font-size: 1.4rem; letter-spacing: 0.4em; text-align: center; font-family: var(--font-display); font-weight: 800;" />
+          Password
+          <input type="password" name="password" required minlength="8" autocomplete="current-password" placeholder="••••••••" />
         </label>
 
         <button type="submit" class="lounge-auth__button">Sign in →</button>
 
-        <button type="button" id="login-resend" class="lounge-auth__resend" style="background:none; border:none; color:var(--color-gold,#c9a961); text-decoration:underline; cursor:pointer; padding:8px 0; font:inherit; margin-top: 8px;">
-          Resend the code
+        <button type="button" id="login-forgot" class="lounge-auth__ghost">
+          First time? Set a password
         </button>
       </form>
+
+      {/* ── Fallback: magic-link / OTP code ──────────────────────────────── */}
+      <details class="lounge-auth__details">
+        <summary>Or sign in with an email link instead</summary>
+
+        <form id="login-magic-form" class="lounge-auth__form" style="margin-top: 1rem;">
+          <label class="lounge-auth__label">
+            Email
+            <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
+          </label>
+          <button type="submit" class="lounge-auth__button lounge-auth__button--secondary">
+            Email me a sign-in link →
+          </button>
+        </form>
+
+        {/* Code-entry form — shown after the magic-link email is sent */}
+        <form id="login-code-form" class="lounge-auth__form" hidden style="margin-top: 1rem;">
+          <label class="lounge-auth__label">
+            6-digit code <span style="color:var(--color-text-muted); font-weight:500;">— check your email</span>
+            <input
+              type="text"
+              name="token"
+              required
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              pattern="[0-9]{6}"
+              placeholder="123456"
+              style="font-size: 1.4rem; letter-spacing: 0.4em; text-align: center; font-family: var(--font-display); font-weight: 800;" />
+          </label>
+          <button type="submit" class="lounge-auth__button">Sign in →</button>
+          <button type="button" id="login-resend" class="lounge-auth__ghost">Resend the code</button>
+        </form>
+      </details>
 
       <p id="login-status" class="lounge-auth__status" hidden></p>
 
@@ -114,6 +130,47 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   }
   .lounge-auth__button:hover { background: var(--color-accent-hover); }
   .lounge-auth__button:disabled { opacity: 0.6; cursor: wait; }
+  .lounge-auth__button--secondary {
+    background: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+  }
+  .lounge-auth__button--secondary:hover {
+    background: rgba(110, 38, 32, 0.08);
+  }
+  .lounge-auth__ghost {
+    background: none; border: none;
+    color: var(--color-gold, #c9a961);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 8px 0; font: inherit;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  .lounge-auth__details {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    padding-top: 1rem;
+  }
+  .lounge-auth__details summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    padding: 4px 0;
+    list-style: none;
+  }
+  .lounge-auth__details summary::-webkit-details-marker { display: none; }
+  .lounge-auth__details summary::before {
+    content: "› ";
+    display: inline-block;
+    transition: transform 0.15s ease;
+    color: var(--color-gold, #c9a961);
+    font-weight: 700;
+  }
+  .lounge-auth__details[open] summary::before {
+    transform: rotate(90deg);
+  }
   .lounge-auth__status {
     margin-top: 1rem; padding: 0.85rem 1rem;
     background: var(--color-cream); border-left: 3px solid var(--color-accent);
@@ -132,6 +189,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
   const LAST_EMAIL_KEY = "lounge_last_email";
 
+  function showStatus(msg: string, isError = false) {
+    const status = document.getElementById("login-status") as HTMLParagraphElement | null;
+    if (!status) return;
+    status.hidden = false;
+    status.classList.toggle("is-error", isError);
+    status.innerHTML = msg;
+  }
+
   async function setup() {
     // If already signed in, skip the form
     const user = await getCurrentUser();
@@ -140,144 +205,154 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       return;
     }
 
-    const form = document.getElementById("login-form") as HTMLFormElement | null;
-    const status = document.getElementById("login-status") as HTMLParagraphElement | null;
-    if (!form || form.dataset.bound === "1") return;
-    form.dataset.bound = "1";
-
-    // Pre-fill the email field if we've seen this device before. Most returning
-    // members are signing in from the same device — saves the typing-on-mobile
-    // friction. The form copy also adapts: "Welcome back, Cris" vs cold "Sign in".
-    const emailInput = form.querySelector("input[name=email]") as HTMLInputElement;
-    const titleEl = document.querySelector(".lounge-auth__title") as HTMLElement;
-    const eyebrowEl = document.querySelector(".lounge-auth__eyebrow") as HTMLElement;
-    const leadEl = document.querySelector(".lounge-auth__lead") as HTMLElement;
+    // Pre-fill saved email on both forms
     let savedEmail: string | null = null;
-    try {
-      savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
-    } catch {}
+    try { savedEmail = localStorage.getItem(LAST_EMAIL_KEY); } catch {}
     if (savedEmail) {
-      emailInput.value = savedEmail;
-      // Lowercase the first-name guess from the local part of the email
-      const localPart = savedEmail.split("@")[0]?.replace(/[._-].*/, "") || "";
-      const firstName = localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
-      if (firstName && firstName !== "Noreply" && eyebrowEl && titleEl && leadEl) {
-        eyebrowEl.textContent = "The Lounge · Welcome back";
-        titleEl.textContent = `Welcome back, ${firstName}.`;
-        leadEl.innerHTML = `Tap the button — we'll send a fresh magic link to <strong>${savedEmail}</strong>. <button type="button" id="login-change-email" style="background:none;border:none;color:var(--color-gold,#c9a961);text-decoration:underline;cursor:pointer;padding:0;font:inherit;">Use a different email</button>`;
-        // Wire the "different email" link
-        setTimeout(() => {
-          document.getElementById("login-change-email")?.addEventListener("click", () => {
-            try { localStorage.removeItem(LAST_EMAIL_KEY); } catch {}
-            emailInput.value = "";
-            emailInput.focus();
-            if (eyebrowEl) eyebrowEl.textContent = "The Lounge · Welcome back";
-            if (titleEl) titleEl.textContent = "Sign in.";
-            if (leadEl) leadEl.textContent = "Enter your email and we'll send a one-time magic link.";
-          });
-        }, 0);
-      }
+      document.querySelectorAll<HTMLInputElement>('input[type=email]').forEach((el) => {
+        if (!el.value) el.value = savedEmail!;
+      });
     }
 
+    // ── Primary: password sign-in ───────────────────────────────────────
+    const pwForm = document.getElementById("login-pw-form") as HTMLFormElement | null;
+    pwForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(pwForm);
+      const email = String(fd.get("email") || "").trim();
+      const password = String(fd.get("password") || "");
+      if (!email || !password) return;
+
+      const btn = pwForm.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
+        window.location.href = "/lounge/app/";
+      } catch (err: any) {
+        // Common case: existing user has no password set yet (signed up via
+        // magic link before passwords were a thing). Steer them to the
+        // forgot-password flow instead of just showing a confusing error.
+        const msg = err?.message || "";
+        const looksLikeNoPassword =
+          /invalid login credentials/i.test(msg) || /invalid_grant/i.test(msg);
+        if (looksLikeNoPassword) {
+          showStatus(
+            `That email exists but no password is set yet. Tap <strong>"First time? Set a password"</strong> below to get a reset email — takes 30 seconds.`,
+            true,
+          );
+        } else {
+          showStatus(err?.message || "Sign-in failed. Try again.", true);
+        }
+        btn.disabled = false;
+        btn.textContent = "Sign in →";
+      }
+    });
+
+    // ── "First time? Set a password" — sends reset email ───────────────
+    document.getElementById("login-forgot")?.addEventListener("click", async () => {
+      const emailInput = pwForm?.querySelector('input[name=email]') as HTMLInputElement;
+      const email = emailInput.value.trim();
+      if (!email) {
+        emailInput.focus();
+        showStatus("Enter your email first, then tap this again.", true);
+        return;
+      }
+      const btn = document.getElementById("login-forgot") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Sending email…";
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/lounge/reset-password/`,
+        });
+        if (error) throw error;
+        try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
+        showStatus(
+          `Email sent to <strong>${email}</strong>. Click the "Set password" link inside — works from any device, any browser. After you set the password, come back here and sign in.`,
+        );
+      } catch (err: any) {
+        showStatus(err?.message || "Couldn't send reset email. Try again.", true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "First time? Set a password";
+      }
+    });
+
+    // ── Fallback: magic-link / OTP code ─────────────────────────────────
+    const magicForm = document.getElementById("login-magic-form") as HTMLFormElement | null;
+    const codeForm = document.getElementById("login-code-form") as HTMLFormElement | null;
     let lastEmailSent = "";
 
-    async function sendCode(email: string) {
+    async function sendMagicLink(email: string) {
       const supabase = getSupabase();
-      // signInWithOtp + shouldCreateUser=false → emails BOTH the magic link AND
-      // a 6-digit OTP code in the same message. The user can either click the
-      // link OR copy the code into the form below.
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/lounge/app/`,
-        },
+        options: { emailRedirectTo: `${window.location.origin}/lounge/app/` },
       });
       if (error) throw error;
       lastEmailSent = email;
       try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
     }
 
-    form.addEventListener("submit", async (e) => {
+    magicForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const data = new FormData(form);
-      const email = String(data.get("email") || "").trim();
+      const fd = new FormData(magicForm);
+      const email = String(fd.get("email") || "").trim();
       if (!email) return;
-      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      const btn = magicForm.querySelector("button[type=submit]") as HTMLButtonElement;
       btn.disabled = true;
       btn.textContent = "Sending…";
       try {
-        await sendCode(email);
-        if (status) {
-          status.hidden = false;
-          status.classList.remove("is-error");
-          status.innerHTML = `Sent. Open the email from <strong>The Lounge</strong> on this device and copy the 6-digit code.`;
+        await sendMagicLink(email);
+        showStatus(`Sent. Open the email from <strong>The Lounge</strong> and tap the link, OR copy the 6-digit code into the form below.`);
+        if (codeForm) {
+          codeForm.hidden = false;
+          (codeForm.querySelector("input[name=token]") as HTMLInputElement).focus();
         }
-        form.style.display = "none";
-        const codeForm = document.getElementById("login-code-form") as HTMLFormElement;
-        codeForm.hidden = false;
-        (codeForm.querySelector("input[name=token]") as HTMLInputElement).focus();
       } catch (err: any) {
-        if (status) {
-          status.hidden = false;
-          status.classList.add("is-error");
-          status.textContent = err.message || "Sign-in failed. Try again, or email guatabeycigars@gmail.com.";
-        }
+        showStatus(err?.message || "Couldn't send. Try again.", true);
         btn.disabled = false;
-        btn.textContent = "Send sign-in code →";
+        btn.textContent = "Email me a sign-in link →";
       }
     });
 
-    // Wire the code-entry form
-    const codeForm = document.getElementById("login-code-form") as HTMLFormElement | null;
-    if (codeForm) {
-      codeForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const token = (codeForm.querySelector("input[name=token]") as HTMLInputElement).value.trim();
-        if (!/^\d{6}$/.test(token)) return;
-        const btn = codeForm.querySelector("button[type=submit]") as HTMLButtonElement;
-        btn.disabled = true;
-        btn.textContent = "Signing in…";
-        try {
-          const supabase = getSupabase();
-          const { error } = await supabase.auth.verifyOtp({
-            email: lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "",
-            token,
-            type: "email",
-          });
-          if (error) throw error;
-          // Signed in — go to the app
-          window.location.href = "/lounge/app/";
-        } catch (err: any) {
-          if (status) {
-            status.hidden = false;
-            status.classList.add("is-error");
-            status.textContent = err.message || "Invalid or expired code. Tap Resend below.";
-          }
-          btn.disabled = false;
-          btn.textContent = "Sign in →";
-        }
-      });
+    codeForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = (codeForm.querySelector("input[name=token]") as HTMLInputElement).value.trim();
+      if (!/^\d{6}$/.test(token)) return;
+      const btn = codeForm.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+      try {
+        const supabase = getSupabase();
+        const { error } = await supabase.auth.verifyOtp({
+          email: lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "",
+          token,
+          type: "email",
+        });
+        if (error) throw error;
+        window.location.href = "/lounge/app/";
+      } catch (err: any) {
+        showStatus(err?.message || "Invalid or expired code. Tap Resend below.", true);
+        btn.disabled = false;
+        btn.textContent = "Sign in →";
+      }
+    });
 
-      // Resend button
-      document.getElementById("login-resend")?.addEventListener("click", async () => {
-        const email = lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "";
-        if (!email) return;
-        try {
-          await sendCode(email);
-          if (status) {
-            status.hidden = false;
-            status.classList.remove("is-error");
-            status.textContent = "Fresh code sent. Codes expire after a few minutes.";
-          }
-        } catch (err: any) {
-          if (status) {
-            status.hidden = false;
-            status.classList.add("is-error");
-            status.textContent = err.message || "Couldn't resend. Try again.";
-          }
-        }
-      });
-    }
+    document.getElementById("login-resend")?.addEventListener("click", async () => {
+      const email = lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "";
+      if (!email) return;
+      try {
+        await sendMagicLink(email);
+        showStatus(`Resent. Check your inbox.`);
+      } catch (err: any) {
+        showStatus(err?.message || "Couldn't resend.", true);
+      }
+    });
   }
 
   document.addEventListener("astro:page-load", setup);
