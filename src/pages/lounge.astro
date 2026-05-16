@@ -129,11 +129,11 @@ const cityCount = new Set(places.map((p) => p.city)).size;
       </div>
       <div class="lounge-feature reveal" data-reveal-delay="3">
         <span class="lounge-feature__num">06</span>
-        <h3>Concierge tier</h3>
+        <h3>Free to start</h3>
         <p>
-          For the deeper travelers: pre-trip planning, host introductions
-          arranged in advance, festival pre-events at Habanos, ProCigar, and
-          Big Smoke. Available to upgrade after your first six months.
+          Sign up free in 60 seconds. Browse the map, check in anywhere,
+          message the first members. Upgrade to Member ($9/mo) the day
+          you book your next trip and want the network working for you.
         </p>
       </div>
     </div>
@@ -165,39 +165,69 @@ const cityCount = new Set(places.map((p) => p.city)).size;
   <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
     <p class="section-eyebrow">Membership</p>
     <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
-      Two tiers. One quiet community.
+      Free to start. Pay when it pays you back.
     </h2>
+    <p class="mt-4 text-base text-[color:var(--color-text-soft)] max-w-2xl">
+      Use the network for free. Upgrade the day you need it — when you're flying somewhere and want
+      to know who's there before you land.
+    </p>
 
-    <div class="lounge-pricing">
+    <div class="lounge-pricing lounge-pricing--three">
+      {/* Free tier */}
       <div class="lounge-tier reveal">
-        <p class="lounge-tier__name">Member</p>
-        <p class="lounge-tier__price">$89<span>/year</span></p>
-        <p class="lounge-tier__pitch">For aficionados who travel a few times a year and want the people, not the algorithm.</p>
+        <p class="lounge-tier__name">Free</p>
+        <p class="lounge-tier__price">$0<span>/forever</span></p>
+        <p class="lounge-tier__pitch">For the curious. The full network read-only, so you can see what's here.</p>
         <ul>
-          <li>Verified profile + founding badge</li>
-          <li>Check-in at all partner lounges</li>
-          <li>Travel mode for any city</li>
-          <li>Member directory across {cityCount}+ cities</li>
+          <li>Verified profile + flavor preferences</li>
+          <li>Browse all {cityCount}+ vetted lounges and shops</li>
+          <li>Check in at any partner lounge</li>
+          <li>Browse first 10 members in each city</li>
+          <li>3 direct messages per month</li>
+          <li>Submit shops to the map</li>
+          <li>Read every event</li>
+        </ul>
+        <a href="/lounge/signup/" class="lounge-tier__cta">Start free →</a>
+      </div>
+
+      {/* Member tier — featured */}
+      <div class="lounge-tier lounge-tier--featured reveal" data-reveal-delay="2">
+        <span class="lounge-tier__flag">Recommended</span>
+        <p class="lounge-tier__name">Member</p>
+        <p class="lounge-tier__price">$9<span>/month</span></p>
+        <p class="lounge-tier__sub">or $79/year — save $29</p>
+        <p class="lounge-tier__pitch">For the traveler. The killer feature plus everything unlimited.</p>
+        <ul>
+          <li>Everything in Free</li>
+          <li><strong>Travel mode</strong> — declare trips, locals get pinged before you land</li>
+          <li>Unlimited direct messages</li>
+          <li>RSVP and chat in event threads</li>
+          <li>Unlimited member browsing</li>
+          <li>Member badge on profile + map</li>
           <li>Quarterly TNC members-only digest</li>
         </ul>
+        <a href="/lounge/signup/?intent=member" class="lounge-tier__cta lounge-tier__cta--primary">Start free, upgrade later →</a>
       </div>
-      <div class="lounge-tier lounge-tier--featured reveal" data-reveal-delay="2">
-        <span class="lounge-tier__flag">Founding offer</span>
-        <p class="lounge-tier__name">Concierge</p>
-        <p class="lounge-tier__price">$349<span>/year</span></p>
-        <p class="lounge-tier__pitch">For the deeper traveler. Hand-arranged introductions, pre-festival meetings, the real network.</p>
+
+      {/* Founding 100 — grandfathered */}
+      <div class="lounge-tier reveal" data-reveal-delay="3">
+        <p class="lounge-tier__name">Founding 100</p>
+        <p class="lounge-tier__price lounge-tier__price--small">Lifetime · capped</p>
+        <p class="lounge-tier__sub">Once 100 spots fill, this tier closes forever.</p>
+        <p class="lounge-tier__pitch">For the early ones. The members who showed up before the network was the network.</p>
         <ul>
-          <li>Everything in Member</li>
-          <li>Pre-trip host introductions arranged in advance</li>
-          <li>Reserved seats at TNC festival pre-events (Habanos, ProCigar, Big Smoke)</li>
-          <li>Direct line to the TNC editorial team for travel questions</li>
+          <li>All Member features, free for life</li>
+          <li>Permanent Founding badge — distinct from Member</li>
+          <li>First access to every new feature</li>
+          <li>Direct line to Cris on WhatsApp</li>
           <li>Annual gift from a partner house</li>
         </ul>
+        <a href="/lounge/signup/?intent=founding" class="lounge-tier__cta">Claim a founding spot →</a>
       </div>
     </div>
+
     <p class="mt-8 text-sm text-[color:var(--color-text-muted)] max-w-2xl">
-      Founding cohort pricing locks for two years. Concierge tier opens by
-      invitation after the first six months of Member-tier activity.
+      Cancel any time, no contract. Member tier pricing locks for the first 24 months once you upgrade.
     </p>
   </section>
 
@@ -239,7 +269,7 @@ const cityCount = new Set(places.map((p) => p.city)).size;
       </details>
       <details>
         <summary>Why pay? Other forums are free.</summary>
-        <p>Free communities (Reddit, FOH) solve a different problem — online discussion. The Lounge is about IRL coordination. The $89 fee is both pricing and a quality filter; trolls don't pay $89/year to bother strangers. It also funds verification and partner-lounge programming.</p>
+        <p>Free communities (Reddit, FOH) solve a different problem — online discussion. The Lounge is about IRL coordination. The Member tier at $9/month funds verification, partner-lounge programming, and the small team. Most of the product stays free forever — the paywall only kicks in when you need to actually act on the network (declaring trips, unlimited messaging, RSVPing to events).</p>
       </details>
       <details>
         <summary>Is this an app I download or a website?</summary>
@@ -395,6 +425,48 @@ const cityCount = new Set(places.map((p) => p.city)).size;
     gap: 1.5rem;
   }
   @media (min-width: 768px) { .lounge-pricing { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+  @media (min-width: 1024px) {
+    .lounge-pricing--three { grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+  }
+  .lounge-tier { display: flex; flex-direction: column; }
+  .lounge-tier__price--small {
+    font-size: 1.4rem;
+    line-height: 1.2;
+  }
+  .lounge-tier__sub {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin: -0.25rem 0 0.85rem 0;
+    font-weight: 500;
+  }
+  .lounge-tier ul { flex: 1; }
+  .lounge-tier__cta {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.7rem 1.2rem;
+    background: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .lounge-tier__cta:hover {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  .lounge-tier__cta--primary {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  .lounge-tier__cta--primary:hover {
+    background: var(--color-accent-hover, #6e2620);
+  }
   .lounge-tier {
     padding: 2rem;
     border: 1px solid var(--color-border);
