@@ -27,6 +27,25 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           <input type="text" name="display_name" required maxlength="40" placeholder="Cris O." />
         </label>
 
+        <label class="lounge-auth__label">
+          Referral code <span style="font-weight:500; text-transform:none; letter-spacing:normal; color:var(--color-text-muted);">— optional</span>
+          <input
+            type="text"
+            name="ref_code"
+            id="signup-ref-code"
+            maxlength="32"
+            autocapitalize="characters"
+            autocorrect="off"
+            spellcheck="false"
+            pattern="[A-Za-z0-9_-]{2,32}"
+            placeholder="UKCE, FTCE, CCELily…"
+            style="text-transform: uppercase;"
+          />
+          <span id="ref-code-applied" hidden style="margin-top:6px; font-size:0.78rem; color:var(--color-gold,#c9a961); text-transform:none; letter-spacing:normal; font-weight:600;">
+            ✓ Code applied — you're signing up via a creator's link
+          </span>
+        </label>
+
         <button type="submit" class="lounge-auth__button">Send magic link →</button>
       </form>
 
@@ -178,12 +197,42 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // survives the magic-link round-trip and gets applied in the welcome flow
     // after auth completes. Codes are normalized uppercase. Invalid/missing
     // is a no-op.
+    //
+    // Also pre-fill the visible ref-code input and show the "code applied"
+    // confirmation message so the signer knows they're going through a
+    // creator's link (not invisible attribution any more).
+    const refInput = document.getElementById("signup-ref-code") as HTMLInputElement | null;
+    const refApplied = document.getElementById("ref-code-applied") as HTMLElement | null;
     try {
       const ref = new URLSearchParams(window.location.search).get("ref");
       if (ref && /^[A-Za-z0-9_-]{2,32}$/.test(ref)) {
-        localStorage.setItem("lounge_referral_code", ref.toUpperCase());
+        const code = ref.toUpperCase();
+        localStorage.setItem("lounge_referral_code", code);
+        if (refInput) refInput.value = code;
+        if (refApplied) refApplied.hidden = false;
+      } else {
+        // No URL param — restore last-saved code if the user navigated away
+        // and came back. Don't show the "applied" confirmation since they
+        // may want to clear it.
+        const saved = localStorage.getItem("lounge_referral_code");
+        if (saved && refInput && !refInput.value) refInput.value = saved;
       }
     } catch {}
+
+    // Whenever the user edits the ref-code field, persist the change to
+    // localStorage so the welcome flow picks up THIS value, not the URL one.
+    refInput?.addEventListener("input", () => {
+      const v = refInput.value.trim().toUpperCase();
+      try {
+        if (v && /^[A-Za-z0-9_-]{2,32}$/.test(v)) {
+          localStorage.setItem("lounge_referral_code", v);
+          if (refApplied) refApplied.hidden = false;
+        } else {
+          localStorage.removeItem("lounge_referral_code");
+          if (refApplied) refApplied.hidden = true;
+        }
+      } catch {}
+    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -196,13 +245,23 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       btn.disabled = true;
       btn.textContent = "Sending…";
 
+      // Capture the entered ref code (already in localStorage, but include it
+      // in user metadata too so the welcome flow has redundancy)
+      let refCode: string | null = null;
+      try {
+        refCode = localStorage.getItem("lounge_referral_code");
+      } catch {}
+
       try {
         const supabase = getSupabase();
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
             emailRedirectTo: `${window.location.origin}/lounge/app/`,
-            data: { display_name },
+            data: {
+              display_name,
+              ...(refCode ? { referral_code: refCode } : {}),
+            },
           },
         });
         if (error) throw error;
