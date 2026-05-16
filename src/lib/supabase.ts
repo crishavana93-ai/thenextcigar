@@ -32,8 +32,24 @@ export function getSupabase(): SupabaseClient {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true, // picks up magic-link tokens from /lounge/app/?token=...
-        flowType: "pkce",
+        // detectSessionInUrl picks up tokens from the URL hash on the landing
+        // page after a magic-link click — required for the implicit flow below.
+        detectSessionInUrl: true,
+        // IMPORTANT: implicit flow, NOT pkce.
+        //
+        // PKCE binds the magic-link click to the originating device's
+        // localStorage (the code_verifier). In the real world, ~80% of magic
+        // link clicks happen on a DIFFERENT device than the one that started
+        // sign-in (laptop -> phone gmail, in-app webview, "open in browser",
+        // etc.). PKCE silently fails in every one of those cases — the user
+        // gets the email, clicks the link, lands on the app and is still
+        // logged out, with no error to explain why.
+        //
+        // Implicit flow puts the access_token directly in the URL hash. The
+        // landing-page SDK picks it up regardless of which device opened the
+        // link. This is what Slack, Notion, Substack, and most magic-link
+        // products use. Same security model.
+        flowType: "implicit",
       },
     });
   }
