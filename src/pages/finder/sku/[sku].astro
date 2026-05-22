@@ -115,7 +115,7 @@ const ogDescription = best
   <script type="application/ld+json" is:inline set:html={JSON.stringify(productJsonLd)}></script>
   <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
   {/* ─── SKU HEADER ─────────────────────────────────────────────────────── */}
-  <section class="sku-hero">
+  <section class="sku-hero" data-finder-sku={sku.id} data-finder-box-size={sku.boxSize}>
     <div class="container-wide pt-12 md:pt-16 pb-10 reveal">
       <a href="/finder/" class="sku-hero__back">← The Finder</a>
 
@@ -192,11 +192,11 @@ const ogDescription = best
         </thead>
         <tbody>
           {offers.map((o, i) => (
-            <tr class={!o.snap.inStock ? "is-oos" : ""}>
-              <td>
+            <tr class={!o.snap.inStock ? "is-oos" : ""} data-retailer-id={o.retailer.id}>
+              <td data-cell="retailer">
                 <span class="finder-table__retailer">{o.retailer.name}</span>
                 {o.retailer.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
-                {i === 0 && o.snap.inStock && <span class="finder-badge finder-badge--accent">Best value</span>}
+                {i === 0 && o.snap.inStock && <span class="finder-badge finder-badge--accent" data-best-value-badge>Best value</span>}
               </td>
               <td>{o.country.flag} {o.country.name}</td>
               <td>
@@ -204,21 +204,21 @@ const ogDescription = best
                   Ships {o.retailer.shipsTo === "domestic" ? "domestic" : o.retailer.shipsTo === "eu" ? "EU" : "worldwide"}
                 </span>
               </td>
-              <td class="finder-table__num finder-table__price">
+              <td class="finder-table__num finder-table__price" data-cell="price">
                 {formatPrice(o.snap.price, o.snap.currency)}
                 {o.snap.originalPrice && (
                   <span class="finder-table__was">was {formatPrice(o.snap.originalPrice, o.snap.currency)}</span>
                 )}
               </td>
-              <td class="finder-table__num">€{o.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</td>
-              <td class="finder-table__num">€{o.perCigarEur.toFixed(2)}</td>
-              <td>
+              <td class="finder-table__num" data-cell="eur">€{o.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</td>
+              <td class="finder-table__num" data-cell="per-cigar">€{o.perCigarEur.toFixed(2)}</td>
+              <td data-cell="stock">
                 {o.snap.inStock
                   ? <span class="finder-stock finder-stock--yes">In stock</span>
                   : <span class="finder-stock finder-stock--no">Out of stock</span>}
               </td>
               <td class="finder-table__cta">
-                <a href={o.snap.sourceUrl} class="finder-table__compare" target="_blank" rel="noopener noreferrer sponsored">
+                <a href={o.snap.sourceUrl} class="finder-table__compare" target="_blank" rel="noopener noreferrer sponsored" data-cell="shop">
                   Shop →
                 </a>
               </td>
@@ -228,9 +228,9 @@ const ogDescription = best
       </table>
     </div>
 
-    <p class="sku-hero__verification">
-      Prices last verified <strong>15 May 2026</strong>.
-      Refreshed nightly in production via direct retailer URLs.
+    <p class="sku-hero__verification" data-verification>
+      Manual research verified <strong>15 May 2026</strong>.
+      Live-scraped rows refresh automatically — look for the <span class="finder-badge finder-badge--live">● LIVE</span> badge.
       Tap any retailer name to verify the price on their site before purchasing.
     </p>
   </section>
@@ -287,6 +287,197 @@ const ogDescription = best
     blurb="One email when the watchlist opens. No promotions."
   />
   <PriceAlertModal />
+
+  {/* ──────────────────────────────────────────────────────────────────────
+       LIVE PRICE HYDRATION
+       ----------------------------------------------------------------------
+       Astro renders this page statically at build time using the manual
+       PRICE_SNAPSHOTS in src/data/finder-data.ts. After hydration we query
+       finder_latest_snapshots_v on Supabase and overlay live scraper data
+       on top of any retailer-row whose retailer_id matches a live row.
+
+       For each matched row we:
+         - replace box price, EUR conversion, per-cigar, in-stock cells
+         - update the retailer's Shop link to the live source_url
+         - add a "● LIVE" badge so the user can tell live from static
+         - move the "Best value" badge if a cheaper retailer emerges
+         - replace the verification footer timestamp
+
+       Rows for retailers we don't yet scrape are left untouched (they
+       continue to render the manual May-2026 research).
+  ──────────────────────────────────────────────────────────────────────── */}
+  <script>
+    import { getSupabase } from "../../../lib/supabase";
+    import { SKUS, RETAILER_BY_ID, formatPrice, toEUR } from "../../../data/finder-data";
+
+    type SnapshotRow = {
+      id: string;
+      sku: string;
+      retailer_id: string;
+      pack_size: number;
+      price: number;
+      currency: string;
+      price_eur: number;
+      price_per_cigar_eur: number;
+      in_stock: boolean;
+      source_url: string;
+      country_code: string;
+      scraped_at: string;
+    };
+
+    function relativeTime(iso: string): string {
+      const t = new Date(iso).getTime();
+      const diff = Date.now() - t;
+      const min = Math.floor(diff / 60000);
+      if (min < 1)   return "just now";
+      if (min < 60)  return `${min} min ago`;
+      const hr = Math.floor(min / 60);
+      if (hr  < 24)  return `${hr} hr${hr === 1 ? "" : "s"} ago`;
+      const d  = Math.floor(hr / 24);
+      return `${d} day${d === 1 ? "" : "s"} ago`;
+    }
+
+    async function hydrateLivePrices() {
+      const hero = document.querySelector<HTMLElement>(".sku-hero[data-finder-sku]");
+      if (!hero) return;
+      const skuId    = hero.dataset.finderSku!;
+      const boxSize  = parseInt(hero.dataset.finderBoxSize || "25", 10);
+      const sku      = SKUS.find((s) => s.id === skuId);
+      if (!sku) return;
+
+      let data: SnapshotRow[] | null = null;
+      try {
+        const supabase = getSupabase();
+        const { data: rows, error } = await supabase
+          .from("finder_latest_snapshots_v")
+          .select("*")
+          .eq("sku", skuId);
+        if (error) throw error;
+        data = rows as SnapshotRow[] | null;
+      } catch (e) {
+        console.warn("[finder] live hydration failed:", e);
+        return;
+      }
+      if (!data || data.length === 0) return;
+
+      // For each retailer, prefer the canonical box-size row; fall back to
+      // whatever pack size they sell.
+      const byRetailer = new Map<string, SnapshotRow>();
+      for (const row of data) {
+        const existing = byRetailer.get(row.retailer_id);
+        if (!existing) { byRetailer.set(row.retailer_id, row); continue; }
+        // Prefer pack_size = boxSize
+        if (row.pack_size === boxSize && existing.pack_size !== boxSize) {
+          byRetailer.set(row.retailer_id, row);
+        }
+      }
+
+      let newestScrapeAt = "";
+      const updatedRetailers: string[] = [];
+
+      for (const [retailerId, row] of byRetailer.entries()) {
+        const tr = document.querySelector<HTMLTableRowElement>(
+          `tr[data-retailer-id="${retailerId}"]`
+        );
+        if (!tr) continue;
+
+        // Update visual stock state
+        tr.classList.toggle("is-oos", !row.in_stock);
+
+        const r = RETAILER_BY_ID[retailerId];
+        const currency = (r ? row.currency : row.currency) as any;
+
+        // Box price (native currency)
+        const priceCell = tr.querySelector<HTMLElement>('[data-cell="price"]');
+        if (priceCell) {
+          priceCell.textContent = formatPrice(row.price, currency);
+        }
+        // EUR-normalized
+        const eurCell = tr.querySelector<HTMLElement>('[data-cell="eur"]');
+        if (eurCell) {
+          eurCell.textContent = `€${Math.round(row.price_eur).toLocaleString("en-US")}`;
+        }
+        // Per-cigar (from generated column — always consistent)
+        const perCigarCell = tr.querySelector<HTMLElement>('[data-cell="per-cigar"]');
+        if (perCigarCell) {
+          perCigarCell.textContent = `€${row.price_per_cigar_eur.toFixed(2)}`;
+        }
+        // In-stock pill
+        const stockCell = tr.querySelector<HTMLElement>('[data-cell="stock"]');
+        if (stockCell) {
+          stockCell.innerHTML = row.in_stock
+            ? '<span class="finder-stock finder-stock--yes">In stock</span>'
+            : '<span class="finder-stock finder-stock--no">Out of stock</span>';
+        }
+        // Shop link → live source_url
+        const shopLink = tr.querySelector<HTMLAnchorElement>('[data-cell="shop"]');
+        if (shopLink) shopLink.href = row.source_url;
+
+        // Live badge on retailer cell (only add once)
+        const retailerCell = tr.querySelector<HTMLElement>('[data-cell="retailer"]');
+        if (retailerCell && !retailerCell.querySelector(".finder-badge--live")) {
+          const badge = document.createElement("span");
+          badge.className = "finder-badge finder-badge--live";
+          badge.title = `Live scrape — refreshed ${relativeTime(row.scraped_at)}`;
+          badge.textContent = "● LIVE";
+          retailerCell.appendChild(badge);
+        }
+
+        updatedRetailers.push(retailerId);
+        if (!newestScrapeAt || row.scraped_at > newestScrapeAt) {
+          newestScrapeAt = row.scraped_at;
+        }
+      }
+
+      // Re-evaluate "Best value" — if a live retailer is now cheaper than the
+      // currently-badged static one, move the badge.
+      const inStockRows = Array.from(
+        document.querySelectorAll<HTMLTableRowElement>("tr[data-retailer-id]")
+      ).filter((tr) => !tr.classList.contains("is-oos"));
+      if (inStockRows.length > 0) {
+        const ranked = inStockRows
+          .map((tr) => {
+            const perCigarTxt = tr.querySelector('[data-cell="per-cigar"]')?.textContent || "";
+            const v = parseFloat(perCigarTxt.replace(/[^0-9.]/g, ""));
+            return { tr, perCigar: Number.isFinite(v) ? v : Infinity };
+          })
+          .sort((a, b) => a.perCigar - b.perCigar);
+
+        // Remove existing best-value badges
+        document.querySelectorAll("[data-best-value-badge]").forEach((b) => b.remove());
+
+        // Add to cheapest row
+        const winner = ranked[0]?.tr.querySelector<HTMLElement>('[data-cell="retailer"]');
+        if (winner) {
+          const badge = document.createElement("span");
+          badge.className = "finder-badge finder-badge--accent";
+          badge.setAttribute("data-best-value-badge", "");
+          badge.textContent = "Best value";
+          winner.appendChild(badge);
+        }
+      }
+
+      // Replace verification footer with live timestamp
+      if (newestScrapeAt) {
+        const footer = document.querySelector<HTMLElement>("[data-verification]");
+        if (footer) {
+          const when = relativeTime(newestScrapeAt);
+          footer.innerHTML =
+            `Live prices refreshed <strong>${when}</strong> via direct retailer scraping ` +
+            `(${updatedRetailers.length} retailer${updatedRetailers.length === 1 ? "" : "s"} live). ` +
+            `Other rows are manual research from <strong>15 May 2026</strong>. ` +
+            `Tap any retailer name to verify the price on their site before purchasing.`;
+        }
+      }
+    }
+
+    // Hydrate after DOM is ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", hydrateLivePrices);
+    } else {
+      hydrateLivePrices();
+    }
+  </script>
 </BaseLayout>
 
 <style>
@@ -480,6 +671,15 @@ const ogDescription = best
   }
   .finder-badge--gold { background: rgba(201, 169, 97, 0.18); color: var(--color-gold-hover); }
   .finder-badge--accent { background: var(--color-accent); color: #fff; }
+  .finder-badge--live {
+    background: rgba(42, 138, 42, 0.14);
+    color: #2a8a2a;
+    animation: finder-live-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes finder-live-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+  }
 
   .finder-stock { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .finder-stock--yes { color: #2a8a2a; }
