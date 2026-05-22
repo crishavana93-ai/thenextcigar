@@ -54,7 +54,7 @@ const SCRAPERS: Record<string, ScraperConfig> = {
     preferredPackSize: 25,
     pdps: [
       { url: "https://www.noblego.de/cohiba-robusto-zigarre/", skuHint: "cohiba-robustos" },
-      { url: "https://www.noblego.de/cohiba-behike-bhk-52/",    skuHint: "cohiba-behike-52" },
+      { url: "https://www.noblego.de/cohiba-behike-52/",        skuHint: "cohiba-behike-52" },
       { url: "https://www.noblego.de/cohiba-siglo-iv/",         skuHint: "cohiba-siglo-iv" },
       { url: "https://www.noblego.de/cohiba-esplendidos/",      skuHint: "cohiba-esplendidos" },
       { url: "https://www.noblego.de/montecristo-no-4/",        skuHint: "montecristo-no-4" },
@@ -64,7 +64,7 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       { url: "https://www.noblego.de/romeo-y-julieta-petit-coronas/", skuHint: "romeo-y-julieta-petit-coronas" },
       { url: "https://www.noblego.de/hoyo-de-monterrey-epicure-no-2/", skuHint: "hoyo-de-monterrey-epicure-no-2" },
       { url: "https://www.noblego.de/trinidad-reyes/",          skuHint: "trinidad-reyes" },
-      { url: "https://www.noblego.de/bolivar-belicosos-finos/", skuHint: "bolivar-belicosos-finos" },
+      { url: "https://www.noblego.de/bolivar-belicoso-fino/",   skuHint: "bolivar-belicosos-finos" },
     ],
   },
   "de-cigarworld": {
@@ -173,6 +173,29 @@ function parseSchemaOrg(html: string): ParsedOffer[] {
   return offers;
 }
 
+// Real-browser User-Agent. Many EU shops (incl. Noblego) gate price markup
+// behind a UA check and serve a stripped/empty page to non-browser fetchers.
+const BROWSER_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+const BROWSER_HEADERS: Record<string, string> = {
+  "user-agent": BROWSER_UA,
+  "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "accept-language": "de-DE,de;q=0.9,en;q=0.8",
+  "accept-encoding": "gzip, deflate, br",
+  "cache-control": "no-cache",
+  "pragma": "no-cache",
+  "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"macOS"',
+  "sec-fetch-dest": "document",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-site": "none",
+  "sec-fetch-user": "?1",
+  "upgrade-insecure-requests": "1",
+};
+
 // ─── Endpoint ──────────────────────────────────────────────────────────────
 export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   const { env, params, request } = ctx;
@@ -186,6 +209,38 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   const config = SCRAPERS[retailerId];
   if (!config) return json({ ok: false, error: "unknown retailer", retailerId }, 404);
 
+  // ?debug=html → fetch only the first PDP and return a snippet of the raw HTML.
+  // Used to verify what bytes the Worker actually receives from the target site
+  // (vs what WebFetch / a normal browser sees). NO Supabase writes in debug mode.
+  const url = new URL(request.url);
+  const debugMode = url.searchParams.get("debug");
+
+  if (debugMode === "html") {
+    const first = config.pdps[0];
+    const res = await fetch(first.url, { headers: BROWSER_HEADERS, cf: { cacheTtl: 0 } });
+    const html = res.ok ? await res.text() : "";
+    // Try parsing it too, so we can see if the regex would match.
+    const parsed = config.stack === "noblego_html" ? parseNoblegoHtml(html) : parseSchemaOrg(html);
+    // Pull a snippet around the first " €" occurrence — that's where Noblego's
+    // price markup lives. If no " €" is found, return the first 4KB instead.
+    const euroIdx = html.indexOf(" €");
+    const snippet =
+      euroIdx >= 0
+        ? html.slice(Math.max(0, euroIdx - 1500), euroIdx + 200)
+        : html.slice(0, 4096);
+    return json({
+      ok: true,
+      debug: "html",
+      url: first.url,
+      status: res.status,
+      contentType: res.headers.get("content-type"),
+      contentLength: html.length,
+      euroFoundAt: euroIdx,
+      parsedOffers: parsed,
+      snippet,
+    });
+  }
+
   const scrapedAt = new Date().toISOString();
   const rowsToInsert: Array<Record<string, unknown>> = [];
   const debugLog: Array<Record<string, unknown>> = [];
@@ -195,7 +250,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   for (const pdp of config.pdps) {
     try {
       const res = await fetch(pdp.url, {
-        headers: { "user-agent": "TheNextCigar-Finder/1.0 (+https://thenextcigar.com/finder/)" },
+        headers: BROWSER_HEADERS,
         cf: { cacheTtl: 0 },
       });
       if (!res.ok) {
@@ -217,6 +272,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       debugLog.push({
         url: pdp.url,
         status: 200,
+        bytes: html.length,
         offersFound: parsed.length,
         packsFound: parsed.map((p) => `${p.packSize}@${p.price}`),
       });
@@ -280,4 +336,11 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
 };
 
 export const onRequestGet: PagesFunction<Env> = async () =>
-  json({ ok: false, error: "POST only (with X-Scraper-Token header)" }, 405);
+  json(
+    {
+      ok: false,
+      error: "POST only (with X-Scraper-Token header)",
+      hint: "Add ?debug=html to a POST to inspect raw HTML the Worker receives.",
+    },
+    405
+  );
