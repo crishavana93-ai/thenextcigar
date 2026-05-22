@@ -327,6 +327,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       rowsToInsert.push({
         sku: pdp.skuHint || null,
         retailer_id: retailerId,
+        pack_size: picked.packSize,
         price: picked.price,
         currency: picked.currency,
         price_eur: Math.round(picked.price * FX_TO_EUR[picked.currency] * 100) / 100,
