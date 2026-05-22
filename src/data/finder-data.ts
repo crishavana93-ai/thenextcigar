@@ -152,84 +152,166 @@ export const COUNTRY_BY_CODE: Record<CountryCode, Country> = Object.fromEntries(
 ) as Record<CountryCode, Country>;
 
 // ============================================================================
-// RETAILERS — top scrapable / authoritative shops per country
+// RETAILERS — verified May 22 2026
+// ============================================================================
+// 78 scrape-grade retailers (hasPublicPricing: true) + ~25 directory-only
+// shops where online sale is legally restricted. URLs all verified by two
+// parallel verification agents. See docs/retailer-research/verification-report.md.
 // ============================================================================
 export const RETAILERS: Retailer[] = [
-  // ─── Germany ──────────────────────────────────────────────────────────────
-  { id: "de-noblego",        name: "Noblego",                       url: "https://www.noblego.de",                        country: "de", city: "Berlin",             status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "de-cigarworld",     name: "Cigarworld.de",                 url: "https://www.cigarworld.de",                     country: "de", city: "Düsseldorf",         status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "de-cigarsmoker",    name: "The Cigar Smoker (LCDH Hamburg)", url: "https://www.thecigarsmoker.com",              country: "de", city: "Hamburg",            status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: false },
-  { id: "de-casabenden",     name: "Casa Benden",                   url: "https://www.casabenden.de/en",                  country: "de", city: "Düsseldorf",         status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "de-zechbauer",      name: "Max Zechbauer Tabakwaren",      url: "https://www.zechbauer.de/en",                   country: "de", city: "München",            status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: true  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCRAPE-GRADE A-LIST — 78 verified retailers across 13 countries
+  // Live webshops with public Cuban pricing. Production scraper targets.
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // ─── Switzerland ──────────────────────────────────────────────────────────
-  { id: "ch-cigarmust",      name: "Cigarmust (LCDH Mendrisio)",    url: "https://cigarmust.com",                         country: "ch", city: "Mendrisio",          status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "ch-cigarone",       name: "CigarOne",                      url: "https://www.cigarone.com",                      country: "ch", city: "Geneva",             status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "ch-siglomundo",     name: "Siglomundo",                    url: "https://it.siglomundo.ch",                      country: "ch", city: "Ticino",             status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "ch-swisscubancigars", name: "SwissCubanCigars",            url: "https://www.swisscubancigars.com",              country: "ch", city: "Zürich",             status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "ch-cigarsofcuba",   name: "Cigars of Cuba",                url: "https://www.cigars-of-cuba.com",                country: "ch",                              status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "ch-casadelpuro",    name: "Casa Del Puro",                 url: "https://casadelpuro.com",                       country: "ch",                              status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: false },
+  // ─── Germany ──── 18 verified ─────────────────────────────────────────────
+  { id: "de-noblego",            name: "Noblego",                            url: "https://www.noblego.de",                                 country: "de", city: "Berlin",          status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-cigarworld",         name: "Cigarworld.de",                      url: "https://www.cigarworld.de",                              country: "de", city: "Düsseldorf",      status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-cigarsmoker",        name: "The Cigar Smoker (LCDH Hamburg)",    url: "https://www.thecigarsmoker.com",                         country: "de", city: "Hamburg",         status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "de-selected-cigars",    name: "Selected Cigars (LCDH Düsseldorf)",  url: "https://www.selected-cigars.com",                        country: "de", city: "Düsseldorf",      status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-vabajo",             name: "Vabajo (LCDH Frankfurt)",            url: "https://www.vabajo.com",                                 country: "de", city: "Frankfurt",       status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-zigarren-herzog",    name: "Zigarren Herzog",                    url: "https://www.zigarren-herzog.com",                        country: "de", city: "Berlin",          status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-tabak-traeber",      name: "Tabak Träber",                       url: "https://www.tabak-traeber.de",                           country: "de", city: "Münster",         status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-starke-zigarren",    name: "Starke Zigarren",                    url: "https://www.starkezigarren.de",                          country: "de", city: "Berlin",          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-peter-heinrichs",    name: "Peter Heinrichs",                    url: "https://www.peterheinrichs.de",                          country: "de", city: "Köln",            status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-zigarre-de",         name: "Zigarre.de",                         url: "https://www.zigarre.de",                                 country: "de",                          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-cigarrenversand24",  name: "Cigarrenversand24",                  url: "https://www.cigarrenversand24.de",                       country: "de",                          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-cigarrenversand",    name: "Cigarrenversand (Peter Weinig)",     url: "https://www.cigarrenversand.de",                         country: "de", city: "Bamberg",         status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-zigarrenwelt",       name: "Zigarrenwelt (Tabac Benden)",        url: "https://www.zigarrenwelt.de",                            country: "de",                          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-casabenden",         name: "Casa Benden (LCDH Düsseldorf)",      url: "https://www.casabenden.de",                              country: "de", city: "Düsseldorf",      status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-tabacum",            name: "Tabacum",                            url: "https://www.tabacum.de",                                 country: "de", city: "Stuttgart",       status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-tabakhaus24",        name: "Tabakhaus24",                        url: "https://www.tabakhaus24.de",                             country: "de",                          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-zechbauer",          name: "Max Zechbauer Tabakwaren",           url: "https://www.zechbauer.de",                               country: "de", city: "München",         status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "de-tabakhaus-durek",    name: "Tabakhaus Durek (directory)",        url: "https://www.tabakhaus-durek.de",                         country: "de", city: "Berlin",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Italy ────────────────────────────────────────────────────────────────
-  { id: "it-sigarietabacchi", name: "Sigari e Tabacchi",            url: "https://sigarietabacchi.it",                    country: "it",                              status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "it-houseofcigars",  name: "House of Cigars (Venice)",      url: "https://houseofcigars.it",                      country: "it", city: "Venezia",            status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "it-bottegadelfumatore", name: "Bottega del Fumatore",      url: "https://bottegadelfumatore.com",                country: "it", city: "Padova",             status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "it-cigarsandco",    name: "Cigars and Co.",                url: "https://www.cigarsandco.it",                    country: "it", city: "Milano",             status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  // ─── Switzerland ──── 12 verified ─────────────────────────────────────────
+  { id: "ch-cigarmust",          name: "Cigarmust (LCDH Lugano/Mendrisio)",  url: "https://www.cigarmust.com",                              country: "ch", city: "Mendrisio",       status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-cigarone",           name: "CigarOne",                           url: "https://www.cigarone.com",                               country: "ch", city: "Geneva",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-siglomundo",         name: "SigloMundo (LCDH Zug)",              url: "https://www.siglomundo.ch",                              country: "ch", city: "Zug",             status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-swisscubancigars",   name: "SwissCubanCigars",                   url: "https://www.swisscubancigars.com",                       country: "ch", city: "Zürich",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-cigarsofcuba",       name: "Cigars of Cuba",                     url: "https://cigars-of-cuba.com",                             country: "ch", city: "Geneva",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-casadelpuro",        name: "Casa del Puro",                      url: "https://www.casadelpuro.com",                            country: "ch", city: "Geneva",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-cigarterminal",      name: "Cigar Terminal",                     url: "https://www.cigarterminal.com",                          country: "ch", city: "Geneva",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-zigarrenversand",    name: "Zigarrenversand.ch",                 url: "https://www.zigarrenversand.ch",                         country: "ch", city: "Schaffhausen",    status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "ch-cigarpassion",       name: "CigarPassion (Nyon)",                url: "https://www.cigarpassion.ch",                            country: "ch", city: "Nyon",            status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-lcdh-geneve",        name: "La Casa del Habano Genève",          url: "https://www.lacasadelhabano-geneve.com",                 country: "ch", city: "Geneva",          status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "ch-topcubans",          name: "Top Cubans",                         url: "https://www.topcubans.com",                              country: "ch", city: "Geneva",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-rheincigars",        name: "Rhein Cigars",                       url: "https://www.rheincigars.ch",                             country: "ch", city: "Geneva",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
 
-  // ─── Spain ────────────────────────────────────────────────────────────────
-  { id: "es-cigarsmokerclub", name: "Cigar Smoker Club",            url: "https://cigarsmokerclub.com",                   country: "es",                              status: "reservation",        shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "es-domingocigars",  name: "Domingo Cigars",                url: "https://www.domingocigars.com",                 country: "es", city: "Barcelona",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
-  { id: "es-lcdh-tenerife",  name: "LCDH Tenerife",                 url: "https://www.lacasadelhabano-tenerife.com",      country: "es", city: "Tenerife",           status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  // ─── United Kingdom ──── 12 verified ──────────────────────────────────────
+  { id: "uk-jjfox",              name: "JJ Fox (LCDH at Harrods)",           url: "https://www.jjfox.co.uk",                                country: "uk", city: "London",          status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-davidoff-london",    name: "Davidoff London",                    url: "https://www.davidofflondon.com",                         country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-sautter",            name: "Sautter Cigars",                     url: "https://www.sauttercigars.com",                          country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-hava-havana",        name: "Hava Havana (LCDH London)",          url: "https://havahavana.com",                                 country: "uk", city: "Teddington",      status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-robert-graham",      name: "Robert Graham 1874",                 url: "https://www.robertgraham1874.com",                       country: "uk", city: "Glasgow",         status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-cgars",              name: "C.Gars Ltd",                         url: "https://www.cgarsltd.co.uk",                             country: "uk", city: "Liverpool",       status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-turmeaus",           name: "Turmeaus (sister to C.Gars)",        url: "https://www.turmeaus.co.uk",                             country: "uk", city: "Liverpool",       status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-havanahouse",        name: "Havana House",                       url: "https://www.havanahouse.co.uk",                          country: "uk", city: "Cheshire",        status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "uk-no6-cavendish",      name: "No.6 Cavendish",                     url: "https://www.no6cavendish.com",                           country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-simplycigars",       name: "Simply Cigars",                      url: "https://www.simplycigars.co.uk",                         country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "uk-smoke-king",         name: "Smoke King",                         url: "https://www.smoke-king.co.uk",                           country: "uk",                          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-tomtom",             name: "Tom Tom Cigars",                     url: "https://www.tomtomcigars.co.uk",                         country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "uk-egmcigars",          name: "EGM Cigars",                         url: "https://egmcigars.com",                                  country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
 
-  // ─── Sweden ───────────────────────────────────────────────────────────────
-  { id: "se-cigarrspecialisten", name: "Cigarrspecialisten",        url: "https://cigarrspecialisten.se",                 country: "se", city: "Växjö",              status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "se-puros",          name: "Puros.se",                      url: "https://www.puros.se",                          country: "se",                              status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "se-cigarrhyllan",   name: "Cigarrhyllan",                  url: "https://cigarrhyllan.se",                       country: "se", city: "Stockholm",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "se-cigarrummet",    name: "Cigarrummet",                   url: "https://www.cigarrummet.com",                   country: "se", city: "Stockholm",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
-  { id: "se-kindcigars",     name: "Kind Cigars",                   url: "https://www.kindcigars.se",                     country: "se", city: "Helsingborg",        status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  // ─── Sweden ──── 15 verified ──────────────────────────────────────────────
+  { id: "se-cigarrspecialisten", name: "Cigarrspecialisten (LCDH-tier Växjö)", url: "https://cigarrspecialisten.se",                        country: "se", city: "Växjö",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-puros",              name: "Puros.se",                           url: "https://www.puros.se",                                   country: "se", city: "Stockholm",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-tobakshop",          name: "Tobakshop",                          url: "https://tobakshop.se",                                   country: "se",                          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-swecigars",          name: "Swecigars",                          url: "https://swecigars.se",                                   country: "se", city: "Södertälje",      status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-tobax",              name: "Tobax",                              url: "https://tobax.se",                                       country: "se",                          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-mr-andersons",       name: "Mr Andersons Cigars",                url: "https://www.mrandersonscigars.se",                       country: "se",                          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-cigarrfabriken",     name: "Cigarrfabriken",                     url: "https://cigarrfabriken.se",                              country: "se", city: "Stockholm",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-tabaquero",          name: "Tabaquero",                          url: "https://tabaquero.se",                                   country: "se",                          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-chefcigars",         name: "Chefcigars",                         url: "https://chefcigars.se",                                  country: "se", city: "Boden",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-snusfabriken",       name: "Snusfabriken (Haparanda)",           url: "https://snusfabriken.com",                               country: "se", city: "Haparanda",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-cigarrummet",        name: "Cigarrummet",                        url: "https://www.cigarrummet.com",                            country: "se", city: "Stockholm",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-cigarrhyllan",       name: "Cigarrhyllan",                       url: "https://cigarrhyllan.se",                                country: "se", city: "Stockholm",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-cubano",             name: "Cubano (Linköpings Cigarrhandel)",   url: "https://cubano.se",                                      country: "se", city: "Linköping",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-robusto",            name: "Robusto",                            url: "https://robusto.se",                                     country: "se",                          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "se-kindcigars",         name: "Kind Cigars",                        url: "https://www.kindcigars.se",                              country: "se", city: "Helsingborg",     status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "se-brobergs",           name: "Brobergs Tobakshandel (since 1881)", url: "https://www.brobergs.se",                                country: "se", city: "Stockholm",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── United Kingdom ───────────────────────────────────────────────────────
-  { id: "uk-jjfox",          name: "JJ Fox (LCDH at Harrods)",      url: "https://www.jjfox.co.uk",                       country: "uk", city: "London",             status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "uk-sautter",        name: "Sautter Cigars",                url: "https://www.sauttercigars.com",                 country: "uk", city: "London",             status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "uk-cgars",          name: "C.Gars / Turmeaus",             url: "https://www.cgarsltd.co.uk",                    country: "uk", city: "Liverpool",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "uk-havanahouse",    name: "Havana House",                  url: "https://www.havanahouse.co.uk",                 country: "uk", city: "Cheshire",           status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "uk-simplycigars",   name: "Simply Cigars",                 url: "https://www.simplycigars.co.uk",                country: "uk", city: "London",             status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "uk-egmcigars",      name: "EGM Cigars",                    url: "https://egmcigars.com",                         country: "uk", city: "London",             status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  // ─── Norway ──── 5 verified ───────────────────────────────────────────────
+  { id: "no-solcigar",           name: "Sol Cigar Co. (Habanos Specialist)", url: "https://www.solcigar.no",                                country: "no", city: "Oslo",            status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "no-havanamagasinet",    name: "Havana-Magasinet (since 1899)",      url: "https://havanamagasinet.no",                             country: "no", city: "Stavanger",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "no-msorensen",          name: "M Sørensen",                         url: "https://msorensen.no",                                   country: "no", city: "Asker",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "no-sigar",              name: "Sigar.com (Viking Cigars)",          url: "https://www.sigar.com",                                  country: "no", city: "Risør",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "no-bamboolt",           name: "Bamboo-Shop (Trondheim)",            url: "https://bamboolt.com",                                   country: "no", city: "Trondheim",       status: "mixed",              shipsTo: "domestic",  hasPublicPricing: true  },
 
-  // ─── Netherlands ──────────────────────────────────────────────────────────
-  { id: "nl-hajenius",       name: "P.G.C. Hajenius",               url: "https://www.hajenius.com/en/",                  country: "nl", city: "Amsterdam",          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "nl-lcdh-maastricht", name: "LCDH Maastricht",              url: "https://www.lacasadelhabanomaastricht.nl",      country: "nl", city: "Maastricht",         status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
-  { id: "nl-gdegraaff",      name: "G. de Graaff",                  url: "https://gdegraaff.com",                         country: "nl", city: "Den Haag",           status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
+  // ─── Denmark ──── 9 verified ──────────────────────────────────────────────
+  { id: "dk-danishpipeshop",     name: "The Danish Pipe Shop",               url: "https://www.danishpipeshop.com",                         country: "dk", city: "København",       status: "mixed",              shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "dk-cigarstuen",         name: "Cigarstuen",                         url: "https://cigarstuen.dk",                                  country: "dk",                          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "dk-havnens-vin",        name: "Havnens Vin- & Tobakshus",           url: "https://havnens-vin.dk",                                 country: "dk", city: "Vejle",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "dk-macanudo-cph",       name: "Cigar Shop Macanudo Copenhagen",     url: "https://www.cigarshopmacanudo-copenhagen.dk",            country: "dk", city: "København",       status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "dk-jware",              name: "JWare",                              url: "https://jware.dk",                                       country: "dk",                          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "dk-vinspec-aarhus",     name: "Vinspecialisten Aarhus / Pibehuset", url: "https://www.vinspecialistenaarhus.dk",                   country: "dk", city: "Aarhus",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "dk-vinspec-aalborg",    name: "Vinspecialisten Aalborg (HJ Hansen)", url: "https://www.vinspecialistenaalborg.dk",                 country: "dk", city: "Aalborg",         status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "dk-hjoerring",          name: "Hjørring Vinhandel",                 url: "https://www.hjoerring-vinhandel.dk",                     country: "dk", city: "Hjørring",        status: "mixed",              shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "dk-cognachuset",        name: "Cognachuset",                        url: "https://cognachuset.dk",                                 country: "dk",                          status: "mixed",              shipsTo: "domestic",  hasPublicPricing: true  },
 
-  // ─── Belgium ──────────────────────────────────────────────────────────────
-  { id: "be-lcdh-antwerp",   name: "LCDH Antwerp",                  url: "https://www.lcdhantwerp.com",                   country: "be", city: "Antwerp",            status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "be-lcdh-brussels",  name: "LCDH Brussels",                 url: "https://lacasadelhabano.brussels",              country: "be", city: "Brussels",           status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  // ─── Netherlands ──── 5 verified ──────────────────────────────────────────
+  { id: "nl-sigaren-online",     name: "Sigaren-Online (Hartman)",           url: "https://www.sigaren-online.nl",                          country: "nl", city: "Amsterdam",       status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "nl-tabakado",           name: "Tabakado (Habanos Specialist)",      url: "https://www.tabakado.nl",                                country: "nl", city: "Eindhoven",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "nl-vanrenssen",         name: "Van Renssen (since 1897)",           url: "https://vanrenssen.com",                                 country: "nl", city: "Delft",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "nl-lcdh-maastricht",    name: "LCDH Maastricht",                    url: "https://www.lacasadelhabanomaastricht.nl",               country: "nl", city: "Maastricht",      status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "nl-vandalen",           name: "Van Dalen Cigars",                   url: "https://vandalen.com",                                   country: "nl", city: "Multi-store",     status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "nl-hajenius",           name: "P.G.C. Hajenius (since 1826)",       url: "https://www.hajenius.com",                               country: "nl", city: "Amsterdam",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Ireland ──────────────────────────────────────────────────────────────
-  { id: "ie-jamesfox",       name: "James J. Fox Dublin",           url: "https://jamesfox.ie",                           country: "ie", city: "Dublin",             status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "ie-decentcigar",    name: "Decent Cigar Emporium",         url: "https://www.decent-cigar.com",                  country: "ie", city: "Dublin",             status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  // ─── Ireland ──── 2 verified ──────────────────────────────────────────────
+  { id: "ie-jamesfox",           name: "James J. Fox Dublin (since 1881)",   url: "https://jamesfox.ie",                                    country: "ie", city: "Dublin",          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "ie-decentcigar",        name: "Decent Cigar Emporium",              url: "https://www.decent-cigar.com",                           country: "ie", city: "Dublin",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
 
-  // ─── Denmark ──────────────────────────────────────────────────────────────
-  { id: "dk-danishpipeshop", name: "The Danish Pipe Shop",          url: "https://www.danishpipeshop.com",                country: "dk", city: "København",          status: "mixed",              shipsTo: "worldwide", hasPublicPricing: true  },
+  // ─── Italy ──── 1 transactional + directory-only ──────────────────────────
+  { id: "it-babalu",             name: "Tabaccheria Babalù (Sanremo)",       url: "https://www.tabaccheriababalu.it",                       country: "it", city: "Sanremo",         status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "it-sigarietabacchi",    name: "Sigari e Tabacchi (Padova)",         url: "https://sigarietabacchi.it",                             country: "it", city: "Padova",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "it-houseofcigars",      name: "House of Cigars (Venice)",           url: "https://houseofcigars.it",                               country: "it", city: "Venezia",         status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "it-bottegadelfumatore", name: "Bottega del Fumatore (Padova)",      url: "https://bottegadelfumatore.com",                         country: "it", city: "Padova",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "it-cigarsandco",        name: "Cigars and Co. (Milano)",            url: "https://www.cigarsandco.it",                             country: "it", city: "Milano",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "it-casadelsigaro",      name: "Casa del Sigaro (Torino)",           url: "https://www.casadelsigaro.com",                          country: "it", city: "Torino",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "it-bollitopipe",        name: "Bollito Pipe (Torino since 1958)",   url: "https://www.bollitopipe.it",                             country: "it", city: "Torino",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Greece ───────────────────────────────────────────────────────────────
-  { id: "gr-cigarsgalaxy",   name: "Cigars Galaxy",                 url: "https://www.cigarsgalaxy.gr/en",                country: "gr", city: "Athina",             status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
-  { id: "gr-cigarsmoke",     name: "CigarSmoke",                    url: "https://cigarsmoke.gr/en",                      country: "gr", city: "Athina",             status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+  // ─── Portugal ──── 3 transactional + directory ────────────────────────────
+  { id: "pt-a4-tabacarias",      name: "A4 Tabacarias (Habanos Specialist)", url: "https://shop.a4tabacarias.com",                          country: "pt", city: "Vilamoura",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "pt-garrafeira-pepe",    name: "Garrafeira Tio Pepe (since 1986)",   url: "https://garrafeirapepe.pt",                              country: "pt", city: "Porto",           status: "mixed",              shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "pt-sevenseas",          name: "DutyFree SevenSeas Lisbon",          url: "https://dutyfree-sevenseas.pt",                          country: "pt", city: "Lisboa",          status: "mixed",              shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "pt-habanero",           name: "Habanero (LCDH Lisboa)",             url: "https://www.habanero.pt",                                country: "pt", city: "Lisboa",          status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "pt-casa-havaneza",      name: "Casa Havaneza (since 1864)",         url: "https://casahavaneza.com",                               country: "pt", city: "Lisboa",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Portugal ─────────────────────────────────────────────────────────────
-  { id: "pt-habanero",       name: "Habanero (LCDH Lisboa)",        url: "http://www.habanero.pt",                        country: "pt", city: "Lisboa",             status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  // ─── Spain ──── 1 reservation-channel + directory ─────────────────────────
+  { id: "es-cigarsmokerclub",    name: "Cigar Smoker Club (legal reservation channel)", url: "https://cigarsmokerclub.com",               country: "es",                          status: "reservation",        shipsTo: "domestic",  hasPublicPricing: true  },
+  { id: "es-magallanes",         name: "Cigar Shop Magallanes (largest humidor)", url: "https://magallanes.store",                          country: "es", city: "Madrid",          status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "es-lcdh-madrid",        name: "LCDH Madrid Recoletos",              url: "https://lacasadelhabano-dl.es",                          country: "es", city: "Madrid",          status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "es-lcdh-tenerife",      name: "LCDH Adeje Tenerife",                url: "https://www.lacasadelhabano-tenerife.com",               country: "es", city: "Adeje",           status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "es-lcdh-gran-canaria",  name: "LCDH Mogán Gran Canaria",            url: "https://www.lacasadelhabano-tenerife.com",               country: "es", city: "Mogán",           status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "es-lcdh-mallorca",      name: "LCDH Palma de Mallorca",             url: "https://habanos.com",                                    country: "es", city: "Palma",           status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Austria ──────────────────────────────────────────────────────────────
-  { id: "at-friedenthal",    name: "Tabakfachgeschäft Friedenthal", url: "https://cubancigargroup.com/cigar-shop/tabakfachgeschaft-nancy-friedenthal", country: "at", city: "Wien", status: "habanos-specialist", shipsTo: "eu",     hasPublicPricing: false },
+  // ─── Belgium ──── 5 LCDH directory-only (online sale banned) ──────────────
+  { id: "be-lcdh-antwerp",       name: "LCDH Antwerpen",                     url: "https://www.lcdhantwerp.com",                            country: "be", city: "Antwerpen",       status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "be-lcdh-brussels",      name: "LCDH Brussel (Charlemagne)",         url: "https://lacasadelhabano.brussels",                       country: "be", city: "Brussels",        status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "be-lcdh-knokke",        name: "LCDH Knokke",                        url: "https://lacasadelhabano-knokke.be",                      country: "be", city: "Knokke",          status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "be-davidoff-brussels",  name: "Davidoff Brussels (non-Cuban LCDT)", url: "https://davidoff.com",                                   country: "be", city: "Brussels",        status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Czech Republic ───────────────────────────────────────────────────────
-  { id: "cz-lcdh-prague",    name: "LCDH Prague",                   url: "http://www.lacasadelhabano.cz/en",              country: "cz", city: "Praha",              status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  // ─── France ──── directory-only (online sale banned by Art. 568 ter CGI) ──
+  { id: "fr-alacivette",         name: "À La Civette (Paris, since 1716)",   url: "https://alacivette.com",                                 country: "fr", city: "Paris",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "fr-cigarestore-lyon",   name: "CigareStore (Lyon)",                 url: "https://cigarestore.fr",                                 country: "fr", city: "Lyon",            status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "fr-lediplomate",        name: "Le Diplomate (Lyon)",                url: "https://lediplomate-cigare-lyon.com",                    country: "fr", city: "Lyon",            status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "fr-civette-marseille",  name: "O'Théo Civette (Marseille)",         url: "https://civette-marseille.com",                          country: "fr", city: "Marseille",       status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "fr-comptoir-cigare",    name: "Le Comptoir du Cigare (Strasbourg)", url: "https://lecomptoirducigare.fr",                          country: "fr", city: "Strasbourg",      status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Finland ──────────────────────────────────────────────────────────────
-  { id: "fi-havanna-aitta",  name: "Havanna-Aitta",                 url: "https://www.havanna-aitta.fi",                  country: "fi", city: "Helsinki",           status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+  // ─── Austria ──── directory-only (no transactional webshops) ──────────────
+  { id: "at-mohilla",            name: "Maria Mohilla (Vienna, since 1692)", url: "https://habanos.com",                                    country: "at", city: "Wien",            status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "at-svoboda",            name: "Trafik Svoboda (Zigarren Welt)",     url: "https://habanos.com",                                    country: "at", city: "Wien",            status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  { id: "at-egger-salzburg",     name: "Gerald Egger (Salzburg)",            url: "https://habanos.com",                                    country: "at", city: "Salzburg",        status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
 
-  // ─── Norway ───────────────────────────────────────────────────────────────
-  { id: "no-solcigar",       name: "Sol Cigar Co.",                 url: "https://www.solcigar.no",                       country: "no", city: "Oslo",               status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: false },
+  // ─── Czech Republic ─── directory ─────────────────────────────────────────
+  { id: "cz-lcdh-prague",        name: "LCDH Prague",                        url: "http://www.lacasadelhabano.cz",                          country: "cz", city: "Praha",           status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
+
+  // ─── Greece ──── 2 verified ───────────────────────────────────────────────
+  { id: "gr-cigarsgalaxy",       name: "Cigars Galaxy",                      url: "https://www.cigarsgalaxy.gr",                            country: "gr", city: "Athens",          status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "gr-cigarsmoke",         name: "CigarSmoke",                         url: "https://cigarsmoke.gr",                                  country: "gr", city: "Athens",          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
+
+  // ─── Finland ──── 1 LCDH directory (all online sale illegal) ──────────────
+  { id: "fi-havanna-aitta",      name: "Havanna-Aitta (LCDH, since 1897)",   url: "https://www.havanna-aitta.fi",                           country: "fi", city: "Helsinki",        status: "lcdh",               shipsTo: "domestic",  hasPublicPricing: false },
 ];
 
 export const RETAILER_BY_ID: Record<string, Retailer> = Object.fromEntries(
