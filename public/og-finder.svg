@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- The Finder — Open Graph cover (1200×630, recommended OG ratio) -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1d2e"/>
+      <stop offset="100%" stop-color="#2a2e44"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="80%" cy="20%" r="50%">
+      <stop offset="0%" stop-color="#c9a961" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#c9a961" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="15%" cy="85%" r="40%">
+      <stop offset="0%" stop-color="#6e2620" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#6e2620" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Top-left eyebrow -->
+  <g font-family="Inter, sans-serif" font-weight="800">
+    <text x="80" y="100" font-size="22" fill="#c9a961" letter-spacing="6">THE NEXT CIGAR · FINDER</text>
+  </g>
+
+  <!-- Headline -->
+  <g font-family="Inter, sans-serif" fill="#f4f4f4">
+    <text x="80" y="240" font-size="100" font-weight="900" letter-spacing="-3">Cuban cigar prices,</text>
+    <text x="80" y="350" font-size="100" font-weight="900" letter-spacing="-3" fill="#c9a961">all of Europe,</text>
+    <text x="80" y="460" font-size="100" font-weight="900" letter-spacing="-3">one page.</text>
+  </g>
+
+  <!-- Stats strip -->
+  <g font-family="Inter, sans-serif" fill="#f4f4f4">
+    <line x1="80" y1="510" x2="1120" y2="510" stroke="rgba(201,169,97,0.25)" stroke-width="1"/>
+    <text x="80" y="555" font-size="34" font-weight="800" letter-spacing="-1">44 prices</text>
+    <text x="80" y="585" font-size="16" font-weight="600" fill="#9a9a9a" letter-spacing="2">VERIFIED MAY 2026</text>
+
+    <text x="370" y="555" font-size="34" font-weight="800" letter-spacing="-1">41 retailers</text>
+    <text x="370" y="585" font-size="16" font-weight="600" fill="#9a9a9a" letter-spacing="2">LICENSED HABANOS DEALERS</text>
+
+    <text x="730" y="555" font-size="34" font-weight="800" letter-spacing="-1">18 countries</text>
+    <text x="730" y="585" font-size="16" font-weight="600" fill="#9a9a9a" letter-spacing="2">FROM IRELAND TO GREECE</text>
+  </g>
+
+  <!-- Bottom right cigar-band-style logomark -->
+  <g transform="translate(990, 80)">
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#c9a961" stroke-width="3"/>
+    <text x="0" y="-15" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#c9a961" letter-spacing="3">THE</text>
+    <text x="0" y="12" text-anchor="middle" font-family="Inter, sans-serif" font-size="22" font-weight="900" fill="#c9a961" letter-spacing="-0.5">FINDER</text>
+    <text x="0" y="32" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="#c9a961" letter-spacing="3">2026</text>
+  </g>
+</svg>

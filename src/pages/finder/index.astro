@@ -1,0 +1,674 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Newsletter from "../../components/Newsletter.astro";
+import {
+  COUNTRIES,
+  SKUS,
+  RETAILERS,
+  PRICE_SNAPSHOTS,
+  bestPriceForSku,
+  formatPrice,
+  toEUR,
+  snapshotsForSku,
+} from "../../data/finder-data.ts";
+
+// Hero stats
+const skuCount       = SKUS.length;
+const retailerCount  = RETAILERS.length;
+const countryCount   = COUNTRIES.length;
+const snapshotCount  = PRICE_SNAPSHOTS.length;
+const lastUpdated    = "15 May 2026";
+
+// Featured rail — every SKU with a current best price, sorted by box price (ascending)
+const featured = SKUS
+  .map((sku) => ({ sku, best: bestPriceForSku(sku.id) }))
+  .filter((row): row is { sku: typeof SKUS[number]; best: NonNullable<ReturnType<typeof bestPriceForSku>> } => !!row.best)
+  .sort((a, b) => a.best.eur - b.best.eur);
+
+// Biggest current "drops" — snapshots with an originalPrice (was/now)
+const dropRows = PRICE_SNAPSHOTS
+  .filter((s) => s.originalPrice && s.inStock)
+  .map((s) => {
+    const sku = SKUS.find((k) => k.id === s.skuId)!;
+    const retailer = RETAILERS.find((r) => r.id === s.retailerId)!;
+    const pct = Math.round(((s.originalPrice! - s.price) / s.originalPrice!) * 100);
+    return { snap: s, sku, retailer, pct };
+  })
+  .sort((a, b) => b.pct - a.pct)
+  .slice(0, 4);
+
+// Country picker: split into "open" vs "restricted" vs "closed"
+const openCountries       = COUNTRIES.filter((c) => c.status === "open");
+const restrictedCountries = COUNTRIES.filter((c) => c.status === "restricted");
+const closedCountries     = COUNTRIES.filter((c) => c.status === "closed");
+
+// ----------------------------------------------------------------------------
+// Structured data — CollectionPage describing The Finder + ItemList of SKUs
+// ----------------------------------------------------------------------------
+const collectionJsonLd = {
+  "@context": "https://schema.org/",
+  "@type": "CollectionPage",
+  name: "The Finder — Cuban cigar prices across Europe",
+  description: `Free European price comparison for Cuban (Habanos) cigars. ${snapshotCount} current prices across ${retailerCount} licensed retailers in ${countryCount} countries.`,
+  url: "https://thenextcigar.com/finder/",
+  isPartOf: {
+    "@type": "WebSite",
+    name: "The Next Cigar",
+    url: "https://thenextcigar.com/",
+  },
+  hasPart: featured.slice(0, 12).map(({ sku, best }) => ({
+    "@type": "Product",
+    name: `${sku.brand} ${sku.vitola}`,
+    brand: { "@type": "Brand", name: sku.brand },
+    url: `https://thenextcigar.com/finder/sku/${sku.slug}/`,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: best.snap.currency,
+      price: best.snap.price.toFixed(2),
+      availability: "https://schema.org/InStock",
+    },
+  })),
+};
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org/",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "The Next Cigar", item: "https://thenextcigar.com/" },
+    { "@type": "ListItem", position: 2, name: "The Finder", item: "https://thenextcigar.com/finder/" },
+  ],
+};
+---
+
+<BaseLayout
+  title="The Finder — Cuban cigar prices across Europe"
+  description={`A free European price comparison for Cuban (Habanos) cigars. ${snapshotCount} current prices across ${retailerCount} retailers in ${countryCount} countries. Refreshed weekly.`}
+  image="/og-finder.svg"
+>
+  {/* Structured data — CollectionPage + ItemList */}
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(collectionJsonLd)}></script>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
+  {/* ─── HERO ──────────────────────────────────────────────────────────── */}
+  <section class="finder-hero">
+    <div class="container-wide pt-16 md:pt-24 pb-12 md:pb-16 reveal">
+      <p class="finder-hero__eyebrow">The Next Cigar · Finder</p>
+      <h1 class="finder-hero__title">
+        Cuban cigar prices,<br/>
+        <span class="finder-hero__title-sub">all of Europe, one page.</span>
+      </h1>
+      <p class="finder-hero__lead">
+        The first European price comparison built for Cuban (Habanos) cigars.
+        We track <strong>{snapshotCount} current prices</strong> across
+        <strong>{retailerCount} licensed retailers</strong> in
+        <strong>{countryCount} countries</strong>. Free to use. No signup. Click through to the
+        cheapest retailer in your country.
+      </p>
+
+      <div class="finder-hero__stats">
+        <div class="finder-hero__stat">
+          <span class="finder-hero__stat-n">{skuCount}</span>
+          <span class="finder-hero__stat-l">Flagship SKUs</span>
+        </div>
+        <div class="finder-hero__stat">
+          <span class="finder-hero__stat-n">{retailerCount}</span>
+          <span class="finder-hero__stat-l">Tracked retailers</span>
+        </div>
+        <div class="finder-hero__stat">
+          <span class="finder-hero__stat-n">{countryCount}</span>
+          <span class="finder-hero__stat-l">European markets</span>
+        </div>
+        <div class="finder-hero__stat">
+          <span class="finder-hero__stat-n">{lastUpdated}</span>
+          <span class="finder-hero__stat-l">Last refreshed</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ─── COUNTRY PICKER ─────────────────────────────────────────────────── */}
+  <section class="container-wide pb-16 reveal">
+    <p class="section-eyebrow" style="font-size:clamp(1.4rem,3.2vw,2.25rem);">Start with your country</p>
+    <p class="mt-3 mb-8 text-[color:var(--color-text-soft)] max-w-2xl text-base leading-relaxed">
+      Tobacco excise is country-specific in the EU, so most retailers ship within their own borders.
+      Pick a market to see retailers and current prices that will actually ship to you.
+    </p>
+
+    <h3 class="finder-section-h">Open markets — domestic & EU shipping</h3>
+    <div class="finder-country-grid mb-8">
+      {openCountries.map((c) => (
+        <a href={`/finder/${c.code}/`} class="finder-country">
+          <span class="finder-country__flag">{c.flag}</span>
+          <span class="finder-country__name">{c.name}</span>
+          <span class="finder-country__currency">{c.currency}</span>
+        </a>
+      ))}
+    </div>
+
+    <h3 class="finder-section-h">Restricted markets — domestic only</h3>
+    <div class="finder-country-grid mb-8">
+      {restrictedCountries.map((c) => (
+        <a href={`/finder/${c.code}/`} class="finder-country finder-country--restricted">
+          <span class="finder-country__flag">{c.flag}</span>
+          <span class="finder-country__name">{c.name}</span>
+          <span class="finder-country__currency">{c.currency}</span>
+        </a>
+      ))}
+    </div>
+
+    <h3 class="finder-section-h">In-store only — no online sale</h3>
+    <div class="finder-country-grid">
+      {closedCountries.map((c) => (
+        <a href={`/finder/${c.code}/`} class="finder-country finder-country--closed">
+          <span class="finder-country__flag">{c.flag}</span>
+          <span class="finder-country__name">{c.name}</span>
+          <span class="finder-country__currency">In-store</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  {/* ─── BIGGEST DROPS RAIL ─────────────────────────────────────────────── */}
+  {dropRows.length > 0 && (
+    <section class="finder-strip section-cream">
+      <div class="container-wide py-12 md:py-16 reveal">
+        <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
+          <div>
+            <p class="lounge-label">Today's drops</p>
+            <h2 class="finder-h2 mt-2">Biggest price cuts this week</h2>
+            <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
+              Snapshots flagged with a discount versus their last refresh. Cohiba and Partagás
+              move most often; the bigger boxes carry the bigger absolute savings.
+            </p>
+          </div>
+          <a href="/finder/de/" class="btn btn-ghost">View Germany dashboard →</a>
+        </div>
+        <div class="finder-drop-grid">
+          {dropRows.map(({ snap, sku, retailer, pct }) => (
+            <a href={`/finder/sku/${sku.slug}/`} class="finder-drop">
+              <div class="finder-drop__pct">−{pct}%</div>
+              <div class="finder-drop__body">
+                <p class="finder-drop__brand">{sku.brand}</p>
+                <p class="finder-drop__vitola">{sku.vitola}</p>
+                <p class="finder-drop__price">
+                  <span class="finder-drop__was">{formatPrice(snap.originalPrice!, snap.currency)}</span>
+                  <strong>{formatPrice(snap.price, snap.currency)}</strong>
+                </p>
+                <p class="finder-drop__retailer">at {retailer.name} · {retailer.country.toUpperCase()}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ─── FEATURED SKUS — "Lowest price across Europe" ───────────────────── */}
+  <section class="container-wide py-16 md:py-20 reveal">
+    <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
+      <div>
+        <p class="lounge-label">The catalogue</p>
+        <h2 class="finder-h2 mt-2">Twelve Cuban cigars, every European price</h2>
+        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
+          The flagship Habanos catalogue, sorted by the cheapest verified box price in Europe.
+          Click any cigar to see every retailer that stocks it and the current best deal in your country.
+        </p>
+      </div>
+    </div>
+
+    <div class="finder-table-wrap">
+      <table class="finder-table">
+        <thead>
+          <tr>
+            <th class="finder-table__brand">Cigar</th>
+            <th>Vitola</th>
+            <th class="finder-table__num">Ring × Length</th>
+            <th class="finder-table__num">Box</th>
+            <th class="finder-table__num">Best price</th>
+            <th class="finder-table__num">€ / cigar</th>
+            <th>At</th>
+            <th class="finder-table__cta"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {featured.map(({ sku, best }) => {
+            const retailer = RETAILERS.find((r) => r.id === best.snap.retailerId)!;
+            const perCigar = best.eur / sku.boxSize;
+            const offerCount = snapshotsForSku(sku.id).length;
+            return (
+              <tr>
+                <td class="finder-table__brand">
+                  <span class="finder-table__brand-name">{sku.brand}</span>
+                  <span class="finder-table__offers">{offerCount} {offerCount === 1 ? "offer" : "offers"}</span>
+                </td>
+                <td>{sku.vitola}</td>
+                <td class="finder-table__num">{sku.ring} × {sku.lengthMm}mm</td>
+                <td class="finder-table__num">{sku.boxSize}</td>
+                <td class="finder-table__num finder-table__price">
+                  {formatPrice(best.snap.price, best.snap.currency)}
+                  {best.snap.currency !== "EUR" && (
+                    <span class="finder-table__eur">≈ €{best.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
+                  )}
+                </td>
+                <td class="finder-table__num">€{perCigar.toFixed(2)}</td>
+                <td>
+                  <span class="finder-table__retailer">{retailer.name}</span>
+                  <span class="finder-table__country">{retailer.country.toUpperCase()}</span>
+                </td>
+                <td class="finder-table__cta">
+                  <a href={`/finder/sku/${sku.slug}/`} class="finder-table__compare">Compare →</a>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {/* ─── HOW IT WORKS ──────────────────────────────────────────────────── */}
+  <section class="section-dark">
+    <div class="container-wide py-16 md:py-24 reveal">
+      <div class="grid md:grid-cols-3 gap-10">
+        <div>
+          <p class="lounge-label lounge-label--gold">01 · Search</p>
+          <h3 class="finder-h3 mt-3">Cuban-only catalogue</h3>
+          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)]">
+            US aggregators can't list Cuban cigars because of the embargo. We're the European
+            mirror — every flagship Habanos vitola, Cohiba to Bolívar, on one page.
+          </p>
+        </div>
+        <div>
+          <p class="lounge-label lounge-label--gold">02 · Compare</p>
+          <h3 class="finder-h3 mt-3">Country-localised pricing</h3>
+          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)]">
+            EU tobacco excise is country-by-country, so most retailers only ship domestically.
+            We localise the comparison to retailers that will actually deliver to you.
+          </p>
+        </div>
+        <div>
+          <p class="lounge-label lounge-label--gold">03 · Watch</p>
+          <h3 class="finder-h3 mt-3">Price-drop alerts <span class="finder-pill-soon">Coming soon</span></h3>
+          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)]">
+            Save a SKU and we'll email you when any retailer in your country drops below
+            your threshold. Free TNC members get one watchlist; <a href="/lounge/" style="color:var(--color-gold);text-decoration:underline;">Lounge members</a> get unlimited.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ─── FROM THE EDITORIAL ────────────────────────────────────────────── */}
+  <section class="container-wide py-12 md:py-16 reveal">
+    <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
+      <div>
+        <p class="lounge-label">From the editorial</p>
+        <h2 class="finder-h2 mt-2">Read before you buy</h2>
+        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
+          Long-form pieces that go deeper than the price tables — retailer history, regulatory context,
+          and the economics of Cuban-cigar buying in 2026.
+        </p>
+      </div>
+    </div>
+    <a href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/" class="finder-editorial">
+      <div class="finder-editorial__body">
+        <p class="lounge-label lounge-label--gold">Long read · 12 min</p>
+        <h3 class="finder-editorial__title">Where to buy Cuban cigars in Europe — the 2026 retailer map</h3>
+        <p class="finder-editorial__excerpt">
+          The complete directory of 90+ Cuban specialist retailers across 18 European countries —
+          from Sweden's Cigarrspecialisten to Switzerland's Cigarmust and the UK's James J. Fox.
+          Plus the five regulatory tiers that decide where you can actually buy online.
+        </p>
+        <span class="finder-editorial__cta">Read the full piece →</span>
+      </div>
+    </a>
+  </section>
+
+  <Newsletter
+    heading="Be first when alerts go live"
+    blurb="One email when the price-drop watchlist opens. No promotions, no daily nags."
+  />
+</BaseLayout>
+
+<style>
+  .finder-hero {
+    background:
+      radial-gradient(circle at 15% 25%, rgba(201, 169, 97, 0.10), transparent 55%),
+      radial-gradient(circle at 85% 75%, rgba(110, 38, 32, 0.06), transparent 55%),
+      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .finder-hero__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+    margin-bottom: 1.25rem;
+  }
+  .finder-hero__title {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    color: var(--color-text);
+    margin-bottom: 1.25rem;
+  }
+  @media (min-width: 768px) { .finder-hero__title { font-size: 4.5rem; } }
+  @media (min-width: 1024px) { .finder-hero__title { font-size: 5.75rem; } }
+  .finder-hero__title-sub {
+    font-size: 0.5em;
+    font-weight: 600;
+    color: var(--color-burgundy);
+    letter-spacing: -0.005em;
+    display: block;
+    margin-top: 0.6rem;
+    line-height: 1.15;
+  }
+  .finder-hero__lead {
+    font-size: 1.075rem;
+    line-height: 1.7;
+    color: var(--color-text-soft);
+    max-width: 56ch;
+    margin-bottom: 2.5rem;
+  }
+  .finder-hero__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 2rem;
+    max-width: 720px;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+  @media (min-width: 640px) { .finder-hero__stats { grid-template-columns: repeat(4, 1fr); } }
+  .finder-hero__stat { display: flex; flex-direction: column; gap: 0.25rem; }
+  .finder-hero__stat-n {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .finder-hero__stat-l {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Section subhead */
+  .finder-section-h {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* Country chips */
+  .finder-country-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  @media (min-width: 640px) { .finder-country-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { .finder-country-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .finder-country {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.95rem 1.1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: border-color 200ms ease, transform 200ms ease, background 200ms ease;
+  }
+  .finder-country:hover {
+    border-color: var(--color-gold);
+    background: var(--color-gold-soft);
+    transform: translateY(-1px);
+  }
+  .finder-country__flag { font-size: 1.4rem; line-height: 1; }
+  .finder-country__name {
+    flex-grow: 1;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .finder-country__currency {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+  .finder-country--restricted { background: var(--color-bg-soft); }
+  .finder-country--restricted .finder-country__currency { color: var(--color-burgundy); }
+  .finder-country--closed { opacity: 0.75; }
+  .finder-country--closed .finder-country__currency { color: var(--color-text-mute-2); }
+
+  /* Headings */
+  .finder-h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.022em;
+    color: var(--color-text);
+  }
+  .section-dark .finder-h2 { color: var(--color-text-on-dark); }
+  .finder-h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--color-text-on-dark);
+  }
+  .finder-pill-soon {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    background: rgba(201, 169, 97, 0.2);
+    color: var(--color-gold);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+
+  /* Drops grid */
+  .finder-strip { border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+  .finder-drop-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  @media (min-width: 640px) { .finder-drop-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .finder-drop-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .finder-drop {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--color-text);
+    overflow: hidden;
+    transition: transform 200ms ease, border-color 200ms ease;
+  }
+  .finder-drop:hover { transform: translateY(-2px); border-color: var(--color-accent); }
+  .finder-drop__pct {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    padding: 0.85rem 1.05rem;
+    min-width: 76px;
+  }
+  .finder-drop__body { padding: 0.85rem 1.05rem; flex: 1; }
+  .finder-drop__brand {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.15rem;
+  }
+  .finder-drop__vitola {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .finder-drop__price { display: flex; gap: 0.6rem; align-items: baseline; margin: 0 0 0.25rem; }
+  .finder-drop__was { text-decoration: line-through; color: var(--color-text-muted); font-size: 0.85rem; }
+  .finder-drop__price strong {
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--color-burgundy);
+    font-size: 1.1rem;
+  }
+  .finder-drop__retailer { font-size: 0.78rem; color: var(--color-text-muted); margin: 0; }
+
+  /* Catalog table */
+  .finder-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); }
+  .finder-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .finder-table th {
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    padding: 1rem 1.1rem;
+    background: var(--color-bg-soft);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .finder-table td {
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--color-border-soft);
+    vertical-align: middle;
+  }
+  .finder-table tr:last-child td { border-bottom: none; }
+  .finder-table tr:hover td { background: var(--color-bg-soft); }
+  .finder-table__num { text-align: right; font-variant-numeric: tabular-nums; }
+  .finder-table__brand { min-width: 180px; }
+  .finder-table__brand-name {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 0.98rem;
+    letter-spacing: -0.005em;
+  }
+  .finder-table__offers {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    margin-top: 0.15rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .finder-table__price {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 1rem;
+  }
+  .finder-table__eur {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    margin-top: 0.1rem;
+  }
+  .finder-table__retailer {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 0.88rem;
+  }
+  .finder-table__country {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.1em;
+    margin-top: 0.1rem;
+  }
+  .finder-table__cta { text-align: right; }
+  .finder-table__compare {
+    display: inline-block;
+    padding: 0.45rem 0.95rem;
+    background: var(--color-text);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    transition: background 180ms ease;
+  }
+  .finder-table__compare:hover { background: var(--color-accent); color: #fff; }
+
+  /* Editorial cross-post rail */
+  .finder-editorial {
+    display: block;
+    padding: 1.6rem 1.8rem;
+    background: linear-gradient(135deg, var(--color-charcoal) 0%, #2a2e44 100%);
+    border: 1px solid rgba(201, 169, 97, 0.3);
+    border-radius: 8px;
+    color: #f4f4f4;
+    text-decoration: none;
+    transition: transform 200ms ease, border-color 200ms ease;
+  }
+  .finder-editorial:hover { transform: translateY(-2px); border-color: var(--color-gold); }
+  .finder-editorial__title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: #f4f4f4;
+    margin: 0.6rem 0 0.8rem;
+  }
+  .finder-editorial__excerpt {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(244,244,244,0.78);
+    margin: 0 0 1rem;
+    max-width: 64ch;
+  }
+  .finder-editorial__cta {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-gold);
+  }
+</style>

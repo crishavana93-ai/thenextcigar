@@ -1,0 +1,414 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+import {
+  SKUS,
+  COUNTRIES,
+  PRICE_SNAPSHOTS,
+  RETAILERS,
+  bestPriceForSku,
+  formatPrice,
+  toEUR,
+  snapshotsForSku,
+} from "../../../../data/finder-data.ts";
+
+// Editorial demo data — in production these come from Supabase per-member:
+// watchlist rows, recent alerts fired, deal digest queue.
+//
+// For the prototype we surface the catalogue using the same data layer that
+// powers the public /finder/. The "demo watchlist" is hard-coded so members
+// see what the feature feels like before scraper writes start.
+const DEMO_WATCHLIST_SKU_IDS = [
+  "cohiba-behike-52",
+  "cohiba-robustos",
+  "partagas-serie-d-no-4",
+  "trinidad-reyes",
+];
+
+const watchlistRows = DEMO_WATCHLIST_SKU_IDS
+  .map((id) => SKUS.find((s) => s.id === id)!)
+  .filter(Boolean)
+  .map((sku) => ({ sku, best: bestPriceForSku(sku.id) }));
+
+const dropRows = PRICE_SNAPSHOTS
+  .filter((s) => s.originalPrice && s.inStock)
+  .map((s) => {
+    const sku = SKUS.find((k) => k.id === s.skuId)!;
+    const retailer = RETAILERS.find((r) => r.id === s.retailerId)!;
+    const pct = Math.round(((s.originalPrice! - s.price) / s.originalPrice!) * 100);
+    return { snap: s, sku, retailer, pct };
+  })
+  .sort((a, b) => b.pct - a.pct)
+  .slice(0, 5);
+
+const totalSnapshots = PRICE_SNAPSHOTS.length;
+const totalRetailers = RETAILERS.length;
+const totalCountries = COUNTRIES.length;
+---
+
+<BaseLayout
+  title="Finder — The Lounge"
+  description="Your Cuban cigar watchlist, recent price drops, and the European deal feed."
+  noIndex
+>
+  <LoungeHeader active="finder" />
+
+  <main class="lounge-app">
+
+    {/* Region A — header strip */}
+    <section class="container-wide pt-6 pb-3 reveal">
+      <div class="finder-strip">
+        <div class="finder-strip__art" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21 21 3" />
+            <path d="m18 3 3 0 0 3" />
+            <path d="M3 12h6a3 3 0 0 1 3 3v6" />
+          </svg>
+        </div>
+        <div class="finder-strip__body">
+          <p class="lounge-label lounge-label--gold">The Finder · Lounge edition</p>
+          <h1 class="lounge-h1">Your Cuban cigar watchlist</h1>
+          <p class="finder-strip__lead">
+            Track {totalSnapshots} live prices across {totalRetailers} European retailers in {totalCountries} countries.
+            Unlimited alerts, push notifications, full price history.
+          </p>
+        </div>
+        <a href="/finder/" class="lbtn lbtn-secondary">Public catalogue →</a>
+      </div>
+    </section>
+
+    {/* Region B — Watchlist */}
+    <section class="container-wide pt-2 pb-6 reveal">
+      <div class="finder-section-head">
+        <p class="lounge-label">Your watchlist</p>
+        <a href="#" id="add-to-watchlist" class="lbtn lbtn-ghost lbtn-sm">+ Add cigar</a>
+      </div>
+
+      <div class="finder-watchlist">
+        {watchlistRows.map(({ sku, best }) => (
+          <a href={`/finder/sku/${sku.slug}/`} class="finder-watch">
+            <div class="finder-watch__body">
+              <p class="finder-watch__brand">{sku.brand}</p>
+              <p class="finder-watch__vitola">{sku.vitola}</p>
+              <p class="finder-watch__spec">
+                {sku.shape} · ring {sku.ring} · box {sku.boxSize}
+              </p>
+            </div>
+            {best ? (
+              <div class="finder-watch__price">
+                <p class="finder-watch__price-now">{formatPrice(best.snap.price, best.snap.currency)}</p>
+                <p class="finder-watch__price-eur">≈ €{best.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
+                <p class="finder-watch__price-at">at {RETAILERS.find((r) => r.id === best.snap.retailerId)?.name}</p>
+              </div>
+            ) : (
+              <div class="finder-watch__price">
+                <p class="finder-watch__price-empty">Waiting for first snapshot</p>
+              </div>
+            )}
+            <div class="finder-watch__alert">
+              <span class="finder-watch__alert-dot" aria-hidden="true"></span>
+              <span class="finder-watch__alert-label">Alert active</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {/* Region C — Deal feed */}
+    <section class="container-wide pb-8 reveal">
+      <div class="finder-section-head">
+        <p class="lounge-label">Today's deal feed</p>
+        <span class="finder-section-head__meta">{dropRows.length} active drops · refreshed 02:14 CET</span>
+      </div>
+
+      <div class="finder-deals">
+        {dropRows.map(({ snap, sku, retailer, pct }) => (
+          <a href={`/finder/sku/${sku.slug}/`} class="finder-deal">
+            <div class="finder-deal__pct">−{pct}%</div>
+            <div class="finder-deal__body">
+              <p class="finder-deal__brand">{sku.brand} · {sku.line}</p>
+              <p class="finder-deal__vitola">{sku.vitola} · box of {sku.boxSize}</p>
+              <p class="finder-deal__price">
+                <span class="finder-deal__was">{formatPrice(snap.originalPrice!, snap.currency)}</span>
+                <strong>{formatPrice(snap.price, snap.currency)}</strong>
+              </p>
+              <p class="finder-deal__retailer">{retailer.name} · {retailer.country.toUpperCase()}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {/* Region D — Premium tools teaser */}
+    <section class="container-wide pb-16 reveal">
+      <div class="finder-tools">
+        <div class="finder-tool">
+          <p class="lounge-label lounge-label--gold">01</p>
+          <h3 class="finder-tool__title">Price history charts</h3>
+          <p class="finder-tool__body">
+            Full 90-day price history for any tracked SKU. See how Cohiba Robustos has tracked since the
+            2024 Habanos harmonisation.
+          </p>
+        </div>
+        <div class="finder-tool">
+          <p class="lounge-label lounge-label--gold">02</p>
+          <h3 class="finder-tool__title">Threshold alerts</h3>
+          <p class="finder-tool__body">
+            Set a target price per cigar. We'll fire an email + push the second any retailer in your country
+            crosses it. Dedupe baked in.
+          </p>
+        </div>
+        <div class="finder-tool">
+          <p class="lounge-label lounge-label--gold">03</p>
+          <h3 class="finder-tool__title">Travel mode</h3>
+          <p class="finder-tool__body">
+            Switch your country lens to wherever you're flying to. See Madrid prices on a weekend trip;
+            switch back when you land home.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* Spacer so the bottom tab bar doesn't cover content on mobile */}
+    <div style="height: 80px;"></div>
+  </main>
+
+  <LoungeTabBar />
+</BaseLayout>
+
+<style>
+  /* Header strip */
+  .finder-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    padding: 1.2rem 1.4rem;
+    background: linear-gradient(135deg, var(--color-charcoal) 0%, #2a2e44 100%);
+    border: 1px solid rgba(201, 169, 97, 0.25);
+    border-radius: 12px;
+    color: #f4f4f4;
+    align-items: center;
+  }
+  @media (min-width: 768px) {
+    .finder-strip {
+      grid-template-columns: 64px 1fr auto;
+      gap: 1.4rem;
+    }
+  }
+  .finder-strip__art {
+    width: 56px; height: 56px;
+    border-radius: 12px;
+    background: rgba(201, 169, 97, 0.18);
+    color: var(--color-gold);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .finder-strip__art svg { width: 28px; height: 28px; }
+  .finder-strip__body .lounge-h1 { color: #f4f4f4; margin-top: 0.25rem; }
+  .finder-strip__lead {
+    font-size: 0.9rem;
+    color: rgba(244,244,244,0.75);
+    margin: 0.4rem 0 0;
+    line-height: 1.5;
+  }
+
+  /* Section head */
+  .finder-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .finder-section-head__meta {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* Watchlist */
+  .finder-watchlist {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  @media (min-width: 640px) { .finder-watchlist { grid-template-columns: repeat(2, 1fr); } }
+
+  .finder-watch {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: border-color 180ms ease, transform 180ms ease;
+    position: relative;
+  }
+  .finder-watch:hover { border-color: var(--color-gold); transform: translateY(-1px); }
+  .finder-watch__brand {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .finder-watch__vitola {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0.2rem 0 0.3rem;
+    line-height: 1.15;
+  }
+  .finder-watch__spec {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .finder-watch__price { text-align: right; }
+  .finder-watch__price-now {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--color-text);
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .finder-watch__price-eur {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin: 0.15rem 0 0;
+  }
+  .finder-watch__price-at {
+    font-size: 0.72rem;
+    color: var(--color-burgundy);
+    margin: 0.15rem 0 0;
+    font-weight: 600;
+  }
+  .finder-watch__price-empty {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin: 0;
+  }
+  .finder-watch__alert {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed var(--color-border);
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  .finder-watch__alert-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #2a8a2a;
+    box-shadow: 0 0 0 4px rgba(42, 138, 42, 0.15);
+  }
+  .finder-watch__alert-label { font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* Deal feed */
+  .finder-deals {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  @media (min-width: 640px) { .finder-deals { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .finder-deals { grid-template-columns: repeat(3, 1fr); } }
+
+  .finder-deal {
+    display: flex;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: transform 180ms ease, border-color 180ms ease;
+  }
+  .finder-deal:hover { transform: translateY(-2px); border-color: var(--color-accent); }
+  .finder-deal__pct {
+    background: var(--color-accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.3rem;
+    padding: 0 1rem;
+    min-width: 70px;
+    letter-spacing: -0.02em;
+  }
+  .finder-deal__body { padding: 0.85rem 1rem; flex: 1; }
+  .finder-deal__brand {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .finder-deal__vitola {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0.2rem 0 0.3rem;
+    line-height: 1.15;
+  }
+  .finder-deal__price { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.2rem; }
+  .finder-deal__was { text-decoration: line-through; color: var(--color-text-muted); font-size: 0.8rem; }
+  .finder-deal__price strong {
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--color-burgundy);
+    font-size: 1.05rem;
+  }
+  .finder-deal__retailer { font-size: 0.72rem; color: var(--color-text-muted); margin: 0; }
+
+  /* Tools teaser */
+  .finder-tools {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--color-bg-soft);
+    border: 1px dashed rgba(201, 169, 97, 0.35);
+    border-radius: 10px;
+  }
+  @media (min-width: 768px) { .finder-tools { grid-template-columns: repeat(3, 1fr); } }
+  .finder-tool { padding: 0.5rem 0.25rem; }
+  .finder-tool__title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin: 0.4rem 0 0.5rem;
+    color: var(--color-text);
+  }
+  .finder-tool__body {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+    margin: 0;
+  }
+
+  /* Lounge app surface (mirrors other lounge pages) */
+  .lounge-app {
+    background: var(--color-bg);
+    min-height: calc(100vh - 64px);
+    padding-bottom: 1rem;
+  }
+</style>

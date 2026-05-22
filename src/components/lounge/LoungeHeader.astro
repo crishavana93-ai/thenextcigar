@@ -5,7 +5,7 @@
  * with a logged-in nav bar.
  */
 interface Props {
-  active?: "dashboard" | "directory" | "map" | "travel" | "inbox" | "profile";
+  active?: "dashboard" | "directory" | "map" | "travel" | "inbox" | "profile" | "finder";
 }
 const { active = "dashboard" } = Astro.props as Props;
 ---
@@ -22,6 +22,7 @@ const { active = "dashboard" } = Astro.props as Props;
       <a href="/lounge/app/directory/" class:list={["lounge-nav-link", active === "directory" && "is-active"]}>Discover</a>
       <a href="/lounge/app/map/" class:list={["lounge-nav-link", active === "map" && "is-active"]}>Map</a>
       <a href="/lounge/app/travel/" class:list={["lounge-nav-link", active === "travel" && "is-active"]}>Travel</a>
+      <a href="/lounge/app/finder/" class:list={["lounge-nav-link", active === "finder" && "is-active"]}>Finder</a>
       <a href="/lounge/app/inbox/" class:list={["lounge-nav-link", active === "inbox" && "is-active"]}>
         Inbox<span id="lounge-header-inbox-badge" class="lounge-header__badge" hidden>0</span>
       </a>

@@ -1,0 +1,483 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Newsletter from "../../components/Newsletter.astro";
+import {
+  COUNTRIES,
+  RETAILERS,
+  SKUS,
+  PRICE_SNAPSHOTS,
+  snapshotsForCountry,
+  retailersForCountry,
+  bestPriceInCountry,
+  formatPrice,
+  toEUR,
+  type CountryCode,
+} from "../../data/finder-data.ts";
+
+export async function getStaticPaths() {
+  return COUNTRIES.map((c) => ({ params: { country: c.code } }));
+}
+
+const { country: countryCode } = Astro.params as { country: CountryCode };
+const country = COUNTRIES.find((c) => c.code === countryCode);
+if (!country) return Astro.redirect("/finder/");
+
+const retailers = retailersForCountry(country.code);
+const snapshots = snapshotsForCountry(country.code);
+
+// SKUs covered in this country, with their cheapest local snapshot
+const skuRows = SKUS
+  .map((sku) => ({ sku, snap: bestPriceInCountry(sku.id, country.code) }))
+  .filter((r): r is { sku: typeof SKUS[number]; snap: NonNullable<ReturnType<typeof bestPriceInCountry>> } => !!r.snap)
+  .sort((a, b) => a.snap.price - b.snap.price);
+
+const skusWithoutLocal = SKUS.filter(
+  (sku) => !skuRows.find((r) => r.sku.id === sku.id),
+);
+
+// Status-aware copy
+const statusLabel: Record<typeof country.status, string> = {
+  open: "Online sale legal",
+  restricted: "Restricted online sale",
+  closed: "No online sale",
+};
+
+// ----------------------------------------------------------------------------
+// Structured data — ItemList of SKUs with prices in this country
+// Gives Google a structured catalogue view, eligible for ItemList rich result.
+// ----------------------------------------------------------------------------
+const itemListJsonLd = {
+  "@context": "https://schema.org/",
+  "@type": "ItemList",
+  name: `Cuban cigar prices in ${country.name}`,
+  numberOfItems: skuRows.length,
+  itemListElement: skuRows.map(({ sku, snap }, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    item: {
+      "@type": "Product",
+      name: `${sku.brand} ${sku.vitola}`,
+      brand: { "@type": "Brand", name: sku.brand },
+      url: `https://thenextcigar.com/finder/sku/${sku.slug}/`,
+      offers: {
+        "@type": "Offer",
+        priceCurrency: snap.currency,
+        price: snap.price.toFixed(2),
+        availability: "https://schema.org/InStock",
+        seller: { "@type": "Organization", name: RETAILERS.find((r) => r.id === snap.retailerId)!.name },
+      },
+    },
+  })),
+};
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org/",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "The Finder", item: "https://thenextcigar.com/finder/" },
+    { "@type": "ListItem", position: 2, name: country.name, item: `https://thenextcigar.com/finder/${country.code}/` },
+  ],
+};
+
+// OG / social
+const ogTitle = `Cuban cigar prices in ${country.name} — ${retailers.length} retailers compared | The Finder`;
+const ogDescription = country.note
+  ? `${retailers.length} ${country.name} retailers, ${skuRows.length} live SKU prices. ${country.note}`
+  : `Compare prices on ${skuRows.length} Cuban cigars across ${retailers.length} ${country.name} retailers.`;
+---
+
+<BaseLayout
+  title={ogTitle}
+  description={ogDescription}
+  image="/og-finder.svg"
+>
+  {/* Structured data — ItemList + Breadcrumb */}
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(itemListJsonLd)}></script>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
+  {/* ─── COUNTRY HEADER ─────────────────────────────────────────────────── */}
+  <section class="finder-country-hero">
+    <div class="container-wide pt-12 md:pt-16 pb-10 md:pb-14 reveal">
+      <a href="/finder/" class="finder-country-hero__back">← All countries</a>
+
+      <div class="finder-country-hero__head">
+        <span class="finder-country-hero__flag">{country.flag}</span>
+        <div>
+          <p class="lounge-label" style={`color: ${country.status === 'open' ? 'var(--color-gold)' : country.status === 'restricted' ? 'var(--color-burgundy)' : 'var(--color-text-muted)'};`}>
+            The Finder · {country.name}
+          </p>
+          <h1 class="finder-country-hero__title">{country.name}</h1>
+        </div>
+      </div>
+
+      <div class="finder-country-hero__meta">
+        <div class="finder-country-hero__metric">
+          <span class="finder-country-hero__n">{retailers.length}</span>
+          <span class="finder-country-hero__l">Retailers</span>
+        </div>
+        <div class="finder-country-hero__metric">
+          <span class="finder-country-hero__n">{skuRows.length}</span>
+          <span class="finder-country-hero__l">SKUs priced</span>
+        </div>
+        <div class="finder-country-hero__metric">
+          <span class="finder-country-hero__n">{country.currency}</span>
+          <span class="finder-country-hero__l">Local currency</span>
+        </div>
+        <div class="finder-country-hero__metric">
+          <span class="finder-country-hero__status" data-status={country.status}>{statusLabel[country.status]}</span>
+        </div>
+      </div>
+
+      {country.note && (
+        <p class="finder-country-hero__note">{country.note}</p>
+      )}
+    </div>
+  </section>
+
+  {/* ─── CHEAPEST IN THIS COUNTRY ───────────────────────────────────────── */}
+  {skuRows.length > 0 && (
+    <section class="container-wide pt-10 pb-16 reveal">
+      <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+        <div>
+          <h2 class="finder-h2">Cheapest in {country.name}</h2>
+          <p class="mt-2 text-[color:var(--color-text-soft)]">
+            Best verified price per SKU at retailers that ship inside {country.name}. Sorted by box price ascending.
+          </p>
+        </div>
+      </div>
+
+      <div class="finder-table-wrap">
+        <table class="finder-table">
+          <thead>
+            <tr>
+              <th class="finder-table__brand">Cigar</th>
+              <th>Vitola</th>
+              <th class="finder-table__num">Box size</th>
+              <th class="finder-table__num">Box price</th>
+              <th class="finder-table__num">Per cigar</th>
+              <th>Retailer</th>
+              <th class="finder-table__cta"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {skuRows.map(({ sku, snap }) => {
+              const retailer = RETAILERS.find((r) => r.id === snap.retailerId)!;
+              const perCigar = snap.price / sku.boxSize;
+              return (
+                <tr>
+                  <td class="finder-table__brand">
+                    <span class="finder-table__brand-name">{sku.brand}</span>
+                    <span class="finder-table__offers">{sku.line}</span>
+                  </td>
+                  <td>{sku.vitola}</td>
+                  <td class="finder-table__num">{sku.boxSize}</td>
+                  <td class="finder-table__num finder-table__price">
+                    {formatPrice(snap.price, snap.currency)}
+                    {snap.originalPrice && (
+                      <span class="finder-table__was">was {formatPrice(snap.originalPrice, snap.currency)}</span>
+                    )}
+                  </td>
+                  <td class="finder-table__num">{formatPrice(perCigar, snap.currency)}</td>
+                  <td>
+                    <span class="finder-table__retailer">{retailer.name}</span>
+                    {retailer.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
+                  </td>
+                  <td class="finder-table__cta">
+                    <a href={`/finder/sku/${sku.slug}/`} class="finder-table__compare">Compare →</a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {skusWithoutLocal.length > 0 && (
+        <p class="mt-5 text-sm text-[color:var(--color-text-muted)]">
+          {skusWithoutLocal.length} more SKU{skusWithoutLocal.length === 1 ? "" : "s"} in the catalogue
+          don't yet have a verified {country.name} price.
+          <a href="/finder/" style="text-decoration:underline;color:var(--color-burgundy);"> See the European catalogue →</a>
+        </p>
+      )}
+    </section>
+  )}
+
+  {skuRows.length === 0 && (
+    <section class="container-wide py-16 reveal">
+      <div class="lounge-empty">
+        <p class="lounge-empty__kicker">No verified prices yet</p>
+        <p class="lounge-empty__title">We don't have public prices for {country.name} retailers yet</p>
+        <p class="lounge-empty__body">
+          {country.name} retailers in our directory don't expose public per-SKU pricing to anonymous browsers —
+          most use catalogue-only sites or login-walled carts. We list the retailers below; for live prices, browse a neighbouring market.
+        </p>
+        <a href="/finder/" class="btn btn-accent lounge-empty__cta">Back to country picker</a>
+      </div>
+    </section>
+  )}
+
+  {/* ─── RETAILERS IN THIS COUNTRY ─────────────────────────────────────── */}
+  <section class="section-cream">
+    <div class="container-wide py-16 reveal">
+      <h2 class="finder-h2 mb-2">Where to buy in {country.name}</h2>
+      <p class="text-[color:var(--color-text-soft)] mb-8 max-w-2xl">
+        Every retailer we've mapped in {country.name}. LCDH = official La Casa del Habano franchise.
+      </p>
+
+      <div class="finder-retailer-grid">
+        {retailers.map((r) => (
+          <a href={r.url} class="finder-retailer" target="_blank" rel="noopener noreferrer sponsored">
+            <div class="finder-retailer__head">
+              <h3 class="finder-retailer__name">{r.name}</h3>
+              {r.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
+              {r.status === "habanos-specialist" && <span class="finder-badge">Habanos Specialist</span>}
+              {r.status === "reservation" && <span class="finder-badge finder-badge--burgundy">Reservation</span>}
+              {r.status === "mixed" && <span class="finder-badge finder-badge--muted">Mixed catalogue</span>}
+            </div>
+            {r.city && <p class="finder-retailer__city">{r.city}</p>}
+            <p class="finder-retailer__meta">
+              Ships {r.shipsTo === "domestic" ? "domestic only" : r.shipsTo === "eu" ? "within EU" : "worldwide"}
+              {!r.hasPublicPricing && " · catalogue only"}
+            </p>
+            <p class="finder-retailer__url">{new URL(r.url).hostname.replace("www.", "")} →</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Newsletter
+    heading={`Be the first to know about ${country.name} price drops`}
+    blurb="One email per week with the biggest cuts on Cuban cigars in your country. Free."
+  />
+</BaseLayout>
+
+<style>
+  .finder-country-hero {
+    background:
+      radial-gradient(circle at 15% 25%, rgba(201, 169, 97, 0.12), transparent 55%),
+      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .finder-country-hero__back {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    margin-bottom: 2rem;
+  }
+  .finder-country-hero__back:hover { color: var(--color-accent); }
+
+  .finder-country-hero__head {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    margin-bottom: 2rem;
+  }
+  .finder-country-hero__flag { font-size: 4.5rem; line-height: 1; }
+  .finder-country-hero__title {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    line-height: 0.98;
+    color: var(--color-text);
+    margin-top: 0.45rem;
+  }
+
+  .finder-country-hero__meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 2rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--color-border);
+  }
+  @media (min-width: 640px) { .finder-country-hero__meta { grid-template-columns: repeat(4, 1fr); } }
+  .finder-country-hero__metric { display: flex; flex-direction: column; gap: 0.25rem; }
+  .finder-country-hero__n {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .finder-country-hero__l {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .finder-country-hero__status {
+    display: inline-block;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .finder-country-hero__status[data-status="open"] { background: rgba(201, 169, 97, 0.18); color: var(--color-gold); }
+  .finder-country-hero__status[data-status="restricted"] { background: rgba(110, 38, 32, 0.12); color: var(--color-burgundy); }
+  .finder-country-hero__status[data-status="closed"] { background: var(--color-surface); color: var(--color-text-muted); }
+
+  .finder-country-hero__note {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text-soft);
+    max-width: 64ch;
+    padding: 1rem 1.2rem;
+    background: var(--color-bg);
+    border-left: 3px solid var(--color-gold);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .finder-h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    color: var(--color-text);
+  }
+
+  /* Table (mirrors landing-page styles) */
+  .finder-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); }
+  .finder-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .finder-table th {
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    padding: 1rem 1.1rem;
+    background: var(--color-bg-soft);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .finder-table td {
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--color-border-soft);
+    vertical-align: middle;
+  }
+  .finder-table tr:last-child td { border-bottom: none; }
+  .finder-table tr:hover td { background: var(--color-bg-soft); }
+  .finder-table__num { text-align: right; font-variant-numeric: tabular-nums; }
+  .finder-table__brand { min-width: 180px; }
+  .finder-table__brand-name {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 0.98rem;
+  }
+  .finder-table__offers {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    margin-top: 0.15rem;
+  }
+  .finder-table__price {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 1rem;
+  }
+  .finder-table__was {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+    margin-top: 0.15rem;
+  }
+  .finder-table__retailer { display: block; font-weight: 600; color: var(--color-text); font-size: 0.88rem; }
+  .finder-table__cta { text-align: right; }
+  .finder-table__compare {
+    display: inline-block;
+    padding: 0.45rem 0.95rem;
+    background: var(--color-text);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 180ms ease;
+  }
+  .finder-table__compare:hover { background: var(--color-accent); }
+
+  /* Badges */
+  .finder-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-text-soft);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-left: 0.5rem;
+  }
+  .finder-badge--gold { background: rgba(201, 169, 97, 0.18); color: var(--color-gold-hover); }
+  .finder-badge--burgundy { background: rgba(110, 38, 32, 0.12); color: var(--color-burgundy); }
+  .finder-badge--muted { background: var(--color-surface); color: var(--color-text-mute-2); }
+
+  /* Retailer grid */
+  .finder-retailer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+  @media (min-width: 640px) { .finder-retailer-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .finder-retailer-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .finder-retailer {
+    display: block;
+    padding: 1.1rem 1.25rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: border-color 200ms ease, transform 200ms ease;
+  }
+  .finder-retailer:hover { transform: translateY(-2px); border-color: var(--color-gold); }
+  .finder-retailer__head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.4rem;
+  }
+  .finder-retailer__name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+  .finder-retailer .finder-badge { margin-left: 0; }
+  .finder-retailer__city {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    margin: 0 0 0.25rem;
+  }
+  .finder-retailer__meta {
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+    margin: 0 0 0.5rem;
+  }
+  .finder-retailer__url {
+    font-size: 0.78rem;
+    color: var(--color-burgundy);
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+</style>
