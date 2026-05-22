@@ -13,6 +13,7 @@ import {
   toEUR,
   type CountryCode,
 } from "../../data/finder-data.ts";
+import { policyFor } from "../../data/country-config.ts";
 
 export async function getStaticPaths() {
   return COUNTRIES.map((c) => ({ params: { country: c.code } }));
@@ -22,6 +23,7 @@ const { country: countryCode } = Astro.params as { country: CountryCode };
 const country = COUNTRIES.find((c) => c.code === countryCode);
 if (!country) return Astro.redirect("/finder/");
 
+const policy = policyFor(country.code);
 const retailers = retailersForCountry(country.code);
 const snapshots = snapshotsForCountry(country.code);
 
@@ -132,6 +134,52 @@ const ogDescription = country.note
       )}
     </div>
   </section>
+
+  {/* ─── REGULATORY DISCLOSURE BANNER ─────────────────────────────────────
+       Shown when the country-config encodes a legal constraint that affects
+       what users can do. Source of truth: src/data/country-config.ts.
+       Six archetypes encoded — see docs/retailer-research/eu-deep-map-summary.md
+       for the full legal mapping. */}
+  {policy.regulatoryWarning && (
+    <section class="container-wide pt-6 reveal">
+      <div class={`finder-legal-banner finder-legal-banner--${policy.archetype}`} role="note">
+        <div class="finder-legal-banner__icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="finder-legal-banner__body">
+          <p class="finder-legal-banner__title">
+            {policy.archetype === "online_sale_banned" && "Online tobacco sale is prohibited in this country"}
+            {policy.archetype === "cross_border_ban" && "Cross-border tobacco import is prohibited for residents"}
+            {policy.archetype === "domestic_grey_zone" && "Domestic online sale operates in a legal grey zone"}
+            {policy.archetype === "display_image_banned" && "Product imagery is restricted by national display law"}
+            {policy.archetype === "state_price_uniform" && "Prices are state-fixed across all licensed retailers"}
+            {policy.archetype === "open" && "Online tobacco sale is legal — note the import disclaimer"}
+          </p>
+          <p class="finder-legal-banner__text">{policy.regulatoryWarning}</p>
+          <p class="finder-legal-banner__cite">
+            Legal basis: <em>{policy.regulationCite}</em> · Habanos importer: {policy.importerOfRecord}
+          </p>
+          {policy.bestForCrossBorder && policy.bestForCrossBorder.length > 0 && (
+            <p class="finder-legal-banner__alt">
+              Legal cross-border channels for {country.name} residents:
+              {policy.bestForCrossBorder.map((cc, i) => {
+                const target = COUNTRIES.find((c) => c.code === cc);
+                if (!target) return null;
+                return (
+                  <Fragment>
+                    {i > 0 && ", "}
+                    <a href={`/finder/${cc}/`}>{target.flag} {target.name}</a>
+                  </Fragment>
+                );
+              })}
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
 
   {/* ─── CHEAPEST IN THIS COUNTRY ───────────────────────────────────────── */}
   {skuRows.length > 0 && (
@@ -480,4 +528,82 @@ const ogDescription = country.note
     margin: 0;
     letter-spacing: 0.02em;
   }
+
+  /* ─── Country regulatory disclosure banner (country-config integration) ── */
+  .finder-legal-banner {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.95rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: 10px;
+    border: 1px solid;
+    margin-bottom: 1.5rem;
+  }
+  .finder-legal-banner__icon {
+    width: 2.4rem; height: 2.4rem;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .finder-legal-banner__title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.005em;
+  }
+  .finder-legal-banner__text {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--color-text);
+    margin: 0 0 0.6rem;
+  }
+  .finder-legal-banner__cite {
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .finder-legal-banner__alt {
+    margin: 0.65rem 0 0;
+    font-size: 0.84rem;
+    color: var(--color-text);
+  }
+  .finder-legal-banner__alt a {
+    color: var(--color-burgundy);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+  /* Archetype colour tokens — burgundy for hard bans, gold for grey-zone, charcoal for neutral */
+  .finder-legal-banner--online_sale_banned,
+  .finder-legal-banner--cross_border_ban {
+    background: rgba(110, 38, 32, 0.06);
+    border-color: rgba(110, 38, 32, 0.32);
+  }
+  .finder-legal-banner--online_sale_banned .finder-legal-banner__icon,
+  .finder-legal-banner--cross_border_ban .finder-legal-banner__icon {
+    background: rgba(110, 38, 32, 0.16);
+    color: var(--color-burgundy);
+  }
+  .finder-legal-banner--domestic_grey_zone,
+  .finder-legal-banner--state_price_uniform {
+    background: rgba(201, 169, 97, 0.08);
+    border-color: rgba(201, 169, 97, 0.4);
+  }
+  .finder-legal-banner--domestic_grey_zone .finder-legal-banner__icon,
+  .finder-legal-banner--state_price_uniform .finder-legal-banner__icon {
+    background: rgba(201, 169, 97, 0.22);
+    color: var(--color-gold-hover);
+  }
+  .finder-legal-banner--display_image_banned,
+  .finder-legal-banner--open {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+  .finder-legal-banner--display_image_banned .finder-legal-banner__icon,
+  .finder-legal-banner--open .finder-legal-banner__icon {
+    background: var(--color-bg-soft);
+    color: var(--color-text-soft);
+  }
+
 </style>
