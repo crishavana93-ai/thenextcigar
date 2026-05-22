@@ -62,7 +62,12 @@ const skipPublicChrome = bareChrome || isLoungeApp;
         <link rel="shortcut icon" type="image/png" href="/lounge-app-icon-192.png" />
       </>
     ) : (
-      <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png" />
+      <>
+        {/* SVG favicon (modern browsers prefer this — scales to every tab size). */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        {/* PNG fallback for Safari and older browsers. */}
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png" />
+      </>
     )}
     <meta name="generator" content={Astro.generator} />
 

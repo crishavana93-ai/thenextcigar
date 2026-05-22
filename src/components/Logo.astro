@@ -9,7 +9,10 @@ interface Props {
 }
 
 const { variant = "mark", class: className = "", tone = "dark" } = Astro.props;
-const wordmarkUrl = tone === "light" ? "/logo-light.png" : "/logo.png";
+// Switched from .png to .svg in 2026-05 — the raster export had transparency
+// artifacts (checkered background visible against the cream page surface).
+// SVG renders crisply at every size and has no transparency edge case.
+const wordmarkUrl = tone === "light" ? "/logo-light.svg" : "/logo.svg";
 ---
 
 {variant === "wordmark" ? (

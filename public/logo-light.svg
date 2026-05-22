@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" fill="none" role="img" aria-label="TNext Cigars">
+  <!-- Light-tone wordmark for dark backgrounds (footer, hero overlays). -->
   <defs>
     <style>
       .tnc-word {
@@ -13,17 +14,12 @@
       }
     </style>
   </defs>
-
   <text x="500" y="225" class="tnc-word" font-size="240" text-anchor="middle" fill="#f5efe0">TNext</text>
-
   <line x1="240" y1="305" x2="465" y2="305" stroke="#f5efe0" stroke-width="2.5" stroke-linecap="round"/>
-
   <g stroke="#f5efe0" stroke-width="6" stroke-linecap="round" fill="none">
     <path d="M484 278 C 472 290, 472 304, 484 316 C 496 328, 496 342, 484 354"/>
     <path d="M516 278 C 528 290, 528 304, 516 316 C 504 328, 504 342, 516 354"/>
   </g>
-
   <line x1="535" y1="305" x2="760" y2="305" stroke="#f5efe0" stroke-width="2.5" stroke-linecap="round"/>
-
   <text x="500" y="402" class="tnc-tag" font-size="56" text-anchor="middle" fill="#f5efe0">CIGARS</text>
 </svg>
