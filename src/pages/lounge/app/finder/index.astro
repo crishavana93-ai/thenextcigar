@@ -85,7 +85,10 @@ const totalCountries = COUNTRIES.length;
         <a href="#" id="add-to-watchlist" class="lbtn lbtn-ghost lbtn-sm">+ Add cigar</a>
       </div>
 
-      <div class="finder-watchlist">
+      <div class="finder-watchlist" id="lounge-watchlist" data-state="demo">
+        <p class="finder-watch__demo-pill" data-demo-pill>
+          Demo data — sign in and save a SKU to populate this with your real watchlist
+        </p>
         {watchlistRows.map(({ sku, best }) => (
           <a href={`/finder/sku/${sku.slug}/`} class="finder-watch">
             <div class="finder-watch__body">
@@ -173,6 +176,75 @@ const totalCountries = COUNTRIES.length;
     {/* Spacer so the bottom tab bar doesn't cover content on mobile */}
     <div style="height: 80px;"></div>
   </main>
+
+
+<script>
+  import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+
+  // Hydrate the watchlist with the signed-in member's saved SKUs. If they
+  // have no rows yet, fall back to the demo cards (and keep the demo pill
+  // visible). If they're signed out, leave demo as-is.
+  async function hydrateWatchlist() {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return; // signed-out members see the demo
+
+      const supabase = getSupabase();
+
+      // Find this member's finder_email_subscribers row (or null if they
+      // haven't saved anything yet).
+      const { data: subs, error: subErr } = await supabase
+        .from("finder_email_subscribers")
+        .select("id")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      if (subErr) { console.warn("[Lounge Finder] sub lookup failed", subErr); return; }
+      if (!subs?.id) return; // no subscriber row yet
+
+      const { data: rows, error: rowErr } = await supabase
+        .from("finder_watchlists")
+        .select("id, sku, target_price_eur, baseline_price_eur, created_at")
+        .eq("subscriber_id", subs.id)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false });
+      if (rowErr) { console.warn("[Lounge Finder] watch query failed", rowErr); return; }
+      if (!rows || rows.length === 0) return; // no saved cigars — keep demo
+
+      const container = document.getElementById("lounge-watchlist");
+      if (!container) return;
+
+      // Drop the demo pill + demo cards.
+      container.innerHTML = "";
+      container.setAttribute("data-state", "live");
+
+      // Render real rows.
+      for (const r of rows) {
+        const a = document.createElement("a");
+        a.className = "finder-watch";
+        a.href = "/finder/sku/" + r.sku + "/";
+        a.innerHTML = `
+          <div class="finder-watch__body">
+            <p class="finder-watch__brand">Saved</p>
+            <p class="finder-watch__vitola">${r.sku.replace(/-/g, " ")}</p>
+            <p class="finder-watch__spec">
+              ${r.target_price_eur != null ? "Target €" + Number(r.target_price_eur).toFixed(0) : "Any drop alert"}
+              ${r.baseline_price_eur != null ? " · baseline €" + Number(r.baseline_price_eur).toFixed(0) : ""}
+            </p>
+          </div>
+          <div class="finder-watch__alert">
+            <span class="finder-watch__alert-dot" aria-hidden="true"></span>
+            <span class="finder-watch__alert-label">Alert active</span>
+          </div>
+        `;
+        container.appendChild(a);
+      }
+    } catch (err) {
+      console.warn("[Lounge Finder] hydration error", err);
+    }
+  }
+  document.addEventListener("astro:page-load", hydrateWatchlist);
+  hydrateWatchlist();
+</script>
 
   <LoungeTabBar />
 </BaseLayout>
@@ -411,4 +483,20 @@ const totalCountries = COUNTRIES.length;
     min-height: calc(100vh - 64px);
     padding-bottom: 1rem;
   }
+
+  /* Block 3 — demo pill replaced when live watchlist data loads */
+  .finder-watch__demo-pill {
+    grid-column: 1 / -1;
+    margin: 0 0 0.35rem;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border: 1px dashed var(--color-border);
+    border-radius: 6px;
+    text-align: center;
+  }
+  [data-state="live"] .finder-watch__demo-pill { display: none; }
+
 </style>

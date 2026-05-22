@@ -40,9 +40,11 @@ const today = new Date().toLocaleDateString("en-US", {
 </div>
 
 <header class="sticky top-0 z-40 bg-[color:var(--color-bg)]/95 backdrop-blur-md border-b border-[color:var(--color-border)]">
-  <div class="container-wide flex items-center justify-between h-24 gap-6">
+  <div class="container-wide flex items-center justify-between h-28 gap-6">
     <a href="/" class="flex items-center group flex-shrink-0" aria-label="The Next Cigar — home">
-      <img src="/logo.svg" alt="The Next Cigar" class="hidden sm:block h-20 w-auto" />
+      {/* logo.svg viewBox cropped to wordmark only (May 2026) — so h-16 now renders a wordmark
+          that's actually 64px tall rather than 18px of art inside an 80px-tall blank canvas. */}
+      <img src="/logo.svg" alt="The Next Cigar" class="hidden sm:block h-16 w-auto" />
       <img src="/logo-mark.png" alt="" class="sm:hidden w-14 h-14" />
     </a>
 

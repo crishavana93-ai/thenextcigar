@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Newsletter from "../../../components/Newsletter.astro";
+import PriceAlertModal from "../../../components/finder/PriceAlertModal.astro";
+import SaveAlertButton from "../../../components/finder/SaveAlertButton.astro";
 import {
   SKUS,
   RETAILERS,
@@ -146,6 +148,15 @@ const ogDescription = best
             <a href={best.retailer.url} class="btn btn-primary sku-hero__best-cta" target="_blank" rel="noopener noreferrer sponsored">
               Shop at {best.retailer.name} →
             </a>
+            <div class="sku-hero__best-alert">
+              <SaveAlertButton
+                sku={sku.slug}
+                productName={`${sku.brand} ${sku.vitola}`}
+                baselineEur={Math.round(best.eur)}
+                baselineLabel={`€${Math.round(best.eur).toLocaleString("en-US")}`}
+                variant="ghost"
+              />
+            </div>
             <p class="sku-hero__best-note">
               Affiliate disclosure: clicking through earns The Next Cigar a referral commission.
               The price you pay is unchanged.
@@ -275,6 +286,7 @@ const ogDescription = best
     heading="Be first when price-drop alerts go live"
     blurb="One email when the watchlist opens. No promotions."
   />
+  <PriceAlertModal />
 </BaseLayout>
 
 <style>

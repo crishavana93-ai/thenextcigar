@@ -1,0 +1,273 @@
+---
+/**
+ * <PriceAlertModal />
+ *
+ * Email-capture modal triggered from any Save-to-Watchlist button across the
+ * Finder. Mounts ONCE at the bottom of the page (hidden by default) and is
+ * opened by SaveAlertButton via a custom event.
+ *
+ * Free tier: 1 active alert per anonymous email. Upsell to The Lounge for
+ * unlimited.
+ */
+---
+
+<dialog
+  id="price-alert-modal"
+  class="price-alert-modal"
+  aria-labelledby="price-alert-title"
+>
+  <div class="price-alert-modal__card">
+    <button type="button" class="price-alert-modal__close" aria-label="Close" data-close>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+
+    <div class="price-alert-modal__state" data-state="form">
+      <p class="price-alert-modal__eyebrow">Free price alert</p>
+      <h3 id="price-alert-title" class="price-alert-modal__title">
+        Email me when <span data-sku-label>this Habano</span> drops in price
+      </h3>
+      <p class="price-alert-modal__lede">
+        One email per drop. No newsletter blast, no spam.
+        Current best European price: <strong data-baseline>—</strong>.
+      </p>
+
+      <form id="price-alert-form" class="price-alert-modal__form" novalidate>
+        <input type="hidden" name="sku" data-sku-input />
+        <input type="hidden" name="baselineEur" data-baseline-input />
+        <input type="hidden" name="source" value="sku_page" />
+
+        <label class="price-alert-modal__field">
+          <span class="price-alert-modal__label">Your email</span>
+          <input type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required />
+        </label>
+
+        <label class="price-alert-modal__field">
+          <span class="price-alert-modal__label">
+            Target price (EUR) <span class="price-alert-modal__optional">— optional</span>
+          </span>
+          <input type="number" name="targetPriceEur" min="0" step="0.01" placeholder="e.g. 350" />
+          <small class="price-alert-modal__hint">
+            Leave blank to be alerted on any drop below the current best price.
+          </small>
+        </label>
+
+        <button type="submit" class="price-alert-modal__submit">Save alert</button>
+
+        <p class="price-alert-modal__fineprint">
+          By submitting, you agree to receive a transactional email and confirmation.
+          1 alert free; unlimited with <a href="/lounge/">The Lounge</a>.
+        </p>
+      </form>
+    </div>
+
+    <div class="price-alert-modal__state" data-state="success" hidden>
+      <div class="price-alert-modal__success-icon">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h3 class="price-alert-modal__title">Saved.</h3>
+      <p class="price-alert-modal__lede" data-success-msg>
+        Check your inbox to confirm the alert.
+      </p>
+      <button type="button" class="price-alert-modal__submit" data-close>Got it</button>
+    </div>
+
+    <div class="price-alert-modal__state" data-state="upsell" hidden>
+      <p class="price-alert-modal__eyebrow">Free tier reached</p>
+      <h3 class="price-alert-modal__title">You're already watching 1 cigar</h3>
+      <p class="price-alert-modal__lede">
+        Free email-only accounts get one alert at a time. Lounge members get
+        unlimited watchlists, drop history, and a daily digest of the biggest
+        movers across Europe.
+      </p>
+      <a href="/lounge/" class="price-alert-modal__submit price-alert-modal__submit--gold">Open The Lounge</a>
+      <button type="button" class="price-alert-modal__link" data-close>Maybe later</button>
+    </div>
+
+    <div class="price-alert-modal__state" data-state="error" hidden>
+      <h3 class="price-alert-modal__title">Something broke.</h3>
+      <p class="price-alert-modal__lede" data-error-msg>
+        We couldn't save that. Try again or email us.
+      </p>
+      <button type="button" class="price-alert-modal__submit" data-retry>Try again</button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .price-alert-modal {
+    border: none; padding: 0; background: transparent;
+    max-width: min(92vw, 480px); width: 100%; border-radius: 0;
+  }
+  .price-alert-modal::backdrop { background: rgba(15, 17, 25, 0.72); backdrop-filter: blur(4px); }
+  .price-alert-modal__card {
+    position: relative;
+    background: var(--color-bg, #fff);
+    border: 1px solid var(--color-border, #e6e3dc);
+    border-radius: 14px;
+    padding: 2.25rem 2rem 1.75rem;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.4);
+  }
+  .price-alert-modal__close {
+    position: absolute; top: 14px; right: 14px;
+    width: 36px; height: 36px;
+    border: none; background: transparent;
+    color: var(--color-text-soft, #555);
+    cursor: pointer; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .price-alert-modal__close:hover { background: var(--color-bg-soft, #f5f3ee); }
+  .price-alert-modal__eyebrow {
+    text-transform: uppercase; letter-spacing: 0.16em;
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--color-accent, #ff2e2e);
+    margin: 0 0 0.6rem;
+  }
+  .price-alert-modal__title {
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 1.45rem; line-height: 1.2;
+    margin: 0 0 0.65rem;
+    color: var(--color-text, #1a1d2e);
+    letter-spacing: -0.01em;
+  }
+  .price-alert-modal__lede {
+    color: var(--color-text-soft, #555);
+    font-size: 0.94rem; line-height: 1.55;
+    margin: 0 0 1.4rem;
+  }
+  .price-alert-modal__field { display: block; margin: 0 0 1rem; }
+  .price-alert-modal__label {
+    display: block; font-size: 0.78rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--color-text-soft, #555); margin-bottom: 0.35rem;
+  }
+  .price-alert-modal__optional {
+    text-transform: none; letter-spacing: 0; font-weight: 400;
+    color: var(--color-text-muted, #888);
+  }
+  .price-alert-modal__field input {
+    width: 100%; padding: 0.75rem 0.9rem;
+    border: 1px solid var(--color-border, #e6e3dc); border-radius: 8px;
+    font-size: 1rem;
+    background: var(--color-bg-soft, #fafafa);
+    color: var(--color-text, #1a1d2e);
+    transition: border-color 0.15s;
+  }
+  .price-alert-modal__field input:focus { outline: none; border-color: var(--color-accent, #ff2e2e); }
+  .price-alert-modal__hint {
+    display: block; margin-top: 0.4rem;
+    color: var(--color-text-muted, #888); font-size: 0.78rem;
+  }
+  .price-alert-modal__submit {
+    width: 100%; padding: 0.85rem 1rem;
+    background: var(--color-accent, #ff2e2e); color: white;
+    font-weight: 700; font-size: 0.94rem;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border: none; border-radius: 8px;
+    cursor: pointer; transition: opacity 0.15s;
+    display: inline-block; text-decoration: none; text-align: center;
+  }
+  .price-alert-modal__submit:hover { opacity: 0.92; }
+  .price-alert-modal__submit:disabled { opacity: 0.5; cursor: wait; }
+  .price-alert-modal__submit--gold { background: var(--color-gold, #c9a961); color: var(--color-charcoal, #1a1d2e); }
+  .price-alert-modal__link {
+    display: block; width: 100%; margin-top: 0.65rem;
+    background: transparent; border: none;
+    color: var(--color-text-soft, #555); cursor: pointer;
+    font-size: 0.88rem; padding: 0.5rem;
+  }
+  .price-alert-modal__link:hover { color: var(--color-accent, #ff2e2e); }
+  .price-alert-modal__fineprint {
+    margin: 0.95rem 0 0; font-size: 0.74rem;
+    color: var(--color-text-muted, #888); line-height: 1.45;
+  }
+  .price-alert-modal__fineprint a { color: var(--color-accent, #ff2e2e); text-decoration: underline; }
+  .price-alert-modal__success-icon {
+    color: #2c8a4a; display: flex; justify-content: center; margin-bottom: 0.4rem;
+  }
+</style>
+
+<script>
+  function showState(s) {
+    document.querySelectorAll(".price-alert-modal__state").forEach((el) => {
+      el.hidden = el.getAttribute("data-state") !== s;
+    });
+  }
+  function setupPriceAlertModal() {
+    const dialog = document.getElementById("price-alert-modal");
+    if (!dialog || dialog._wired) return;
+    dialog._wired = true;
+
+    const form = document.getElementById("price-alert-form");
+    const skuLabel = dialog.querySelector("[data-sku-label]");
+    const skuInput = dialog.querySelector("[data-sku-input]");
+    const baselineLabel = dialog.querySelector("[data-baseline]");
+    const baselineInput = dialog.querySelector("[data-baseline-input]");
+    const successMsg = dialog.querySelector("[data-success-msg]");
+    const errorMsg = dialog.querySelector("[data-error-msg]");
+
+    dialog.querySelectorAll("[data-close]").forEach((b) =>
+      b.addEventListener("click", () => dialog.close && dialog.close())
+    );
+    dialog.querySelectorAll("[data-retry]").forEach((b) =>
+      b.addEventListener("click", () => showState("form"))
+    );
+
+    document.addEventListener("open-price-alert", (e) => {
+      const d = (e && e.detail) || {};
+      if (skuInput) skuInput.value = d.sku || "";
+      if (baselineInput) baselineInput.value = d.baselineEur != null ? String(d.baselineEur) : "";
+      if (skuLabel) skuLabel.textContent = d.productName || "this Habano";
+      if (baselineLabel) baselineLabel.textContent = d.baselineLabel || (d.baselineEur ? "€" + d.baselineEur : "—");
+      showState("form");
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "");
+    });
+
+    form && form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const submitBtn = form.querySelector("button[type=submit]");
+      if (submitBtn) submitBtn.disabled = true;
+
+      const fd = new FormData(form);
+      const payload = {
+        sku: String(fd.get("sku") || ""),
+        email: String(fd.get("email") || "").trim(),
+        source: String(fd.get("source") || "sku_page"),
+      };
+      const target = fd.get("targetPriceEur");
+      if (target !== null && String(target).trim() !== "") payload.targetPriceEur = Number(target);
+      const baseline = fd.get("baselineEur");
+      if (baseline !== null && String(baseline).trim() !== "") payload.baselineEur = Number(baseline);
+
+      try {
+        const res = await fetch("/api/watchlist/save", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.status === 402 || data && data.status === "free_tier_limit") {
+          showState("upsell");
+        } else if (res.ok && data && data.ok) {
+          if (successMsg && data.message) successMsg.textContent = data.message;
+          showState("success");
+        } else {
+          if (errorMsg && data && data.error) errorMsg.textContent = data.error;
+          showState("error");
+        }
+      } catch (err) {
+        if (errorMsg) errorMsg.textContent = (err && err.message) || "Network error.";
+        showState("error");
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  }
+  document.addEventListener("astro:page-load", setupPriceAlertModal);
+  setupPriceAlertModal();
+</script>

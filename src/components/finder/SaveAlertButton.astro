@@ -1,0 +1,94 @@
+---
+/**
+ * <SaveAlertButton sku productName baselineEur baselineLabel />
+ *
+ * Per-SKU "Save price alert" button. Dispatches a custom DOM event picked up
+ * by the single <PriceAlertModal /> instance on the page.
+ *
+ * Drop into any /finder/ page that already mounts <PriceAlertModal />.
+ */
+interface Props {
+  sku: string;
+  productName: string;
+  baselineEur?: number | null;
+  baselineLabel?: string | null;
+  variant?: "primary" | "ghost";
+}
+const {
+  sku,
+  productName,
+  baselineEur = null,
+  baselineLabel = null,
+  variant = "primary",
+} = Astro.props as Props;
+---
+<button
+  type="button"
+  class={`save-alert-btn save-alert-btn--${variant}`}
+  data-save-alert
+  data-sku={sku}
+  data-product-name={productName}
+  data-baseline-eur={baselineEur ?? ""}
+  data-baseline-label={baselineLabel ?? ""}
+>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+    <path d="M10 21a2 2 0 0 0 4 0"/>
+  </svg>
+  Save price alert
+</button>
+
+<style>
+  .save-alert-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.86rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .save-alert-btn--primary {
+    background: var(--color-charcoal, #1a1d2e);
+    color: var(--color-gold, #c9a961);
+    border-color: var(--color-charcoal, #1a1d2e);
+  }
+  .save-alert-btn--primary:hover { opacity: 0.92; transform: translateY(-1px); }
+  .save-alert-btn--ghost {
+    background: transparent;
+    color: var(--color-text, #1a1d2e);
+    border-color: var(--color-border, #e6e3dc);
+  }
+  .save-alert-btn--ghost:hover {
+    border-color: var(--color-accent, #ff2e2e);
+    color: var(--color-accent, #ff2e2e);
+  }
+</style>
+
+<script>
+  function wireSaveAlertButtons() {
+    document.querySelectorAll("[data-save-alert]").forEach((btn) => {
+      if (btn._wired) return;
+      btn._wired = true;
+      btn.addEventListener("click", () => {
+        const ev = new CustomEvent("open-price-alert", {
+          detail: {
+            sku: btn.getAttribute("data-sku"),
+            productName: btn.getAttribute("data-product-name"),
+            baselineEur: Number(btn.getAttribute("data-baseline-eur")) || null,
+            baselineLabel: btn.getAttribute("data-baseline-label") || null,
+          },
+        });
+        document.dispatchEvent(ev);
+      });
+    });
+  }
+  document.addEventListener("astro:page-load", wireSaveAlertButtons);
+  wireSaveAlertButtons();
+</script>
