@@ -219,15 +219,35 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
     const first = config.pdps[0];
     const res = await fetch(first.url, { headers: BROWSER_HEADERS, cf: { cacheTtl: 0 } });
     const html = res.ok ? await res.text() : "";
-    // Try parsing it too, so we can see if the regex would match.
+
+    // Helper: slice 1500 chars around the first index in html where one of the
+    // listed needles appears (case-insensitive).
+    const sliceAround = (needles: string[]): { needle: string; idx: number; slice: string } | null => {
+      for (const n of needles) {
+        const idx = html.toLowerCase().indexOf(n.toLowerCase());
+        if (idx >= 0) return { needle: n, idx, slice: html.slice(Math.max(0, idx - 600), idx + 900) };
+      }
+      return null;
+    };
+
+    // ALL gtagEvent('view_item', {...}) matches — gives default variant pricing.
+    const gtagMatches: Array<Record<string, unknown>> = [];
+    const gtagRx = /gtagEvent\(['"]view_item['"]\s*,\s*(\{[\s\S]*?\})\)\s*;?/g;
+    let gm: RegExpExecArray | null;
+    while ((gm = gtagRx.exec(html)) !== null) {
+      try { gtagMatches.push(JSON.parse(gm[1])); } catch { gtagMatches.push({ raw: gm[1].slice(0, 400) }); }
+    }
+
+    // First occurrence of various price indicators.
+    const euroSymbol = sliceAround(["€"]);
+    const euroEntity = sliceAround(["&euro;", "&#8364;"]);
+    const erPattern  = sliceAround(["25er", "10er", "5er", "3er"]);
+    const spConfig   = sliceAround(["spConfig", "Product.Config", "configurableSwatches", "super_attribute"]);
+    const priceData  = sliceAround(["product-info-price", "price-final_price", "data-price-amount", '"final_price"', "regular-price"]);
+
+    // Run current parser anyway to confirm it returns 0.
     const parsed = config.stack === "noblego_html" ? parseNoblegoHtml(html) : parseSchemaOrg(html);
-    // Pull a snippet around the first " €" occurrence — that's where Noblego's
-    // price markup lives. If no " €" is found, return the first 4KB instead.
-    const euroIdx = html.indexOf(" €");
-    const snippet =
-      euroIdx >= 0
-        ? html.slice(Math.max(0, euroIdx - 1500), euroIdx + 200)
-        : html.slice(0, 4096);
+
     return json({
       ok: true,
       debug: "html",
@@ -235,9 +255,15 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       status: res.status,
       contentType: res.headers.get("content-type"),
       contentLength: html.length,
-      euroFoundAt: euroIdx,
       parsedOffers: parsed,
-      snippet,
+      gtagViewItem: gtagMatches,
+      snippets: {
+        euroSymbol,
+        euroEntity,
+        erPattern,
+        spConfig,
+        priceData,
+      },
     });
   }
 
