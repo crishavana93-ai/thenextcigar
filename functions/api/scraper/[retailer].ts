@@ -2,18 +2,15 @@
 // ---------------------------------------------------------------------------
 // Manual-trigger scraper endpoint. POST here with retailer ID in path to
 // scrape that retailer's startUrls, parse offers, and upsert into
-// finder_price_snapshots. Used during development to validate parsers before
-// the production cron Worker is wired up.
+// finder_price_snapshots.
 //
 // Auth: requires X-Scraper-Token header matching SCRAPER_ADMIN_TOKEN env var.
-//       This is a Cris-only endpoint until cron is in place.
 //
 // Example:
 //   curl -X POST https://thenextcigar.com/api/scraper/de-noblego \
 //     -H "X-Scraper-Token: <secret>"
-
-// Note: this Function imports the parser registry at runtime. Cloudflare Pages
-// Functions bundle the imported modules so /src/lib/scrapers/ is available.
+//
+// Per-retailer parsing dispatches on `stack` field in SCRAPERS config.
 
 interface Env {
   PUBLIC_SUPABASE_URL: string;
@@ -27,48 +24,115 @@ const json = (data: unknown, status = 200): Response =>
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
 
-// FX rates — duplicated here from finder-data.ts because Pages Functions
-// can't reliably import .ts files outside /functions in all Cloudflare builds.
-// In a follow-up commit we'll move this to a shared edge-safe module.
 const FX_TO_EUR: Record<string, number> = {
   EUR: 1.000, CHF: 1.050, SEK: 0.087, GBP: 1.190, DKK: 0.134, NOK: 0.087,
 };
 
-// Map each scrape-grade retailer id to a config object. We hard-code the
-// startUrls + country here so the Function doesn't have to import the parser
-// registry (which keeps the Function's bundle size tiny).
-type ScraperConfig = {
+// ─── Scraper configs ─────────────────────────────────────────────────────────
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html";
+
+interface PdpUrl {
+  url: string;
+  // Override SKU classification if the title regex isn't reliable enough.
+  skuHint?: string;
+}
+
+interface ScraperConfig {
   country: string;
-  startUrls: string[];
-};
+  stack: ParserStack;
+  // Pack size to scrape — typically 25 for box-of-25 Cuban premium SKUs.
+  // The parser will pick that pack out of multi-pack PDPs.
+  preferredPackSize: number;
+  // PDPs to scrape. One product page per canonical SKU we want priced.
+  pdps: PdpUrl[];
+}
+
 const SCRAPERS: Record<string, ScraperConfig> = {
   "de-noblego": {
     country: "de",
-    startUrls: [
-      "https://www.noblego.de/cohiba/",
-      "https://www.noblego.de/montecristo/",
-      "https://www.noblego.de/partagas/",
-      "https://www.noblego.de/romeo-y-julieta/",
-      "https://www.noblego.de/hoyo-de-monterrey/",
-      "https://www.noblego.de/trinidad/",
-      "https://www.noblego.de/bolivar/",
+    stack: "noblego_html",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://www.noblego.de/cohiba-robusto-zigarre/", skuHint: "cohiba-robustos" },
+      { url: "https://www.noblego.de/cohiba-behike-bhk-52/",    skuHint: "cohiba-behike-52" },
+      { url: "https://www.noblego.de/cohiba-siglo-iv/",         skuHint: "cohiba-siglo-iv" },
+      { url: "https://www.noblego.de/cohiba-esplendidos/",      skuHint: "cohiba-esplendidos" },
+      { url: "https://www.noblego.de/montecristo-no-4/",        skuHint: "montecristo-no-4" },
+      { url: "https://www.noblego.de/montecristo-no-2/",        skuHint: "montecristo-no-2" },
+      { url: "https://www.noblego.de/montecristo-petit-edmundo/", skuHint: "montecristo-petit-edmundo" },
+      { url: "https://www.noblego.de/partagas-serie-d-no-4/",   skuHint: "partagas-serie-d-no-4" },
+      { url: "https://www.noblego.de/romeo-y-julieta-petit-coronas/", skuHint: "romeo-y-julieta-petit-coronas" },
+      { url: "https://www.noblego.de/hoyo-de-monterrey-epicure-no-2/", skuHint: "hoyo-de-monterrey-epicure-no-2" },
+      { url: "https://www.noblego.de/trinidad-reyes/",          skuHint: "trinidad-reyes" },
+      { url: "https://www.noblego.de/bolivar-belicosos-finos/", skuHint: "bolivar-belicosos-finos" },
     ],
   },
   "de-cigarworld": {
     country: "de",
-    startUrls: [
-      "https://www.cigarworld.de/zigarren/kuba/cohiba/",
-      "https://www.cigarworld.de/zigarren/kuba/montecristo/",
-      "https://www.cigarworld.de/zigarren/kuba/partagas/",
-      "https://www.cigarworld.de/zigarren/kuba/romeo-y-julieta/",
-      "https://www.cigarworld.de/zigarren/kuba/hoyo-de-monterrey/",
-      "https://www.cigarworld.de/zigarren/kuba/trinidad/",
-      "https://www.cigarworld.de/zigarren/kuba/bolivar/",
+    stack: "schema_org_jsonld",  // verify on first scrape; may need custom too
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://www.cigarworld.de/zigarren/kuba/cohiba/cohiba-robustos.html",     skuHint: "cohiba-robustos" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/cohiba/cohiba-behike-52.html",    skuHint: "cohiba-behike-52" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/cohiba/cohiba-siglo-iv.html",     skuHint: "cohiba-siglo-iv" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/montecristo/montecristo-no-4.html", skuHint: "montecristo-no-4" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/montecristo/montecristo-no-2.html", skuHint: "montecristo-no-2" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/partagas/partagas-serie-d-no-4.html", skuHint: "partagas-serie-d-no-4" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/hoyo-de-monterrey/hoyo-de-monterrey-epicure-no-2.html", skuHint: "hoyo-de-monterrey-epicure-no-2" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/trinidad/trinidad-reyes.html",    skuHint: "trinidad-reyes" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/bolivar/bolivar-belicosos-finos.html", skuHint: "bolivar-belicosos-finos" },
     ],
   },
 };
 
-// ─── schema.org JSON-LD parser (inlined for edge-safety) ────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function germanPriceToNumber(s: string): number {
+  // "358,90" -> 358.90 ; "1.230,45" -> 1230.45
+  return parseFloat(s.replace(/\./g, "").replace(",", "."));
+}
+
+interface ParsedOffer {
+  packSize: number;     // 25, 10, 5, etc.
+  price: number;
+  currency: string;
+  inStock: boolean;
+}
+
+// ─── Noblego HTML parser ───────────────────────────────────────────────────
+// Pattern: "(25er|Einzeln) <stock status> <price> €"
+//   - "25er Momentan ausverkauft, Liefertermin unbekannt 358,90 €"  -> 25, 358.90, OOS
+//   - "25er Sofort verfügbar 358,90 €"                              -> 25, 358.90, IN
+function parseNoblegoHtml(html: string): ParsedOffer[] {
+  const offers: ParsedOffer[] = [];
+  // Capture: (pack)(any non-price text)(price)
+  // The stock status sits between pack size and price; we classify after.
+  const rx = /(?:^|\s|>|\|)\s*(\d{1,3})er\s+([^0-9]{0,200}?)\s+(\d{1,3}(?:[.,]\d{3})*,\d{2})\s*€/g;
+  let m: RegExpExecArray | null;
+  while ((m = rx.exec(html)) !== null) {
+    const packSize = Number(m[1]);
+    const between = m[2].toLowerCase();
+    const priceStr = m[3];
+    const price = germanPriceToNumber(priceStr);
+    if (!packSize || !price) continue;
+    // Stock status detection — German + English fallbacks.
+    const inStock = !(
+      between.includes("ausverkauft") ||
+      between.includes("nicht verfügbar") ||
+      between.includes("nicht lieferbar") ||
+      between.includes("out of stock") ||
+      between.includes("unavailable")
+    );
+    offers.push({ packSize, price, currency: "EUR", inStock });
+  }
+  // Dedup — keep one per packSize (Noblego sometimes lists the same pack twice).
+  const dedup = new Map<number, ParsedOffer>();
+  for (const o of offers) {
+    if (!dedup.has(o.packSize)) dedup.set(o.packSize, o);
+  }
+  return Array.from(dedup.values());
+}
+
+// ─── schema.org JSON-LD parser (kept for cigarworld + future targets) ──────
 function extractJsonLdBlocks(html: string): unknown[] {
   const blocks: unknown[] = [];
   const rx = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
@@ -88,46 +152,31 @@ function* iterateProducts(node: unknown): Generator<Record<string, unknown>> {
   if (isProduct) yield obj;
   if (Array.isArray(obj["@graph"])) yield* iterateProducts(obj["@graph"]);
 }
-
-// ─── SKU matcher (inlined) ─────────────────────────────────────────────────
-const CANONICAL_SKUS = [
-  { slug: "cohiba-behike-52",       brand: "cohiba",      tokens: ["behike"],            mustContain: ["52"] },
-  { slug: "cohiba-siglo-iv",        brand: "cohiba",      tokens: ["siglo"],             mustContain: ["iv","4"] },
-  { slug: "cohiba-esplendidos",     brand: "cohiba",      tokens: ["esplendidos","espléndidos"] },
-  { slug: "cohiba-robustos",        brand: "cohiba",      tokens: ["robusto"] },
-  { slug: "montecristo-no-2",       brand: "montecristo", tokens: [],                    mustContain: ["2"] },
-  { slug: "montecristo-no-4",       brand: "montecristo", tokens: [],                    mustContain: ["4"] },
-  { slug: "montecristo-petit-edmundo", brand: "montecristo", tokens: ["petit","edmundo"] },
-  { slug: "partagas-serie-d-no-4",  brand: "partag",      tokens: ["serie","d"],         mustContain: ["4"] },
-  { slug: "romeo-y-julieta-petit-coronas", brand: "romeo", tokens: ["petit","corona"] },
-  { slug: "hoyo-de-monterrey-epicure-no-2", brand: "hoyo", tokens: ["epicure"],          mustContain: ["2"] },
-  { slug: "trinidad-reyes",         brand: "trinidad",    tokens: ["reyes"] },
-  { slug: "bolivar-belicosos-finos", brand: "bol",        tokens: ["belicoso"] },
-];
-function normalize(s: string): string {
-  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-}
-function matchSku(title: string): string | null {
-  const t = normalize(title);
-  if (!t) return null;
-  for (const sku of CANONICAL_SKUS) {
-    if (!t.includes(sku.brand)) continue;
-    const allTokens = sku.tokens.every((tok) => t.includes(normalize(tok)));
-    if (!allTokens) continue;
-    if (sku.mustContain) {
-      const ok = sku.mustContain.every((m) => new RegExp(`\\b${m}\\b`).test(t));
-      if (!ok) continue;
+function parseSchemaOrg(html: string): ParsedOffer[] {
+  const offers: ParsedOffer[] = [];
+  for (const block of extractJsonLdBlocks(html)) {
+    for (const product of iterateProducts(block)) {
+      const offerList = Array.isArray(product.offers) ? product.offers : product.offers ? [product.offers] : [];
+      for (const o of offerList) {
+        if (!o || typeof o !== "object") continue;
+        const offer = o as Record<string, unknown>;
+        const price = parseFloat(String(offer.price ?? offer.lowPrice ?? ""));
+        if (Number.isNaN(price) || price <= 0) continue;
+        const currency = String(offer.priceCurrency ?? "EUR").toUpperCase();
+        if (!FX_TO_EUR[currency]) continue;
+        const availability = String(offer.availability ?? "").toLowerCase();
+        const inStock = !availability || availability.includes("instock");
+        offers.push({ packSize: 25, price, currency, inStock });
+      }
     }
-    return sku.slug;
   }
-  return null;
+  return offers;
 }
 
 // ─── Endpoint ──────────────────────────────────────────────────────────────
 export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   const { env, params, request } = ctx;
 
-  // Auth gate
   const token = request.headers.get("x-scraper-token");
   if (!env.SCRAPER_ADMIN_TOKEN || token !== env.SCRAPER_ADMIN_TOKEN) {
     return json({ ok: false, error: "unauthorized" }, 401);
@@ -138,59 +187,65 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   if (!config) return json({ ok: false, error: "unknown retailer", retailerId }, 404);
 
   const scrapedAt = new Date().toISOString();
-  const offers: Array<Record<string, unknown>> = [];
+  const rowsToInsert: Array<Record<string, unknown>> = [];
+  const debugLog: Array<Record<string, unknown>> = [];
   const errors: string[] = [];
   let bytesDownloaded = 0;
 
-  for (const url of config.startUrls) {
+  for (const pdp of config.pdps) {
     try {
-      const res = await fetch(url, {
+      const res = await fetch(pdp.url, {
         headers: { "user-agent": "TheNextCigar-Finder/1.0 (+https://thenextcigar.com/finder/)" },
-        cf: { cacheTtl: 0 }, // do not cache
+        cf: { cacheTtl: 0 },
       });
-      if (!res.ok) { errors.push(`${url}: HTTP ${res.status}`); continue; }
+      if (!res.ok) {
+        errors.push(`${pdp.url}: HTTP ${res.status}`);
+        debugLog.push({ url: pdp.url, status: res.status, offers: 0 });
+        continue;
+      }
       const html = await res.text();
       bytesDownloaded += html.length;
 
-      for (const block of extractJsonLdBlocks(html)) {
-        for (const product of iterateProducts(block)) {
-          const title = String((product.name as string) || "");
-          if (!title) continue;
-          const offerList = Array.isArray(product.offers) ? product.offers : product.offers ? [product.offers] : [];
-          for (const o of offerList) {
-            if (!o || typeof o !== "object") continue;
-            const offer = o as Record<string, unknown>;
-            const price = parseFloat(String(offer.price ?? offer.lowPrice ?? ""));
-            if (Number.isNaN(price) || price <= 0) continue;
-            const currency = String(offer.priceCurrency ?? "EUR").toUpperCase();
-            if (!FX_TO_EUR[currency]) continue;
-            const availability = String(offer.availability ?? "").toLowerCase();
-            const inStock = !availability || availability.includes("instock");
-            const sourceUrl = String(offer.url ?? product.url ?? url);
-            const skuSlug = matchSku(title);
-            offers.push({
-              sku: skuSlug, raw_title: title, retailer_id: retailerId,
-              price, currency, price_eur: Math.round(price * FX_TO_EUR[currency] * 100) / 100,
-              in_stock: inStock, source_url: sourceUrl, country_code: config.country,
-              parser: "schema_org", scraped_at: scrapedAt,
-            });
-          }
-        }
+      // Dispatch on stack
+      let parsed: ParsedOffer[];
+      if (config.stack === "noblego_html") parsed = parseNoblegoHtml(html);
+      else parsed = parseSchemaOrg(html);
+
+      // Pick the preferred pack size; fall back to any pack if not present.
+      const picked = parsed.find((o) => o.packSize === config.preferredPackSize) ?? parsed[0];
+
+      debugLog.push({
+        url: pdp.url,
+        status: 200,
+        offersFound: parsed.length,
+        packsFound: parsed.map((p) => `${p.packSize}@${p.price}`),
+      });
+
+      if (!picked) {
+        errors.push(`${pdp.url}: parser found 0 offers`);
+        continue;
       }
+
+      rowsToInsert.push({
+        sku: pdp.skuHint || null,
+        retailer_id: retailerId,
+        price: picked.price,
+        currency: picked.currency,
+        price_eur: Math.round(picked.price * FX_TO_EUR[picked.currency] * 100) / 100,
+        in_stock: picked.inStock,
+        source_url: pdp.url,
+        country_code: config.country,
+        parser: config.stack,
+        scraped_at: scrapedAt,
+      });
     } catch (e: any) {
-      errors.push(`${url}: ${e?.message || "fetch failed"}`);
+      errors.push(`${pdp.url}: ${e?.message || "fetch failed"}`);
     }
   }
 
-  // Filter to offers where we could classify the SKU (others go to a triage log).
-  const classified = offers.filter((o) => o.sku);
-  const unclassified = offers.filter((o) => !o.sku);
-
-  // Upsert classified offers into finder_price_snapshots.
+  // Insert into Supabase
   let inserted = 0;
-  if (classified.length) {
-    // Strip raw_title from rows we insert (the column is sku-classified only).
-    const rows = classified.map(({ raw_title, ...rest }) => rest);
+  if (rowsToInsert.length) {
     const r = await fetch(
       `${env.PUBLIC_SUPABASE_URL}/rest/v1/finder_price_snapshots`,
       {
@@ -201,28 +256,26 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
           "content-type": "application/json",
           Prefer: "return=minimal",
         },
-        body: JSON.stringify(rows),
+        body: JSON.stringify(rowsToInsert),
       }
     );
-    if (r.ok) inserted = rows.length;
+    if (r.ok) inserted = rowsToInsert.length;
     else errors.push(`supabase insert failed: HTTP ${r.status} ${await r.text()}`);
   }
 
   return json({
-    ok: errors.length === 0,
+    ok: errors.length === 0 && inserted > 0,
     retailerId,
     scrapedAt,
     stats: {
-      pagesFetched: config.startUrls.length,
+      pdpsScraped: config.pdps.length,
       bytesDownloaded,
-      offersTotal: offers.length,
-      classified: classified.length,
-      unclassified: unclassified.length,
+      rowsExtracted: rowsToInsert.length,
       inserted,
     },
     errors,
-    sampleClassified: classified.slice(0, 5),
-    sampleUnclassified: unclassified.slice(0, 10).map((o) => ({ raw_title: o.raw_title, price: o.price, currency: o.currency })),
+    debugLog,
+    sampleRows: rowsToInsert.slice(0, 5),
   });
 };
 
