@@ -69,18 +69,23 @@ const SCRAPERS: Record<string, ScraperConfig> = {
   },
   "de-cigarworld": {
     country: "de",
-    stack: "schema_org_jsonld",  // verify on first scrape; may need custom too
+    // Will be updated to a custom parser once debug=html reveals the markup.
+    // Schema.org is the optimistic starting point.
+    stack: "schema_org_jsonld",
     preferredPackSize: 25,
     pdps: [
-      { url: "https://www.cigarworld.de/zigarren/kuba/cohiba/cohiba-robustos.html",     skuHint: "cohiba-robustos" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/cohiba/cohiba-behike-52.html",    skuHint: "cohiba-behike-52" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/cohiba/cohiba-siglo-iv.html",     skuHint: "cohiba-siglo-iv" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/montecristo/montecristo-no-4.html", skuHint: "montecristo-no-4" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/montecristo/montecristo-no-2.html", skuHint: "montecristo-no-2" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/partagas/partagas-serie-d-no-4.html", skuHint: "partagas-serie-d-no-4" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/hoyo-de-monterrey/hoyo-de-monterrey-epicure-no-2.html", skuHint: "hoyo-de-monterrey-epicure-no-2" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/trinidad/trinidad-reyes.html",    skuHint: "trinidad-reyes" },
-      { url: "https://www.cigarworld.de/zigarren/kuba/bolivar/bolivar-belicosos-finos.html", skuHint: "bolivar-belicosos-finos" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/cohiba-robustos-01002_13",                       skuHint: "cohiba-robustos" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/cohiba-behike-bhk-52-90008612_19690",            skuHint: "cohiba-behike-52" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/cohiba-siglo-iv-01002_17",                       skuHint: "cohiba-siglo-iv" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/cohiba-esplendidos-01002_12",                    skuHint: "cohiba-esplendidos" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/montecristo-no-4-01007_47",                      skuHint: "montecristo-no-4" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/montecristo-no-2-01007_45",                      skuHint: "montecristo-no-2" },
+      { url: "https://www.cigarworld.de/zigarren/cuba/regulares/montecristo-petit-edmundo-01007_11521",          skuHint: "montecristo-petit-edmundo" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/partagas-serie-d-no-4-01008_66",                 skuHint: "partagas-serie-d-no-4" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/romeo-y-julieta-petit-coronas-01013_14101",      skuHint: "romeo-y-julieta-petit-coronas" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/hoyo-de-monterrey-epicure-no-2-01004_24",        skuHint: "hoyo-de-monterrey-epicure-no-2" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/trinidad-reyes-01021_5800",                      skuHint: "trinidad-reyes" },
+      { url: "https://www.cigarworld.de/zigarren/kuba/regulares/bolivar-belicosos-finos-01001_6",                skuHint: "bolivar-belicosos-finos" },
     ],
   },
 };
