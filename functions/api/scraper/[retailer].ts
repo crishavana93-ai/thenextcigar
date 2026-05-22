@@ -99,36 +99,52 @@ interface ParsedOffer {
 }
 
 // ─── Noblego HTML parser ───────────────────────────────────────────────────
-// Pattern: "(25er|Einzeln) <stock status> <price> €"
-//   - "25er Momentan ausverkauft, Liefertermin unbekannt 358,90 €"  -> 25, 358.90, OOS
-//   - "25er Sofort verfügbar 358,90 €"                              -> 25, 358.90, IN
+// Noblego (Magento backend) renders each pack-size variant as:
+//
+//   <span title="Verpackungseinheit">25er</span>
+//   <span class="availability-icon availability-limited-instock" title="..."></span>
+//   <span class="availability">
+//     <span class="availability-text">Auf Lager...</span>
+//   </span>
+//   ...
+//   <span class="product-price">
+//     <span class="price">1.930,30 €</span>
+//
+// The PDP usually lists multiple variants (3er, 5er, 10er, 25er) — we capture
+// them all and the caller picks the preferred pack size.
+//
+// Availability classes observed:
+//   availability-instock          → in stock
+//   availability-limited-instock  → in stock (limited)
+//   availability-only-X-instock   → in stock (X units left)
+//   availability-out-of-stock     → OOS
+//   availability-nicht-lieferbar  → OOS (rare)
 function parseNoblegoHtml(html: string): ParsedOffer[] {
   const offers: ParsedOffer[] = [];
-  // Capture: (pack)(any non-price text)(price)
-  // The stock status sits between pack size and price; we classify after.
-  const rx = /(?:^|\s|>|\|)\s*(\d{1,3})er\s+([^0-9]{0,200}?)\s+(\d{1,3}(?:[.,]\d{3})*,\d{2})\s*€/g;
+
+  // Span ~4500 chars max between the pack-size label and the price. Empirically
+  // the gap is ~1000-2000 chars of HTML; 4500 leaves headroom for variants
+  // with extra promo badges.
+  const rx =
+    /title=["']Verpackungseinheit["'][^>]*>\s*(\d{1,3})er\s*<\/span>[\s\S]{0,4500}?availability-icon\s+availability-([a-z0-9-]+)[\s\S]{0,4500}?<span\s+class=["']price["']\s*>\s*(\d{1,3}(?:\.\d{3})*,\d{2})\s*€/gi;
+
   let m: RegExpExecArray | null;
   while ((m = rx.exec(html)) !== null) {
     const packSize = Number(m[1]);
-    const between = m[2].toLowerCase();
+    const availClass = m[2].toLowerCase();
     const priceStr = m[3];
     const price = germanPriceToNumber(priceStr);
     if (!packSize || !price) continue;
-    // Stock status detection — German + English fallbacks.
-    const inStock = !(
-      between.includes("ausverkauft") ||
-      between.includes("nicht verfügbar") ||
-      between.includes("nicht lieferbar") ||
-      between.includes("out of stock") ||
-      between.includes("unavailable")
-    );
+    const inStock =
+      !availClass.includes("out-of-stock") &&
+      !availClass.includes("nicht-lieferbar") &&
+      !availClass.includes("ausverkauft");
     offers.push({ packSize, price, currency: "EUR", inStock });
   }
-  // Dedup — keep one per packSize (Noblego sometimes lists the same pack twice).
+
+  // Dedup — keep first occurrence per packSize.
   const dedup = new Map<number, ParsedOffer>();
-  for (const o of offers) {
-    if (!dedup.has(o.packSize)) dedup.set(o.packSize, o);
-  }
+  for (const o of offers) if (!dedup.has(o.packSize)) dedup.set(o.packSize, o);
   return Array.from(dedup.values());
 }
 
