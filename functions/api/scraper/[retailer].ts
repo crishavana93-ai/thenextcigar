@@ -245,7 +245,7 @@ function extractJsonLdBlocks(html: string): unknown[] {
       .replace(/^<!--[\s\S]*?-->\s*/i, "")           // strip leading HTML comment
       .replace(/\s*<!--[\s\S]*?-->\s*$/i, "")        // strip trailing HTML comment
       .replace(/^\s*\/\*[\s\S]*?\*\/\s*/i, "")       // strip leading /* … */ comment
-      .replace(/[  ]/g, " ");              // line/paragraph separators
+      .replace(/[\u2028\u2029]/g, " ");              // line/paragraph separators
     const attempts: Array<() => unknown> = [
       () => JSON.parse(raw),
       () => JSON.parse(raw.replace(/,(\s*[}\]])/g, "$1")),                          // trailing commas
