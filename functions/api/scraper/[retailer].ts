@@ -35,6 +35,12 @@ interface PdpUrl {
   url: string;
   // Override SKU classification if the title regex isn't reliable enough.
   skuHint?: string;
+  // Optional pack-size override. Use when the retailer splits each pack-size
+  // into a SEPARATE PDP (like Havana House: ".../cohiba-robusto-box-of-25/"
+  // vs ".../cohiba-robusto-cigar-single/") and the JSON-LD doesn't carry
+  // eligibleQuantity. The scraper applies this AFTER parsing to overwrite
+  // whatever pack size the schema.org parser inferred.
+  packSize?: number;
 }
 
 interface ScraperConfig {
@@ -87,6 +93,50 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       { url: "https://www.cigarmaxx.de/hoyo-de-monterrey-epicure-no-2/",      skuHint: "hoyo-de-monterrey-epicure-no-2" },
       { url: "https://www.cigarmaxx.de/trinidad-reyes/",                      skuHint: "trinidad-reyes" },
       { url: "https://www.cigarmaxx.de/bolivar-belicoso-fino/",               skuHint: "bolivar-belicosos-finos" },
+    ],
+  },
+  "ch-cigarmust": {
+    country: "ch",
+    // PrestaShop backend. Each product page lists all pack-size variants and
+    // serves Schema.org JSON-LD with offers + priceSpecification.eligibleQuantity.
+    // Prices in CHF; FX_TO_EUR converts to canonical price_eur for storage.
+    // Currently 10/12 SKUs — Romeo Petit Coronas + Bolívar Belicosos Finos
+    // need their PrestaShop product IDs found; they fall back to static research.
+    stack: "schema_org_jsonld",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://cigarmust.com/en/cohiba/217-140-cohiba-robustos-7612907060907.html",                   skuHint: "cohiba-robustos" },
+      { url: "https://cigarmust.com/en/cohiba/209-cohiba-behike-52-7612907060877.html",                      skuHint: "cohiba-behike-52" },
+      { url: "https://cigarmust.com/en/cohiba/224-cohiba-siglo-iv-7612907060945.html",                       skuHint: "cohiba-siglo-iv" },
+      { url: "https://cigarmust.com/en/cohiba/212-cohiba-esplendidos-7612907060600.html",                    skuHint: "cohiba-esplendidos" },
+      { url: "https://cigarmust.com/en/montecristo/341-70-montecristo-no4-7612907062178.html",               skuHint: "montecristo-no-4" },
+      { url: "https://cigarmust.com/en/montecristo/339-montecristo-no2-7612907062123.html",                  skuHint: "montecristo-no-2" },
+      { url: "https://cigarmust.com/en/montecristo/336-40-montecristo-petit-edmundo-7612907062314.html",     skuHint: "montecristo-petit-edmundo" },
+      { url: "https://cigarmust.com/en/partagas/367-85-partagas-serie-d-no4-7612907062994.html",             skuHint: "partagas-serie-d-no-4" },
+      { url: "https://cigarmust.com/en/hoyo-de-monterrey/273-18-hoyo-de-monterrey-epicure-no-2-7612907061461.html", skuHint: "hoyo-de-monterrey-epicure-no-2" },
+      { url: "https://cigarmust.com/en/trinidad/448-121-trinidad-reyes-7612907060389.html",                  skuHint: "trinidad-reyes" },
+    ],
+  },
+  "uk-havanahouse": {
+    country: "uk",
+    // WooCommerce backend — serves Schema.org JSON-LD per PDP. Each pack size
+    // is a SEPARATE product page (unlike Noblego's all-in-one), so we list
+    // only the box-of-25 PDPs and override packSize from the URL slug.
+    stack: "schema_org_jsonld",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://www.havanahouse.co.uk/product/cohiba-robusto-box-of-25/",                       skuHint: "cohiba-robustos",            packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/cohiba-behike-52-cigar-box-of-10/",               skuHint: "cohiba-behike-52",           packSize: 10 },
+      { url: "https://www.havanahouse.co.uk/product/cohiba-siglo-iv-cigar-box-of-25/",                skuHint: "cohiba-siglo-iv",            packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/cohiba-esplendidos-box-of-25/",                   skuHint: "cohiba-esplendidos",         packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/montecristo-no-4-box-of-25/",                     skuHint: "montecristo-no-4",           packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/montecristo-no-2-box-of-25/",                     skuHint: "montecristo-no-2",           packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/montecristo-petit-edmundo-box-of-25/",            skuHint: "montecristo-petit-edmundo",  packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/partagas-series-d-no-4-box-of-25/",               skuHint: "partagas-serie-d-no-4",      packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/romeo-y-julieta-petit-corona-cigar-box-of-25/",   skuHint: "romeo-y-julieta-petit-coronas", packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/hoyo-de-monterrey-epicure-no-2-cigar-box-25/",    skuHint: "hoyo-de-monterrey-epicure-no-2", packSize: 25 },
+      { url: "https://www.havanahouse.co.uk/product/trinidad-reyes-cigar-box-12/",                    skuHint: "trinidad-reyes",             packSize: 12 },
+      { url: "https://www.havanahouse.co.uk/product/bolivar-belicosos-finos-cigar-cabinet-of-25/",    skuHint: "bolivar-belicosos-finos",    packSize: 25 },
     ],
   },
   "de-cigarworld": {
@@ -426,6 +476,14 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       let parsed: ParsedOffer[];
       if (config.stack === "noblego_html") parsed = parseNoblegoHtml(html);
       else parsed = parseSchemaOrg(html);
+
+      // Apply per-PDP pack-size override. Used when the retailer splits each
+      // pack-size into a separate PDP (Havana House WooCommerce style) and the
+      // JSON-LD doesn't expose eligibleQuantity — the URL slug is then the
+      // most reliable source. We rewrite every parsed offer to the override.
+      if (typeof pdp.packSize === "number") {
+        parsed = parsed.map((o) => ({ ...o, packSize: pdp.packSize! }));
+      }
 
       debugLog.push({
         url: pdp.url,
