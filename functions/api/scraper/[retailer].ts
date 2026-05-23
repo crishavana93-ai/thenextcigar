@@ -907,6 +907,19 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   }
 
   const scrapedAt = new Date().toISOString();
+
+  // ── Slicing: `?slice=N&total=T` processes only the Nth slice of T equal
+  // partitions of config.pdps. Used by GH Actions to call each retailer
+  // multiple times so no single invocation hits Cloudflare's subrequest /
+  // memory / CPU limits when the PDP count is large (52 PDPs / 3 slices
+  // ≈ 17 PDPs per invocation = ~20 subrequests including Supabase write).
+  const sliceN = parseInt(url.searchParams.get("slice") || "0", 10) || 0;
+  const sliceTotal = Math.max(1, parseInt(url.searchParams.get("total") || "1", 10) || 1);
+  let pdpsToProcess = config.pdps;
+  if (sliceTotal > 1) {
+    const size = Math.ceil(config.pdps.length / sliceTotal);
+    pdpsToProcess = config.pdps.slice(sliceN * size, (sliceN + 1) * size);
+  }
   const rowsToInsert: Array<Record<string, unknown>> = [];
   const debugLog: Array<Record<string, unknown>> = [];
   const errors: string[] = [];
@@ -917,7 +930,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   // timeout. We now fetch in batches of CONCURRENCY at a time using Promise.all
   // so 52 URLs complete in ~12s instead of ~100s. CPU work (parsing) still
   // happens inline per response, well under the 30s CPU limit.
-  const CONCURRENCY = 8;
+  const CONCURRENCY = 4;
 
   async function processPdp(pdp: PdpUrl): Promise<void> {
     try {
@@ -995,11 +1008,10 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
     }
   }
 
-  // Slice the pdps array into chunks of CONCURRENCY and await each chunk.
-  // Maintains a hard cap on simultaneous fetches so we don't trip any per-host
-  // rate limit while still drastically cutting total wall-clock time.
-  for (let i = 0; i < config.pdps.length; i += CONCURRENCY) {
-    const batch = config.pdps.slice(i, i + CONCURRENCY);
+  // Slice the pdpsToProcess array into chunks of CONCURRENCY and await each
+  // chunk. pdpsToProcess respects the ?slice=N&total=T params if set.
+  for (let i = 0; i < pdpsToProcess.length; i += CONCURRENCY) {
+    const batch = pdpsToProcess.slice(i, i + CONCURRENCY);
     await Promise.all(batch.map(processPdp));
   }
 
@@ -1031,11 +1043,13 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   }
 
   return json({
-    ok: errors.length === 0 && inserted > 0,
+    ok: errors.length === 0 && (inserted > 0 || pdpsToProcess.length === 0),
     retailerId,
     scrapedAt,
+    slice: { n: sliceN, total: sliceTotal, pdpsInSlice: pdpsToProcess.length },
     stats: {
-      pdpsScraped: config.pdps.length,
+      pdpsScraped: pdpsToProcess.length,
+      pdpsConfigured: config.pdps.length,
       bytesDownloaded,
       rowsExtracted: rowsToInsert.length,
       inserted,
