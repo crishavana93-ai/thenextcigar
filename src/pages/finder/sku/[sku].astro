@@ -31,7 +31,14 @@ const offers = snapshots
     const country  = COUNTRY_BY_CODE[retailer.country];
     const eur      = toEUR(snap.price, snap.currency);
     const link     = effectiveShopUrl(snap.sourceUrl, sku, retailer);
-    return { snap, retailer, country, eur, perCigarEur: eur / sku.boxSize, link };
+    const shopLabel = link.isExact ? "Shop →" : "Search on site →";
+    const shopClass = link.isExact ? "finder-table__compare" : "finder-table__compare finder-table__compare--search";
+    const shopTitle = link.isExact
+      ? "Opens the retailer's product page in a new tab"
+      : "We don't have a direct link to this cigar on " + retailer.name + " yet — this opens their site search for " + sku.brand + " " + sku.vitola + ".";
+    // Pre-format the "Last verified" date so the template doesn't need an IIFE
+    const verifiedDate = new Date(snap.scrapedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    return { snap, retailer, country, eur, perCigarEur: eur / sku.boxSize, link, shopLabel, shopClass, shopTitle, verifiedDate };
   })
   .sort((a, b) => {
     // In-stock first, then by EUR price ascending
@@ -239,24 +246,19 @@ const ogDescription = best
                     For unverified rows we honestly say 'Last verified' so
                     users know the data is historical, not real-time. */}
                 <span class="finder-stock finder-stock--unverified" title="No live scrape for this retailer yet — please verify availability on their site before purchasing">
-                  Last verified · {(() => {
-                    const d = new Date(o.snap.scrapedAt);
-                    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-                  })()}
+                  Last verified · {o.verifiedDate}
                 </span>
               </td>
               <td class="finder-table__cta">
                 <a
                   href={o.link.url}
-                  class={o.link.isExact ? "finder-table__compare" : "finder-table__compare finder-table__compare--search"}
+                  class={o.shopClass}
                   target="_blank"
                   rel="noopener noreferrer sponsored"
                   data-cell="shop"
-                  title={o.link.isExact
-                    ? "Opens the retailer's product page in a new tab"
-                    : `We don't have a direct link to this cigar on ${o.retailer.name} yet — this opens their site search for "${sku.brand} ${sku.vitola}".`}
+                  title={o.shopTitle}
                 >
-                  {o.link.isExact ? "Shop →" : "Search on site →"}
+                  {o.shopLabel}
                 </a>
               </td>
             </tr>
