@@ -151,57 +151,13 @@ const breadcrumbJsonLd = {
     </div>
   </section>
 
-  {/* ─── SEARCH BAR — free text + brand + country + in-stock filters ───── */}
-  <section class="container-wide pb-12 reveal" id="finder-search-section">
-    <div class="finder-search">
-      <label class="finder-search__label" for="finder-search-input">
-        Search the catalogue
-      </label>
-      <div class="finder-search__row">
-        <div class="finder-search__input-wrap">
-          <svg class="finder-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input
-            type="search"
-            id="finder-search-input"
-            class="finder-search__input"
-            placeholder="Try 'Cohiba Robustos', 'Petit Edmundo', 'Trinidad'…"
-            autocomplete="off"
-            aria-label="Search Cuban cigars by name"
-          />
-          <button type="button" class="finder-search__clear" data-finder-clear aria-label="Clear search">×</button>
-        </div>
-        <select class="finder-search__country" id="finder-search-country" aria-label="Filter by country">
-          <option value="">All countries</option>
-          {searchCountries.map((c) => (
-            <option value={c.code}>{c.flag} {c.name}</option>
-          ))}
-        </select>
-        <label class="finder-search__instock">
-          <input type="checkbox" id="finder-search-instock" />
-          <span>In stock only</span>
-        </label>
-      </div>
-      <div class="finder-search__chips" role="group" aria-label="Filter by brand">
-        <button type="button" class="finder-search__chip is-active" data-brand-chip="">All brands</button>
-        {allBrands.map((brand) => (
-          <button type="button" class="finder-search__chip" data-brand-chip={brand}>{brand}</button>
-        ))}
-      </div>
-      <p class="finder-search__count" data-finder-count aria-live="polite">
-        Showing all {skuCount} cigars
-      </p>
-    </div>
-  </section>
-
   {/* ─── COUNTRY PICKER ─────────────────────────────────────────────────── */}
   <section class="container-wide pb-16 reveal" data-finder-country-section>
-    <p class="section-eyebrow" style="font-size:clamp(1.4rem,3.2vw,2.25rem);">Start with your country</p>
+    <p class="section-eyebrow" style="font-size:clamp(1.4rem,3.2vw,2.25rem);">Browse by country</p>
     <p class="mt-3 mb-8 text-[color:var(--color-text-soft)] max-w-2xl text-base leading-relaxed">
       Tobacco excise is country-specific in the EU, so most retailers ship within their own borders.
-      Pick a market to see retailers and current prices that will actually ship to you.
+      Pick a market to see retailers and current prices that will actually ship to you —
+      or <a href="#finder-catalogue" style="color:var(--color-gold-hover);text-decoration:underline;">jump to the catalogue search ↓</a> if you already know which cigar you want.
     </p>
 
     <h3 class="finder-section-h">Open markets — domestic & EU shipping</h3>
@@ -273,17 +229,64 @@ const breadcrumbJsonLd = {
     </section>
   )}
 
-  {/* ─── FEATURED SKUS — "Lowest price across Europe" ───────────────────── */}
-  <section class="container-wide py-16 md:py-20 reveal">
-    <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
+  {/* ─── FEATURED SKUS — search bar + filterable catalogue.
+      The search bar is paired directly with the SKU table it filters; the
+      country picker above is the "browse by geography" path, this is the
+      "find a specific cigar" path. Brand chips + country dropdown + in-stock
+      toggle + free-text input, all client-side. ─────────────────────────── */}
+  <section class="container-wide py-16 md:py-20 reveal" id="finder-catalogue">
+    <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
       <div>
         <p class="lounge-label">The catalogue</p>
-        <h2 class="finder-h2 mt-2">Twelve Cuban cigars, every European price</h2>
+        <h2 class="finder-h2 mt-2">Or search by cigar</h2>
         <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
           The flagship Habanos catalogue, sorted by the cheapest verified box price in Europe.
-          Click any cigar to see every retailer that stocks it and the current best deal in your country.
+          Search by name, filter by brand or country, click any cigar to compare every retailer.
         </p>
       </div>
+    </div>
+
+    {/* Search + filter controls — applied to the table below */}
+    <div class="finder-search mb-8" id="finder-search-section">
+      <label class="finder-search__label" for="finder-search-input">
+        Search the catalogue
+      </label>
+      <div class="finder-search__row">
+        <div class="finder-search__input-wrap">
+          <svg class="finder-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="search"
+            id="finder-search-input"
+            class="finder-search__input"
+            placeholder="Try 'Cohiba Robustos', 'Petit Edmundo', 'Trinidad'…"
+            autocomplete="off"
+            aria-label="Search Cuban cigars by name"
+          />
+          <button type="button" class="finder-search__clear" data-finder-clear aria-label="Clear search">×</button>
+        </div>
+        <select class="finder-search__country" id="finder-search-country" aria-label="Filter by country">
+          <option value="">All countries</option>
+          {searchCountries.map((c) => (
+            <option value={c.code}>{c.flag} {c.name}</option>
+          ))}
+        </select>
+        <label class="finder-search__instock">
+          <input type="checkbox" id="finder-search-instock" />
+          <span>In stock only</span>
+        </label>
+      </div>
+      <div class="finder-search__chips" role="group" aria-label="Filter by brand">
+        <button type="button" class="finder-search__chip is-active" data-brand-chip="">All brands</button>
+        {allBrands.map((brand) => (
+          <button type="button" class="finder-search__chip" data-brand-chip={brand}>{brand}</button>
+        ))}
+      </div>
+      <p class="finder-search__count" data-finder-count aria-live="polite">
+        Showing all {skuCount} cigars
+      </p>
     </div>
 
     <div class="finder-table-wrap">
