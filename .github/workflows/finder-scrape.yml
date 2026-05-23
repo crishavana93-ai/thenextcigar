@@ -89,3 +89,50 @@ jobs:
             echo "::error::Zero rows inserted — parser may have regressed"
             exit 1
           fi
+
+  # Once both retailers have written fresh snapshots, diff against the previous
+  # round and email subscribers about price_drop / back_in_stock events. We let
+  # this fail soft — alerts are best-effort and shouldn't block scraping.
+  alerts:
+    needs: scrape
+    if: always() && needs.scrape.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Fire watchlist alerts
+        env:
+          SCRAPER_ADMIN_TOKEN: ${{ secrets.SCRAPER_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SCRAPER_ADMIN_TOKEN:-}" ]; then
+            echo "::error::SCRAPER_ADMIN_TOKEN secret is not set"
+            exit 1
+          fi
+          echo "→ POST /api/finder/alerts/process"
+          response=$(curl -sS -w "\n%{http_code}" \
+            -X POST "https://thenextcigar.com/api/finder/alerts/process" \
+            -H "X-Scraper-Token: ${SCRAPER_ADMIN_TOKEN}" \
+            --max-time 120)
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP $http_code"
+          echo "$body" | head -c 4000
+          echo ""
+          if [ "$http_code" != "200" ]; then
+            echo "::warning::Alert engine returned HTTP $http_code"
+            exit 0
+          fi
+          scanned=$(echo "$body" | jq -r '.watchlistsScanned // 0')
+          fired=$(echo "$body" | jq -r '.alertsFired // 0')
+          detected=$(echo "$body" | jq -r '.eventsDetected // 0')
+          {
+            echo "## Alerts"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| watchlists scanned | $scanned |"
+            echo "| events detected | $detected |"
+            echo "| alerts fired | $fired |"
+          } >> "$GITHUB_STEP_SUMMARY"
