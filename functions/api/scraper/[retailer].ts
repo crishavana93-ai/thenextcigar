@@ -239,19 +239,52 @@ function extractJsonLdBlocks(html: string): unknown[] {
   const rx = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let m: RegExpExecArray | null;
   while ((m = rx.exec(html)) !== null) {
-    try { blocks.push(JSON.parse(m[1].trim())); }
-    catch { try { blocks.push(JSON.parse(m[1].trim().replace(/,(\s*[}\]])/g, "$1"))); } catch {} }
+    // Clean common injections: leading XML comments, trailing commas, HTML
+    // entity escaping (some CMS encode quotes inside JSON-LD by mistake).
+    let raw = m[1].trim()
+      .replace(/^<!--[\s\S]*?-->\s*/i, "")           // strip leading HTML comment
+      .replace(/\s*<!--[\s\S]*?-->\s*$/i, "")        // strip trailing HTML comment
+      .replace(/^\s*\/\*[\s\S]*?\*\/\s*/i, "")       // strip leading /* … */ comment
+      .replace(/[  ]/g, " ");              // line/paragraph separators
+    const attempts: Array<() => unknown> = [
+      () => JSON.parse(raw),
+      () => JSON.parse(raw.replace(/,(\s*[}\]])/g, "$1")),                          // trailing commas
+      () => JSON.parse(raw.replace(/&quot;/g, '"').replace(/&amp;/g, "&")),         // HTML-escaped quotes
+      () => JSON.parse(raw.replace(/,(\s*[}\]])/g, "$1").replace(/&quot;/g, '"')),  // both
+    ];
+    let parsed: unknown = null;
+    for (const attempt of attempts) {
+      try { parsed = attempt(); break; } catch { /* try next */ }
+    }
+    if (parsed) blocks.push(parsed);
   }
   return blocks;
 }
-function* iterateProducts(node: unknown): Generator<Record<string, unknown>> {
+// Yield every Product node anywhere in the JSON-LD tree. Walks ALL object
+// properties (not just @graph) because:
+//   - WooCommerce / PrestaShop nest the Product inside WebPage, mainEntity,
+//     hasOfferCatalog, isRelatedTo, or under their own custom keys
+//   - Some sites wrap the catalog in {"WebPage": {...}, "Product": {...}}
+//     at root level with no @graph wrapper
+//   - @type can be a string ("Product"), an array (["Product", "Variant"]),
+//     or a fully-qualified URL ("https://schema.org/Product")
+function* iterateProducts(node: unknown, depth = 0): Generator<Record<string, unknown>> {
+  if (depth > 12) return;                            // safety against cycles
   if (!node || typeof node !== "object") return;
-  if (Array.isArray(node)) { for (const n of node) yield* iterateProducts(n); return; }
+  if (Array.isArray(node)) {
+    for (const n of node) yield* iterateProducts(n, depth + 1);
+    return;
+  }
   const obj = node as Record<string, unknown>;
+  // Normalise @type to a list of bare type names (strip schema.org URL prefix).
   const t = obj["@type"];
-  const isProduct = t === "Product" || (Array.isArray(t) && t.includes("Product"));
-  if (isProduct) yield obj;
-  if (Array.isArray(obj["@graph"])) yield* iterateProducts(obj["@graph"]);
+  const types: string[] = [];
+  if (typeof t === "string") types.push(t);
+  else if (Array.isArray(t)) for (const x of t) if (typeof x === "string") types.push(x);
+  const bareTypes = types.map((s) => s.replace(/^https?:\/\/schema\.org\//, ""));
+  if (bareTypes.includes("Product")) yield obj;
+  // Recurse into every nested property — Products may sit under any key.
+  for (const v of Object.values(obj)) yield* iterateProducts(v, depth + 1);
 }
 // Schema.org price-spec parser. Reads pack size from:
 //   offer.priceSpecification.eligibleQuantity (string|number|QuantitativeValue.value)
