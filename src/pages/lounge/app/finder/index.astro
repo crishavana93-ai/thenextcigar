@@ -149,6 +149,36 @@ const cataloguePerSku = SKUS.map((sku) => ({
       </div>
     </section>
 
+    {/* Region B+ — Picked for your taste.
+        Personalized 3-card row computed from the member's profile
+        (favorite_brands, flavor_notes, strength_preference). Falls back
+        to Editor's Picks for members who haven't filled out preferences
+        yet — that variant is the entry point to /profile setup. The
+        section is hidden by default; hydrateRecommendations() reveals
+        it once we know if the member is signed in + their profile state. */}
+    <section class="container-wide pt-2 pb-6 reveal" id="picked-section" hidden>
+      <div class="finder-section-head">
+        <p class="lounge-label" id="picked-label">Picked for your taste</p>
+        <a href="/lounge/app/profile/" class="finder-section-head__meta" id="picked-profile-link" hidden>
+          Tune my taste profile →
+        </a>
+      </div>
+      <p class="finder-picked-lead" id="picked-lead" hidden>
+        Matched against your flavor profile, strength preference, and the brands you've saved.
+      </p>
+      <div class="finder-picked-grid" id="picked-grid">
+        {/* Populated by JS — Astro can't read auth.uid() at build time. */}
+      </div>
+      {/* Empty-state CTA for profiles that lack taste data. */}
+      <div class="finder-picked-empty" id="picked-empty" hidden>
+        <p class="finder-picked-empty__lead">
+          <strong>Tell us what you like.</strong> Pick a few flavor notes and a strength preference in
+          your profile — we'll surface the cigars from our catalogue that match your taste.
+        </p>
+        <a href="/lounge/app/profile/?setup=1" class="lbtn lbtn-primary lbtn-sm">Complete my taste profile →</a>
+      </div>
+    </section>
+
     {/* Region B½ — Catalogue search.
         Lets a member type any cigar name to find SKUs they can add to
         their watchlist. Same filter pattern as /finder/ (free text + brand
@@ -320,7 +350,11 @@ const cataloguePerSku = SKUS.map((sku) => ({
 
 <script>
   import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
-  import { matchKnownBrand, TRACKED_BRAND_NAMES, KNOWN_BRANDS, SKUS } from "../../../../data/finder-data";
+  import {
+    matchKnownBrand, TRACKED_BRAND_NAMES, KNOWN_BRANDS, SKUS,
+    selectRecommendedSkus, EDITORS_PICK_SKU_IDS, profileHasTasteData,
+    SKU_BY_ID, bestPriceForSku, formatPrice,
+  } from "../../../../data/finder-data";
 
   // Hydrate the watchlist with the signed-in member's saved SKUs. If they
   // have no rows yet, fall back to the demo cards (and keep the demo pill
@@ -385,6 +419,104 @@ const cataloguePerSku = SKUS.map((sku) => ({
   }
   document.addEventListener("astro:page-load", hydrateWatchlist);
   hydrateWatchlist();
+
+  // ─── Picked for your taste ─────────────────────────────────────────────
+  // Reads the member's profile preference fields, runs scoreSkuForProfile
+  // over the catalogue, and renders the top 3 picks with match reasons.
+  // Falls back to Editor's Picks when preferences are missing or the user
+  // is signed out. Always reveals the section so the page never looks
+  // half-built; the empty state has its own profile-completion CTA.
+  async function hydrateRecommendations() {
+    const section   = document.getElementById("picked-section");
+    const grid      = document.getElementById("picked-grid");
+    const lead      = document.getElementById("picked-lead");
+    const empty     = document.getElementById("picked-empty");
+    const label     = document.getElementById("picked-label");
+    const profLink  = document.getElementById("picked-profile-link");
+    if (!section || !grid) return;
+
+    let mode: "personalized" | "editors" = "editors";
+    let picks: ReturnType<typeof selectRecommendedSkus> = [];
+
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        const supabase = getSupabase();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("favorite_brands, flavor_notes, strength_preference")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profile && profileHasTasteData(profile)) {
+          mode = "personalized";
+          picks = selectRecommendedSkus(profile as any);
+        }
+      }
+    } catch (err) {
+      console.warn("[Lounge Finder] taste recommendation failed:", err);
+    }
+
+    // Fall back to editor's picks if no personalised picks computed.
+    if (picks.length === 0) {
+      picks = EDITORS_PICK_SKU_IDS
+        .map((id) => SKU_BY_ID[id])
+        .filter(Boolean)
+        .map((sku) => ({ sku, score: 0, reasons: [] }));
+      mode = "editors";
+    }
+
+    // Render cards.
+    section.hidden = false;
+    if (mode === "editors") {
+      if (label) label.textContent = "Editor's picks";
+      if (lead) {
+        lead.hidden = false;
+        lead.textContent = "A starting trio while we get to know you. Tell us what you like to unlock taste-matched picks below.";
+      }
+      if (empty) empty.hidden = false;
+      if (profLink) profLink.hidden = true;
+    } else {
+      if (label) label.textContent = "Picked for your taste";
+      if (lead) {
+        lead.hidden = false;
+        lead.textContent = "Matched against your flavor profile, strength preference, and the brands you've saved.";
+      }
+      if (empty) empty.hidden = true;
+      if (profLink) profLink.hidden = false;
+    }
+
+    function escapeHtml(s: string): string {
+      return s.replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+    }
+
+    grid.innerHTML = picks.map(({ sku, reasons }) => {
+      const best = bestPriceForSku(sku.id);
+      const priceHtml = best
+        ? `<span class="finder-picked-card__price-now">${escapeHtml(formatPrice(best.snap.price, best.snap.currency))}</span>` +
+          (best.snap.currency !== "EUR"
+            ? `<span class="finder-picked-card__price-eur">≈ €${Math.round(best.eur).toLocaleString("en-US")}</span>`
+            : "")
+        : `<span class="finder-picked-card__price-empty">No live price yet</span>`;
+
+      const reasonsHtml = reasons.length > 0 && mode === "personalized"
+        ? `<p class="finder-picked-card__why">Matches: <strong>${reasons.slice(0, 3).map(escapeHtml).join(" · ")}</strong></p>`
+        : "";
+
+      return `<a class="finder-picked-card" href="/finder/sku/${escapeHtml(sku.slug)}/">
+                <div class="finder-picked-card__head">
+                  <span class="finder-picked-card__brand">${escapeHtml(sku.brand)}</span>
+                  <span class="finder-picked-card__vitola">${escapeHtml(sku.vitola)}</span>
+                </div>
+                <p class="finder-picked-card__spec">${escapeHtml(sku.shape)} · ring ${sku.ring} · box ${sku.boxSize}</p>
+                ${reasonsHtml}
+                <div class="finder-picked-card__price">${priceHtml}</div>
+              </a>`;
+    }).join("");
+  }
+  document.addEventListener("astro:page-load", hydrateRecommendations);
+  hydrateRecommendations();
 
   // ─── Catalogue search — filter the SKU card grid in real time. ────────
   // Mirrors the public /finder/ filter pattern: free-text + brand chip +
@@ -872,6 +1004,111 @@ const cataloguePerSku = SKUS.map((sku) => ({
     text-align: center;
   }
   [data-state="live"] .finder-watch__demo-pill { display: none; }
+
+  /* ─── Picked for your taste (Region B+) ───────────────────────────── */
+  .finder-picked-lead {
+    margin: 0.4rem 0 1rem;
+    color: var(--color-text-soft);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    max-width: 56ch;
+  }
+  .finder-picked-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.7rem;
+  }
+  .finder-picked-card {
+    position: relative;
+    background: linear-gradient(180deg, #fff 0%, #fbf8f1 100%);
+    border: 1px solid rgba(201, 169, 97, 0.35);
+    border-radius: 10px;
+    padding: 0.95rem 1rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+  }
+  .finder-picked-card:hover {
+    border-color: var(--color-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(201, 169, 97, 0.12);
+  }
+  .finder-picked-card__head {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .finder-picked-card__brand {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-gold-hover);
+    font-weight: 800;
+  }
+  .finder-picked-card__vitola {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-top: 0.15rem;
+  }
+  .finder-picked-card__spec {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+  }
+  .finder-picked-card__why {
+    margin: 0.25rem 0 0 0;
+    padding: 0.4rem 0.55rem;
+    background: rgba(201, 169, 97, 0.14);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--color-text);
+    line-height: 1.35;
+  }
+  .finder-picked-card__why strong { color: var(--color-text); }
+  .finder-picked-card__price {
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(201, 169, 97, 0.18);
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+  .finder-picked-card__price-now {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--color-text);
+  }
+  .finder-picked-card__price-eur {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+  .finder-picked-card__price-empty {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+  .finder-picked-empty {
+    margin-top: 0.85rem;
+    padding: 1rem 1.15rem;
+    background: var(--color-bg-soft);
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    align-items: flex-start;
+  }
+  .finder-picked-empty__lead {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-soft);
+    line-height: 1.5;
+  }
 
   /* ─── Catalogue search (Region B½) ─────────────────────────────────── */
   .lcat-search {

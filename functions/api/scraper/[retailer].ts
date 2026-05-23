@@ -149,7 +149,11 @@ const SCRAPERS: Record<string, ScraperConfig> = {
     preferredPackSize: 25,
     pdps: [
       { url: "https://cigarmust.com/en/cohiba/217-140-cohiba-robustos-7612907060907.html",                   skuHint: "cohiba-robustos" },
-      { url: "https://cigarmust.com/en/cohiba/209-cohiba-behike-52-7612907060877.html",                      skuHint: "cohiba-behike-52" },
+      // { url: "https://cigarmust.com/en/cohiba/209-cohiba-behike-52-7612907060877.html", skuHint: "cohiba-behike-52" },
+      // ⚠️ Behike 52 disabled — without a combination ID the PrestaShop page
+      // defaults to a non-canonical pack size and returns CHF 448 (≈ 3-pack
+      // price marked as 25-pack). Re-enable once we find the box-of-10
+      // combination URL (likely 209-{comboId}-cohiba-behike-52-...html).
       { url: "https://cigarmust.com/en/cohiba/224-cohiba-siglo-iv-7612907060945.html",                       skuHint: "cohiba-siglo-iv" },
       { url: "https://cigarmust.com/en/cohiba/212-cohiba-esplendidos-7612907060600.html",                    skuHint: "cohiba-esplendidos" },
       { url: "https://cigarmust.com/en/montecristo/341-70-montecristo-no4-7612907062178.html",               skuHint: "montecristo-no-4" },

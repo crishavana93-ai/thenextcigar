@@ -510,6 +510,154 @@ export function matchKnownBrand(query: string): KnownBrand | null {
 export const TRACKED_BRAND_NAMES: Set<string> = new Set(SKUS.map((s) => s.brand));
 
 // ============================================================================
+// PERSONALIZATION — score an SKU against a member's taste profile
+// ============================================================================
+// Used by the Lounge Finder "Picked for your taste" section. Reads the
+// profile.favorite_brands / .flavor_notes / .strength_preference fields and
+// produces a numeric score; higher means a better taste match.
+//
+// Scoring weights (tuned for our 15-note vocabulary + 4-tier strength):
+//   +3.0  favourite-brand hit
+//   +1.0  per overlapping flavour note (cap +5.0 — five matches is plenty)
+//   +2.0  exact strength match
+//   +1.0  adjacent strength (one tier off)
+//   +0.6  has at least one in-stock retailer (don't recommend dead SKUs)
+//   -0.4  per-cigar price above EU median (gentle nudge toward affordability)
+//
+// Tiebreakers handled in selectRecommendedSkus() below.
+// ============================================================================
+export type StrengthLevel = "mild" | "medium" | "full" | "extra_full";
+
+export interface TasteProfile {
+  favorite_brands: string[] | null;
+  flavor_notes:    string[] | null;
+  strength_preference: StrengthLevel | null;
+}
+
+const STRENGTH_ORDER: StrengthLevel[] = ["mild", "medium", "full", "extra_full"];
+function strengthDistance(a: StrengthLevel, b: StrengthLevel): number {
+  return Math.abs(STRENGTH_ORDER.indexOf(a) - STRENGTH_ORDER.indexOf(b));
+}
+
+/** Compute a deterministic match score between an SKU and a member's profile. */
+export function scoreSkuForProfile(
+  sku: Sku,
+  profile: TasteProfile,
+  context: { hasInStockSnapshot: boolean; perCigarEur: number | null; medianPerCigarEur: number } = {
+    hasInStockSnapshot: true, perCigarEur: null, medianPerCigarEur: 50,
+  },
+): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // Brand match (+3) — strongest single signal of taste alignment.
+  const favBrands = profile.favorite_brands || [];
+  if (favBrands.length > 0 && favBrands.includes(sku.brand)) {
+    score += 3;
+    reasons.push(sku.brand);
+  }
+
+  // Flavor-note overlap — each match is +1 up to +5.
+  const wantNotes = profile.flavor_notes || [];
+  if (wantNotes.length > 0) {
+    const overlap = sku.flavorNotes.filter((n) => wantNotes.includes(n));
+    const bonus = Math.min(5, overlap.length);
+    score += bonus;
+    if (overlap.length > 0) reasons.push(...overlap.slice(0, 3));  // surface up to 3 matched notes
+  }
+
+  // Strength alignment.
+  if (profile.strength_preference) {
+    const d = strengthDistance(sku.strength, profile.strength_preference);
+    if (d === 0) { score += 2; reasons.push(strengthLabel(sku.strength)); }
+    else if (d === 1) { score += 1; }
+  }
+
+  // In-stock bias — don't recommend a SKU that's OOS everywhere.
+  if (context.hasInStockSnapshot) score += 0.6;
+
+  // Gentle affordability nudge — penalise SKUs more expensive per cigar than median.
+  if (context.perCigarEur != null) {
+    const delta = context.perCigarEur - context.medianPerCigarEur;
+    if (delta > 0) score -= Math.min(0.4, delta / 100);
+  }
+
+  return { score, reasons };
+}
+
+function strengthLabel(s: StrengthLevel): string {
+  return ({ mild: "Mild", medium: "Medium", full: "Full", extra_full: "Extra full" } as const)[s];
+}
+
+/**
+ * Select the top N SKUs for a member, with light diversification so the
+ * recommendations don't all come from one brand. Returns SKUs sorted by
+ * score (desc) with their match reasons surfaced for the UI.
+ */
+export interface SkuRecommendation {
+  sku: Sku;
+  score: number;
+  reasons: string[];
+}
+
+export function selectRecommendedSkus(
+  profile: TasteProfile,
+  context: {
+    skuInStock?: Record<string, boolean>;
+    perCigarEurBySku?: Record<string, number>;
+  } = {},
+  limit = 3,
+): SkuRecommendation[] {
+  // Compute median per-cigar price for the affordability penalty.
+  const prices = Object.values(context.perCigarEurBySku || {}).filter((p) => Number.isFinite(p));
+  prices.sort((a, b) => a - b);
+  const medianPerCigarEur = prices.length ? prices[Math.floor(prices.length / 2)] : 50;
+
+  // Score every SKU.
+  const scored: SkuRecommendation[] = SKUS.map((sku) => {
+    const { score, reasons } = scoreSkuForProfile(sku, profile, {
+      hasInStockSnapshot: context.skuInStock?.[sku.id] ?? true,
+      perCigarEur:        context.perCigarEurBySku?.[sku.id] ?? null,
+      medianPerCigarEur,
+    });
+    return { sku, score, reasons };
+  }).sort((a, b) => b.score - a.score);
+
+  // Diversify: avoid returning more than 2 SKUs from the same brand in the
+  // final list. We walk the sorted array and skip the third+ from any brand.
+  const picked: SkuRecommendation[] = [];
+  const brandCount: Record<string, number> = {};
+  for (const rec of scored) {
+    if (picked.length >= limit) break;
+    const c = brandCount[rec.sku.brand] || 0;
+    if (c >= 2) continue;
+    picked.push(rec);
+    brandCount[rec.sku.brand] = c + 1;
+  }
+  return picked;
+}
+
+/**
+ * Editor's Picks — a stable, hand-curated 3-card row shown when the member
+ * hasn't filled out taste preferences yet. Mix of accessible price points
+ * + iconic vitolas + one premium aspiration item.
+ */
+export const EDITORS_PICK_SKU_IDS: string[] = [
+  "montecristo-no-4",          // accessible entry — €358 box, the most-sold Cuban ever
+  "partagas-serie-d-no-4",     // mid-range value — best-value Cuban robusto
+  "cohiba-behike-52",          // aspirational premium — the SKU everyone wants
+];
+
+/** True when a profile has enough data to compute a meaningful recommendation. */
+export function profileHasTasteData(p: Partial<TasteProfile>): boolean {
+  return (
+    (Array.isArray(p.favorite_brands) && p.favorite_brands.length > 0) ||
+    (Array.isArray(p.flavor_notes) && p.flavor_notes.length > 0) ||
+    !!p.strength_preference
+  );
+}
+
+// ============================================================================
 // PRICE SNAPSHOTS — verified May 2026 prices from public retailer pages
 // ============================================================================
 // Notes:
