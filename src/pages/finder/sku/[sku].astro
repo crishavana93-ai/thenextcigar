@@ -15,6 +15,7 @@ import {
   effectiveShopUrl,
   dutyPaidCountries,
 } from "../../../data/finder-data.ts";
+import { buildSkuFaq } from "../../../lib/finder/skuFaq.ts";
 
 export async function getStaticPaths() {
   return SKUS.map((sku) => ({ params: { sku: sku.slug } }));
@@ -161,40 +162,16 @@ const breadcrumbJsonLd = {
   ],
 };
 
-// ─── FAQ items ──────────────────────────────────────────────────────────────
-// Four PAA-shaped questions built from the SKU's actual offers + editorial.
-// Targets the questions buyers actually type into Google for a specific
-// premium Cuban SKU: "where to buy", "how much", "vs alternatives", "is it
-// duty-paid where I live". Renders as FAQPage JSON-LD + visible accordion.
-const cheapestCountry = best?.country.name || "Germany";
-const cheapestRetailer = best?.retailer.name || "Noblego";
-const cheapestEur = best?.eur ? Math.round(best.eur) : null;
-const sameBrandVitolas = SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 4);
-const sameBrandList = sameBrandVitolas.length > 0
-  ? sameBrandVitolas.map((s) => `<a href="/finder/sku/${s.slug}/">${s.brand} ${s.vitola}</a>`).join(", ")
-  : "";
-const faqItems = [
-  {
-    q: `Where is the cheapest place to buy ${sku.brand} ${sku.vitola} in Europe right now?`,
-    a: cheapestEur
-      ? `<p>The cheapest verified box of ${sku.brand} ${sku.vitola} in Europe right now is at <strong>${cheapestRetailer}</strong> in ${cheapestCountry} at approximately <strong>€${cheapestEur.toLocaleString("en-US")}</strong> for a box of ${sku.boxSize} (about €${(cheapestEur / sku.boxSize).toFixed(2)} per cigar). The full ranking — refreshed every six hours across ${offers.length} European retailers — is in the table above.</p><p>Prices and availability shift weekly. Save this SKU to your watchlist with the "Save price alert" button to get an email the moment any retailer in your country drops below your target price.</p>`
-      : `<p>We're tracking ${offers.length} European retailers that list ${sku.brand} ${sku.vitola}. Stock is moving — refresh this page or save it to your watchlist to be alerted when any retailer restocks at a competitive price.</p>`,
-  },
-  {
-    q: `Will the listed price include duty + VAT for my country?`,
-    a: `<p>The "Duty / Ships" column above tells you exactly that. Each retailer's listed price is <strong>all-in (excise duty + VAT included) only in their home country</strong>. Buy from a German retailer as a German buyer: what you see is what you pay. Buy cross-border (e.g. a Swiss retailer shipping to Germany, or any EU retailer shipping to the UK, Sweden, Denmark, Finland, or Ireland) and the destination country will charge its own tobacco excise + VAT at the door — typically <strong>€100–€300 extra</strong> on a box of 25 Habanos, sometimes much more for the UK.</p><p>If you set your destination country on the page, every row that's genuinely all-in for you gets highlighted in green. The dimmed rows are honest-looking prices that will cost more than they show.</p>`,
-  },
-  {
-    q: `How does ${sku.brand} ${sku.vitola} compare to other ${sku.brand} cigars?`,
-    a: sameBrandList
-      ? `<p>${sku.editorial.split("\n\n")[0]}</p><p>If you want a side-by-side comparison of ${sku.brand}'s other vitolas at current European prices, the SKUs we track are: ${sameBrandList}. Each link opens its own live price-comparison page.</p>`
-      : `<p>${sku.editorial.split("\n\n")[0]}</p>`,
-  },
-  {
-    q: `Is the price for ${sku.brand} ${sku.vitola} likely to drop?`,
-    a: `<p>Habanos S.A. (the Cuban state tobacco monopoly) sets the worldwide release-price floor for every Habano in this catalogue. That floor went up roughly 40% during the 2022–2024 global price harmonisation, and Habanos has signalled further annual increases through 2027. So the long-term trend is up, not down.</p><p>Short-term, prices fluctuate at the retailer level — Swiss promotional weeks, German LCDH clearance, the occasional Spanish over-stock. The Finder catches those. A drop alert with no target price will email you on any meaningful reduction; setting a target locks the alert to your specific budget.</p>`,
-  },
-];
+// FAQ items — built in a separate helper module to keep this frontmatter
+// minimal. Astro's esbuild frontmatter parser was choking on the nested
+// template literals + HTML strings + apostrophes when this block lived
+// inline. Helper takes the live data it needs and returns a Q/A array.
+const faqItems = buildSkuFaq({
+  sku,
+  best,
+  offersCount: offers.length,
+  sameBrandSkus: SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 4),
+});
 
 // Open Graph / social copy
 const ogTitle = `${sku.brand} ${sku.vitola} — ${best ? `from ${best.snap.currency} ${best.snap.price.toFixed(0)}` : "European price comparison"}`;
