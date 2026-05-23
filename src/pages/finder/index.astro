@@ -323,21 +323,21 @@ const breadcrumbJsonLd = {
                 data-sku-instock-countries={skuStockCountries.join(",")}
                 data-sku-any-instock={skuStockCountries.length > 0 ? "1" : "0"}
               >
-                <td class="finder-table__brand">
+                <td class="finder-table__brand" data-label="Cigar">
                   <span class="finder-table__brand-name">{sku.brand}</span>
                   <span class="finder-table__offers">{offerCount} {offerCount === 1 ? "offer" : "offers"}</span>
                 </td>
-                <td>{sku.vitola}</td>
-                <td class="finder-table__num">{sku.ring} × {sku.lengthMm}mm</td>
-                <td class="finder-table__num">{sku.boxSize}</td>
-                <td class="finder-table__num finder-table__price">
+                <td data-label="Vitola">{sku.vitola}</td>
+                <td class="finder-table__num" data-label="Ring × Length">{sku.ring} × {sku.lengthMm}mm</td>
+                <td class="finder-table__num" data-label="Box">{sku.boxSize}</td>
+                <td class="finder-table__num finder-table__price" data-label="Best price">
                   {formatPrice(best.snap.price, best.snap.currency)}
                   {best.snap.currency !== "EUR" && (
                     <span class="finder-table__eur">≈ €{best.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
                   )}
                 </td>
-                <td class="finder-table__num">€{perCigar.toFixed(2)}</td>
-                <td>
+                <td class="finder-table__num" data-label="€ / cigar">€{perCigar.toFixed(2)}</td>
+                <td data-label="At">
                   <span class="finder-table__retailer">{retailer.name}</span>
                   <span class="finder-table__country">{retailer.country.toUpperCase()}</span>
                 </td>
@@ -726,6 +726,92 @@ const breadcrumbJsonLd = {
   }
   .finder-table__compare:hover { background: var(--color-accent); color: #fff; }
 
+  /* ─── MOBILE: convert the catalogue table to a card stack ───────────────
+     The desktop layout is a wide 8-column table that overflows on iPhone
+     even with overflow-x:auto. At ≤ 720px we re-flow each <tr> as a card:
+     the <table>/<thead>/<tbody>/<tr>/<td> elements become block-level, and
+     each cell gets a ::before label showing its column name.
+     This works because the cell data attributes were structured for it. */
+  @media (max-width: 720px) {
+    .finder-table-wrap {
+      border: none;
+      background: transparent;
+      overflow-x: visible;
+    }
+    .finder-table,
+    .finder-table thead,
+    .finder-table tbody,
+    .finder-table tr,
+    .finder-table th,
+    .finder-table td {
+      display: block;
+      width: 100%;
+    }
+    /* Hide the header row — labels appear inside each card via ::before. */
+    .finder-table thead { display: none; }
+    .finder-table tr {
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      background: var(--color-bg);
+      padding: 1rem 1.1rem 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    .finder-table tr:hover td { background: transparent; }
+    .finder-table td {
+      padding: 0.4rem 0;
+      border-bottom: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.6rem;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    /* Column label rendered as a left-aligned chip-style prefix. */
+    .finder-table td::before {
+      content: attr(data-label);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      flex: 0 0 auto;
+      text-align: left;
+    }
+    /* Brand cell becomes the card heading — full-width, no flex split. */
+    .finder-table__brand {
+      display: block !important;
+      padding: 0 0 0.55rem !important;
+      border-bottom: 1px solid var(--color-border-soft) !important;
+      margin-bottom: 0.55rem;
+      text-align: left !important;
+      min-width: 0;
+    }
+    .finder-table__brand::before { content: none; }
+    .finder-table__brand-name { font-size: 1.05rem; }
+    /* Numeric cells right-aligned (already are via the flex split). */
+    .finder-table__num { text-align: right; }
+    /* Price cell — make the figure visually prominent on the right. */
+    .finder-table__price { font-size: 1.1rem; }
+    .finder-table__eur { display: inline; margin-left: 0.4rem; }
+    /* Retailer cell stacks name + country code on the right side. */
+    .finder-table__retailer { display: inline; }
+    .finder-table__country  { display: inline; margin-left: 0.4rem; }
+    /* CTA button — full-width at bottom of card. */
+    .finder-table__cta {
+      padding-top: 0.65rem !important;
+      border-top: 1px solid var(--color-border-soft);
+      margin-top: 0.2rem;
+    }
+    .finder-table__cta::before { content: none; }
+    .finder-table__compare {
+      display: block;
+      text-align: center;
+      padding: 0.65rem 1rem;
+      width: 100%;
+    }
+  }
+
   /* Editorial cross-post rail */
   .finder-editorial {
     display: block;
@@ -788,6 +874,16 @@ const breadcrumbJsonLd = {
   }
   @media (max-width: 720px) {
     .finder-search__row { grid-template-columns: 1fr; }
+    .finder-search { padding: 1rem 1.1rem 0.9rem; }
+    /* Brand chips wrap onto multiple lines and stay touch-friendly. */
+    .finder-search__chip {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.78rem;
+    }
+    /* Inputs sized for thumb taps. */
+    .finder-search__input  { padding: 0.85rem 2.4rem 0.85rem 2.6rem; font-size: 16px; }
+    .finder-search__country,
+    .finder-search__instock { padding: 0.85rem 1rem; font-size: 0.92rem; }
   }
   .finder-search__input-wrap {
     position: relative;

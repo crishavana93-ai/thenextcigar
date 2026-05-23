@@ -193,26 +193,26 @@ const ogDescription = best
         <tbody>
           {offers.map((o, i) => (
             <tr class={!o.snap.inStock ? "is-oos" : ""} data-retailer-id={o.retailer.id}>
-              <td data-cell="retailer">
+              <td data-cell="retailer" data-label="Retailer">
                 <span class="finder-table__retailer">{o.retailer.name}</span>
                 {o.retailer.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
                 {i === 0 && o.snap.inStock && <span class="finder-badge finder-badge--accent" data-best-value-badge>Best value</span>}
               </td>
-              <td>{o.country.flag} {o.country.name}</td>
-              <td>
+              <td data-label="Country">{o.country.flag} {o.country.name}</td>
+              <td data-label="Status">
                 <span class="finder-ships">
                   Ships {o.retailer.shipsTo === "domestic" ? "domestic" : o.retailer.shipsTo === "eu" ? "EU" : "worldwide"}
                 </span>
               </td>
-              <td class="finder-table__num finder-table__price" data-cell="price">
+              <td class="finder-table__num finder-table__price" data-cell="price" data-label="Box price">
                 {formatPrice(o.snap.price, o.snap.currency)}
                 {o.snap.originalPrice && (
                   <span class="finder-table__was">was {formatPrice(o.snap.originalPrice, o.snap.currency)}</span>
                 )}
               </td>
-              <td class="finder-table__num" data-cell="eur">€{o.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</td>
-              <td class="finder-table__num" data-cell="per-cigar">€{o.perCigarEur.toFixed(2)}</td>
-              <td data-cell="stock">
+              <td class="finder-table__num" data-cell="eur" data-label="≈ EUR">€{o.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</td>
+              <td class="finder-table__num" data-cell="per-cigar" data-label="€ / cigar">€{o.perCigarEur.toFixed(2)}</td>
+              <td data-cell="stock" data-label="Stock">
                 {o.snap.inStock
                   ? <span class="finder-stock finder-stock--yes">In stock</span>
                   : <span class="finder-stock finder-stock--no">Out of stock</span>}
@@ -667,6 +667,83 @@ const ogDescription = best
 
   /* Offers table reuses landing styles */
   .finder-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); margin-top: 1.5rem; }
+
+  /* ─── MOBILE: convert offer table to card stack ───────────────────────
+     Same pattern as the catalogue table on /finder/. Each <tr> becomes a
+     stand-alone card with column labels via data-label attributes. */
+  @media (max-width: 720px) {
+    .finder-table-wrap { border: none; background: transparent; overflow-x: visible; }
+    .finder-table,
+    .finder-table thead,
+    .finder-table tbody,
+    .finder-table tr,
+    .finder-table th,
+    .finder-table td {
+      display: block;
+      width: 100%;
+    }
+    .finder-table thead { display: none; }
+    .finder-table tr {
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      background: var(--color-bg);
+      padding: 0.95rem 1.05rem 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    .finder-table tr.is-oos { opacity: 0.6; }
+    .finder-table tr:hover td { background: transparent; }
+    .finder-table td {
+      padding: 0.45rem 0;
+      border-bottom: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.6rem;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    .finder-table td::before {
+      content: attr(data-label);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      flex: 0 0 auto;
+      text-align: left;
+    }
+    /* Retailer cell becomes the card heading — full-width, no flex split. */
+    td[data-cell="retailer"] {
+      display: block !important;
+      padding: 0 0 0.55rem !important;
+      border-bottom: 1px solid var(--color-border-soft) !important;
+      margin-bottom: 0.55rem;
+      text-align: left !important;
+    }
+    td[data-cell="retailer"]::before { content: none; }
+    /* CTA — full-width button at bottom of card. */
+    .finder-table__cta {
+      padding-top: 0.65rem !important;
+      border-top: 1px solid var(--color-border-soft);
+      margin-top: 0.2rem;
+    }
+    .finder-table__cta::before { content: none; }
+    .finder-table__compare {
+      display: block;
+      text-align: center;
+      padding: 0.7rem 1rem;
+      width: 100%;
+    }
+    .finder-table__was {
+      display: inline;
+      margin-left: 0.4rem;
+      font-size: 0.78rem;
+      text-decoration: line-through;
+      color: var(--color-text-muted);
+    }
+    /* Pack-note annotation stays inline on mobile. */
+    .finder-pack-note { display: inline; margin-left: 0.3rem; }
+  }
   .finder-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   .finder-table th {
     text-align: left;

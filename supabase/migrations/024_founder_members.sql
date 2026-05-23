@@ -50,8 +50,11 @@ create index if not exists profiles_founder_member_idx
 -- grant to rows where founder_member is currently false, so re-running is
 -- idempotent and won't overwrite manually-promoted accounts).
 -- ────────────────────────────────────────────────────────────────────────────
+-- public.profiles uses `joined_at` (set on row creation), not `created_at`.
+-- We order by joined_at ascending then id as tiebreaker so the result is
+-- deterministic for members who joined on the same second.
 with ordered as (
-  select id, row_number() over (order by created_at asc, id asc) as rn
+  select id, row_number() over (order by joined_at asc nulls last, id asc) as rn
   from public.profiles
   where founder_member = false
 ),
@@ -69,7 +72,7 @@ update public.profiles p
 -- 3. Helper view — surface founder rows for the admin dashboard.
 -- ────────────────────────────────────────────────────────────────────────────
 create or replace view public.founder_members_v as
-  select id, display_name, full_name, founder_number, founder_granted_at, created_at
+  select id, display_name, full_name, founder_number, founder_granted_at, joined_at
   from public.profiles
   where founder_member = true
   order by founder_number asc;
