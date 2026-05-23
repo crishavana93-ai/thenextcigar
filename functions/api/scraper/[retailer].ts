@@ -29,7 +29,7 @@ const FX_TO_EUR: Record<string, number> = {
 };
 
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html";
 
 interface PdpUrl {
   url: string;
@@ -97,12 +97,10 @@ const SCRAPERS: Record<string, ScraperConfig> = {
   },
   "ch-cigarmust": {
     country: "ch",
-    // PrestaShop backend. Each product page lists all pack-size variants and
-    // serves Schema.org JSON-LD with offers + priceSpecification.eligibleQuantity.
-    // Prices in CHF; FX_TO_EUR converts to canonical price_eur for storage.
-    // Currently 10/12 SKUs — Romeo Petit Coronas + Bolívar Belicosos Finos
-    // need their PrestaShop product IDs found; they fall back to static research.
-    stack: "schema_org_jsonld",
+    // PrestaShop backend — but this theme does NOT emit JSON-LD. Instead it
+    // exposes the price via OpenGraph meta tags (product:price:amount/currency)
+    // and the stock state via inline text + meta tags. Custom parser below.
+    stack: "cigarmust_html",
     preferredPackSize: 25,
     pdps: [
       { url: "https://cigarmust.com/en/cohiba/217-140-cohiba-robustos-7612907060907.html",                   skuHint: "cohiba-robustos" },
@@ -119,10 +117,11 @@ const SCRAPERS: Record<string, ScraperConfig> = {
   },
   "uk-havanahouse": {
     country: "uk",
-    // WooCommerce backend — serves Schema.org JSON-LD per PDP. Each pack size
-    // is a SEPARATE product page (unlike Noblego's all-in-one), so we list
-    // only the box-of-25 PDPs and override packSize from the URL slug.
-    stack: "schema_org_jsonld",
+    // WooCommerce backend — emits Yoast SEO JSON-LD with no Product node, so
+    // we fall back to the standard WooCommerce price/stock markup. Each pack
+    // size is a SEPARATE product page (unlike Noblego's all-in-one), so we
+    // list only the canonical pack-size PDPs and set packSize per-PDP.
+    stack: "havanahouse_html",
     preferredPackSize: 25,
     pdps: [
       { url: "https://www.havanahouse.co.uk/product/cohiba-robusto-box-of-25/",                       skuHint: "cohiba-robustos",            packSize: 25 },
@@ -348,6 +347,121 @@ function parseSchemaOrg(html: string): ParsedOffer[] {
   return Array.from(dedup.values());
 }
 
+// ─── Havana House (UK) parser ──────────────────────────────────────────────
+// WooCommerce backend with Yoast SEO. Yoast emits JSON-LD but no Product node,
+// so we read straight off the WooCommerce product markup:
+//
+//   <span class="woocommerce-Price-amount amount">
+//     <bdi><span class="woocommerce-Price-currencySymbol">£</span>475.00</bdi>
+//   </span>
+//
+// Sale prices use <ins>...<bdi>£NNN</bdi></ins> wrapping; we prefer the <ins>
+// price when present (= the current sale price). Stock state:
+//
+//   <p class="stock in-stock">In stock</p>
+//   <p class="stock out-of-stock">Out of stock</p>
+//
+// Each PDP carries one pack size — config sets it via pdp.packSize override.
+function parseHavanaHouseHtml(html: string): ParsedOffer[] {
+  // 1. Restrict the search window to the main product summary if possible —
+  // WooCommerce wraps the canonical price in <div class="summary entry-summary">.
+  // Falls back to whole document if the summary div isn't present.
+  let scope = html;
+  const sumMatch = html.match(/<div[^>]*class=["'][^"']*\bsummary\s+entry-summary\b[^"']*["'][\s\S]{0,80000}?<\/div>\s*(?:<\/div>|<form|<aside)/i);
+  if (sumMatch) scope = sumMatch[0];
+
+  // 2. Try the sale price first (current price in WooCommerce when on sale).
+  let priceStr: string | null = null;
+  const saleMatch = scope.match(/<ins[^>]*>[\s\S]{0,800}?£\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)/i);
+  if (saleMatch) priceStr = saleMatch[1];
+
+  // 3. Fall back to the first woocommerce-Price-amount block.
+  if (!priceStr) {
+    const reg = scope.match(/woocommerce-Price-amount[\s\S]{0,400}?£\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)/i);
+    if (reg) priceStr = reg[1];
+  }
+
+  // 4. Last-ditch — any £NNN.NN with a decimal in the product summary.
+  if (!priceStr) {
+    const fallback = scope.match(/£\s*(\d{1,3}(?:,\d{3})*\.\d{2})/);
+    if (fallback) priceStr = fallback[1];
+  }
+
+  if (!priceStr) return [];
+  const price = parseFloat(priceStr.replace(/,/g, ""));
+  if (!price || price <= 0) return [];
+
+  // 5. Stock state. WooCommerce: <p class="stock in-stock"> or "out-of-stock".
+  const outOfStock = /<[^>]*class=["'][^"']*\bstock\s+out-of-stock\b/i.test(html)
+    || /\bout\s+of\s+stock\b/i.test(scope);
+  const inStock = !outOfStock;
+
+  // packSize defaults to 25 — the config's pdp.packSize override rewrites it.
+  return [{ packSize: 25, price, currency: "GBP", inStock }];
+}
+
+// ─── Cigarmust (CH) parser ─────────────────────────────────────────────────
+// PrestaShop theme with no JSON-LD. Prices live in OpenGraph meta tags:
+//   <meta property="product:price:amount" content="2040">
+//   <meta property="product:price:currency" content="CHF">
+//
+// Pack size lives in the <select name="group[N]"> options (the packaging
+// picker). The OG price corresponds to the currently-selected combination
+// (whichever the canonical URL maps to — usually the box-25 pack).
+//
+// Stock state isn't in OG, so we look for the "In Stock" / "Out of Stock"
+// text and the addtocart button's data-available attribute.
+function parseCigarmustHtml(html: string): ParsedOffer[] {
+  // 1. Price.
+  const priceMatch = html.match(/<meta[^>]+property=["']product:price:amount["'][^>]+content=["']([\d.]+)["']/i);
+  if (!priceMatch) return [];
+  const price = parseFloat(priceMatch[1]);
+  if (!price || price <= 0) return [];
+
+  // 2. Currency.
+  const curMatch = html.match(/<meta[^>]+property=["']product:price:currency["'][^>]+content=["']([A-Z]{3})["']/i);
+  const currency = curMatch ? curMatch[1] : "CHF";
+  if (!FX_TO_EUR[currency]) return [];
+
+  // 3. Stock state. PrestaShop typically renders this as:
+  //   <span id="product-availability" ...>In Stock</span>  (or "Out-of-Stock")
+  // or as a hidden meta:
+  //   <link itemprop="availability" href="https://schema.org/InStock" />
+  let inStock = true;
+  const availMeta = html.match(/itemprop=["']availability["'][^>]+href=["']https?:\/\/schema\.org\/([A-Za-z]+)["']/i);
+  if (availMeta) {
+    inStock = /InStock/i.test(availMeta[1]);
+  } else if (/\b(out[\s-]?of[\s-]?stock|sold[\s-]?out|non[\s-]?disponibile|esaurito)\b/i.test(html)) {
+    inStock = false;
+  }
+
+  // 4. Pack size. Read the currently-selected option from the packaging
+  // selector. PrestaShop renders this as a <select> with the "selected"
+  // option labelled "Box 25 Pcs." / "Petacas 5x3 Pcs (15 Cigars)" / etc.
+  // First try a select-with-selected-option pattern, then a fallback to
+  // reading any "Box N Pcs" or "N Cigars" hint near the price.
+  let packSize = 25;
+  const selectedOpt = html.match(/<option[^>]*\bselected\b[^>]*>([^<]+)<\/option>/i);
+  const packCandidates: string[] = [];
+  if (selectedOpt) packCandidates.push(selectedOpt[1]);
+  // Also probe the page title / h1 area in case it encodes the pack.
+  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if (titleMatch) packCandidates.push(titleMatch[1]);
+
+  for (const txt of packCandidates) {
+    // "Box 25 Pcs." | "Box 12 Pcs." | "Petacas 5x3 Pcs (15 Cigars)" | "10 Cigars"
+    const boxN  = txt.match(/Box\s+(\d{1,3})\s*Pcs/i);
+    const pcsN  = txt.match(/(\d{1,3})\s*Cigars?/i);
+    const xByY  = txt.match(/(\d{1,2})\s*[x×]\s*(\d{1,2})\s*Pcs/i);
+    if (boxN)  { packSize = Number(boxN[1]); break; }
+    if (xByY)  { packSize = Number(xByY[1]) * Number(xByY[2]); break; }
+    if (pcsN)  { packSize = Number(pcsN[1]); break; }
+  }
+  if (!packSize || packSize < 1 || packSize > 100) packSize = 25;
+
+  return [{ packSize, price, currency, inStock }];
+}
+
 // Real-browser User-Agent. Many EU shops (incl. Noblego) gate price markup
 // behind a UA check and serve a stripped/empty page to non-browser fetchers.
 const BROWSER_UA =
@@ -458,8 +572,14 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       if (jsonLdBlocks.length >= 5) break;
     }
 
-    // Run current parser anyway to confirm it returns 0.
-    const parsed = config.stack === "noblego_html" ? parseNoblegoHtml(html) : parseSchemaOrg(html);
+    // Run the retailer's configured parser so debug output reflects reality.
+    let parsed: ParsedOffer[];
+    switch (config.stack) {
+      case "noblego_html":     parsed = parseNoblegoHtml(html); break;
+      case "havanahouse_html": parsed = parseHavanaHouseHtml(html); break;
+      case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
+      default:                 parsed = parseSchemaOrg(html);
+    }
 
     return json({
       ok: true,
@@ -507,8 +627,14 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
 
       // Dispatch on stack
       let parsed: ParsedOffer[];
-      if (config.stack === "noblego_html") parsed = parseNoblegoHtml(html);
-      else parsed = parseSchemaOrg(html);
+      switch (config.stack) {
+        case "noblego_html":     parsed = parseNoblegoHtml(html); break;
+        case "havanahouse_html": parsed = parseHavanaHouseHtml(html); break;
+        case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
+        case "cigarworld_html":  parsed = parseSchemaOrg(html); break; // currently same as schema.org
+        case "schema_org_jsonld":
+        default:                 parsed = parseSchemaOrg(html);
+      }
 
       // Apply per-PDP pack-size override. Used when the retailer splits each
       // pack-size into a separate PDP (Havana House WooCommerce style) and the
