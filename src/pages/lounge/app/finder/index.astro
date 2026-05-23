@@ -173,8 +173,19 @@ const cataloguePerSku = SKUS.map((sku) => ({
               placeholder="Search 'Cohiba', 'Petit Edmundo', 'Trinidad'…"
               autocomplete="off"
               aria-label="Search Cuban cigars"
+              aria-autocomplete="list"
+              aria-controls="lcat-search-ac"
             />
             <button type="button" class="lcat-search__clear" data-lcat-clear aria-label="Clear search">×</button>
+            {/* Autocomplete dropdown — same logic as public /finder/ */}
+            <div
+              class="lcat-search__autocomplete"
+              id="lcat-search-ac"
+              data-lcat-ac
+              role="listbox"
+              aria-label="Search suggestions"
+              hidden
+            ></div>
           </div>
           <select class="lcat-search__country" id="lcat-search-country" aria-label="Filter by country">
             <option value="">All countries</option>
@@ -197,7 +208,10 @@ const cataloguePerSku = SKUS.map((sku) => ({
 
       <div class="lcat-grid">
         {cataloguePerSku.map(({ sku, best, countries, inStockCountries }) => {
-          const searchName = `${sku.brand} ${sku.vitola} ${sku.id}`.toLowerCase();
+          // Broaden the match — include shape (Robusto/Churchill/Minuto),
+          // line (Behike/Serie D/Línea Edmundo) and blurb so users can find
+          // SKUs by shape or sub-line as well as by brand + vitola.
+          const searchName = `${sku.brand} ${sku.vitola} ${sku.shape} ${sku.line} ${sku.id} ${sku.blurb}`.toLowerCase();
           return (
             <a
               href={`/finder/sku/${sku.slug}/`}
@@ -231,8 +245,16 @@ const cataloguePerSku = SKUS.map((sku) => ({
         })}
       </div>
       <div class="lcat-empty" data-lcat-empty hidden>
-        <p><strong>No cigars match those filters.</strong></p>
-        <button type="button" class="lcat-empty__reset" data-lcat-reset>Reset filters</button>
+        <div data-lcat-empty-default>
+          <p><strong>No cigars match those filters.</strong></p>
+          <button type="button" class="lcat-empty__reset" data-lcat-reset>Reset filters</button>
+        </div>
+        <div data-lcat-empty-brand hidden>
+          <p class="lcat-empty__brand-eyebrow" data-lcat-empty-brand-eyebrow>Cuban Habano · Not yet tracked</p>
+          <p class="lcat-empty__brand-name" data-lcat-empty-brand-name>Juan López</p>
+          <p class="lcat-empty__brand-note" data-lcat-empty-brand-note>We launched with the 12 most-traded Cuban premium SKUs. Expanding the catalogue monthly.</p>
+          <button type="button" class="lcat-empty__reset" data-lcat-reset>← Back to all cigars</button>
+        </div>
       </div>
     </section>
 
@@ -298,6 +320,7 @@ const cataloguePerSku = SKUS.map((sku) => ({
 
 <script>
   import { getCurrentUser, getSupabase } from "../../../../lib/supabase";
+  import { matchKnownBrand, TRACKED_BRAND_NAMES, KNOWN_BRANDS, SKUS } from "../../../../data/finder-data";
 
   // Hydrate the watchlist with the signed-in member's saved SKUs. If they
   // have no rows yet, fall back to the demo cards (and keep the demo pill
@@ -411,6 +434,43 @@ const cataloguePerSku = SKUS.map((sku) => ({
 
       if (wrap) wrap.classList.toggle("has-text", q.length > 0);
       if (empty) empty.toggleAttribute("hidden", visible !== 0);
+
+      // ─── Brand-aware empty state ─────────────────────────────────────────
+      // Same logic as /finder/: when the query matches a known untracked
+      // brand, show brand-specific messaging instead of generic "No matches".
+      if (empty && visible === 0 && q.length >= 2) {
+        const matched = matchKnownBrand(q);
+        const defaultEl = empty.querySelector<HTMLElement>("[data-lcat-empty-default]");
+        const brandEl   = empty.querySelector<HTMLElement>("[data-lcat-empty-brand]");
+        const eyebrowEl = empty.querySelector<HTMLElement>("[data-lcat-empty-brand-eyebrow]");
+        const nameEl    = empty.querySelector<HTMLElement>("[data-lcat-empty-brand-name]");
+        const noteEl    = empty.querySelector<HTMLElement>("[data-lcat-empty-brand-note]");
+        const isTracked = matched && TRACKED_BRAND_NAMES.has(matched.name);
+        if (matched && !isTracked && defaultEl && brandEl && eyebrowEl && nameEl && noteEl) {
+          const originLabel: Record<string, string> = {
+            cuba: "Cuban Habano",
+            dominican: "Dominican premium",
+            nicaragua: "Nicaraguan premium",
+            honduras: "Honduran premium",
+            spain: "Spanish premium",
+            other: "International premium",
+          };
+          eyebrowEl.textContent = `${originLabel[matched.origin] || "Premium cigar"} · Not yet tracked`;
+          nameEl.textContent = matched.name;
+          const defaultNote = matched.origin === "cuba"
+            ? "We launched with the 12 most-traded Cuban premium SKUs. This brand is on the shortlist — expanding monthly."
+            : "The Finder focuses on Cuban (Habanos) cigars at launch. This brand isn't in scope yet.";
+          noteEl.textContent = matched.shortNote
+            ? `${matched.shortNote} ${defaultNote}`
+            : defaultNote;
+          defaultEl.hidden = true;
+          brandEl.hidden = false;
+        } else if (defaultEl && brandEl) {
+          defaultEl.hidden = false;
+          brandEl.hidden = true;
+        }
+      }
+
       if (count) {
         if (visible === cards.length && !q && !wantCty && !wantStock && !activeBrand) {
           count.textContent = `${cards.length} cigars`;
@@ -445,6 +505,118 @@ const cataloguePerSku = SKUS.map((sku) => ({
       chips.forEach((c, i) => c.classList.toggle("is-active", i === 0));
       apply();
     });
+
+    // ─── Autocomplete dropdown — Google-style typeahead ─────────────────
+    const ac = document.querySelector<HTMLElement>("[data-lcat-ac]");
+    let acActive = -1;
+    let acItems: HTMLElement[] = [];
+
+    function escapeHtmlAc(s: string): string {
+      return s.replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+    }
+    function highlight(text: string, q: string): string {
+      if (!q) return escapeHtmlAc(text);
+      const i = text.toLowerCase().indexOf(q.toLowerCase());
+      if (i < 0) return escapeHtmlAc(text);
+      return escapeHtmlAc(text.slice(0, i))
+        + "<mark>" + escapeHtmlAc(text.slice(i, i + q.length)) + "</mark>"
+        + escapeHtmlAc(text.slice(i + q.length));
+    }
+
+    function buildSuggestions(q: string): string {
+      const ql = q.trim().toLowerCase();
+      if (ql.length < 1) return "";
+      const trackedHits = SKUS
+        .map((sku) => ({ sku, hay: `${sku.brand} ${sku.vitola} ${sku.shape} ${sku.line}`.toLowerCase() }))
+        .filter((x) => x.hay.includes(ql))
+        .slice(0, 6);
+      const brandHits = KNOWN_BRANDS.filter((b) => {
+        if (TRACKED_BRAND_NAMES.has(b.name)) return false;
+        return b.aliases.some((a) => a.includes(ql) || ql.includes(a)) || b.name.toLowerCase().includes(ql);
+      }).slice(0, 4);
+      if (trackedHits.length === 0 && brandHits.length === 0) return "";
+      const originLabel: Record<string, string> = {
+        cuba: "Cuban", dominican: "Dominican", nicaragua: "Nicaraguan",
+        honduras: "Honduran", spain: "Spanish", other: "International",
+      };
+      const parts: string[] = [];
+      if (trackedHits.length > 0) {
+        parts.push(`<div class="lcat-search__ac-section-label">In our catalogue</div>`);
+        for (let i = 0; i < trackedHits.length; i++) {
+          const { sku } = trackedHits[i];
+          parts.push(
+            `<a class="lcat-search__ac-item" role="option" href="/finder/sku/${sku.slug}/" data-ac-index="${i}">
+               <span class="lcat-search__ac-item-label">
+                 <span class="lcat-search__ac-item-title">${highlight(`${sku.brand} ${sku.vitola}`, q)}</span>
+                 <span class="lcat-search__ac-item-meta">${escapeHtmlAc(sku.shape)} · box ${sku.boxSize}</span>
+               </span>
+               <span class="lcat-search__ac-item-tag lcat-search__ac-item-tag--tracked">Tracked</span>
+             </a>`
+          );
+        }
+      }
+      if (brandHits.length > 0) {
+        parts.push(`<div class="lcat-search__ac-section-label">Other premium brands</div>`);
+        const baseIdx = trackedHits.length;
+        for (let i = 0; i < brandHits.length; i++) {
+          const b = brandHits[i];
+          parts.push(
+            `<button type="button" class="lcat-search__ac-item" role="option" data-ac-brand="${escapeHtmlAc(b.name)}" data-ac-index="${baseIdx + i}">
+               <span class="lcat-search__ac-item-label">
+                 <span class="lcat-search__ac-item-title">${highlight(b.name, q)}</span>
+                 <span class="lcat-search__ac-item-meta">${originLabel[b.origin] || "Premium"} · not yet in catalogue</span>
+               </span>
+               <span class="lcat-search__ac-item-tag lcat-search__ac-item-tag--untracked">Request</span>
+             </button>`
+          );
+        }
+      }
+      return parts.join("");
+    }
+
+    function updateAc() {
+      if (!ac) return;
+      const html = buildSuggestions(input.value);
+      if (!html) { ac.hidden = true; ac.innerHTML = ""; acItems = []; acActive = -1; return; }
+      ac.innerHTML = html;
+      ac.hidden = false;
+      acItems = Array.from(ac.querySelectorAll<HTMLElement>("[data-ac-index]"));
+      acActive = -1;
+      acItems.forEach((item) => {
+        const brandName = item.getAttribute("data-ac-brand");
+        if (brandName) {
+          item.addEventListener("click", () => {
+            input.value = brandName;
+            ac.hidden = true;
+            apply();
+            input.focus();
+          });
+        }
+      });
+    }
+    function moveAc(delta: number) {
+      if (acItems.length === 0) return;
+      acActive = (acActive + delta + acItems.length) % acItems.length;
+      acItems.forEach((it, i) => it.classList.toggle("is-active", i === acActive));
+      acItems[acActive]?.scrollIntoView({ block: "nearest" });
+    }
+    input.addEventListener("input", updateAc);
+    input.addEventListener("focus", updateAc);
+    input.addEventListener("keydown", (e) => {
+      if (!ac || ac.hidden) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); moveAc(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); moveAc(-1); }
+      else if (e.key === "Enter" && acActive >= 0) { e.preventDefault(); acItems[acActive]?.click(); }
+      else if (e.key === "Escape") { ac.hidden = true; }
+    });
+    document.addEventListener("click", (e) => {
+      if (!ac) return;
+      const wrapEl = input.closest(".lcat-search__input-wrap");
+      if (wrapEl && !wrapEl.contains(e.target as Node)) ac.hidden = true;
+    });
+    clearBtn?.addEventListener("click", () => { if (ac) ac.hidden = true; });
+    resetBtn?.addEventListener("click", () => { if (ac) ac.hidden = true; });
   })();
 </script>
 
@@ -890,6 +1062,118 @@ const cataloguePerSku = SKUS.map((sku) => ({
     text-decoration: underline;
     font: inherit;
     padding: 0;
+  }
+
+  /* Brand-aware empty state */
+  .lcat-empty__brand-eyebrow {
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold-hover);
+    margin: 0 0 0.4rem 0;
+  }
+  .lcat-empty__brand-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem !important;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.2;
+    margin: 0 0 0.5rem 0 !important;
+  }
+  .lcat-empty__brand-note {
+    margin: 0 0 0.85rem 0 !important;
+    color: var(--color-text-soft);
+    line-height: 1.5;
+  }
+
+  /* ─── Autocomplete dropdown (Lounge variant) ─────────────────────────── */
+  .lcat-search__input-wrap { position: relative; }
+  .lcat-search__autocomplete {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    z-index: 30;
+    overflow: hidden;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+  .lcat-search__ac-section-label {
+    padding: 0.45rem 0.85rem 0.3rem;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    background: var(--color-bg-soft);
+    border-top: 1px solid var(--color-border-soft);
+  }
+  .lcat-search__ac-section-label:first-child { border-top: 0; }
+  .lcat-search__ac-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.55rem 0.85rem;
+    background: #fff;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    text-decoration: none;
+    transition: background 0.08s ease;
+  }
+  .lcat-search__ac-item:hover,
+  .lcat-search__ac-item.is-active {
+    background: var(--color-bg-soft);
+  }
+  .lcat-search__ac-item-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .lcat-search__ac-item-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.25;
+  }
+  .lcat-search__ac-item-title mark {
+    background: rgba(201, 169, 97, 0.25);
+    color: inherit;
+    padding: 0 1px;
+    border-radius: 2px;
+  }
+  .lcat-search__ac-item-meta {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+  }
+  .lcat-search__ac-item-tag {
+    flex: 0 0 auto;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.16rem 0.45rem;
+    border-radius: 999px;
+  }
+  .lcat-search__ac-item-tag--tracked {
+    background: rgba(42, 138, 42, 0.12);
+    color: #2a8a2a;
+  }
+  .lcat-search__ac-item-tag--untracked {
+    background: rgba(201, 169, 97, 0.18);
+    color: var(--color-gold-hover);
   }
 
 </style>
