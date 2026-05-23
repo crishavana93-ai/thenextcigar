@@ -212,7 +212,7 @@ export const RETAILERS: Retailer[] = [
   { id: "uk-simplycigars",       name: "Simply Cigars",                      url: "https://www.simplycigars.co.uk",                         country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "eu",        hasPublicPricing: true  },
   { id: "uk-smoke-king",         name: "Smoke King",                         url: "https://www.smoke-king.co.uk",                           country: "uk",                          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
   { id: "uk-tomtom",             name: "Tom Tom Cigars",                     url: "https://www.tomtomcigars.co.uk",                         country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
-  { id: "uk-egmcigars",          name: "EGM Cigars",                         url: "https://egmcigars.com",                                  country: "uk", city: "London",          status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
+  { id: "ch-egmcigars",          name: "EGM Cigars",                         url: "https://egmcigars.com",                                  country: "ch", city: "Balerna",         status: "habanos-specialist", shipsTo: "worldwide", hasPublicPricing: true  },
 
   // ─── Sweden ──── 15 verified ──────────────────────────────────────────────
   { id: "se-cigarrspecialisten", name: "Cigarrspecialisten (LCDH-tier Växjö)", url: "https://cigarrspecialisten.se",                        country: "se", city: "Växjö",           status: "habanos-specialist", shipsTo: "domestic",  hasPublicPricing: true  },
@@ -450,7 +450,7 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   // ─── Trinidad Reyes (box 12) ──────────────────────────────────────────────
   { skuId: "trinidad-reyes",         retailerId: "de-noblego",        price: 791.52, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/trinidad-reyes/" },
   { skuId: "trinidad-reyes",         retailerId: "ch-cigarmust",      price: 412.80, currency: "CHF", originalPrice: 458.00, inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/" },
-  { skuId: "trinidad-reyes",         retailerId: "uk-egmcigars",      price: 690.00, currency: "GBP", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://egmcigars.com/" },
+  { skuId: "trinidad-reyes",         retailerId: "ch-egmcigars",      price: 825.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://egmcigars.com/products/trinidad-reyes" },
 
   // ─── Bolívar Belicosos Finos (box 25) ─────────────────────────────────────
   { skuId: "bolivar-belicosos-finos", retailerId: "de-noblego",       price: 612.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/" },

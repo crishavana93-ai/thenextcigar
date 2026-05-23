@@ -28,8 +28,21 @@ const FX_TO_EUR: Record<string, number> = {
   EUR: 1.000, CHF: 1.050, SEK: 0.087, GBP: 1.190, DKK: 0.134, NOK: 0.087,
 };
 
+// Map an ISO country code to its primary trading currency. Used when the
+// retailer's response body doesn't carry the currency natively (Shopify's
+// /products/{slug}.json endpoint is a per-product view that doesn't include
+// the shop-level currency).
+function currencyForCountry(country: string): string {
+  const map: Record<string, string> = {
+    de: "EUR", at: "EUR", nl: "EUR", be: "EUR", fr: "EUR", es: "EUR",
+    it: "EUR", ie: "EUR", pt: "EUR", gr: "EUR", lu: "EUR", fi: "EUR",
+    ch: "CHF", uk: "GBP", gb: "GBP", se: "SEK", dk: "DKK", no: "NOK",
+  };
+  return map[country.toLowerCase()] || "EUR";
+}
+
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json";
 
 interface PdpUrl {
   url: string;
@@ -102,6 +115,29 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       { url: "https://www.cigarmaxx.de/hoyo-de-monterrey-epicure-no-2/",      skuHint: "hoyo-de-monterrey-epicure-no-2" },
       { url: "https://www.cigarmaxx.de/trinidad-reyes/",                      skuHint: "trinidad-reyes" },
       { url: "https://www.cigarmaxx.de/bolivar-belicoso-fino/",               skuHint: "bolivar-belicosos-finos" },
+    ],
+  },
+  "ch-egmcigars": {
+    country: "ch",
+    // Shopify backend — exposes structured product data at /products/{slug}.json
+    // including every variant (pack size) with its own price + inventory state.
+    // Much cleaner than scraping HTML. EGM is Swiss (Balerna, CHF base prices)
+    // despite shipping worldwide — we record CHF and let FX_TO_EUR convert.
+    stack: "shopify_json",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://egmcigars.com/products/cohiba-robusto-slb.json",                       skuHint: "cohiba-robustos" },
+      { url: "https://egmcigars.com/products/cohiba-behike-52.json",                         skuHint: "cohiba-behike-52" },
+      { url: "https://egmcigars.com/products/cohiba-siglo-4-slb.json",                       skuHint: "cohiba-siglo-iv" },
+      { url: "https://egmcigars.com/products/cohiba-esplendidos-bn-1.json",                  skuHint: "cohiba-esplendidos" },
+      { url: "https://egmcigars.com/products/montecristo-no-4.json",                         skuHint: "montecristo-no-4" },
+      { url: "https://egmcigars.com/products/montecristo-no-2.json",                         skuHint: "montecristo-no-2" },
+      { url: "https://egmcigars.com/products/montecristo-petit-edmundo.json",                skuHint: "montecristo-petit-edmundo" },
+      { url: "https://egmcigars.com/products/partagas-serie-d-no-4.json",                    skuHint: "partagas-serie-d-no-4" },
+      { url: "https://egmcigars.com/products/romeo-y-julieta-petit-coronas.json",            skuHint: "romeo-y-julieta-petit-coronas" },
+      { url: "https://egmcigars.com/products/hoyo-de-monterrey-epicure-no-2-slb.json",       skuHint: "hoyo-de-monterrey-epicure-no-2" },
+      { url: "https://egmcigars.com/products/trinidad-reyes.json",                           skuHint: "trinidad-reyes" },
+      { url: "https://egmcigars.com/products/bolivar-belicosos.json",                        skuHint: "bolivar-belicosos-finos" },
     ],
   },
   "ch-cigarmust": {
@@ -499,6 +535,100 @@ function parseCigarmustHtml(html: string): ParsedOffer[] {
   return [{ packSize, price, currency, inStock }];
 }
 
+// ─── Shopify JSON product endpoint parser ──────────────────────────────────
+// Used for EGM Cigars and any other Shopify-backed retailer. Every Shopify
+// shop exposes /products/{handle}.json which returns:
+//
+//   {
+//     "product": {
+//       "title": "...",
+//       "variants": [
+//         { "id": 123, "title": "Box of 25", "price": "2524.31",
+//           "available": false, "option1": "Box of 25", ... },
+//         { "id": 124, "title": "Single Cigar", "price": "101.01",
+//           "available": true, "option1": "Single Cigar", ... }
+//       ]
+//     }
+//   }
+//
+// We map each variant's title → pack size and emit one ParsedOffer per variant.
+// Currency comes from the config (Shopify omits it in the per-product endpoint;
+// it's a shop-level setting).
+function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[] {
+  let data: Record<string, unknown>;
+  try { data = JSON.parse(body); } catch { return []; }
+  const product = (data?.product as Record<string, unknown>) || null;
+  if (!product) return [];
+  const variants = product.variants;
+  if (!Array.isArray(variants)) return [];
+
+  const offers: ParsedOffer[] = [];
+  for (const v of variants) {
+    if (!v || typeof v !== "object") continue;
+    const vv = v as Record<string, unknown>;
+    const priceStr = String(vv.price ?? "");
+    const price = parseFloat(priceStr);
+    if (!price || price <= 0) continue;
+
+    // option1 / title typically describes the pack ("Box of 25", "Single Cigar").
+    const title = String(vv.option1 || vv.title || "");
+    const packSize = parsePackSizeFromTitle(title);
+    if (!packSize) continue;
+
+    // Shopify's `available` flag is the most reliable inventory signal;
+    // fall back to inventory_quantity if it's not set.
+    let inStock: boolean;
+    if (typeof vv.available === "boolean") {
+      inStock = vv.available;
+    } else if (typeof vv.inventory_quantity === "number") {
+      inStock = vv.inventory_quantity > 0;
+    } else {
+      inStock = true;  // optimistic when neither flag is present
+    }
+
+    offers.push({ packSize, price, currency, inStock });
+  }
+  // Dedup by packSize — Shopify sometimes lists the same pack under multiple
+  // option2/option3 values; keep the first occurrence so we don't double-write.
+  const dedup = new Map<number, ParsedOffer>();
+  for (const o of offers) if (!dedup.has(o.packSize)) dedup.set(o.packSize, o);
+  return Array.from(dedup.values());
+}
+
+// Map a Shopify variant title to a pack-size integer. Recognises:
+//   "Box of 25"             → 25
+//   "Pack of 3" / "3-pack"  → 3
+//   "Single Cigar" / "1pc"  → 1
+//   "5x3 Pcs"               → 15
+//   "10er Kiste"            → 10  (rare on Shopify, kept for safety)
+// Returns 0 (falsy) when no pack size can be inferred — those variants are
+// dropped so we don't poison the snapshot with bogus pack data.
+function parsePackSizeFromTitle(title: string): number {
+  const t = title.trim();
+  if (!t) return 0;
+  // Most common
+  const boxN  = t.match(/Box\s+of\s+(\d{1,3})/i);
+  if (boxN) return Number(boxN[1]);
+  const cabN  = t.match(/Cabinet\s+of\s+(\d{1,3})/i);
+  if (cabN) return Number(cabN[1]);
+  const packN = t.match(/Pack\s+of\s+(\d{1,3})/i);
+  if (packN) return Number(packN[1]);
+  const dashN = t.match(/(\d{1,3})[-\s]pack/i);
+  if (dashN) return Number(dashN[1]);
+  // "5x3 Pcs" → 15
+  const grid  = t.match(/(\d{1,2})\s*[x×]\s*(\d{1,2})/i);
+  if (grid) return Number(grid[1]) * Number(grid[2]);
+  // "Ner Kiste"
+  const erN   = t.match(/(\d{1,3})er\b/i);
+  if (erN) return Number(erN[1]);
+  // Single-cigar synonyms
+  if (/\b(single|stick|1\s*pc|1\s*cigar|individual|unidad|stück)\b/i.test(t)) return 1;
+  // Bare "N Cigars" / "N Pcs" / "N Sticks"
+  const nCigars = t.match(/(\d{1,3})\s*(cigars?|pcs?|sticks?|tubo?s?)\b/i);
+  if (nCigars) return Number(nCigars[1]);
+  return 0;
+}
+
 // Real-browser User-Agent. Many EU shops (incl. Noblego) gate price markup
 // behind a UA check and serve a stripped/empty page to non-browser fetchers.
 const BROWSER_UA =
@@ -624,6 +754,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       case "noblego_html":     parsed = parseNoblegoHtml(html); break;
       case "havanahouse_html": parsed = parseHavanaHouseHtml(html); break;
       case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
+      case "shopify_json":     parsed = parseShopifyJson(html, currencyForCountry(config.country)); break;
       default:                 parsed = parseSchemaOrg(html);
     }
 
@@ -678,6 +809,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         case "havanahouse_html": parsed = parseHavanaHouseHtml(html); break;
         case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
         case "cigarworld_html":  parsed = parseSchemaOrg(html); break; // currently same as schema.org
+        case "shopify_json":     parsed = parseShopifyJson(html, currencyForCountry(config.country)); break;
         case "schema_org_jsonld":
         default:                 parsed = parseSchemaOrg(html);
       }

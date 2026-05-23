@@ -39,8 +39,8 @@ jobs:
           - de-noblego
           - de-cigarmaxx
           - de-cigarworld
-          - uk-havanahouse
           - ch-cigarmust
+          - ch-egmcigars
       # Don't kill the matrix if one retailer fails — we want partial success.
       fail-fast: false
     steps:
