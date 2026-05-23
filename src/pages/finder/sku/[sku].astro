@@ -200,10 +200,10 @@ const ogDescription = best
           </tr>
         </thead>
         <tbody>
+          {/* Each row starts with class='is-unverified' (no 'is-oos' lie).
+              The hydration script adds 'is-oos' only when a LIVE scrape
+              actually reports the retailer as out of stock. */}
           {offers.map((o, i) => (
-            {/* Row class is 'is-unverified' by default — no 'is-oos' lie.
-                The hydration script adds 'is-oos' only when a LIVE scrape
-                actually reports the retailer as out of stock. */}
             <tr class="is-unverified" data-retailer-id={o.retailer.id}>
               <td data-cell="retailer" data-label="Retailer">
                 <span class="finder-table__retailer">{o.retailer.name}</span>
