@@ -362,16 +362,17 @@ const ogDescription = best
 
       // For each retailer, pick the best pack to display. Priority:
       //   1. canonical box-size AND in stock     ← perfect match
-      //   2. canonical box-size, any stock        ← right pack, just OOS
-      //   3. any pack that is in stock            ← let the user buy something
+      //   2. any pack that is in stock            ← can actually buy today
+      //   3. canonical box-size (OOS)             ← can't buy, but right pack to compare
       //   4. anything                             ← last resort
-      // We rank rows per retailer with a numeric score and keep the highest.
+      // In-stock outranks canonical-but-OOS so the "buy now" link is real.
+      // The per-cigar column already normalizes for cross-pack comparison.
       const scoreRow = (r: SnapshotRow): number => {
         const isCanonical = r.pack_size === boxSize;
         const inStock = r.in_stock;
         if (isCanonical && inStock) return 4;
-        if (isCanonical) return 3;
-        if (inStock) return 2;
+        if (inStock) return 3;
+        if (isCanonical) return 2;
         return 1;
       };
       const byRetailer = new Map<string, SnapshotRow>();
