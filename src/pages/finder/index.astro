@@ -383,33 +383,67 @@ const breadcrumbJsonLd = {
     </div>
   </section>
 
-  {/* ─── HOW IT WORKS ──────────────────────────────────────────────────── */}
-  <section class="section-dark">
+  {/* ─── TIERS — Free (watch as guest) vs Lounge (registered) ───────────
+       Two-column value-prop block. Replaces the older "How it works" trio.
+       The point of this section is to make explicit what's free for anyone
+       (1 email alert, browsing) and what's behind registration (multi-SKU
+       comparison, unlimited alerts, history, travel mode). Reduces "wait,
+       is this paid?" friction and routes intent: casual visitor → watch
+       one SKU as guest; serious buyer → register. */}
+  <section class="section-dark" id="finder-tiers">
     <div class="container-wide py-16 md:py-24 reveal">
-      <div class="grid md:grid-cols-3 gap-10">
+      <div class="flex items-end justify-between mb-10 flex-wrap gap-4">
         <div>
-          <p class="lounge-label lounge-label--gold">01 · Search</p>
-          <h3 class="finder-h3 mt-3">Cuban-only catalogue</h3>
-          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)]">
-            US aggregators can't list Cuban cigars because of the embargo. We're the European
-            mirror — every flagship Habanos vitola, Cohiba to Bolívar, on one page.
+          <p class="lounge-label lounge-label--gold">How the Finder works</p>
+          <h2 class="finder-h2 mt-2 text-[color:var(--color-text-on-dark)]">Free for everyone. More for members.</h2>
+          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)] max-w-2xl">
+            The public Finder stays free, forever. One email-only watchlist included with no signup.
+            Multi-cigar comparison, unlimited alerts, price history, and travel mode are reserved for
+            registered Lounge members — and free for life if you sign up before 1 June 2026.
           </p>
         </div>
-        <div>
-          <p class="lounge-label lounge-label--gold">02 · Compare</p>
-          <h3 class="finder-h3 mt-3">Country-localised pricing</h3>
-          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)]">
-            EU tobacco excise is country-by-country, so most retailers only ship domestically.
-            We localise the comparison to retailers that will actually deliver to you.
+      </div>
+
+      <div class="finder-tiers__grid">
+        {/* FREE / GUEST */}
+        <div class="finder-tier finder-tier--free">
+          <p class="finder-tier__eyebrow">Free · no signup needed</p>
+          <h3 class="finder-tier__title">Watch as guest</h3>
+          <p class="finder-tier__lead">
+            See every price across all tracked European retailers. Save one cigar
+            with just an email — we'll alert you the moment any retailer drops below
+            the current best price. No password, no profile, no spam.
           </p>
+          <ul class="finder-tier__list">
+            <li><strong>Full public catalogue</strong> — every Habano we track, refreshed every 6 hours</li>
+            <li><strong>1 price-drop alert</strong> by email, no account required</li>
+            <li><strong>Country filter</strong> — see only retailers that ship to you, with duty-paid pricing</li>
+            <li>Side-by-side retailer comparison for any single SKU you visit</li>
+          </ul>
+          <a href="/finder/" class="finder-tier__cta finder-tier__cta--ghost">Browse the public catalogue →</a>
+          <p class="finder-tier__note">Tap "Save price alert" on any cigar page — that's the guest watchlist.</p>
         </div>
-        <div>
-          <p class="lounge-label lounge-label--gold">03 · Watch</p>
-          <h3 class="finder-h3 mt-3">Price-drop alerts <span class="finder-pill-soon">Coming soon</span></h3>
-          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)]">
-            Save a SKU and we'll email you when any retailer in your country drops below
-            your threshold. Free TNC members get one watchlist; <a href="/lounge/" style="color:var(--color-gold);text-decoration:underline;">Lounge members</a> get unlimited.
+
+        {/* LOUNGE / REGISTERED */}
+        <div class="finder-tier finder-tier--lounge">
+          <span class="finder-tier__flag">Registered members only</span>
+          <p class="finder-tier__eyebrow finder-tier__eyebrow--gold">The Lounge · $9/mo or $79/yr</p>
+          <h3 class="finder-tier__title">Multi-cigar comparison + alerts</h3>
+          <p class="finder-tier__lead">
+            For buyers actually shopping — not just browsing. Compare multiple cigars
+            side-by-side, track unlimited SKUs, see 90-day price history charts, and
+            switch the Finder lens to wherever you're flying.
           </p>
+          <ul class="finder-tier__list">
+            <li><strong>Side-by-side comparison tool</strong> — pick any 2 to 6 cigars; see price, per-cigar cost, retailer availability, and history charts on one screen</li>
+            <li><strong>Unlimited watchlists</strong> + push notifications when prices drop</li>
+            <li><strong>90-day price history charts</strong> on every tracked SKU</li>
+            <li><strong>Travel mode</strong> — switch the catalogue lens to your destination country</li>
+            <li>Taste-matched recommendations from your flavour profile</li>
+            <li>Member directory, check-ins, event RSVPs across Europe</li>
+          </ul>
+          <a href="/lounge/signup/" class="finder-tier__cta finder-tier__cta--gold">Become a Lounge member →</a>
+          <p class="finder-tier__note">Sign up before 1 June 2026 and the paid tier is <strong>free for you, for life</strong> — OG Member grant.</p>
         </div>
       </div>
     </div>
@@ -606,6 +640,128 @@ const breadcrumbJsonLd = {
     border-radius: 999px;
     vertical-align: middle;
   }
+
+  /* ── Tier grid (Watch as guest / Lounge comparison tool) ─────────────── */
+  .finder-tiers__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+    margin-top: 1.6rem;
+  }
+  @media (min-width: 768px) {
+    .finder-tiers__grid { grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+  }
+  .finder-tier {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.6rem 1.5rem 1.4rem;
+    color: var(--color-text-on-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .finder-tier--lounge {
+    background: linear-gradient(140deg, rgba(201, 169, 97, 0.14), rgba(201, 169, 97, 0.04));
+    border-color: rgba(201, 169, 97, 0.45);
+  }
+  .finder-tier__flag {
+    position: absolute;
+    top: -0.65rem;
+    right: 1.2rem;
+    background: var(--color-gold, #c9a961);
+    color: #1a1612;
+    padding: 0.2rem 0.7rem;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .finder-tier__eyebrow {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-on-dark-mute);
+    margin: 0;
+  }
+  .finder-tier__eyebrow--gold { color: var(--color-gold, #c9a961); }
+  .finder-tier__title {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--color-text-on-dark);
+  }
+  .finder-tier__lead {
+    font-size: 0.94rem;
+    line-height: 1.55;
+    color: var(--color-text-on-dark-soft);
+    margin: 0;
+  }
+  .finder-tier__list {
+    margin: 0.4rem 0 0.6rem;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .finder-tier__list li {
+    padding-left: 1.4rem;
+    position: relative;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-on-dark-soft);
+  }
+  .finder-tier__list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--color-gold, #c9a961);
+    font-weight: 700;
+  }
+  .finder-tier__list strong { color: var(--color-text-on-dark); }
+  .finder-tier__cta {
+    display: inline-block;
+    margin-top: 0.4rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+  .finder-tier__cta--gold {
+    background: var(--color-gold, #c9a961);
+    color: #1a1612;
+  }
+  .finder-tier__cta--gold:hover { background: #b08e4a; }
+  .finder-tier__cta--ghost {
+    background: transparent;
+    color: var(--color-text-on-dark);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+  }
+  .finder-tier__cta--ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--color-gold, #c9a961);
+    color: var(--color-gold, #c9a961);
+  }
+  .finder-tier__note {
+    font-size: 0.78rem;
+    color: var(--color-text-on-dark-mute);
+    margin: 0.2rem 0 0;
+    line-height: 1.5;
+  }
+  .finder-tier__note strong { color: var(--color-gold, #c9a961); }
 
   /* Drops grid */
   .finder-strip { border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }

@@ -9,7 +9,7 @@ The principles behind the templates:
 4. **No PR-speak.** "Killer tool" / "industry-leading" / "exciting launch" all earn instant trash. Plain language wins.
 5. **One ask per email.** Either a link, or a quote, or a feature mention. Never all three.
 
-Send from `cris@thenextcigar.com` (or `guatabeycigars@gmail.com` if the custom domain isn't set up yet — note that a custom domain triples reply rate). Plain text, no signature graphics, no tracking pixels.
+Send from `guatabeycigars@gmail.com` today. If you set up `cris@thenextcigar.com` via Cloudflare Email Routing (see `marketing/setup-custom-email-cloudflare.md`), reply rate roughly triples vs gmail. Plain text, no signature graphics, no tracking pixels.
 
 ---
 

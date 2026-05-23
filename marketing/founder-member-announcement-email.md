@@ -41,7 +41,7 @@ Every Lounge member who joined before public launch is now an OG Member. That me
 
 - Every paid feature The Next Cigar ever ships is free for you. Forever.
 - An OG Member badge on your profile, visible to everyone in the directory.
-- Direct line to me (cris@thenextcigar.com) for anything you want to see built.
+- Direct line to me (guatabeycigars@gmail.com) for anything you want to see built.
 - Your name in the credits when we publish the 2026 wrap.
 
 You don't have to do anything to claim it. The badge auto-appears on your profile next time you log in.
@@ -98,7 +98,7 @@ You're receiving this as a Lounge member. Unsubscribe: https://thenextcigar.com/
           <ul style="margin:0 0 18px 0;padding-left:22px;font-size:15px;line-height:1.7;">
             <li>Every paid feature The Next Cigar ever ships is free for you. Forever.</li>
             <li>An OG Member badge on your profile, visible to everyone in the directory.</li>
-            <li>Direct line to me (<a href="mailto:cris@thenextcigar.com" style="color:#3a322a;">cris@thenextcigar.com</a>) for anything you want to see built.</li>
+            <li>Direct line to me (<a href="mailto:guatabeycigars@gmail.com" style="color:#3a322a;">guatabeycigars@gmail.com</a>) for anything you want to see built.</li>
             <li>Your name in the credits when we publish the 2026 wrap.</li>
           </ul>
           <p style="margin:0 0 14px 0;">You don't have to do anything to claim it. The badge auto-appears on your profile next time you log in.</p>

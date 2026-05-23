@@ -326,7 +326,12 @@ export const places: CigarPlace[] = [
     note: "One of the only bars in Denmark that sells cigars. Two floors, old-Copenhagen apartment vibe, smoking nights on designated days. The cult cigar bar of København.",
   },
 
-  // ─── SOUTHERN SWEDEN ─────────────────────────────────────────────────────
+  // ─── SOUTHERN SWEDEN / MALMÖ ─────────────────────────────────────────────
+  // Note: Cris flagged this list as undercounted — there are ~8 venues he
+  // wants represented in Malmö specifically. The 3 entries below are the
+  // ones with publicly verifiable addresses + coordinates as of May 2026.
+  // Pending additions are tracked in marketing/cigar-places-research-todo.md
+  // and will be wired in once Cris drops names + verified addresses.
   {
     slug: "malmo-cigarr-tobakshandel",
     name: "Malmö Cigarr & Tobakshandel",
@@ -338,6 +343,30 @@ export const places: CigarPlace[] = [
     lng: 13.0009,
     website: "https://www.facebook.com/MalmoCigarrTobakshandel/",
     note: "Small shop, big depth. The cigar specialist for southern Sweden — walk-in humidor on Gustav Adolfs Torg, the destination for serious Skåne smokers.",
+  },
+  {
+    slug: "den-anspraksliva-cigarraffaren-malmo",
+    name: "Den anspråkslösa Cigarraffären (Gott Eftermaten)",
+    type: "retailer",
+    city: "Malmö",
+    country: "Sweden",
+    address: "Carl Herslowsgatan 11 b, 211 47 Malmö",
+    lat: 55.5961,
+    lng: 12.9924,
+    website: "https://www.gotteftermaten.se/sv/",
+    note: "Open since November 2007. 1,000+ cigars on display — the broadest cigar range in Malmö, probably in Sweden. Full Habanos Nordic Cuban catalogue, Davidoff house line, Drew Estate, Plasencia, Oliva. Also Sweden's deepest pipe-tobacco selection. Tue–Fri 11:00–18:00, Sat 11:00–14:00.",
+  },
+  {
+    slug: "lund-cigarrkompaniet",
+    name: "Cigarrkompaniet Lund",
+    type: "retailer",
+    city: "Lund",
+    country: "Sweden",
+    address: "Stora Södergatan 11, 222 23 Lund",
+    lat: 55.6985,
+    lng: 13.1933,
+    website: "https://www.cigarrkompaniet.se/",
+    note: "Nearest premium cigar shop to Malmö after the city-centre options. Lund's only dedicated walk-in humidor; serves the Lund + east-Skåne university crowd.",
   },
 
   // ─── ASIA ───────────────────────────────────────────────────────────────
