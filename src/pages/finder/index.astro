@@ -42,6 +42,32 @@ const openCountries       = COUNTRIES.filter((c) => c.status === "open");
 const restrictedCountries = COUNTRIES.filter((c) => c.status === "restricted");
 const closedCountries     = COUNTRIES.filter((c) => c.status === "closed");
 
+// Brand chips for the search bar. Derived from the SKU set — every brand that
+// appears in our catalogue at least once, in the order we want them displayed.
+const allBrands = Array.from(new Set(SKUS.map((s) => s.brand))).sort();
+
+// Country dropdown — every country we have at least one retailer in.
+const countriesWithRetailers = Array.from(new Set(RETAILERS.map((r) => r.country)));
+const searchCountries = COUNTRIES.filter((c) => countriesWithRetailers.includes(c.code));
+
+// Pre-compute the set of countries each SKU has at least one snapshot in, so
+// the JS filter has the data it needs without making API calls.
+const skuCountryMap: Record<string, string[]> = {};
+const skuInStockCountries: Record<string, string[]> = {};
+for (const sku of SKUS) {
+  const snaps = PRICE_SNAPSHOTS.filter((s) => s.skuId === sku.id);
+  const countries = Array.from(new Set(snaps.map((s) => {
+    const r = RETAILERS.find((x) => x.id === s.retailerId);
+    return r ? r.country : null;
+  }).filter((c): c is string => !!c)));
+  skuCountryMap[sku.id] = countries;
+  const inStockCountries = Array.from(new Set(snaps.filter((s) => s.inStock).map((s) => {
+    const r = RETAILERS.find((x) => x.id === s.retailerId);
+    return r ? r.country : null;
+  }).filter((c): c is string => !!c)));
+  skuInStockCountries[sku.id] = inStockCountries;
+}
+
 // ----------------------------------------------------------------------------
 // Structured data — CollectionPage describing The Finder + ItemList of SKUs
 // ----------------------------------------------------------------------------
@@ -125,8 +151,53 @@ const breadcrumbJsonLd = {
     </div>
   </section>
 
+  {/* ─── SEARCH BAR — free text + brand + country + in-stock filters ───── */}
+  <section class="container-wide pb-12 reveal" id="finder-search-section">
+    <div class="finder-search">
+      <label class="finder-search__label" for="finder-search-input">
+        Search the catalogue
+      </label>
+      <div class="finder-search__row">
+        <div class="finder-search__input-wrap">
+          <svg class="finder-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="search"
+            id="finder-search-input"
+            class="finder-search__input"
+            placeholder="Try 'Cohiba Robustos', 'Petit Edmundo', 'Trinidad'…"
+            autocomplete="off"
+            aria-label="Search Cuban cigars by name"
+          />
+          <button type="button" class="finder-search__clear" data-finder-clear aria-label="Clear search">×</button>
+        </div>
+        <select class="finder-search__country" id="finder-search-country" aria-label="Filter by country">
+          <option value="">All countries</option>
+          {searchCountries.map((c) => (
+            <option value={c.code}>{c.flag} {c.name}</option>
+          ))}
+        </select>
+        <label class="finder-search__instock">
+          <input type="checkbox" id="finder-search-instock" />
+          <span>In stock only</span>
+        </label>
+      </div>
+      <div class="finder-search__chips" role="group" aria-label="Filter by brand">
+        <button type="button" class="finder-search__chip is-active" data-brand-chip="">All brands</button>
+        {allBrands.map((brand) => (
+          <button type="button" class="finder-search__chip" data-brand-chip={brand}>{brand}</button>
+        ))}
+      </div>
+      <p class="finder-search__count" data-finder-count aria-live="polite">
+        Showing all {skuCount} cigars
+      </p>
+    </div>
+  </section>
+
   {/* ─── COUNTRY PICKER ─────────────────────────────────────────────────── */}
-  <section class="container-wide pb-16 reveal">
+  <section class="container-wide pb-16 reveal" data-finder-country-section>
     <p class="section-eyebrow" style="font-size:clamp(1.4rem,3.2vw,2.25rem);">Start with your country</p>
     <p class="mt-3 mb-8 text-[color:var(--color-text-soft)] max-w-2xl text-base leading-relaxed">
       Tobacco excise is country-specific in the EU, so most retailers ship within their own borders.
@@ -234,8 +305,21 @@ const breadcrumbJsonLd = {
             const retailer = RETAILERS.find((r) => r.id === best.snap.retailerId)!;
             const perCigar = best.eur / sku.boxSize;
             const offerCount = snapshotsForSku(sku.id).length;
+            const skuCountries = skuCountryMap[sku.id] || [];
+            const skuStockCountries = skuInStockCountries[sku.id] || [];
+            // data-* attributes drive the client-side filter. Lower-case the
+            // searchable name so the JS doesn't need to normalise on every key.
+            const searchName = `${sku.brand} ${sku.vitola} ${sku.id}`.toLowerCase();
             return (
-              <tr>
+              <tr
+                data-finder-sku-row
+                data-sku-id={sku.id}
+                data-sku-brand={sku.brand}
+                data-sku-name={searchName}
+                data-sku-countries={skuCountries.join(",")}
+                data-sku-instock-countries={skuStockCountries.join(",")}
+                data-sku-any-instock={skuStockCountries.length > 0 ? "1" : "0"}
+              >
                 <td class="finder-table__brand">
                   <span class="finder-table__brand-name">{sku.brand}</span>
                   <span class="finder-table__offers">{offerCount} {offerCount === 1 ? "offer" : "offers"}</span>
@@ -262,6 +346,10 @@ const breadcrumbJsonLd = {
           })}
         </tbody>
       </table>
+      <div class="finder-search__empty" data-finder-empty hidden>
+        <p><strong>No cigars match those filters.</strong></p>
+        <p>Try clearing the country or brand filter — or <button type="button" class="finder-search__empty-reset" data-finder-reset>reset everything</button>.</p>
+      </div>
     </div>
   </section>
 
@@ -671,4 +759,304 @@ const breadcrumbJsonLd = {
     letter-spacing: 0.02em;
     color: var(--color-gold);
   }
+
+  /* ─── SEARCH BAR ──────────────────────────────────────────────────── */
+  .finder-search {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem 1.1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  }
+  .finder-search__label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 0.6rem;
+  }
+  .finder-search__row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+  @media (max-width: 720px) {
+    .finder-search__row { grid-template-columns: 1fr; }
+  }
+  .finder-search__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .finder-search__icon {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+  .finder-search__input {
+    width: 100%;
+    padding: 0.7rem 2.4rem 0.7rem 2.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: #fafafa;
+    color: var(--color-text);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .finder-search__input:focus {
+    outline: none;
+    border-color: var(--color-gold);
+    background: #fff;
+  }
+  .finder-search__clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1;
+    font-size: 1.4rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: none;
+    border-radius: 4px;
+  }
+  .finder-search__clear:hover { background: var(--color-bg-soft); }
+  .finder-search.has-text .finder-search__clear { display: block; }
+  .finder-search__country {
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    min-width: 9.5rem;
+  }
+  .finder-search__instock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.7rem 0.9rem;
+    background: #fafafa;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .finder-search__instock input { accent-color: var(--color-gold); }
+  .finder-search__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+  }
+  .finder-search__chip {
+    padding: 0.32rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: #fafafa;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-text-soft);
+    cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+  }
+  .finder-search__chip:hover {
+    border-color: var(--color-gold);
+    color: var(--color-text);
+  }
+  .finder-search__chip.is-active {
+    background: var(--color-gold);
+    border-color: var(--color-gold);
+    color: #1a1612;
+    font-weight: 700;
+  }
+  .finder-search__count {
+    margin: 0.85rem 0 0;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+  .finder-search__empty {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--color-text-soft);
+    font-size: 0.95rem;
+  }
+  .finder-search__empty p { margin: 0 0 0.5rem; }
+  .finder-search__empty-reset {
+    background: transparent;
+    border: 0;
+    color: var(--color-gold-hover);
+    cursor: pointer;
+    text-decoration: underline;
+    font: inherit;
+    padding: 0;
+  }
+  .finder-search__empty-reset:hover { color: var(--color-text); }
+  /* Rows hidden by filter — kept in DOM for SEO + state, just visually removed. */
+  tr[data-finder-sku-row][hidden] { display: none !important; }
 </style>
+
+<script>
+  // Finder search — client-side filter for the SKU catalog table.
+  // No API calls, no spinner: every needed datum is already on the row as a
+  // data-* attribute (brand, name, countries, in-stock countries). We just
+  // walk the rows and flip `hidden` based on the current filter state.
+  (function initFinderSearch() {
+    const input    = document.getElementById("finder-search-input") as HTMLInputElement | null;
+    const country  = document.getElementById("finder-search-country") as HTMLSelectElement | null;
+    const instock  = document.getElementById("finder-search-instock") as HTMLInputElement | null;
+    const wrap     = document.querySelector<HTMLElement>(".finder-search");
+    const clearBtn = document.querySelector<HTMLButtonElement>("[data-finder-clear]");
+    const resetBtn = document.querySelector<HTMLButtonElement>("[data-finder-reset]");
+    const empty    = document.querySelector<HTMLElement>("[data-finder-empty]");
+    const count    = document.querySelector<HTMLElement>("[data-finder-count]");
+    const rows     = Array.from(
+      document.querySelectorAll<HTMLTableRowElement>("tr[data-finder-sku-row]")
+    );
+    const chips    = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("[data-brand-chip]")
+    );
+    if (!input || !country || !instock || rows.length === 0) return;
+
+    let activeBrand = ""; // empty = "all brands"
+
+    function applyFilter() {
+      const q          = input.value.trim().toLowerCase();
+      const wantCty    = country.value;       // "" or country code
+      const wantStock  = instock.checked;
+      let visible      = 0;
+
+      for (const row of rows) {
+        const name       = row.dataset.skuName || "";
+        const brand      = row.dataset.skuBrand || "";
+        const cties      = (row.dataset.skuCountries || "").split(",");
+        const stockCties = (row.dataset.skuInstockCountries || "").split(",");
+        const anyInStock = row.dataset.skuAnyInstock === "1";
+
+        // Free-text match — token-level so "petit edmundo" still matches even
+        // if the user typed it out of order. Empty query passes.
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const textOk = tokens.every((t) => name.includes(t));
+
+        // Brand chip — empty matches everything.
+        const brandOk = !activeBrand || brand === activeBrand;
+
+        // Country — if a country is chosen, the SKU must have at least one
+        // snapshot from that country (or, if in-stock toggled, an in-stock one).
+        let countryOk = true;
+        if (wantCty) {
+          countryOk = wantStock
+            ? stockCties.includes(wantCty)
+            : cties.includes(wantCty);
+        }
+
+        // In-stock toggle without a country picks any in-stock SKU globally.
+        const stockOk = !wantStock || (wantCty ? stockCties.includes(wantCty) : anyInStock);
+
+        const show = textOk && brandOk && countryOk && stockOk;
+        if (show) visible++;
+        row.toggleAttribute("hidden", !show);
+      }
+
+      // Visible state UI
+      if (wrap) wrap.classList.toggle("has-text", q.length > 0);
+      if (empty) empty.toggleAttribute("hidden", visible !== 0);
+      if (count) {
+        if (visible === 0) {
+          count.textContent = "No cigars match those filters.";
+        } else if (visible === rows.length && !q && !wantCty && !wantStock && !activeBrand) {
+          count.textContent = `Showing all ${rows.length} cigars`;
+        } else {
+          count.textContent =
+            `Showing ${visible} of ${rows.length} cigar${rows.length === 1 ? "" : "s"}` +
+            (q ? ` matching "${input.value.trim()}"` : "");
+        }
+      }
+    }
+
+    // ─ Input handlers ─────────────────────────────────────────────────────
+    input.addEventListener("input", applyFilter);
+    country.addEventListener("change", applyFilter);
+    instock.addEventListener("change", applyFilter);
+
+    clearBtn?.addEventListener("click", () => {
+      input.value = "";
+      input.focus();
+      applyFilter();
+    });
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        activeBrand = chip.dataset.brandChip || "";
+        chips.forEach((c) => c.classList.remove("is-active"));
+        chip.classList.add("is-active");
+        applyFilter();
+      });
+    });
+
+    resetBtn?.addEventListener("click", () => {
+      input.value     = "";
+      country.value   = "";
+      instock.checked = false;
+      activeBrand     = "";
+      chips.forEach((c, i) => c.classList.toggle("is-active", i === 0));
+      applyFilter();
+    });
+
+    // ─ Persist filter state across page navigations via URL hash ──────────
+    // /finder/#q=cohiba&brand=Cohiba&cty=de — share a filtered view, restore
+    // on back/forward, deep-link from a blog post.
+    function readFromHash() {
+      const hash = window.location.hash.replace(/^#/, "");
+      if (!hash) return false;
+      const p = new URLSearchParams(hash);
+      let used = false;
+      if (p.has("q"))     { input.value     = p.get("q")    || ""; used = true; }
+      if (p.has("cty"))   { country.value   = p.get("cty")  || ""; used = true; }
+      if (p.has("stock")) { instock.checked = p.get("stock") === "1"; used = true; }
+      if (p.has("brand")) {
+        const b = p.get("brand") || "";
+        activeBrand = b;
+        chips.forEach((c) => c.classList.toggle("is-active", (c.dataset.brandChip || "") === b));
+        used = true;
+      }
+      return used;
+    }
+    function writeToHash() {
+      const p = new URLSearchParams();
+      if (input.value.trim()) p.set("q", input.value.trim());
+      if (country.value)      p.set("cty", country.value);
+      if (instock.checked)    p.set("stock", "1");
+      if (activeBrand)        p.set("brand", activeBrand);
+      const s = p.toString();
+      const newHash = s ? "#" + s : "";
+      if (window.location.hash !== newHash) {
+        // Replace, don't push — typing is too granular for back-button history.
+        history.replaceState(null, "", window.location.pathname + window.location.search + newHash);
+      }
+    }
+    let writeTimer: ReturnType<typeof setTimeout> | null = null;
+    function debouncedWrite() {
+      if (writeTimer) clearTimeout(writeTimer);
+      writeTimer = setTimeout(writeToHash, 250);
+    }
+    input.addEventListener("input", debouncedWrite);
+    country.addEventListener("change", debouncedWrite);
+    instock.addEventListener("change", debouncedWrite);
+    chips.forEach((chip) => chip.addEventListener("click", debouncedWrite));
+
+    // ─ Init ──────────────────────────────────────────────────────────────
+    if (readFromHash()) applyFilter();
+  })();
+</script>
