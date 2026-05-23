@@ -106,8 +106,11 @@ jobs:
             # remove from the PDP list in functions/api/scraper/[retailer].ts.
             slice_404=$(echo "$body" | jq -r '.errors[] | select(test(" HTTP 404$"))' || true)
             if [ -n "$slice_404" ]; then
-              NOT_FOUND_URLS="${NOT_FOUND_URLS}${slice_404}
-"
+              # Append slice's 404 URLs followed by a newline. Use ANSI-C
+              # quoting ($'\n') so the bash string holds an actual LF without
+              # putting a literal newline in the YAML block scalar — a literal
+              # newline here used to break workflow parsing ("No jobs were run").
+              NOT_FOUND_URLS="${NOT_FOUND_URLS}${slice_404}"$'\n'
             fi
           done
           {
