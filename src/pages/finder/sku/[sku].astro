@@ -26,9 +26,17 @@ if (!sku) return Astro.redirect("/finder/");
 
 const snapshots = snapshotsForSku(sku.id);
 
-// Decorate snapshots with retailer + country + per-cigar EUR conversion, sort by EUR
+// Decorate snapshots with retailer + country + per-cigar EUR conversion, sort by EUR.
+//
+// Note: we keep this .map callback as boring as possible — only plain string +
+// number expressions, no TS type predicates and no for-loops with type
+// annotations. A previous attempt to use a (c): c is NonNullable<...> predicate
+// inside the callback broke Astro's esbuild frontmatter parser with an
+// unrelated "Unexpected export" error. Anything fancier than what's below
+// goes in a helper function in src/data/finder-data.ts where the full
+// TypeScript pipeline runs.
 const offers = snapshots
-  .map((snap) => {
+  .map(function decorateOffer(snap) {
     const retailer = RETAILER_BY_ID[snap.retailerId];
     const country  = COUNTRY_BY_CODE[retailer.country];
     const eur      = toEUR(snap.price, snap.currency);
@@ -36,44 +44,61 @@ const offers = snapshots
     const shopLabel = link.isExact ? "Shop →" : "Search on site →";
     const shopClass = link.isExact ? "finder-table__compare" : "finder-table__compare finder-table__compare--search";
     const shopTitle = link.isExact
-      ? "Opens the retailer's product page in a new tab"
-      : "We don't have a direct link to this cigar on " + retailer.name + " yet — this opens their site search for " + sku.brand + " " + sku.vitola + ".";
-    // Pre-format the "Last verified" date so the template doesn't need an IIFE
+      ? "Opens the retailer product page in a new tab"
+      : "We do not have a direct link to this cigar on " + retailer.name + " yet. This opens their site search for " + sku.brand + " " + sku.vitola + ".";
     const verifiedDate = new Date(snap.scrapedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-    // Resolve where this retailer's listed price is genuinely all-in (excise duty
-    // + VAT already baked in). Defaults to home country only. Used to render the
-    // per-row "Duty-paid in 🇩🇪" badge and the optional "all-in for you" highlight
-    // when we know the buyer's country.
-    const dutyCodes  = dutyPaidCountries(retailer);
-    // Resolve country objects, dropping any that aren't in COUNTRY_BY_CODE.
-    // Plain Boolean filter (no TS type predicate) — esbuild's Astro-frontmatter
-    // parser chokes on `(c): c is NonNullable<typeof country>` predicates and
-    // bails out reporting an unrelated "Unexpected export" further down.
-    const dutyCountries: Array<{ flag: string; name: string }> = [];
-    for (const cc of dutyCodes) {
-      const c = COUNTRY_BY_CODE[cc];
-      if (c) dutyCountries.push(c);
-    }
-    const dutyFlags  = dutyCountries.map((c) => c.flag).join(" ");
-    const dutyNames  = dutyCountries.map((c) => c.name).join(", ");
-    const shipsLabel = retailer.shipsTo === "domestic"
-      ? "Ships in-country"
-      : retailer.shipsTo === "eu"   ? "Ships EU · duty extra"
-      :                               "Ships worldwide · duty extra";
-    const dutyTitle = retailer.shipsTo === "domestic"
-      ? `Listed price is all-in for ${dutyNames}. Retailer doesn't ship cross-border.`
-      : `Listed price is all-in for ${dutyNames}. Buyers outside these countries pay destination-country tobacco excise duty + VAT on top of the listed price.`;
+    // Duty-paid resolution lives in a separate helper (countryListForRetailer)
+    // declared below the offers loop — keeps this callback clean.
+    const dutyCodes = dutyPaidCountries(retailer);
     return {
-      snap, retailer, country, eur, perCigarEur: eur / sku.boxSize,
-      link, shopLabel, shopClass, shopTitle, verifiedDate,
-      dutyCodes, dutyFlags, dutyNames, shipsLabel, dutyTitle,
+      snap: snap,
+      retailer: retailer,
+      country: country,
+      eur: eur,
+      perCigarEur: eur / sku.boxSize,
+      link: link,
+      shopLabel: shopLabel,
+      shopClass: shopClass,
+      shopTitle: shopTitle,
+      verifiedDate: verifiedDate,
+      dutyCodes: dutyCodes,
     };
   })
-  .sort((a, b) => {
+  .sort(function rankOffers(a, b) {
     // In-stock first, then by EUR price ascending
     if (a.snap.inStock !== b.snap.inStock) return a.snap.inStock ? -1 : 1;
     return a.eur - b.eur;
   });
+
+// Second-pass enrichment — adds the human-readable duty / ships strings
+// without putting any of that logic inside the .map() callback above.
+const offersEnriched = offers.map(function enrichDuty(o) {
+  const codes = o.dutyCodes;
+  const flagParts = [];
+  const nameParts = [];
+  for (let i = 0; i < codes.length; i++) {
+    const c = COUNTRY_BY_CODE[codes[i]];
+    if (c) {
+      flagParts.push(c.flag);
+      nameParts.push(c.name);
+    }
+  }
+  const dutyFlags = flagParts.join(" ");
+  const dutyNames = nameParts.join(", ");
+  let shipsLabel;
+  if (o.retailer.shipsTo === "domestic")      shipsLabel = "Ships in-country";
+  else if (o.retailer.shipsTo === "eu")       shipsLabel = "Ships EU · duty extra";
+  else                                         shipsLabel = "Ships worldwide · duty extra";
+  const dutyTitle = o.retailer.shipsTo === "domestic"
+    ? "Listed price is all-in for " + dutyNames + ". Retailer doesn't ship cross-border."
+    : "Listed price is all-in for " + dutyNames + ". Buyers outside these countries pay destination-country tobacco excise duty + VAT on top of the listed price.";
+  return Object.assign({}, o, {
+    dutyFlags: dutyFlags,
+    dutyNames: dutyNames,
+    shipsLabel: shipsLabel,
+    dutyTitle: dutyTitle,
+  });
+});
 
 const inStockOffers = offers.filter((o) => o.snap.inStock);
 const best          = inStockOffers[0];
@@ -267,7 +292,7 @@ const ogDescription = best
           {/* Each row starts with class='is-unverified' (no 'is-oos' lie).
               The hydration script adds 'is-oos' only when a LIVE scrape
               actually reports the retailer as out of stock. */}
-          {offers.map((o, i) => (
+          {offersEnriched.map((o, i) => (
             <tr class="is-unverified" data-retailer-id={o.retailer.id} data-duty-paid={o.dutyCodes.join(",")}>
               <td data-cell="retailer" data-label="Retailer">
                 <span class="finder-table__retailer">{o.retailer.name}</span>
