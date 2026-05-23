@@ -200,8 +200,18 @@ const ogDescription = best
               </td>
               <td data-label="Country">{o.country.flag} {o.country.name}</td>
               <td data-label="Status">
-                <span class="finder-ships">
+                <span
+                  class="finder-ships"
+                  title={
+                    o.retailer.shipsTo === "domestic"
+                      ? `Domestic shipping only — duty-paid within ${o.country.name}.`
+                      : "Cross-border shipping accepted, but destination-country tobacco duty + VAT applies. SE/DK/FI/IE/UK/CH buyers: expect a surcharge at customs."
+                  }
+                >
                   Ships {o.retailer.shipsTo === "domestic" ? "domestic" : o.retailer.shipsTo === "eu" ? "EU" : "worldwide"}
+                  {o.retailer.shipsTo !== "domestic" && (
+                    <span class="finder-ships-warn" aria-label="Cross-border duty warning">ⓘ</span>
+                  )}
                 </span>
               </td>
               <td class="finder-table__num finder-table__price" data-cell="price" data-label="Box price">
@@ -233,6 +243,33 @@ const ogDescription = best
       Live-scraped rows refresh automatically — look for the <span class="finder-badge finder-badge--live">● LIVE</span> badge.
       Tap any retailer name to verify the price on their site before purchasing.
     </p>
+
+    {/* ─── Duty-paid shipping clarification ─────────────────────────────────
+        Critical buyer transparency: "Ships EU" means the retailer accepts EU
+        addresses, NOT that no destination-country tobacco duty applies. Sweden
+        in particular has been levying tobacco tax on inbound EU shipments
+        since 2018 case law; Denmark, Finland, Ireland enforce similar rules;
+        UK + Switzerland are outside the EU customs union so all shipments
+        face destination duty + VAT. Better to surface this than risk a buyer
+        getting a 50% surcharge surprise at the door. */}
+    <div class="finder-duty-notice">
+      <p>
+        <strong>About "Ships EU" and "Ships worldwide".</strong>
+        Most retailers ship duty-paid only within their <strong>own country</strong>.
+        Cross-border tobacco shipments are subject to <strong>destination-country
+        excise duty + VAT</strong>, which the retailer's listed price does not include:
+      </p>
+      <ul>
+        <li><strong>🇸🇪 Sweden, 🇩🇰 Denmark, 🇫🇮 Finland, 🇮🇪 Ireland:</strong> Customs intercepts cross-border tobacco mail orders and levies the destination country's tobacco tax. On a box of 25 Cuban premiums this typically adds <strong>€100–€300</strong>.</li>
+        <li><strong>🇬🇧 UK (post-Brexit):</strong> Every EU→UK tobacco shipment faces UK Tobacco Products Duty (~£5.31/kg + 16.5% ad valorem on cigars) + UK VAT (20%). A €765 box typically becomes <strong>£1,250–1,400 delivered</strong>.</li>
+        <li><strong>🇨🇭 Switzerland → EU and EU → Switzerland:</strong> Outside the EU customs union — destination duty + VAT applies in both directions.</li>
+      </ul>
+      <p>
+        Always verify the <strong>total delivered cost</strong> on the retailer's checkout page before buying.
+        Domestic orders (German buyer → German shop, Swiss → Swiss, etc.) face <strong>no additional duty</strong>
+        because the listed price already includes the local tobacco excise.
+      </p>
+    </div>
   </section>
 
   {/* ─── EDITORIAL — tasting notes, history, why compare ───────────────── */}
@@ -833,7 +870,50 @@ const ogDescription = best
   .finder-stock { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .finder-stock--yes { color: #2a8a2a; }
   .finder-stock--no  { color: var(--color-text-muted); }
-  .finder-ships { font-size: 0.78rem; color: var(--color-text-soft); }
+  .finder-ships { font-size: 0.78rem; color: var(--color-text-soft); cursor: help; }
+  .finder-ships-warn {
+    display: inline-block;
+    margin-left: 0.25rem;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    text-align: center;
+    border-radius: 50%;
+    background: rgba(201, 169, 97, 0.2);
+    color: var(--color-gold-hover);
+    font-size: 0.62rem;
+    font-weight: 800;
+    vertical-align: middle;
+  }
+
+  /* Duty-paid shipping clarification — sits below the offer table on each
+     SKU page. Honest disclosure that cross-border tobacco shipments face
+     destination-country duty + VAT. */
+  .finder-duty-notice {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem 1.1rem;
+    background: rgba(110, 38, 32, 0.04);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-text);
+  }
+  .finder-duty-notice p {
+    margin: 0 0 0.55rem 0;
+    color: var(--color-text-soft);
+  }
+  .finder-duty-notice p:last-child { margin-bottom: 0; }
+  .finder-duty-notice strong { color: var(--color-text); }
+  .finder-duty-notice ul {
+    margin: 0.55rem 0 0.7rem 0;
+    padding-left: 1.15rem;
+  }
+  .finder-duty-notice li {
+    margin-bottom: 0.4rem;
+    color: var(--color-text-soft);
+  }
+  .finder-duty-notice li:last-child { margin-bottom: 0; }
 
   .sku-hero__verification {
     margin-top: 1.5rem;
