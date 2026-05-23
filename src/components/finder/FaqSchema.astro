@@ -1,0 +1,161 @@
+---
+/**
+ * <FaqSchema items={[{ q, a }, ...]} heading="…" />
+ *
+ * Renders a visible FAQ block AND emits FAQPage JSON-LD so Google can
+ * surface "People Also Ask" rich results.
+ *
+ * Why this matters: a SKU comparison page that ranks #4 organically can
+ * still appear in the PAA box at position 0 — sometimes outranking the
+ * #1 organic result above it. FAQPage schema is the cheapest way to win
+ * that real estate. We pair it with on-page Q/A so the human reader
+ * also benefits, not just the crawler.
+ *
+ * Rendering rules:
+ *   - Questions render as <h3> so they're scrollable in the page outline.
+ *   - Answers render as raw HTML (we pass markdown-ish strings, escape on
+ *     our own where untrusted) — keeps short paragraphs + lists possible
+ *     without forcing every callsite to use <details>.
+ *   - JSON-LD is emitted inline; Google accepts it anywhere in the doc.
+ *
+ * One FAQPage per page is the safe pattern — multiple FAQPage blocks on
+ * a single URL is technically allowed but confuses the rich-result eval.
+ */
+interface FaqItem {
+  q: string;
+  a: string; // HTML allowed — caller is responsible for escaping user input
+}
+interface Props {
+  items: FaqItem[];
+  heading?: string;
+  // When the section sits inside a wider page, suppress the outer container
+  // so the parent's layout (e.g. container-narrow) wins.
+  containerClass?: string;
+}
+const {
+  items,
+  heading = "Frequently asked questions",
+  containerClass = "container-narrow",
+} = Astro.props as Props;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: items.map((it) => ({
+    "@type": "Question",
+    name: it.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      // Strip HTML tags for the structured-data answer (Google flags HTML
+      // inside acceptedAnswer.text for some categories). The visible block
+      // keeps the formatting.
+      text: it.a.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
+    },
+  })),
+};
+---
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)}></script>
+
+<section class={`faq-schema ${containerClass}`.trim()}>
+  <p class="lounge-label">FAQ</p>
+  <h2 class="faq-schema__heading">{heading}</h2>
+  <div class="faq-schema__list">
+    {items.map((it) => (
+      <details class="faq-schema__item">
+        <summary class="faq-schema__q">
+          <h3>{it.q}</h3>
+          <span class="faq-schema__chev" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-schema__a" set:html={it.a}></div>
+      </details>
+    ))}
+  </div>
+</section>
+
+<style>
+  .faq-schema {
+    padding-top: 2.25rem;
+    padding-bottom: 2.5rem;
+  }
+  .faq-schema__heading {
+    font-family: var(--font-display, Georgia, serif);
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+    margin: 0.4rem 0 1.5rem;
+  }
+  .faq-schema__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .faq-schema__item {
+    border: 1px solid var(--color-border, #e6e3dc);
+    border-radius: 8px;
+    background: var(--color-bg-soft, #fafaf6);
+    overflow: hidden;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .faq-schema__item[open] {
+    border-color: var(--color-gold, #c9a961);
+    background: var(--color-bg, #fff);
+  }
+  .faq-schema__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  .faq-schema__q::-webkit-details-marker { display: none; }
+  .faq-schema__q h3 {
+    margin: 0;
+    font-family: var(--font-display, Georgia, serif);
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--color-text);
+    letter-spacing: -0.005em;
+  }
+  .faq-schema__chev {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(201, 169, 97, 0.16);
+    color: var(--color-gold, #c9a961);
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 24px;
+    text-align: center;
+    transition: transform 0.18s ease, background 0.18s ease;
+  }
+  .faq-schema__item[open] .faq-schema__chev {
+    transform: rotate(45deg);
+    background: var(--color-gold, #c9a961);
+    color: var(--color-bg, #fff);
+  }
+  .faq-schema__a {
+    padding: 0 1.2rem 1.2rem 1.2rem;
+    font-size: 0.94rem;
+    line-height: 1.6;
+    color: var(--color-text-soft);
+  }
+  .faq-schema__a p { margin: 0 0 0.7rem 0; }
+  .faq-schema__a p:last-child { margin-bottom: 0; }
+  .faq-schema__a a {
+    color: var(--color-gold-hover, #b08e4a);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .faq-schema__a a:hover { color: var(--color-accent, #ff2e2e); }
+  .faq-schema__a ul, .faq-schema__a ol {
+    margin: 0.3rem 0 0.7rem 1.2rem;
+    padding: 0;
+  }
+  .faq-schema__a li { margin: 0.2rem 0; }
+</style>

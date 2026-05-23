@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Newsletter from "../../components/Newsletter.astro";
+import FaqSchema from "../../components/finder/FaqSchema.astro";
 import {
   COUNTRIES,
   RETAILERS,
@@ -45,6 +46,41 @@ const statusLabel: Record<typeof country.status, string> = {
   restricted: "Restricted online sale",
   closed: "No online sale",
 };
+
+// ─── Country FAQ ──────────────────────────────────────────────────────────
+// 4 PAA-shaped questions specific to this market. The copy branches on
+// country.status because Sweden / France / UK each face different
+// regulatory truth. Renders as FAQPage JSON-LD + visible accordion.
+const cheapestRow = skuRows[0];
+const retailerCount = retailers.length;
+const cheapestLine = cheapestRow
+  ? `The cheapest in-stock box on our ${country.name} tracker right now is <strong><a href="/finder/sku/${cheapestRow.sku.slug}/">${cheapestRow.sku.brand} ${cheapestRow.sku.vitola}</a></strong> at approximately <strong>${cheapestRow.snap.currency} ${Math.round(cheapestRow.snap.price).toLocaleString("en-US")}</strong>.`
+  : `We're tracking ${SKUS.length} Cuban SKUs across this market — refresh weekly for live availability.`;
+
+const statusAnswers: Record<typeof country.status, string> = {
+  open: `<p>Yes. Licensed retailers based in ${country.name} sell Cuban (Habanos) cigars online with public pricing and ship domestically. Cross-border EU shipments are accepted by many of them but face destination-country tobacco duty + VAT — see each retailer card's "Duty / Ships" line for specifics.</p>`,
+  restricted: `<p>Restricted. ${country.name} permits online tobacco sale only under specific conditions (often: identity verification, no public price display, or shipping limited to certain regions). The retailers listed above operate inside those rules; prices may be brochure-only or require an account to view.</p>`,
+  closed: `<p>No. ${country.name} does not permit online Cuban-cigar sale. The retailers listed are in-store walk-in only. To buy online and ship into ${country.name}, you'd need to import from another EU country — which makes the listed price subject to ${country.name} tobacco excise + VAT at customs.</p>`,
+};
+
+const countryFaq = [
+  {
+    q: `Can I legally buy Cuban cigars online in ${country.name}?`,
+    a: statusAnswers[country.status],
+  },
+  {
+    q: `Where is the cheapest place to buy Cuban cigars in ${country.name} right now?`,
+    a: `<p>${cheapestLine} The full ranking is in the catalogue above, sorted by current price ascending across the ${retailerCount} licensed retailers we track in ${country.name}.</p><p>Prices and stock shift weekly — set a price alert on any individual SKU page to get an email the moment a retailer in ${country.name} drops below your target.</p>`,
+  },
+  {
+    q: `Will I pay tobacco duty + VAT on top of the listed price?`,
+    a: `<p>If you buy from a retailer based in ${country.name} and ship to a ${country.name} address: <strong>no</strong> — duty + VAT are already included in the listed price.</p><p>If you buy from a retailer in another country and ship to ${country.name}: <strong>yes</strong> — ${country.name} will charge its own tobacco excise + VAT at customs, regardless of whether the retailer is inside the EU. Sweden, Denmark, Finland, Ireland, the UK, and Switzerland all enforce this aggressively on inbound tobacco mail order. Stick with the duty-paid retailers above unless you're buying from a country with a lower net rate and you've done the math.</p>`,
+  },
+  {
+    q: `What's the difference between an LCDH, a Habanos Specialist, and a generic tobacconist?`,
+    a: `<p><strong>LCDH (La Casa del Habano)</strong> is the official franchise network of Habanos S.A. — the Cuban state tobacco company. LCDH stores get first allocation on Edición Limitada releases, sell exclusive house-line cigars, and are the highest-prestige tier. Look for the gold LCDH badge in the listings above.</p><p><strong>Habanos Specialist</strong> is a quality tier below LCDH — licensed by Habanos S.A., trained staff, guaranteed authenticity. Most premium Cuban-only shops fall here.</p><p><strong>Generic tobacconist</strong> sells Cuban alongside Dominican, Nicaraguan and supermarket-grade cigars. Authenticity is usually fine but allocation on rare SKUs is limited.</p>`,
+  },
+];
 
 // ----------------------------------------------------------------------------
 // Structured data — ItemList of SKUs with prices in this country
@@ -308,6 +344,13 @@ const ogDescription = country.note
       </div>
     </div>
   </section>
+
+  {/* ─── FAQ ─── PAA box wins for "buy cuban cigars in {country}" queries. */}
+  <FaqSchema
+    items={countryFaq}
+    heading={`Buying Cuban cigars in ${country.name} — frequently asked questions`}
+    containerClass="container-narrow"
+  />
 
   <Newsletter
     heading={`Be the first to know about ${country.name} price drops`}
