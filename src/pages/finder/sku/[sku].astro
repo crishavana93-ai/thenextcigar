@@ -360,14 +360,24 @@ const ogDescription = best
       }
       if (!data || data.length === 0) return;
 
-      // For each retailer, prefer the canonical box-size row; fall back to
-      // whatever pack size they sell.
+      // For each retailer, pick the best pack to display. Priority:
+      //   1. canonical box-size AND in stock     ← perfect match
+      //   2. canonical box-size, any stock        ← right pack, just OOS
+      //   3. any pack that is in stock            ← let the user buy something
+      //   4. anything                             ← last resort
+      // We rank rows per retailer with a numeric score and keep the highest.
+      const scoreRow = (r: SnapshotRow): number => {
+        const isCanonical = r.pack_size === boxSize;
+        const inStock = r.in_stock;
+        if (isCanonical && inStock) return 4;
+        if (isCanonical) return 3;
+        if (inStock) return 2;
+        return 1;
+      };
       const byRetailer = new Map<string, SnapshotRow>();
       for (const row of data) {
         const existing = byRetailer.get(row.retailer_id);
-        if (!existing) { byRetailer.set(row.retailer_id, row); continue; }
-        // Prefer pack_size = boxSize
-        if (row.pack_size === boxSize && existing.pack_size !== boxSize) {
+        if (!existing || scoreRow(row) > scoreRow(existing)) {
           byRetailer.set(row.retailer_id, row);
         }
       }
@@ -387,15 +397,25 @@ const ogDescription = best
         const r = RETAILER_BY_ID[retailerId];
         const currency = (r ? row.currency : row.currency) as any;
 
-        // Box price (native currency)
+        // Box price (native currency). If the retailer only carries a
+        // non-canonical pack size, append "(N-pack)" so users aren't misled
+        // into thinking €238 = a full box of 25.
         const priceCell = tr.querySelector<HTMLElement>('[data-cell="price"]');
         if (priceCell) {
-          priceCell.textContent = formatPrice(row.price, currency);
+          let priceText = formatPrice(row.price, currency);
+          if (row.pack_size !== boxSize) {
+            priceText += ` <span class="finder-pack-note">(${row.pack_size}-pack)</span>`;
+          }
+          priceCell.innerHTML = priceText;
         }
-        // EUR-normalized
+        // EUR-normalized. Same annotation rule applies for clarity.
         const eurCell = tr.querySelector<HTMLElement>('[data-cell="eur"]');
         if (eurCell) {
-          eurCell.textContent = `€${Math.round(row.price_eur).toLocaleString("en-US")}`;
+          let eurText = `€${Math.round(row.price_eur).toLocaleString("en-US")}`;
+          if (row.pack_size !== boxSize) {
+            eurText += ` <span class="finder-pack-note">(${row.pack_size}-pack)</span>`;
+          }
+          eurCell.innerHTML = eurText;
         }
         // Per-cigar (from generated column — always consistent)
         const perCigarCell = tr.querySelector<HTMLElement>('[data-cell="per-cigar"]');
@@ -679,6 +699,17 @@ const ogDescription = best
   @keyframes finder-live-pulse {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.55; }
+  }
+
+  /* Pack-size note shown next to price/EUR when a retailer carries a
+     non-canonical pack (e.g. 3-pack instead of the canonical box of 25). */
+  .finder-pack-note {
+    display: inline-block;
+    margin-left: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
   }
 
   .finder-stock { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }

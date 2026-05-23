@@ -173,6 +173,43 @@ function* iterateProducts(node: unknown): Generator<Record<string, unknown>> {
   if (isProduct) yield obj;
   if (Array.isArray(obj["@graph"])) yield* iterateProducts(obj["@graph"]);
 }
+// Schema.org price-spec parser. Reads pack size from:
+//   offer.priceSpecification.eligibleQuantity (string|number|QuantitativeValue.value)
+//   offer.eligibleQuantity (Cigarworld-style fallback)
+//   offer.inventoryLevel.value (some Shopify shops)
+// Falls back to 25 only if none of those are present.
+function readPackSize(offer: Record<string, unknown>): number {
+  const tryNumeric = (v: unknown): number | null => {
+    if (v == null) return null;
+    if (typeof v === "number" && v > 0 && v <= 100) return Math.round(v);
+    if (typeof v === "string") {
+      const n = parseFloat(v);
+      if (!Number.isNaN(n) && n > 0 && n <= 100) return Math.round(n);
+    }
+    if (typeof v === "object") {
+      const obj = v as Record<string, unknown>;
+      // QuantitativeValue: { @type: "QuantitativeValue", value: "25" }
+      return tryNumeric(obj.value);
+    }
+    return null;
+  };
+  const ps = offer.priceSpecification;
+  if (ps && typeof ps === "object") {
+    const psObj = ps as Record<string, unknown>;
+    const n = tryNumeric(psObj.eligibleQuantity);
+    if (n) return n;
+  }
+  const direct = tryNumeric(offer.eligibleQuantity);
+  if (direct) return direct;
+  const inv = offer.inventoryLevel;
+  if (inv && typeof inv === "object") {
+    const invObj = inv as Record<string, unknown>;
+    const n = tryNumeric(invObj.value);
+    if (n) return n;
+  }
+  return 25;
+}
+
 function parseSchemaOrg(html: string): ParsedOffer[] {
   const offers: ParsedOffer[] = [];
   for (const block of extractJsonLdBlocks(html)) {
@@ -187,11 +224,15 @@ function parseSchemaOrg(html: string): ParsedOffer[] {
         if (!FX_TO_EUR[currency]) continue;
         const availability = String(offer.availability ?? "").toLowerCase();
         const inStock = !availability || availability.includes("instock");
-        offers.push({ packSize: 25, price, currency, inStock });
+        const packSize = readPackSize(offer);
+        offers.push({ packSize, price, currency, inStock });
       }
     }
   }
-  return offers;
+  // Dedup by packSize — same retailer may list duplicate offers; keep first.
+  const dedup = new Map<number, ParsedOffer>();
+  for (const o of offers) if (!dedup.has(o.packSize)) dedup.set(o.packSize, o);
+  return Array.from(dedup.values());
 }
 
 // Real-browser User-Agent. Many EU shops (incl. Noblego) gate price markup
@@ -356,35 +397,38 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       if (config.stack === "noblego_html") parsed = parseNoblegoHtml(html);
       else parsed = parseSchemaOrg(html);
 
-      // Pick the preferred pack size; fall back to any pack if not present.
-      const picked = parsed.find((o) => o.packSize === config.preferredPackSize) ?? parsed[0];
-
       debugLog.push({
         url: pdp.url,
         status: 200,
         bytes: html.length,
         offersFound: parsed.length,
-        packsFound: parsed.map((p) => `${p.packSize}@${p.price}`),
+        packsFound: parsed.map((p) => `${p.packSize}@${p.price}${p.inStock ? "" : "(OOS)"}`),
       });
 
-      if (!picked) {
+      if (parsed.length === 0) {
         errors.push(`${pdp.url}: parser found 0 offers`);
         continue;
       }
 
-      rowsToInsert.push({
-        sku: pdp.skuHint || null,
-        retailer_id: retailerId,
-        pack_size: picked.packSize,
-        price: picked.price,
-        currency: picked.currency,
-        price_eur: Math.round(picked.price * FX_TO_EUR[picked.currency] * 100) / 100,
-        in_stock: picked.inStock,
-        source_url: pdp.url,
-        country_code: config.country,
-        parser: config.stack,
-        scraped_at: scrapedAt,
-      });
+      // Write ALL pack-size variants — the migration 023 view dedups on
+      // (sku, retailer_id, pack_size) so per-pack price comparison works.
+      // The SKU page hydration prefers the canonical box size and falls
+      // back to in-stock packs at the same per-cigar price.
+      for (const offer of parsed) {
+        rowsToInsert.push({
+          sku: pdp.skuHint || null,
+          retailer_id: retailerId,
+          pack_size: offer.packSize,
+          price: offer.price,
+          currency: offer.currency,
+          price_eur: Math.round(offer.price * FX_TO_EUR[offer.currency] * 100) / 100,
+          in_stock: offer.inStock,
+          source_url: pdp.url,
+          country_code: config.country,
+          parser: config.stack,
+          scraped_at: scrapedAt,
+        });
+      }
     } catch (e: any) {
       errors.push(`${pdp.url}: ${e?.message || "fetch failed"}`);
     }
