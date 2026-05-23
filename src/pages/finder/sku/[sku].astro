@@ -308,7 +308,7 @@ const ogDescription = best
   ──────────────────────────────────────────────────────────────────────── */}
   <script>
     import { getSupabase } from "../../../lib/supabase";
-    import { SKUS, RETAILER_BY_ID, formatPrice, toEUR } from "../../../data/finder-data";
+    import { SKUS, RETAILER_BY_ID, COUNTRY_BY_CODE, formatPrice, toEUR } from "../../../data/finder-data";
 
     type SnapshotRow = {
       id: string;
@@ -386,10 +386,50 @@ const ogDescription = best
       let newestScrapeAt = "";
       const updatedRetailers: string[] = [];
 
+      // Helper — build a new <tr> from scratch when a live retailer isn't
+      // already pre-rendered in the static table. Mirrors the Astro template
+      // exactly so subsequent style + querySelector hooks all match.
+      function buildRetailerRow(retailerId: string, row: SnapshotRow): HTMLTableRowElement | null {
+        const retailer = RETAILER_BY_ID[retailerId];
+        if (!retailer) return null;
+        const country = COUNTRY_BY_CODE[retailer.country] || { name: retailer.country.toUpperCase(), flag: "" };
+        const tr = document.createElement("tr");
+        tr.dataset.retailerId = retailerId;
+        const shipsLabel = retailer.shipsTo === "domestic" ? "domestic" : retailer.shipsTo === "eu" ? "EU" : "worldwide";
+        const statusBadge = retailer.status === "lcdh" ? '<span class="finder-badge finder-badge--gold">LCDH</span>' : "";
+        tr.innerHTML = `
+          <td data-cell="retailer">
+            <span class="finder-table__retailer">${retailer.name}</span>
+            ${statusBadge}
+          </td>
+          <td>${country.flag} ${country.name}</td>
+          <td><span class="finder-ships">Ships ${shipsLabel}</span></td>
+          <td class="finder-table__num finder-table__price" data-cell="price"></td>
+          <td class="finder-table__num" data-cell="eur"></td>
+          <td class="finder-table__num" data-cell="per-cigar"></td>
+          <td data-cell="stock"></td>
+          <td class="finder-table__cta">
+            <a href="#" class="finder-table__compare" target="_blank" rel="noopener noreferrer sponsored" data-cell="shop">Shop →</a>
+          </td>
+        `;
+        return tr;
+      }
+
+      const tbody = document.querySelector<HTMLTableSectionElement>(".finder-table tbody");
+
       for (const [retailerId, row] of byRetailer.entries()) {
-        const tr = document.querySelector<HTMLTableRowElement>(
+        let tr = document.querySelector<HTMLTableRowElement>(
           `tr[data-retailer-id="${retailerId}"]`
         );
+        // If this live retailer has no static row, inject one. Lets us add
+        // a new scraper (e.g. de-cigarmaxx) without touching the SKU template.
+        if (!tr && tbody) {
+          const newRow = buildRetailerRow(retailerId, row);
+          if (newRow) {
+            tbody.appendChild(newRow);
+            tr = newRow;
+          }
+        }
         if (!tr) continue;
 
         // Update visual stock state

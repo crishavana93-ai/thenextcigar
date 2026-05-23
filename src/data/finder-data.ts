@@ -166,6 +166,7 @@ export const RETAILERS: Retailer[] = [
 
   // ─── Germany ──── 18 verified ─────────────────────────────────────────────
   { id: "de-noblego",            name: "Noblego",                            url: "https://www.noblego.de",                                 country: "de", city: "Berlin",          status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
+  { id: "de-cigarmaxx",          name: "Cigarmaxx",                          url: "https://www.cigarmaxx.de",                               country: "de", city: "Berlin",          status: "mixed",              shipsTo: "eu",        hasPublicPricing: true  },
   { id: "de-cigarworld",         name: "Cigarworld.de",                      url: "https://www.cigarworld.de",                              country: "de", city: "Düsseldorf",      status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },
   { id: "de-cigarsmoker",        name: "The Cigar Smoker (LCDH Hamburg)",    url: "https://www.thecigarsmoker.com",                         country: "de", city: "Hamburg",         status: "lcdh",               shipsTo: "worldwide", hasPublicPricing: true  },
   { id: "de-selected-cigars",    name: "Selected Cigars (LCDH Düsseldorf)",  url: "https://www.selected-cigars.com",                        country: "de", city: "Düsseldorf",      status: "lcdh",               shipsTo: "eu",        hasPublicPricing: true  },

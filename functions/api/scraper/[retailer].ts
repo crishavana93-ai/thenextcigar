@@ -67,6 +67,28 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       { url: "https://www.noblego.de/bolivar-belicoso-fino/",   skuHint: "bolivar-belicosos-finos" },
     ],
   },
+  "de-cigarmaxx": {
+    country: "de",
+    // Cigarmaxx.de is owned by Solid Taste GmbH — same parent as Noblego — and
+    // serves identical Magento markup. We reuse parseNoblegoHtml; the regex
+    // additionally accepts "Einzeln" as a single-cigar pack label.
+    stack: "noblego_html",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://www.cigarmaxx.de/cohiba-robusto-zigarre/",              skuHint: "cohiba-robustos" },
+      { url: "https://www.cigarmaxx.de/cohiba-behike-52/",                    skuHint: "cohiba-behike-52" },
+      { url: "https://www.cigarmaxx.de/cohiba-siglo-iv/",                     skuHint: "cohiba-siglo-iv" },
+      { url: "https://www.cigarmaxx.de/cohiba-esplendidos/",                  skuHint: "cohiba-esplendidos" },
+      { url: "https://www.cigarmaxx.de/montecristo-no-4/",                    skuHint: "montecristo-no-4" },
+      { url: "https://www.cigarmaxx.de/montecristo-no-2/",                    skuHint: "montecristo-no-2" },
+      { url: "https://www.cigarmaxx.de/montecristo-petit-edmundo/",           skuHint: "montecristo-petit-edmundo" },
+      { url: "https://www.cigarmaxx.de/partagas-serie-d-no-4/",               skuHint: "partagas-serie-d-no-4" },
+      { url: "https://www.cigarmaxx.de/romeo-y-julieta-petit-coronas/",       skuHint: "romeo-y-julieta-petit-coronas" },
+      { url: "https://www.cigarmaxx.de/hoyo-de-monterrey-epicure-no-2/",      skuHint: "hoyo-de-monterrey-epicure-no-2" },
+      { url: "https://www.cigarmaxx.de/trinidad-reyes/",                      skuHint: "trinidad-reyes" },
+      { url: "https://www.cigarmaxx.de/bolivar-belicoso-fino/",               skuHint: "bolivar-belicosos-finos" },
+    ],
+  },
   "de-cigarworld": {
     country: "de",
     // Will be updated to a custom parser once debug=html reveals the markup.
@@ -124,20 +146,28 @@ interface ParsedOffer {
 //   availability-only-X-instock   → in stock (X units left)
 //   availability-out-of-stock     → OOS
 //   availability-nicht-lieferbar  → OOS (rare)
+// Solid Taste GmbH Magento template. Used by both Noblego.de AND Cigarmaxx.de —
+// they share infrastructure, identical markup. Variants:
+//   <span title="Verpackungseinheit">25er</span>     → pack of 25
+//   <span title="Verpackungseinheit">Einzeln</span>   → pack of 1 (Cigarmaxx)
+//   <span title="Verpackungseinheit">Stück</span>     → pack of 1 (alt label)
 function parseNoblegoHtml(html: string): ParsedOffer[] {
   const offers: ParsedOffer[] = [];
 
+  // Match "{N}er" OR a single-cigar label. Capture group 1 is N when numeric,
+  // empty when "Einzeln/Stück" — we map empty → 1 below.
   // Span ~4500 chars max between the pack-size label and the price. Empirically
   // the gap is ~1000-2000 chars of HTML; 4500 leaves headroom for variants
   // with extra promo badges.
   const rx =
-    /title=["']Verpackungseinheit["'][^>]*>\s*(\d{1,3})er\s*<\/span>[\s\S]{0,4500}?availability-icon\s+availability-([a-z0-9-]+)[\s\S]{0,4500}?<span\s+class=["']price["']\s*>\s*(\d{1,3}(?:\.\d{3})*,\d{2})\s*€/gi;
+    /title=["']Verpackungseinheit["'][^>]*>\s*(?:(\d{1,3})er|(Einzeln|St(?:ü|ue|&uuml;)ck))\s*<\/span>[\s\S]{0,4500}?availability-icon\s+availability-([a-z0-9-]+)[\s\S]{0,4500}?<span\s+class=["']price["']\s*>\s*(\d{1,3}(?:\.\d{3})*,\d{2})\s*€/gi;
 
   let m: RegExpExecArray | null;
   while ((m = rx.exec(html)) !== null) {
-    const packSize = Number(m[1]);
-    const availClass = m[2].toLowerCase();
-    const priceStr = m[3];
+    // Group 1 is numeric "N" (from "Ner"), group 2 is the single-cigar label.
+    const packSize = m[1] ? Number(m[1]) : (m[2] ? 1 : 0);
+    const availClass = m[3].toLowerCase();
+    const priceStr = m[4];
     const price = germanPriceToNumber(priceStr);
     if (!packSize || !price) continue;
     const inStock =

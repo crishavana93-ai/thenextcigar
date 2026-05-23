@@ -37,6 +37,7 @@ jobs:
       matrix:
         retailer:
           - de-noblego
+          - de-cigarmaxx
           - de-cigarworld
       # Don't kill the matrix if one retailer fails — we want partial success.
       fail-fast: false
