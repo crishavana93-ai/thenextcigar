@@ -35,6 +35,7 @@
 
       <form id="price-alert-form" class="price-alert-modal__form" novalidate>
         <input type="hidden" name="sku" data-sku-input />
+        <input type="hidden" name="productName" data-product-input />
         <input type="hidden" name="baselineEur" data-baseline-input />
         <input type="hidden" name="source" value="sku_page" />
 
@@ -205,6 +206,7 @@
     const form = document.getElementById("price-alert-form");
     const skuLabel = dialog.querySelector("[data-sku-label]");
     const skuInput = dialog.querySelector("[data-sku-input]");
+    const productInput = dialog.querySelector("[data-product-input]");
     const baselineLabel = dialog.querySelector("[data-baseline]");
     const baselineInput = dialog.querySelector("[data-baseline-input]");
     const successMsg = dialog.querySelector("[data-success-msg]");
@@ -220,6 +222,7 @@
     document.addEventListener("open-price-alert", (e) => {
       const d = (e && e.detail) || {};
       if (skuInput) skuInput.value = d.sku || "";
+      if (productInput) productInput.value = d.productName || "";
       if (baselineInput) baselineInput.value = d.baselineEur != null ? String(d.baselineEur) : "";
       if (skuLabel) skuLabel.textContent = d.productName || "this Habano";
       if (baselineLabel) baselineLabel.textContent = d.baselineLabel || (d.baselineEur ? "€" + d.baselineEur : "—");
@@ -239,6 +242,8 @@
         email: String(fd.get("email") || "").trim(),
         source: String(fd.get("source") || "sku_page"),
       };
+      const productName = String(fd.get("productName") || "").trim();
+      if (productName) payload.productName = productName;
       const target = fd.get("targetPriceEur");
       if (target !== null && String(target).trim() !== "") payload.targetPriceEur = Number(target);
       const baseline = fd.get("baselineEur");
