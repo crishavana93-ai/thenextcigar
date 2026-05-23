@@ -389,6 +389,127 @@ export const SKU_BY_SLUG: Record<string, Sku> = Object.fromEntries(
 );
 
 // ============================================================================
+// KNOWN BRANDS — every premium cigar brand we recognise, including ones we
+// don't yet track. Powers the search empty-state: when a user types
+// 'Juan Lopez' (a real Cuban brand) we want to acknowledge the brand exists
+// and explain why no results show up, instead of just saying 'no matches'.
+//
+// `tracked` is true when at least one SKU in the SKUS array uses this brand;
+// derived at build time below to keep the two sources of truth in sync.
+// ============================================================================
+export type BrandOrigin = "cuba" | "dominican" | "nicaragua" | "honduras" | "spain" | "other";
+
+export interface KnownBrand {
+  name: string;            // canonical display name ("Juan Lopez")
+  origin: BrandOrigin;     // which country the brand is rolled in
+  aliases: string[];       // alternate spellings + search terms ("juan lópez", "jl")
+  shortNote?: string;      // one-liner for the empty-state message
+}
+
+export const KNOWN_BRANDS: KnownBrand[] = [
+  // ─── Cuban (Habanos S.A.) — the full official roster ──────────────────────
+  { name: "Cohiba",                origin: "cuba", aliases: ["cohiba"] },
+  { name: "Montecristo",           origin: "cuba", aliases: ["montecristo", "monte"] },
+  { name: "Romeo y Julieta",       origin: "cuba", aliases: ["romeo y julieta", "romeo", "ryj"] },
+  { name: "Partagás",              origin: "cuba", aliases: ["partagas", "partagás"] },
+  { name: "Hoyo de Monterrey",     origin: "cuba", aliases: ["hoyo de monterrey", "hoyo"] },
+  { name: "H. Upmann",             origin: "cuba", aliases: ["h. upmann", "h upmann", "upmann"] },
+  { name: "Trinidad",              origin: "cuba", aliases: ["trinidad"] },
+  { name: "Bolívar",               origin: "cuba", aliases: ["bolivar", "bolívar"] },
+  { name: "Cuaba",                 origin: "cuba", aliases: ["cuaba"] },
+  { name: "Diplomáticos",          origin: "cuba", aliases: ["diplomaticos", "diplomáticos"] },
+  { name: "El Rey del Mundo",      origin: "cuba", aliases: ["el rey del mundo", "rey del mundo"] },
+  { name: "Fonseca",               origin: "cuba", aliases: ["fonseca"] },
+  { name: "Guantanamera",          origin: "cuba", aliases: ["guantanamera"] },
+  { name: "José L. Piedra",        origin: "cuba", aliases: ["jose l. piedra", "jose l piedra", "jlp", "piedra"] },
+  { name: "Juan López",            origin: "cuba", aliases: ["juan lopez", "juan lópez", "juan l"],
+    shortNote: "Mid-strength Cuban classic, often compared to Hoyo de Monterrey." },
+  { name: "La Flor de Cano",       origin: "cuba", aliases: ["la flor de cano", "flor de cano"] },
+  { name: "La Gloria Cubana",      origin: "cuba", aliases: ["la gloria cubana", "gloria cubana"] },
+  { name: "Por Larrañaga",         origin: "cuba", aliases: ["por larranaga", "por larrañaga", "larranaga"] },
+  { name: "Punch",                 origin: "cuba", aliases: ["punch"] },
+  { name: "Quai d'Orsay",          origin: "cuba", aliases: ["quai d'orsay", "quai dorsay", "quai d orsay", "quai"] },
+  { name: "Quintero",              origin: "cuba", aliases: ["quintero"] },
+  { name: "Rafael González",       origin: "cuba", aliases: ["rafael gonzalez", "rafael gonzález"] },
+  { name: "Ramón Allones",         origin: "cuba", aliases: ["ramon allones", "ramón allones"] },
+  { name: "Saint Luis Rey",        origin: "cuba", aliases: ["saint luis rey", "san luis rey"] },
+  { name: "San Cristóbal de la Habana", origin: "cuba", aliases: ["san cristobal", "san cristóbal", "san cristobal de la habana"] },
+  { name: "Sancho Panza",          origin: "cuba", aliases: ["sancho panza"] },
+  { name: "Vegas Robaina",         origin: "cuba", aliases: ["vegas robaina", "robaina"],
+    shortNote: "Boutique Cuban from a single Pinar del Río farm — small annual production." },
+  { name: "Vegueros",              origin: "cuba", aliases: ["vegueros"] },
+
+  // ─── Dominican premium — the most-asked-for non-Cuban brands ──────────────
+  { name: "Davidoff",              origin: "dominican", aliases: ["davidoff"],
+    shortNote: "Dominican-rolled premium since 1991 — Davidoff left Cuba over quality disputes." },
+  { name: "Arturo Fuente",         origin: "dominican", aliases: ["arturo fuente", "fuente", "opus x", "opusx"] },
+  { name: "Ashton",                origin: "dominican", aliases: ["ashton"] },
+  { name: "AVO",                   origin: "dominican", aliases: ["avo"] },
+  { name: "Cohiba (Dominican)",    origin: "dominican", aliases: ["cohiba dominican", "cohiba red dot", "general cigar"],
+    shortNote: "Separate brand from Cuban Cohiba — owned by General Cigar (USA). The two are unrelated." },
+  { name: "E.P. Carrillo",         origin: "dominican", aliases: ["e.p. carrillo", "ep carrillo", "carrillo"] },
+  { name: "La Aurora",             origin: "dominican", aliases: ["la aurora", "aurora"] },
+  { name: "Macanudo",              origin: "dominican", aliases: ["macanudo"] },
+  { name: "Romeo y Julieta (DR)",  origin: "dominican", aliases: ["romeo y julieta dominican", "ryj dominican"] },
+
+  // ─── Nicaraguan premium ──────────────────────────────────────────────────
+  { name: "Padrón",                origin: "nicaragua", aliases: ["padron", "padrón"],
+    shortNote: "Nicaraguan family-owned, one of the highest-rated non-Cuban brands worldwide." },
+  { name: "Oliva",                 origin: "nicaragua", aliases: ["oliva"] },
+  { name: "Aganorsa Leaf",         origin: "nicaragua", aliases: ["aganorsa", "aganorsa leaf", "casa fernandez"] },
+  { name: "My Father",             origin: "nicaragua", aliases: ["my father", "myfather", "le bijou", "flor de las antillas"] },
+  { name: "Drew Estate",           origin: "nicaragua", aliases: ["drew estate", "drew", "liga privada", "undercrown"] },
+  { name: "Tatuaje",               origin: "nicaragua", aliases: ["tatuaje"] },
+  { name: "Joya de Nicaragua",     origin: "nicaragua", aliases: ["joya de nicaragua", "joya"] },
+  { name: "Plasencia",             origin: "nicaragua", aliases: ["plasencia"] },
+  { name: "Crowned Heads",         origin: "nicaragua", aliases: ["crowned heads"] },
+  { name: "Rocky Patel",           origin: "nicaragua", aliases: ["rocky patel", "rocky"] },
+
+  // ─── Honduran premium ────────────────────────────────────────────────────
+  { name: "Camacho",               origin: "honduras", aliases: ["camacho"] },
+  { name: "Punch (Honduran)",      origin: "honduras", aliases: ["punch honduran", "punch hf"] },
+  { name: "Flor de Copán",         origin: "honduras", aliases: ["flor de copan", "flor de copán"] },
+  { name: "Alec Bradley",          origin: "honduras", aliases: ["alec bradley"] },
+
+  // ─── Other / Multi-origin ────────────────────────────────────────────────
+  { name: "Villiger",              origin: "spain", aliases: ["villiger"] },
+];
+
+// Build a lookup index at module load — flatten every (alias, brand) pair
+// into a Map for O(1) prefix matching from search input.
+const BRAND_ALIAS_INDEX: Array<{ alias: string; brand: KnownBrand }> = [];
+for (const b of KNOWN_BRANDS) {
+  for (const alias of b.aliases) BRAND_ALIAS_INDEX.push({ alias: alias.toLowerCase(), brand: b });
+  BRAND_ALIAS_INDEX.push({ alias: b.name.toLowerCase(), brand: b });
+}
+
+/**
+ * Match a free-text query against the known-brands catalog. Returns the brand
+ * if the query is a recognisable brand name (full or partial), null otherwise.
+ *
+ * Used by the search bar's empty state to distinguish "user typed a real
+ * brand we don't yet track" from "user typed something random".
+ */
+export function matchKnownBrand(query: string): KnownBrand | null {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return null;
+
+  // First pass — exact alias match.
+  for (const { alias, brand } of BRAND_ALIAS_INDEX) {
+    if (alias === q) return brand;
+  }
+  // Second pass — query contains an alias OR alias contains the query
+  // (so "juan" matches "juan lopez", "padron robusto" matches "padron").
+  for (const { alias, brand } of BRAND_ALIAS_INDEX) {
+    if (alias.length >= 3 && (q.includes(alias) || alias.startsWith(q))) return brand;
+  }
+  return null;
+}
+
+/** Set of brand names we currently track (have at least one SKU for). */
+export const TRACKED_BRAND_NAMES: Set<string> = new Set(SKUS.map((s) => s.brand));
+
+// ============================================================================
 // PRICE SNAPSHOTS — verified May 2026 prices from public retailer pages
 // ============================================================================
 // Notes:
