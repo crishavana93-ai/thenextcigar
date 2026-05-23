@@ -1,0 +1,91 @@
+name: Finder — scheduled scrape
+
+# Cloudflare Pages doesn't ship a built-in scheduler, so GitHub Actions runs
+# the scrapers on a cron and POSTs them to /api/scraper/[retailer]. The handler
+# is idempotent — each row carries a scraped_at timestamp and the view dedupes
+# on (sku, retailer_id, pack_size) so repeated calls are safe.
+#
+# SECRETS REQUIRED (Settings → Secrets and variables → Actions):
+#   SCRAPER_ADMIN_TOKEN — same token Cloudflare Pages uses (X-Scraper-Token)
+#
+# CRON CADENCE
+#   Every 6h, on the hour: 02:00, 08:00, 14:00, 20:00 UTC.
+#   = 04:00, 10:00, 16:00, 22:00 Berlin local in summer (CEST)
+#   That spreads scrapes around the day so we catch morning/afternoon/evening
+#   stock churn without hammering retailers more than they'd see a normal user.
+
+on:
+  schedule:
+    # 6-hour cadence — picks four times daily.
+    - cron: "0 2,8,14,20 * * *"
+  # Manual trigger for ad-hoc runs from the GitHub UI.
+  workflow_dispatch:
+
+# Cancel any in-flight scrape if a new one starts (avoid overlapping writes).
+concurrency:
+  group: finder-scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    strategy:
+      # Run retailers in parallel — they hit different domains, no rate-limit risk.
+      matrix:
+        retailer:
+          - de-noblego
+          - de-cigarworld
+      # Don't kill the matrix if one retailer fails — we want partial success.
+      fail-fast: false
+    steps:
+      - name: Trigger ${{ matrix.retailer }} scrape
+        env:
+          SCRAPER_ADMIN_TOKEN: ${{ secrets.SCRAPER_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SCRAPER_ADMIN_TOKEN:-}" ]; then
+            echo "::error::SCRAPER_ADMIN_TOKEN secret is not set"
+            exit 1
+          fi
+          echo "→ POST /api/scraper/${{ matrix.retailer }}"
+          # Capture full response for the run log. Fail the step if HTTP != 200
+          # OR if the JSON body has ok=false.
+          response=$(curl -sS -w "\n%{http_code}" \
+            -X POST "https://thenextcigar.com/api/scraper/${{ matrix.retailer }}" \
+            -H "X-Scraper-Token: ${SCRAPER_ADMIN_TOKEN}" \
+            --max-time 240)
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP $http_code"
+          echo "$body" | head -c 4000
+          echo ""
+          if [ "$http_code" != "200" ]; then
+            echo "::error::HTTP $http_code from scraper endpoint"
+            exit 1
+          fi
+          # `jq` is preinstalled on ubuntu-latest. Surface key metrics into the
+          # GitHub Actions summary so we can audit success at a glance.
+          inserted=$(echo "$body" | jq -r '.stats.inserted // 0')
+          extracted=$(echo "$body" | jq -r '.stats.rowsExtracted // 0')
+          errors=$(echo "$body" | jq -r '.errors // [] | length')
+          ok=$(echo "$body" | jq -r '.ok // false')
+          {
+            echo "## ${{ matrix.retailer }}"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| ok | $ok |"
+            echo "| rows extracted | $extracted |"
+            echo "| rows inserted | $inserted |"
+            echo "| errors | $errors |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$ok" != "true" ]; then
+            echo "::warning::Scraper returned ok=false ($errors errors). Check body above."
+          fi
+          if [ "$inserted" -lt 1 ]; then
+            echo "::error::Zero rows inserted — parser may have regressed"
+            exit 1
+          fi
