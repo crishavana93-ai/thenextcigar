@@ -111,6 +111,22 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
         <div id="match-strip" class="events-strip"></div>
       </section>
 
+      {/* Region B4 — Finder snapshot. Surfaces price-tracking on the dashboard
+          so the marquee feature isn't buried behind the tab bar.
+          Two states, decided in JS:
+            • Member has ≥1 watchlist row → show their cigars with current best EUR price
+              and % change vs baseline (positive = drop, negative = rise).
+            • Member has 0 watchlist rows → show 3 cheapest live in-stock SKUs across
+              Europe as a teaser, with "Start your watchlist →" CTA.
+          Always reveals the section so the Finder is never invisible from /lounge/app/. */}
+      <section id="finder-snapshot-section" class="container-wide pb-3" hidden>
+        <div class="feed-section-head">
+          <p class="lounge-label lounge-label--gold" id="finder-snapshot-label">Cuban price tracker</p>
+          <a href="/lounge/app/finder/" class="feed-section-head__link">Open Finder →</a>
+        </div>
+        <div id="finder-snapshot-strip" class="events-strip"></div>
+      </section>
+
       {/* Region C — From the network — chronological activity feed */}
       <section class="container-wide pb-24">
         <div class="feed-section-head">
@@ -474,6 +490,26 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   .events-strip__date {
     font-size: 0.7rem; font-weight: 800; letter-spacing: 0.16em;
     text-transform: uppercase; color: var(--color-gold, #c9a961);
+  }
+  /* Watchlist price-delta pill (Region B4). Positive (drop) = teal, negative = burgundy. */
+  .evt-delta {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: rgba(150, 150, 150, 0.14);
+    color: var(--color-text-soft);
+  }
+  .evt-delta--good {
+    background: rgba(30, 140, 96, 0.16);
+    color: #1e8c60;
+  }
+  .evt-delta--bad {
+    background: rgba(165, 42, 42, 0.16);
+    color: #a52a2a;
   }
   .events-strip__title {
     margin: 0;
@@ -886,6 +922,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
       loadUpcomingEvents(profile?.city || null),
       loadHeroCta(user.id, profile),
       loadFlavorMatches(user.id, profile),
+      loadFinderSnapshot(user.id),
     ]);
 
     const guard = document.getElementById("lounge-guard");
@@ -1187,6 +1224,141 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
         `;
       })
       .join("");
+  }
+
+  // ─── Finder snapshot (Region B4) ───────────────────────────────────────
+  // Two states:
+  //   A) Member has saved cigars → show their top 3 watched SKUs with current
+  //      best EUR price + % change vs baseline (positive = price drop = good).
+  //   B) Member has 0 saved cigars → show 3 cheapest live in-stock SKUs across
+  //      Europe with a "Start your watchlist" CTA.
+  // Always reveals the section unless the catalogue itself returned nothing
+  // (which would mean the scraper is fully down — in which case hiding is fine).
+  async function loadFinderSnapshot(userId: string): Promise<void> {
+    const section = document.getElementById("finder-snapshot-section") as HTMLElement | null;
+    const strip   = document.getElementById("finder-snapshot-strip") as HTMLElement | null;
+    const label   = document.getElementById("finder-snapshot-label") as HTMLElement | null;
+    if (!section || !strip) return;
+
+    const supabase = getSupabase();
+
+    // ── State A: does this member have saved watchlist rows? ─────────────
+    let watched: Array<{ sku: string; baseline: number | null; target: number | null }> = [];
+    try {
+      const { data: subs } = await supabase
+        .from("finder_email_subscribers")
+        .select("id")
+        .eq("profile_id", userId)
+        .maybeSingle();
+      if (subs?.id) {
+        const { data: rows } = await supabase
+          .from("finder_watchlists")
+          .select("sku, baseline_price_eur, target_price_eur, created_at")
+          .eq("subscriber_id", subs.id)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false })
+          .limit(3);
+        watched = (rows || []).map((r: any) => ({
+          sku: r.sku,
+          baseline: r.baseline_price_eur != null ? Number(r.baseline_price_eur) : null,
+          target: r.target_price_eur != null ? Number(r.target_price_eur) : null,
+        }));
+      }
+    } catch (err) {
+      console.warn("[Lounge dash] watchlist lookup failed", err);
+    }
+
+    // Pull live snapshots — needed for both states.
+    const skuFilter = watched.length > 0 ? watched.map((w) => w.sku) : null;
+    let live: any[] = [];
+    try {
+      let q = supabase
+        .from("finder_latest_snapshots_v")
+        .select("sku, retailer_id, price, currency, price_eur, in_stock, scraped_at")
+        .eq("in_stock", true);
+      if (skuFilter) q = q.in("sku", skuFilter);
+      const { data } = await q.limit(200);
+      live = data || [];
+    } catch (err) {
+      console.warn("[Lounge dash] live snapshot lookup failed", err);
+    }
+
+    // ── State A: render the watchlist row ────────────────────────────────
+    if (watched.length > 0) {
+      if (label) label.textContent = `Your watchlist · ${watched.length} cigar${watched.length === 1 ? "" : "s"}`;
+      strip.innerHTML = watched.map((w) => {
+        // Pick the cheapest live offer for this SKU (any retailer, any pack).
+        const offers = live.filter((l) => l.sku === w.sku);
+        const cheapest = offers.sort((a, b) => Number(a.price_eur) - Number(b.price_eur))[0];
+        const prettyName = w.sku.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        if (!cheapest) {
+          return `
+            <a class="events-strip__card" href="/lounge/app/finder/">
+              <p class="events-strip__date">WATCHING</p>
+              <h3 class="events-strip__title">${escapeHtml(prettyName)}</h3>
+              <p class="events-strip__venue">Waiting for next refresh</p>
+            </a>`;
+        }
+        const now = Math.round(Number(cheapest.price_eur));
+        let delta = "";
+        if (w.baseline != null && w.baseline > 0) {
+          const pct = Math.round(((w.baseline - now) / w.baseline) * 100);
+          if (pct >= 1)      delta = `<span class="evt-delta evt-delta--good">↓ ${pct}%</span>`;
+          else if (pct <= -1) delta = `<span class="evt-delta evt-delta--bad">↑ ${-pct}%</span>`;
+          else                delta = `<span class="evt-delta">flat</span>`;
+        }
+        return `
+          <a class="events-strip__card" href="/finder/sku/${cheapest.sku}/">
+            <p class="events-strip__date">€${now.toLocaleString("en-US")} ${delta}</p>
+            <h3 class="events-strip__title">${escapeHtml(prettyName)}</h3>
+            <p class="events-strip__venue">Best of ${offers.length} live offer${offers.length === 1 ? "" : "s"}</p>
+          </a>`;
+      }).join("");
+      section.hidden = false;
+      return;
+    }
+
+    // ── State B: no watchlist → tease the catalogue ──────────────────────
+    if (live.length === 0) {
+      // Scraper down or no data — hide rather than show a hollow section.
+      section.hidden = true;
+      return;
+    }
+    if (label) label.textContent = "Cheapest in Europe right now";
+
+    // Group by SKU; pick the cheapest in-stock offer per SKU, sort ascending,
+    // take the top 3.
+    const bySku = new Map<string, any>();
+    for (const row of live) {
+      const existing = bySku.get(row.sku);
+      if (!existing || Number(row.price_eur) < Number(existing.price_eur)) {
+        bySku.set(row.sku, row);
+      }
+    }
+    const top = Array.from(bySku.values())
+      .sort((a, b) => Number(a.price_eur) - Number(b.price_eur))
+      .slice(0, 3);
+
+    strip.innerHTML = top.map((row) => {
+      const prettyName = String(row.sku).replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+      const eur = Math.round(Number(row.price_eur));
+      return `
+        <a class="events-strip__card" href="/finder/sku/${row.sku}/">
+          <p class="events-strip__date">€${eur.toLocaleString("en-US")}</p>
+          <h3 class="events-strip__title">${escapeHtml(prettyName)}</h3>
+          <p class="events-strip__venue">Cheapest live · tap to compare</p>
+        </a>`;
+    }).join("");
+
+    // Prepend the "start a watchlist" CTA card so the empty state has a path.
+    strip.innerHTML =
+      `<a class="events-strip__card" href="/lounge/app/finder/" style="background:linear-gradient(135deg,#1a1612 0%,#3a2e22 100%);color:#f5e6c5;border:1px solid #c9a961;">
+         <p class="events-strip__date" style="color:#c9a961;">START</p>
+         <h3 class="events-strip__title" style="color:#f5e6c5;">Your watchlist</h3>
+         <p class="events-strip__venue" style="color:#d0c2a0;">Save a cigar to get drop alerts</p>
+       </a>` + strip.innerHTML;
+
+    section.hidden = false;
   }
 
   document.addEventListener("astro:page-load", init);
