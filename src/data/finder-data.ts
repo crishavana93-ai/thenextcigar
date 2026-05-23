@@ -33,7 +33,27 @@ export interface Retailer {
   city?: string;
   /** LCDH = La Casa del Habano franchise (highest prestige tier). */
   status: "lcdh" | "habanos-specialist" | "mixed" | "reservation";
+  /** Where the retailer will physically ship the parcel. This is the
+   *  *delivery* surface — orthogonal to whether the listed price already
+   *  includes destination-country tobacco duty + VAT (see dutyPaidTo). */
   shipsTo: "domestic" | "eu" | "worldwide";
+  /**
+   * Countries where the listed price is genuinely all-in — i.e. local
+   * tobacco excise duty + VAT are already baked into what you see on the
+   * product page. For every other destination, the buyer pays additional
+   * destination-country duty + VAT on top of the listed price.
+   *
+   * Default (when omitted): `[country]`. This is the legal reality for the
+   * vast majority of European Habanos retailers — they pay duty only in
+   * their home market and any cross-border buyer is technically importing.
+   * Set this explicitly only when a retailer documents a wider duty-paid
+   * coverage (rare; usually only large operators with multi-country tax
+   * registrations).
+   *
+   * The Finder UI uses this to label rows: a 🇩🇪 buyer looking at a German
+   * row sees "all-in"; the same buyer looking at a Swiss row sees a
+   * cross-border duty warning. */
+  dutyPaidTo?: CountryCode[];
   /** True if site has public pricing we can show; false = brochure-only. */
   hasPublicPricing: boolean;
   /** Template used by `effectiveShopUrl()` when a price snapshot's sourceUrl
@@ -41,6 +61,25 @@ export interface Retailer {
    *  encoded "Brand Vitola" so the user lands on the retailer's search results
    *  for that exact cigar instead of having to retype it. */
   searchUrlTemplate?: string;
+}
+
+/**
+ * Resolve the duty-paid country list for a retailer. Falls back to the
+ * retailer's home country when the explicit list is missing — this matches
+ * the legal default across the EU + UK + CH (duty paid in the retailer's
+ * home market only, cross-border is at the buyer's risk).
+ */
+export function dutyPaidCountries(r: Retailer): CountryCode[] {
+  return r.dutyPaidTo && r.dutyPaidTo.length > 0 ? r.dutyPaidTo : [r.country];
+}
+
+/**
+ * True when buying from this retailer at the listed price is genuinely
+ * all-in for a buyer in the given destination country. Used to mark rows
+ * "duty paid" vs "destination duty extra" in the comparison table.
+ */
+export function isPriceAllInFor(r: Retailer, destination: CountryCode): boolean {
+  return dutyPaidCountries(r).includes(destination);
 }
 
 /**

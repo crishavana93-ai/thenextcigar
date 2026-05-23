@@ -1,139 +1,141 @@
 ---
 /**
- * /lounge — MVP landing page for The Lounge.
+ * /lounge — public landing page for The Lounge.
  *
- * Vetted IRL connection layer for cigar travelers and locals.
- * This page is the validation funnel: it explains the concept, captures
- * waitlist signups, and sets the cultural tone for the founding cohort.
- * No real product behind it yet — first 60 days are WhatsApp-group beta
- * before we write any code.
+ * As of May 2026 the product is LIVE — public Finder, member app, watchlist
+ * alerts, OG Member tier. This page is the conversion funnel: explains what
+ * The Lounge actually is today (price-tracking + IRL community), the three
+ * tiers (Free / Lounge / OG Member), and lands the OG-Member cutoff
+ * (1 June 2026) without making it feel like a fake-urgency hustle.
+ *
+ * Older draft (pre-Finder, "launching Q3 2026", WhatsApp-beta language) has
+ * been rewritten — keep the styles below, the cities band, and the FAQ
+ * shell, but every word that promises a future product has been replaced
+ * with what's actually shipping.
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { places } from "../data/cigar-places";
+import {
+  SKUS as FINDER_SKUS,
+  RETAILERS as FINDER_RETAILERS,
+  PRICE_SNAPSHOTS as FINDER_SNAPSHOTS,
+  COUNTRIES as FINDER_COUNTRIES,
+} from "../data/finder-data";
 
 const heroPlaces = places.slice(0, 6);
 const cityCount = new Set(places.map((p) => p.city)).size;
+
+// Pull live counts so the Finder pitch isn't built on stale promises.
+const skuCount       = FINDER_SKUS.length;
+const retailerCount  = FINDER_RETAILERS.length;
+const snapshotCount  = FINDER_SNAPSHOTS.length;
+const countryCount   = FINDER_COUNTRIES.length;
 ---
 
 <BaseLayout
-  title="The Lounge — A members-only network for cigar travelers"
-  description="The Next Cigar's invite-only network for cigar smokers who travel. Find verified members in your city tonight, get welcomed into lounges abroad, smoke better wherever you land."
+  title="The Lounge — Cuban cigar price tracking + members' network"
+  description={`The Next Cigar's members' room. Track ${snapshotCount} Cuban cigar prices across ${retailerCount} European retailers, get drop alerts, and find verified members at the lounge tonight. From $9/month or free for everything public.`}
 >
   {/* ─── HERO ─── */}
   <section class="lounge-hero">
     <div class="container-wide pt-24 md:pt-32 pb-20 reveal">
-      <p class="lounge-eyebrow">By invitation · Launching Q3 2026</p>
+      <p class="lounge-eyebrow">Live · OG Member tier closes 1 June 2026</p>
       <h1 class="lounge-title">
-        Find your people.<br/>
-        Wherever you land.
+        The room behind<br/>
+        the price tag.
       </h1>
       <p class="lounge-lead">
-        The Lounge is a vetted, members-only network for cigar smokers who
-        travel. Walk into a strange city, open the app, see which verified
-        members are at the lounge tonight — or which local hosts will welcome
-        you to theirs.
+        The Lounge is two things in one place. <strong>The Finder</strong> tracks
+        {snapshotCount.toLocaleString("en-US")} live Cuban cigar prices across
+        {retailerCount} European retailers, refreshed every six hours — so you
+        never overpay by €100 for a box that's cheaper at the shop next door.
+        <strong>The members' app</strong> shows you which verified smokers are
+        in your city tonight, where they're sitting, and which lounges abroad
+        will welcome you when you land.
       </p>
       <p class="lounge-lead lounge-lead--soft">
-        No swipes, no selling, no noise. Lounge-paced introductions, real
-        people, real smokes. Built on top of The Next Cigar's editorial
-        community — the same readers you already trust.
+        Free public Finder for everyone. Lounge membership unlocks unlimited
+        watchlists, price-drop alerts, travel mode, direct messaging, and
+        every feature we ship next. Sign up before 1 June and you're an
+        <strong>OG Member</strong> — every paid feature, free for you, forever.
       </p>
 
-      <form
-        id="lounge-waitlist"
-        class="lounge-waitlist"
-        action="https://formsubmit.co/guatabeycigars@gmail.com"
-        method="POST"
-      >
-        <input type="hidden" name="_subject" value="The Lounge — Waitlist signup" />
-        <input type="hidden" name="_template" value="table" />
-        <input type="hidden" name="_captcha" value="true" />
-        <input type="hidden" name="_next" value="https://thenextcigar.com/lounge/?joined=1" />
-        <input type="hidden" name="_honey" value="" />
-        <input
-          type="email"
-          name="email"
-          required
-          autocomplete="email"
-          placeholder="your-email@anywhere.com"
-          aria-label="Email"
-        />
-        <input
-          type="text"
-          name="city"
-          placeholder="Your home city"
-          aria-label="City"
-        />
-        <button type="submit" class="btn btn-accent">Request invite →</button>
-      </form>
+      <div class="lounge-hero__cta-row">
+        <a href="/lounge/signup/" class="btn btn-accent">Become an OG Member →</a>
+        <a href="/finder/" class="btn btn-ghost">Try the free Finder →</a>
+      </div>
       <p class="lounge-fineprint">
-        Founding cohort is capped at 200 invitations. We're hand-vetting every
-        signup. 21+ only.
+        OG Member is a one-time, date-based grant — not a tier you can upgrade
+        into. After 1 June 2026 the door closes and the path to a free
+        membership is earned through referrals + event hosting. 21+ only.
       </p>
     </div>
   </section>
 
   {/* ─── HOW IT WORKS ─── */}
   <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
-    <p class="section-eyebrow">How it works</p>
+    <p class="section-eyebrow">What you get</p>
     <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
-      Five things, built to respect lounge etiquette.
+      Two products, one membership.
     </h2>
 
     <div class="lounge-features">
       <div class="lounge-feature reveal">
         <span class="lounge-feature__num">01</span>
-        <h3>Check in to a lounge</h3>
+        <h3>The Finder — free for everyone</h3>
         <p>
-          Walk into a partner lounge, tap "I'm here." Other verified members
-          inside see you've arrived. They can wave across the room — literally —
-          or send a quiet "join me?" tap. No public broadcast.
+          {snapshotCount.toLocaleString("en-US")} Cuban cigar prices across
+          {retailerCount} licensed European retailers in {countryCount} countries.
+          Refreshed every six hours, sorted cheapest first, click through to the
+          shop. No signup. No ads. No commission padded into the price you see.
         </p>
       </div>
       <div class="lounge-feature reveal" data-reveal-delay="2">
         <span class="lounge-feature__num">02</span>
-        <h3>Travel mode</h3>
+        <h3>Watchlist + drop alerts</h3>
         <p>
-          Flag your next trip. See verified members who'll be in that city the
-          same week, local hosts who've offered to welcome visitors, and the
-          editorial map of lounges worth your time.
+          Save any cigar, set a target price. The moment a retailer in your country
+          drops below it, you get an email — and, for Lounge members, a push notification.
+          Dedupe baked in: one alert per drop, not five copies of the same news.
         </p>
       </div>
       <div class="lounge-feature reveal" data-reveal-delay="3">
         <span class="lounge-feature__num">03</span>
-        <h3>Verified hosts</h3>
+        <h3>Travel mode</h3>
         <p>
-          A subset of members opt in to host visitors in their home city.
-          Reputation-tracked. Hosts get recognition, partner-lounge perks, and
-          the founding badge that comes with being one of the first.
+          Flag your next trip. See verified members who'll be in the same city the
+          same week, locals who've offered to welcome visitors, and the editorial
+          map of lounges worth your time. Switch your Finder lens to that country
+          so prices match what you'll actually pay on the ground.
         </p>
       </div>
       <div class="lounge-feature reveal">
         <span class="lounge-feature__num">04</span>
-        <h3>Slow messaging</h3>
+        <h3>Check in, see who's here</h3>
         <p>
-          DMs unlock only after you've been at the same lounge, been
-          host-introduced, or sent a single template intro. No mass-messaging,
-          no swipes, no hustle. Built for a smoke-paced conversation.
+          Walk into a partner lounge, tap "I'm here." Other verified members
+          inside see you've arrived — they can wave across the room or send a
+          quiet "join me?" tap. No public broadcast. No location sharing unless
+          you actively check in.
         </p>
       </div>
       <div class="lounge-feature reveal" data-reveal-delay="2">
         <span class="lounge-feature__num">05</span>
-        <h3>Partner lounges</h3>
+        <h3>Slow messaging</h3>
         <p>
-          A growing network of verified lounges worldwide where members get
-          recognized at the door. Complimentary first coffee at most,
-          members-only nights at some. Discovery for travelers, foot traffic
-          for the houses.
+          DMs unlock only after you've been at the same lounge, been host-introduced,
+          or sent a single template intro. No mass-messaging, no swipes, no hustle.
+          Real-time when both members are typing, polite when only one is.
         </p>
       </div>
       <div class="lounge-feature reveal" data-reveal-delay="3">
         <span class="lounge-feature__num">06</span>
-        <h3>Free to start</h3>
+        <h3>Events + partner lounges</h3>
         <p>
-          Sign up free in 60 seconds. Browse the map, check in anywhere,
-          message the first members. Upgrade to Member ($9/mo) the day
-          you book your next trip and want the network working for you.
+          A growing roster of verified houses across Europe where Lounge members
+          are recognized at the door — complimentary first coffee at most,
+          members-only nights at some. RSVP to launch events, tastings, and
+          travel-week pop-ups from inside the app.
         </p>
       </div>
     </div>
@@ -165,11 +167,13 @@ const cityCount = new Set(places.map((p) => p.city)).size;
   <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
     <p class="section-eyebrow">Membership</p>
     <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
-      Free to start. Pay when it pays you back.
+      Free to start. Pay when the Finder pays you back.
     </h2>
     <p class="mt-4 text-base text-[color:var(--color-text-soft)] max-w-2xl">
-      Use the network for free. Upgrade the day you need it — when you're flying somewhere and want
-      to know who's there before you land.
+      The public Finder is free forever — most Cuban cigar buyers save more than
+      the Lounge price on their first box. The paid tier unlocks unlimited alerts,
+      travel mode, and the members' app. Sign up before 1 June 2026 and the
+      paid tier is free for you for life.
     </p>
 
     <div class="lounge-pricing lounge-pricing--three">
@@ -177,57 +181,60 @@ const cityCount = new Set(places.map((p) => p.city)).size;
       <div class="lounge-tier reveal">
         <p class="lounge-tier__name">Free</p>
         <p class="lounge-tier__price">$0<span>/forever</span></p>
-        <p class="lounge-tier__pitch">For the curious. Try the network, message 3 members a month — no card needed.</p>
+        <p class="lounge-tier__pitch">For the curious. The public Finder, plus one watchlist alert — enough to feel the value before you commit.</p>
         <ul>
+          <li>Full access to the public Finder — {snapshotCount.toLocaleString("en-US")} prices, {retailerCount} retailers</li>
+          <li><strong>1 saved cigar</strong> with one price-drop alert by email</li>
           <li>Verified profile + flavor preferences</li>
-          <li>Browse all {cityCount}+ vetted lounges and shops</li>
-          <li>Check in at any partner lounge</li>
-          <li>Browse first 10 members in each city</li>
-          <li><strong>Chat with up to 3 new members per month</strong></li>
-          <li>Submit shops to the map</li>
+          <li>Browse the editorial map of {cityCount}+ vetted lounges</li>
           <li>Read every event</li>
+          <li>Submit shops to the map</li>
         </ul>
         <a href="/lounge/signup/" class="lounge-tier__cta">Start free →</a>
       </div>
 
-      {/* Member tier — featured */}
+      {/* Lounge tier — featured */}
       <div class="lounge-tier lounge-tier--featured reveal" data-reveal-delay="2">
         <span class="lounge-tier__flag">Recommended</span>
-        <p class="lounge-tier__name">Member</p>
+        <p class="lounge-tier__name">Lounge</p>
         <p class="lounge-tier__price">$9<span>/month</span></p>
         <p class="lounge-tier__sub">or $79/year — save $29</p>
-        <p class="lounge-tier__pitch">For the traveler. The killer feature plus everything unlimited.</p>
+        <p class="lounge-tier__pitch">For the traveler and the price-watcher. Everything unlocked, no caps anywhere.</p>
         <ul>
           <li>Everything in Free</li>
-          <li><strong>Travel mode</strong> — declare trips, locals get pinged before you land</li>
-          <li>Unlimited direct messages</li>
-          <li>RSVP and chat in event threads</li>
-          <li>Unlimited member browsing</li>
-          <li>Member badge on profile + map</li>
-          <li>Quarterly TNC members-only digest</li>
+          <li><strong>Unlimited Finder watchlists</strong> + push notifications when a price drops</li>
+          <li>Taste-matched cigar recommendations from your flavor profile</li>
+          <li>90-day price history charts on every tracked SKU</li>
+          <li><strong>Travel mode</strong> — switch the Finder lens to wherever you're flying</li>
+          <li>Unlimited direct messages with verified members</li>
+          <li>Check-ins, member matches, event RSVPs</li>
+          <li>Lounge badge on profile + map</li>
         </ul>
-        <a href="/lounge/signup/?intent=member" class="lounge-tier__cta lounge-tier__cta--primary">Start free, upgrade later →</a>
+        <a href="/lounge/signup/?intent=lounge" class="lounge-tier__cta lounge-tier__cta--primary">Start free, upgrade later →</a>
       </div>
 
-      {/* Founding 100 — grandfathered */}
+      {/* OG Member — date-gated lifetime grant */}
       <div class="lounge-tier reveal" data-reveal-delay="3">
-        <p class="lounge-tier__name">Founding 100</p>
-        <p class="lounge-tier__price lounge-tier__price--small">Lifetime · capped</p>
-        <p class="lounge-tier__sub">Once 100 spots fill, this tier closes forever.</p>
+        <p class="lounge-tier__name">OG Member</p>
+        <p class="lounge-tier__price lounge-tier__price--small">Lifetime · door closes 1 June 2026</p>
+        <p class="lounge-tier__sub">Any account opened before the cutoff. Not an upgrade — a date.</p>
         <p class="lounge-tier__pitch">For the early ones. The members who showed up before the network was the network.</p>
         <ul>
-          <li>All Member features, free for life</li>
-          <li>Permanent Founding badge — distinct from Member</li>
-          <li>First access to every new feature</li>
+          <li>Every Lounge feature, free for life</li>
+          <li>Every paid feature we ship next, free for life</li>
+          <li>Permanent OG Member badge — distinct from Lounge</li>
+          <li>First access to every new feature before public release</li>
           <li>Direct line to Cris on WhatsApp</li>
           <li>Annual gift from a partner house</li>
         </ul>
-        <a href="/lounge/signup/?intent=founding" class="lounge-tier__cta">Claim a founding spot →</a>
+        <a href="/lounge/signup/" class="lounge-tier__cta">Become an OG Member →</a>
       </div>
     </div>
 
     <p class="mt-8 text-sm text-[color:var(--color-text-muted)] max-w-2xl">
-      Cancel any time, no contract. Member tier pricing locks for the first 24 months once you upgrade.
+      Cancel any time, no contract. Lounge pricing locks for the first 24 months once you upgrade.
+      After 1 June 2026 the OG Member door closes — late joiners can still earn a free Lounge
+      membership through the referrer + event-host program.
     </p>
   </section>
 
@@ -264,20 +271,24 @@ const cityCount = new Set(places.map((p) => p.city)).size;
 
     <div class="lounge-faq reveal">
       <details>
-        <summary>When does the Lounge launch?</summary>
-        <p>We're in private beta with the founding cohort starting Q3 2026. Public-paid launch follows in Q4 once we've proven the WhatsApp-only beta actually drives real meet-ups. We won't ship code we're not confident in.</p>
+        <summary>Is the Lounge live?</summary>
+        <p>Yes — the public Finder, watchlist alerts, member directory, map, travel mode, messaging, and events are all in production. The Cuban catalogue covers {skuCount} flagship SKUs and {retailerCount} European retailers right now, with new retailers being added every month.</p>
       </details>
       <details>
-        <summary>Why pay? Other forums are free.</summary>
-        <p>Free communities (Reddit, FOH) solve a different problem — online discussion. The Lounge is about IRL coordination. The Member tier at $9/month funds verification, partner-lounge programming, and the small team. Most of the product stays free forever — the paywall only kicks in when you need to actually act on the network (declaring trips, unlimited messaging, RSVPing to events).</p>
+        <summary>What does $9/month or $79/year actually unlock?</summary>
+        <p>The free Finder + the public site stay free forever. Lounge membership unlocks: unlimited Finder watchlists, push notifications on price drops, 90-day price history charts, taste-matched recommendations, travel mode, unlimited direct messaging with verified members, check-ins, member matches, and event RSVPs. Most Cuban buyers save more than $79 on their first box thanks to the Finder — the rest of the year, the network is a bonus.</p>
+      </details>
+      <details>
+        <summary>What is an OG Member?</summary>
+        <p>Any account opened before 1 June 2026 becomes an OG Member automatically — no extra signup step, no money, no application. OG Members get every Lounge feature free for life plus every paid feature we ship after that. It's a one-time, date-based grant. After the cutoff the door closes; late joiners can still earn free Lounge membership through the referrer + event-host program.</p>
       </details>
       <details>
         <summary>Is this an app I download or a website?</summary>
-        <p>Web-first, installable as a PWA (Progressive Web App). Tap the install button above or use your browser's "Add to Home Screen" — you get a full-screen native-feeling app without the App Store gatekeeping. Native iOS/Android come later.</p>
+        <p>Both. It's web-first, installable as a PWA (Progressive Web App). Tap the install button above or use your browser's "Add to Home Screen" — you get a full-screen native-feeling app without App Store gatekeeping. Native iOS/Android come later.</p>
       </details>
       <details>
         <summary>I run a lounge. Can I be a partner?</summary>
-        <p>Yes — that's a core part of the model. <a href="/contact/" class="text-[color:var(--color-accent)] underline">Get in touch</a> and we'll send the partner deck. Partner lounges get listed in-app, verified-member walk-ins, and quarterly featured-house slots in TNC editorial.</p>
+        <p>Yes — partner houses are a core part of the model. <a href="/contact/" class="text-[color:var(--color-accent)] underline">Get in touch</a> and we'll send the partner deck. Partner lounges get listed in-app, verified-member walk-ins, and quarterly featured-house slots in TNC editorial.</p>
       </details>
       <details>
         <summary>What about privacy?</summary>
@@ -321,6 +332,16 @@ const cityCount = new Set(places.map((p) => p.city)).size;
     max-width: 36rem;
   }
   .lounge-lead--soft { color: var(--color-text-muted); }
+  .lounge-hero__cta-row {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: center;
+  }
+  .lounge-hero__cta-row .btn {
+    min-width: 11rem;
+  }
   .lounge-waitlist {
     margin-top: 2.5rem;
     display: flex;
