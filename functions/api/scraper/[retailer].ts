@@ -266,6 +266,44 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
     const spConfig   = sliceAround(["spConfig", "Product.Config", "configurableSwatches", "super_attribute"]);
     const priceData  = sliceAround(["product-info-price", "price-final_price", "data-price-amount", '"final_price"', "regular-price"]);
 
+    // ── Cigarworld-specific: dump ALL "(\d+)er Kiste" matches with surrounding
+    // context so we can map each pack-size variant to its price + stock state.
+    const kisteRx = /(\d{1,3})er\s+(?:Kiste|Schachtel|Tubo|Etui|Holzkiste|St(?:ü|ue)ck|Bund)/gi;
+    const kisteMatches: Array<{ packSize: number; idx: number; slice: string }> = [];
+    let km: RegExpExecArray | null;
+    while ((km = kisteRx.exec(html)) !== null) {
+      kisteMatches.push({
+        packSize: Number(km[1]),
+        idx: km.index,
+        // 600 chars before (covers the wk_einheit input + label opening)
+        // 1800 chars after (covers the avail_X status div + adjacent price)
+        slice: html.slice(Math.max(0, km.index - 600), km.index + 1800),
+      });
+      if (kisteMatches.length >= 8) break; // PDPs have ≤6 variants
+    }
+
+    // All standalone price candidates (German format) with line context.
+    const priceRx = /(\d{1,4}(?:\.\d{3})*,\d{2})\s*€/g;
+    const priceMatches: Array<{ price: string; idx: number; context: string }> = [];
+    let pm: RegExpExecArray | null;
+    while ((pm = priceRx.exec(html)) !== null) {
+      priceMatches.push({
+        price: pm[1],
+        idx: pm.index,
+        context: html.slice(Math.max(0, pm.index - 200), pm.index + 50).replace(/\s+/g, " ").trim(),
+      });
+      if (priceMatches.length >= 20) break;
+    }
+
+    // All raw JSON-LD script blocks (so we can see the schema fields).
+    const jsonLdBlocks: Array<{ raw: string }> = [];
+    const jsonLdRx = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+    let jm: RegExpExecArray | null;
+    while ((jm = jsonLdRx.exec(html)) !== null) {
+      jsonLdBlocks.push({ raw: jm[1].trim().slice(0, 2500) });
+      if (jsonLdBlocks.length >= 5) break;
+    }
+
     // Run current parser anyway to confirm it returns 0.
     const parsed = config.stack === "noblego_html" ? parseNoblegoHtml(html) : parseSchemaOrg(html);
 
@@ -284,6 +322,11 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         erPattern,
         spConfig,
         priceData,
+      },
+      cigarworldDebug: {
+        kisteMatches,
+        priceMatches,
+        jsonLdBlocks,
       },
     });
   }

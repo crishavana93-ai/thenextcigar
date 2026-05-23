@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Lounge — Real-Screenshot IG Carousel Preview</title>
+<style>
+  :root {
+    --navy: #1A1D2E;
+    --cream: #F5EFE0;
+    --gold: #C9A961;
+    --red: #D9342B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #2a2a2a;
+    color: #ddd;
+    padding: 24px;
+  }
+  header {
+    max-width: 720px;
+    margin: 0 auto 24px;
+    padding: 18px 22px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    border: 1px solid #333;
+  }
+  header h1 { margin: 0 0 4px; font-size: 18px; color: #fff; }
+  header p { margin: 0; font-size: 13px; color: #aaa; line-height: 1.5; }
+  .slide-wrap {
+    max-width: 720px;
+    margin: 0 auto 32px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
+  .slide-bar {
+    padding: 10px 16px;
+    background: #222;
+    font-size: 12px;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .slide-bar strong { color: var(--gold); }
+  .slide-frame {
+    width: 100%;
+    aspect-ratio: 1080 / 1350;
+    background: var(--navy);
+    color: white;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5%;
+    overflow: hidden;
+  }
+  .top-stamp {
+    position: absolute;
+    top: 4%;
+    right: 6%;
+    font-size: 11px;
+    color: var(--red);
+    letter-spacing: 1.5px;
+    font-weight: 800;
+    text-align: right;
+    line-height: 1.4;
+  }
+  .top-stamp .url { color: rgba(255,255,255,0.4); font-weight: 500; }
+  .headline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-align: center;
+    margin: 0 0 20px;
+  }
+  .headline .accent { color: var(--red); }
+  .subhead {
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: center;
+    color: rgba(255,255,255,0.78);
+    max-width: 86%;
+    margin: 0 auto;
+  }
+  .phone-frame {
+    position: relative;
+    width: 52%;
+    aspect-ratio: 9 / 19.5;
+    border: 3px solid var(--gold);
+    border-radius: 26px;
+    overflow: hidden;
+    background: #000;
+    margin: 18px 0;
+    flex-shrink: 0;
+  }
+  .phone-frame .notch {
+    position: absolute;
+    top: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 26%;
+    height: 2.6%;
+    background: #000;
+    border-radius: 99px;
+    z-index: 2;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .phone-screen.placeholder {
+    background: linear-gradient(135deg, #2a2d3e 0%, #1a1d2e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.4);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+  }
+  .swipe-hint {
+    position: absolute;
+    bottom: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .slide-counter {
+    position: absolute;
+    bottom: 4%;
+    right: 6%;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    opacity: 0.5;
+  }
+  .cta-card {
+    background: var(--gold);
+    color: var(--navy);
+    padding: 18px 28px;
+    border-radius: 12px;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    font-size: 18px;
+    margin-top: 14px;
+  }
+  .crest {
+    width: 72px;
+    height: 72px;
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: 40px;
+    margin-bottom: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Lounge — Real-Screenshot IG Carousel</h1>
+  <p>8 slides, 1080 × 1350 (Instagram 4:5). These previews show layout intent and copy — to ship, rebuild each slide in your Canva template and drop your actual phone screenshot into the phone frame. Full instructions in <code>marketing/lounge-ig-carousel-real-screenshots.md</code>.</p>
+</header>
+
+<!-- SLIDE 1 — COVER -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 1 / 8 — <strong>Cover</strong></span><span>No screenshot · pure typography</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE</div></div>
+    <h2 class="headline" style="font-size:64px; margin-top:8%;">CIGAR SMOKERS<br/>WHO <span class="accent">TRAVEL.</span></h2>
+    <p class="subhead" style="margin-top:6%; font-size:18px;">The private network that helps you find your people in the next city. 25 founding members. Free to join.</p>
+    <div class="swipe-hint">SWIPE →</div>
+    <div class="slide-counter">1/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 2 — HOME -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 2 / 8 — <strong>Home</strong> · Your daily dashboard</span><span>Use: Home page screenshot</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · HOME</div></div>
+    <h2 class="headline" style="margin-top:4%;">YOUR CIGAR LIFE,<br/>ONE <span class="accent">TAP</span> AWAY.</h2>
+    <div class="phone-frame"><div class="notch"></div><div class="phone-screen placeholder">[ Drop Home page screenshot here ]</div></div>
+    <p class="subhead">Check in, see who's nearby, RSVP to tonight's lounge night. Built for the cigar smoker who actually goes out.</p>
+    <div class="slide-counter">2/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 3 — MAP -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 3 / 8 — <strong>Map</strong> · Vetted shops + members near you</span><span>Use: Copenhagen map screenshot</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · MAP</div></div>
+    <h2 class="headline" style="margin-top:4%;">EVERY VETTED<br/>CIGAR SHOP <span class="accent">MAPPED.</span></h2>
+    <div class="phone-frame"><div class="notch"></div><div class="phone-screen placeholder">[ Drop Copenhagen Map screenshot here ]</div></div>
+    <p class="subhead">200+ partner lounges and humidors across 50+ cities. Tap to check in, see member pins live.</p>
+    <div class="slide-counter">3/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 4 — DISCOVER -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 4 / 8 — <strong>Discover</strong> · Who you should meet</span><span>Use: Discover page screenshot</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · DISCOVER</div></div>
+    <h2 class="headline" style="margin-top:4%;">MEMBERS <span class="accent">PICKED</span><br/>FOR YOU.</h2>
+    <div class="phone-frame"><div class="notch"></div><div class="phone-screen placeholder">[ Drop Discover page screenshot here ]</div></div>
+    <p class="subhead">Curated by city, trip overlap, and flavor profile. Find the cigar smokers who actually smoke what you smoke.</p>
+    <div class="slide-counter">4/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 5 — TRAVEL -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 5 / 8 — <strong>Travel</strong> · Declare a trip, locals find you</span><span>Use: Travel page screenshot</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · TRAVEL</div></div>
+    <h2 class="headline" style="margin-top:4%;">DECLARE YOUR TRIP.<br/>LOCALS <span class="accent">FIND</span> YOU.</h2>
+    <div class="phone-frame"><div class="notch"></div><div class="phone-screen placeholder">[ Drop Travel page screenshot here ]</div></div>
+    <p class="subhead">7 hosts and 23 members in Madrid. They get a quiet ping the moment you tell us you're coming.</p>
+    <div class="slide-counter">5/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 6 — INBOX -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 6 / 8 — <strong>Inbox</strong> · Real introductions, not cold DMs</span><span>Use: Inbox/introductions screenshot</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · INBOX</div></div>
+    <h2 class="headline" style="margin-top:4%;">REAL <span class="accent">INTRODUCTIONS.</span><br/>NO COLD DMs.</h2>
+    <div class="phone-frame"><div class="notch"></div><div class="phone-screen placeholder">[ Drop Inbox / Introductions screenshot here ]</div></div>
+    <p class="subhead">Members accept the intro first, then the chat opens. The quality filter that keeps the network real.</p>
+    <div class="slide-counter">6/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 7 — EVENTS -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 7 / 8 — <strong>Events</strong> · Cigar nights worth showing up to</span><span>Use: Events page screenshot</span></div>
+  <div class="slide-frame">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · EVENTS</div></div>
+    <h2 class="headline" style="margin-top:4%;">CIGAR NIGHTS<br/>WORTH <span class="accent">SHOWING UP</span> TO.</h2>
+    <div class="phone-frame"><div class="notch"></div><div class="phone-screen placeholder">[ Drop Events page screenshot here ]</div></div>
+    <p class="subhead">Brand launches, lounge nights, member smokes. Tap to RSVP — we'll remind you the morning of.</p>
+    <div class="slide-counter">7/8</div>
+  </div>
+</div>
+
+<!-- SLIDE 8 — CTA -->
+<div class="slide-wrap">
+  <div class="slide-bar"><span>Slide 8 / 8 — <strong>CTA</strong></span><span>Founding cohort offer</span></div>
+  <div class="slide-frame" style="justify-content:center;">
+    <div class="top-stamp">THENEXTCIGAR.COM<div class="url">FOUNDING COHORT</div></div>
+    <div class="crest">T</div>
+    <h2 class="headline" style="font-size:56px;">JOIN THE<br/>FOUNDING <span class="accent">100.</span></h2>
+    <p class="subhead" style="margin:18px auto 0;">Free for the first 100 members. Lifetime founding badge. Cancel anytime.</p>
+    <div class="cta-card">lounge.thenextcigar.com</div>
+    <div style="margin-top:30px; font-size:11px; color:var(--gold); letter-spacing:3px; opacity:0.6;">THE LOUNGE · THE NEXT CIGAR</div>
+    <div class="slide-counter">8/8</div>
+  </div>
+</div>
+
+</body>
+</html>

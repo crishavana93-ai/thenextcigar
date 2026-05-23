@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Lounge — Instagram Carousel Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --navy: #1A1D2E;
+    --gold: #C9A961;
+    --red: #D9342B;
+    --cream: #F5EFE0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #2a2a2a;
+    color: #ddd;
+    padding: 24px;
+  }
+  header {
+    max-width: 800px;
+    margin: 0 auto 24px;
+    padding: 18px 22px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    border: 1px solid #333;
+  }
+  header h1 { margin: 0 0 6px; font-size: 18px; color: #fff; }
+  header p { margin: 0 0 10px; font-size: 13px; color: #aaa; line-height: 1.5; }
+  header ol { margin: 8px 0 0 18px; font-size: 13px; color: #aaa; line-height: 1.7; }
+  header button {
+    margin-top: 12px;
+    padding: 10px 18px;
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+
+  .slide-wrap {
+    max-width: 800px;
+    margin: 0 auto 32px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
+  .slide-bar {
+    padding: 12px 16px;
+    background: #222;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .slide-bar .label { font-size: 12px; color: #999; }
+  .slide-bar .label strong { color: var(--gold); }
+  .slide-bar .controls { display: flex; gap: 8px; }
+  .slide-bar button, .slide-bar label {
+    padding: 6px 12px;
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .slide-bar button:hover, .slide-bar label:hover { background: rgba(201,169,97,0.15); }
+  .slide-bar input[type=file] { display: none; }
+
+  .preview-shell {
+    width: 100%;
+    aspect-ratio: 1080 / 1350;
+    overflow: hidden;
+    background: var(--navy);
+    position: relative;
+  }
+  /* Each .slide is the actual 1080x1350 element. We scale it down to fit
+     the preview shell via CSS transform — but html2canvas captures at the
+     true size for clean export. */
+  .slide {
+    width: 1080px;
+    height: 1350px;
+    background: var(--navy);
+    color: white;
+    position: relative;
+    transform-origin: top left;
+    overflow: hidden;
+  }
+
+  /* Top stamp — moved further into the corner with smaller font so it
+     never crowds the headline. */
+  .top-stamp {
+    position: absolute;
+    top: 48px;
+    right: 56px;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+    font-weight: 800;
+    text-align: right;
+    line-height: 1.5;
+    z-index: 5;
+  }
+  .top-stamp .url {
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  .headline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-align: center;
+    padding: 0 80px;
+    position: absolute;
+    top: 140px;
+    left: 0;
+    right: 0;
+  }
+  .headline .accent { color: var(--red); }
+
+  .phone-frame {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    /* Phone: 320x680 (close to iPhone 9:19.5 ratio, slightly tighter to
+       leave breathing room). Layout: top 330 → ends 1010. Headline above,
+       subhead at 1050 — 40px gap so text never collides with the frame. */
+    top: 330px;
+    width: 320px;
+    height: 680px;
+    border: 4px solid var(--gold);
+    border-radius: 30px;
+    overflow: hidden;
+    background: #000;
+  }
+  .phone-frame .notch {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 16px;
+    background: #000;
+    border-radius: 99px;
+    z-index: 3;
+  }
+  .phone-screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background-color: #000;
+    display: block;
+  }
+  .phone-screen img {
+    /* Stretch the screenshot to fully fill the phone frame. We set
+       width/height as both HTML attributes AND inline styles in JS, so
+       html2canvas uses the correct size during export (it ignores
+       object-fit on dynamically-added images otherwise). */
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+  }
+  .phone-screen.placeholder {
+    background: linear-gradient(135deg, #2a2d3e 0%, #1a1d2e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.45);
+    font-size: 20px;
+    text-align: center;
+    padding: 28px;
+    font-style: italic;
+    font-family: Georgia, serif;
+  }
+
+  .subhead {
+    position: absolute;
+    /* Anchored from TOP, clear of phone bottom (330+680 = 1010, +40 gap) */
+    top: 1050px;
+    left: 80px;
+    right: 80px;
+    font-size: 24px;
+    line-height: 1.4;
+    text-align: center;
+    color: rgba(255,255,255,0.82);
+  }
+
+  .slide-counter {
+    position: absolute;
+    bottom: 50px;
+    right: 70px;
+    font-size: 16px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    opacity: 0.55;
+    font-weight: 700;
+  }
+
+  /* COVER + CTA slides override layout */
+  .slide.cover .headline {
+    top: 320px;
+    font-size: 92px;
+    line-height: 1.08;
+  }
+  .slide.cta .headline {
+    top: 480px;
+    font-size: 110px;
+  }
+  .slide.cover .subhead {
+    top: 940px;
+    bottom: auto;
+    font-size: 28px;
+    line-height: 1.45;
+  }
+  .slide.cover .swipe-hint {
+    position: absolute;
+    bottom: 130px;
+    left: 0; right: 0;
+    text-align: center;
+    color: var(--gold);
+    font-size: 22px;
+    letter-spacing: 8px;
+    font-weight: 700;
+  }
+  .slide.cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+  }
+  .slide.cta .crest {
+    width: 130px;
+    height: 130px;
+    border: 4px solid var(--gold);
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-family: Georgia, serif;
+    font-weight: 800;
+    font-size: 72px;
+    margin-bottom: 50px;
+  }
+  .slide.cta .headline { position: static; padding: 0; }
+  .slide.cta .subhead { position: static; margin: 36px auto 0; max-width: 700px; bottom: auto; left: auto; right: auto; }
+  .slide.cta .cta-card {
+    background: var(--gold);
+    color: var(--navy);
+    padding: 30px 56px;
+    border-radius: 18px;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    font-size: 34px;
+    margin-top: 50px;
+  }
+  .slide.cta .footer-mark {
+    position: absolute;
+    bottom: 80px;
+    left: 0; right: 0;
+    text-align: center;
+    color: var(--gold);
+    font-size: 18px;
+    letter-spacing: 6px;
+    opacity: 0.6;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Lounge — Instagram Carousel Builder <span style="color:#C9A961;font-size:12px;font-weight:400;">v4 · pure-canvas painter</span></h1>
+  <p>Build all 8 slides in your browser. No Canva needed.</p>
+  <ol>
+    <li>For each of slides 2–7, click <strong>Choose screenshot</strong> and pick the matching iPhone screenshot from your photos</li>
+    <li>Click <strong>Download PNG</strong> on each slide to save it (1080×1350, ready for Instagram)</li>
+    <li>Slides 1 and 8 are pure typography — just download as-is</li>
+    <li>Upload all 8 PNGs in order to a new Instagram post</li>
+  </ol>
+  <p style="margin-top:8px;font-size:11px;color:#888;">If you don't see "v3 · canvas-resize" above, hard-refresh with Cmd+Shift+R to bypass cache.</p>
+  <button onclick="downloadAll()">⬇ Download all 8 as PNGs</button>
+</header>
+
+<div id="debug-panel" style="max-width:800px;margin:0 auto 24px;padding:14px 18px;background:#0d2410;border:1px solid #1f5128;border-radius:12px;display:none;">
+  <strong style="color:#86d39c;font-size:13px;">Upload diagnostic</strong>
+  <div id="debug-log" style="margin-top:8px;font-size:12px;color:#aaa;font-family:monospace;line-height:1.6;"></div>
+</div>
+
+<!-- SLIDE 1 — COVER -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 1 / 8 — <strong>Cover</strong></span>
+    <div class="controls">
+      <button onclick="dl(1)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-1">
+    <div class="slide cover" id="slide-1">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE</div></div>
+      <h2 class="headline">WHERE CIGAR<br/>AFICIONADOS<br/><span class="accent">ACTUALLY</span> MEET.</h2>
+      <p class="subhead">Not Reddit. Not Facebook groups. The IRL cigar network — 50+ cities, 25 founding members. Free to join.</p>
+      <div class="swipe-hint">SWIPE →</div>
+      <div class="slide-counter">1/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2 — HOME -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 2 / 8 — <strong>Home</strong> · Your daily dashboard</span>
+    <div class="controls">
+      <label for="file-2">Choose screenshot</label>
+      <input type="file" id="file-2" accept="image/*" onchange="loadScreenshot(2, this)" />
+      <button onclick="dl(2)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-2">
+    <div class="slide" id="slide-2">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · HOME</div></div>
+      <h2 class="headline">TELL THE CITY<br/>YOU'RE <span class="accent">HERE.</span></h2>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen placeholder" id="screen-2">[ Choose your Home screenshot above ]</div>
+      </div>
+      <p class="subhead">Tap "I'm at a lounge" — members in your city see you for 90 minutes. The cigar-bar version of saying "I'm out tonight."</p>
+      <div class="slide-counter">2/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3 — MAP -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 3 / 8 — <strong>Map</strong> · Vetted shops + member pins</span>
+    <div class="controls">
+      <label for="file-3">Choose screenshot</label>
+      <input type="file" id="file-3" accept="image/*" onchange="loadScreenshot(3, this)" />
+      <button onclick="dl(3)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-3">
+    <div class="slide" id="slide-3">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · MAP</div></div>
+      <h2 class="headline">200 HUMIDORS.<br/><span class="accent">ZERO</span> GUESSWORK.</h2>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen placeholder" id="screen-3">[ Choose your Map screenshot above ]</div>
+      </div>
+      <p class="subhead">Every shop on the map is hand-verified. Lounges, humidors, Casa del Habanos across 50+ cities. No bots, no scraped data.</p>
+      <div class="slide-counter">3/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4 — DISCOVER -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 4 / 8 — <strong>Discover</strong> · Members picked for you</span>
+    <div class="controls">
+      <label for="file-4">Choose screenshot</label>
+      <input type="file" id="file-4" accept="image/*" onchange="loadScreenshot(4, this)" />
+      <button onclick="dl(4)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-4">
+    <div class="slide" id="slide-4">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · DISCOVER</div></div>
+      <h2 class="headline">MATCH BY FLAVOR.<br/><span class="accent">NOT</span> BY FEED.</h2>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen placeholder" id="screen-4">[ Choose your Discover screenshot above ]</div>
+      </div>
+      <p class="subhead">The algorithm matches by city, trip overlap, AND flavor profile. Maduro people find maduro people. Curated, not scrolled.</p>
+      <div class="slide-counter">4/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5 — TRAVEL -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 5 / 8 — <strong>Travel</strong> · Declare a trip, locals find you</span>
+    <div class="controls">
+      <label for="file-5">Choose screenshot</label>
+      <input type="file" id="file-5" accept="image/*" onchange="loadScreenshot(5, this)" />
+      <button onclick="dl(5)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-5">
+    <div class="slide" id="slide-5">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · TRAVEL</div></div>
+      <h2 class="headline">LOCALS WAITING<br/><span class="accent">BEFORE</span> YOU BOARD.</h2>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen placeholder" id="screen-5">[ Choose your Travel screenshot above ]</div>
+      </div>
+      <p class="subhead">Tell us where you're going. Members in that city get a quiet ping. You arrive with introductions already started.</p>
+      <div class="slide-counter">5/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 — INBOX -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 6 / 8 — <strong>Inbox</strong> · Real introductions, not DMs</span>
+    <div class="controls">
+      <label for="file-6">Choose screenshot</label>
+      <input type="file" id="file-6" accept="image/*" onchange="loadScreenshot(6, this)" />
+      <button onclick="dl(6)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-6">
+    <div class="slide" id="slide-6">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · INBOX</div></div>
+      <h2 class="headline">THE <span class="accent">BOUNCER</span><br/>FOR YOUR INBOX.</h2>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen placeholder" id="screen-6">[ Choose your Inbox screenshot above ]</div>
+      </div>
+      <p class="subhead">Both members accept the intro before any message lands. No spam, no random DMs. Just the cigar conversation you actually want.</p>
+      <div class="slide-counter">6/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7 — EVENTS -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 7 / 8 — <strong>Events</strong> · Cigar nights worth showing up to</span>
+    <div class="controls">
+      <label for="file-7">Choose screenshot</label>
+      <input type="file" id="file-7" accept="image/*" onchange="loadScreenshot(7, this)" />
+      <button onclick="dl(7)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-7">
+    <div class="slide" id="slide-7">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">LOUNGE · EVENTS</div></div>
+      <h2 class="headline">CIGAR NIGHTS<br/>WORTH <span class="accent">SHOWING UP.</span></h2>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen placeholder" id="screen-7">[ Choose your Events screenshot above ]</div>
+      </div>
+      <p class="subhead">Brand launches, lounge nights, member smokes. Tap to RSVP — we'll remind you the morning of.</p>
+      <div class="slide-counter">7/8</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 — CTA -->
+<div class="slide-wrap">
+  <div class="slide-bar">
+    <span class="label">Slide 8 / 8 — <strong>CTA</strong></span>
+    <div class="controls">
+      <button onclick="dl(8)">Download PNG</button>
+    </div>
+  </div>
+  <div class="preview-shell" id="shell-8">
+    <div class="slide cta" id="slide-8">
+      <div class="top-stamp">THENEXTCIGAR.COM<div class="url">FOUNDING COHORT</div></div>
+      <div class="crest">T</div>
+      <h2 class="headline">JOIN THE<br/>FOUNDING <span class="accent">100.</span></h2>
+      <p class="subhead">Free for the first 100 members. Lifetime founding badge. Cancel anytime.</p>
+      <div class="cta-card">lounge.thenextcigar.com</div>
+      <div class="footer-mark">THE LOUNGE · THE NEXT CIGAR</div>
+      <div class="slide-counter">8/8</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Scale every .slide down to fit its preview shell on screen,
+  // while keeping the actual element at full 1080x1350 for export.
+  function scaleSlides() {
+    document.querySelectorAll(".preview-shell").forEach((shell) => {
+      const slide = shell.querySelector(".slide");
+      if (!slide) return;
+      const scale = shell.clientWidth / 1080;
+      slide.style.transform = `scale(${scale})`;
+    });
+  }
+  window.addEventListener("load", scaleSlides);
+  window.addEventListener("resize", scaleSlides);
+
+  // Keep loaded source Image objects per slide — canvas painter uses them directly.
+  const sourceImages = {};
+  const screenshotLoadPromises = {};
+
+  // Debug helper: write a line to the diagnostic panel
+  function debugLog(slideNum, msg) {
+    const panel = document.getElementById("debug-panel");
+    const log = document.getElementById("debug-log");
+    if (!panel || !log) return;
+    panel.style.display = "block";
+    const time = new Date().toLocaleTimeString();
+    log.innerHTML += `<div>[${time}] slide ${slideNum}: ${msg}</div>`;
+  }
+
+  async function loadScreenshot(n, input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const screen = document.getElementById("screen-" + n);
+      if (!screen) return;
+
+      // Reset the placeholder
+      screen.classList.remove("placeholder");
+      screen.textContent = "";
+      while (screen.firstChild) screen.removeChild(screen.firstChild);
+
+      debugLog(n, `file picked — ${(file.size/1024).toFixed(0)} KB · type ${file.type}`);
+
+      // Load source image — keep a global reference for the canvas painter,
+      // and also append it to the preview div (sized via CSS to fill the frame).
+      const sourceImg = new Image();
+      screenshotLoadPromises[n] = new Promise((resolve) => {
+        sourceImg.onload = () => {
+          debugLog(n, `source loaded — ${sourceImg.naturalWidth} × ${sourceImg.naturalHeight} (aspect ${(sourceImg.naturalWidth/sourceImg.naturalHeight).toFixed(3)})`);
+          resolve();
+        };
+        sourceImg.onerror = () => {
+          debugLog(n, `<span style="color:#f88">source failed to load</span>`);
+          resolve();
+        };
+      });
+      sourceImg.src = e.target.result;
+      sourceImages[n] = sourceImg;
+
+      // Preview img inside the phone frame (browser-rendered, just for visual feedback)
+      const previewImg = document.createElement("img");
+      previewImg.alt = "";
+      previewImg.style.cssText = "display:block;width:100%;height:100%;object-fit:cover;";
+      previewImg.src = e.target.result;
+      screen.appendChild(previewImg);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ============================================================
+  // PURE CANVAS PAINTER — draws each slide from scratch onto a
+  // 1080x1350 canvas. No html2canvas. No DOM rendering. Every pixel
+  // is placed by hand from the slide's <h2> headline, <p> subhead,
+  // top stamp text, and (for slides 2-7) the uploaded screenshot.
+  // ============================================================
+
+  const COLORS = {
+    navy: "#1A1D2E",
+    gold: "#C9A961",
+    red:  "#D9342B",
+    white: "#FFFFFF",
+    whiteDim: "rgba(255,255,255,0.82)",
+  };
+
+  // Helper — rounded rect path
+  function roundedRectPath(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // Helper — multi-line centered text. Each "line" is an array of
+  // segments, where each segment is { text, color }. Returns final y.
+  function drawCenteredLines(ctx, lines, cx, startY, lineHeight, font) {
+    ctx.font = font;
+    ctx.textBaseline = "alphabetic";
+    let y = startY;
+    for (const line of lines) {
+      // Measure full line width
+      let totalW = 0;
+      for (const seg of line) {
+        totalW += ctx.measureText(seg.text).width;
+      }
+      let x = cx - totalW / 2;
+      for (const seg of line) {
+        ctx.fillStyle = seg.color;
+        ctx.textAlign = "left";
+        ctx.fillText(seg.text, x, y);
+        x += ctx.measureText(seg.text).width;
+      }
+      y += lineHeight;
+    }
+    return y;
+  }
+
+  // Parse the .headline element of a slide into [{text,color},...] lines,
+  // splitting on <br/> and detecting <span class="accent"> for red coloring.
+  function parseHeadline(headlineEl) {
+    const lines = [[]];
+    headlineEl.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const t = node.textContent;
+        if (t) lines[lines.length - 1].push({ text: t, color: COLORS.white });
+      } else if (node.nodeName === "BR") {
+        lines.push([]);
+      } else if (node.nodeName === "SPAN" && node.classList.contains("accent")) {
+        lines[lines.length - 1].push({ text: node.textContent, color: COLORS.red });
+      } else if (node.nodeName) {
+        // Generic element — push as white
+        lines[lines.length - 1].push({ text: node.textContent || "", color: COLORS.white });
+      }
+    });
+    return lines;
+  }
+
+  // Word-wrap a string to fit within maxWidth (in canvas pixels), returning array of strings
+  function wrapText(ctx, text, maxWidth) {
+    const words = text.split(/\s+/);
+    const lines = [];
+    let line = "";
+    for (const word of words) {
+      const test = line ? line + " " + word : word;
+      if (ctx.measureText(test).width <= maxWidth) {
+        line = test;
+      } else {
+        if (line) lines.push(line);
+        line = word;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  // Paint one slide onto a fresh 1080x1350 canvas. Returns the canvas.
+  function paintSlide(n) {
+    const slide = document.getElementById("slide-" + n);
+    if (!slide) return null;
+
+    const isCover = slide.classList.contains("cover");
+    const isCta = slide.classList.contains("cta");
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1350;
+    const ctx = canvas.getContext("2d");
+
+    // 1. Background
+    ctx.fillStyle = COLORS.navy;
+    ctx.fillRect(0, 0, 1080, 1350);
+
+    // 2. Top stamp (top-right corner)
+    const stamp = slide.querySelector(".top-stamp");
+    if (stamp) {
+      const main = stamp.childNodes[0] ? stamp.childNodes[0].textContent.trim() : "";
+      const sub = stamp.querySelector(".url");
+      ctx.textAlign = "right";
+      ctx.fillStyle = COLORS.red;
+      ctx.font = "800 18px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+      ctx.fillText(main, 1024, 72);
+      if (sub) {
+        ctx.fillStyle = "rgba(255,255,255,0.45)";
+        ctx.font = "500 14px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+        ctx.fillText(sub.textContent.trim(), 1024, 96);
+      }
+    }
+
+    // 3. Headline
+    const headlineEl = slide.querySelector(".headline");
+    const headlineLines = headlineEl ? parseHeadline(headlineEl) : [];
+    let headlineFont, headlineLineHeight, headlineY;
+    if (isCover) {
+      headlineFont = "800 96px Georgia, 'Times New Roman', serif";
+      headlineLineHeight = 110;
+      headlineY = 380;
+    } else if (isCta) {
+      headlineFont = "800 110px Georgia, 'Times New Roman', serif";
+      headlineLineHeight = 122;
+      headlineY = 620;
+    } else {
+      headlineFont = "800 68px Georgia, 'Times New Roman', serif";
+      headlineLineHeight = 78;
+      headlineY = 200;
+    }
+    drawCenteredLines(ctx, headlineLines, 540, headlineY, headlineLineHeight, headlineFont);
+
+    // 4. Phone frame + screenshot (slides 2-7 only)
+    if (!isCover && !isCta) {
+      const frameX = 380, frameY = 330, frameW = 320, frameH = 680, frameR = 30;
+
+      // Black inside fill
+      ctx.fillStyle = "#000";
+      roundedRectPath(ctx, frameX, frameY, frameW, frameH, frameR);
+      ctx.fill();
+
+      // Screenshot — clipped to inner rounded rect (inset by border width)
+      const img = sourceImages[n];
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.save();
+        roundedRectPath(ctx, frameX + 4, frameY + 4, frameW - 8, frameH - 8, frameR - 4);
+        ctx.clip();
+        // Draw screenshot stretched to fill the inner frame. ~2% squish is
+        // imperceptible vs the original phone aspect.
+        ctx.drawImage(img, frameX + 4, frameY + 4, frameW - 8, frameH - 8);
+        ctx.restore();
+      }
+
+      // Gold border (drawn after image so border sits on top)
+      ctx.strokeStyle = COLORS.gold;
+      ctx.lineWidth = 4;
+      roundedRectPath(ctx, frameX + 2, frameY + 2, frameW - 4, frameH - 4, frameR - 2);
+      ctx.stroke();
+
+      // Notch
+      ctx.fillStyle = "#000";
+      roundedRectPath(ctx, frameX + (frameW - 100) / 2, frameY + 14, 100, 16, 8);
+      ctx.fill();
+    }
+
+    // 5. Subhead
+    const subheadEl = slide.querySelector(".subhead");
+    if (subheadEl) {
+      const subText = subheadEl.textContent.trim().replace(/\s+/g, " ");
+      let subY, subFont, subLineHeight, subMaxWidth;
+      if (isCover) {
+        subFont = "400 28px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+        subLineHeight = 40;
+        subY = 940;
+        subMaxWidth = 900;
+      } else if (isCta) {
+        subFont = "400 26px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+        subLineHeight = 38;
+        subY = 880;
+        subMaxWidth = 800;
+      } else {
+        subFont = "400 24px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+        subLineHeight = 34;
+        subY = 1080;
+        subMaxWidth = 920;
+      }
+      ctx.font = subFont;
+      ctx.fillStyle = COLORS.whiteDim;
+      ctx.textAlign = "center";
+      const lines = wrapText(ctx, subText, subMaxWidth);
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 540, subY + i * subLineHeight);
+      });
+    }
+
+    // 6. Cover-specific: SWIPE → hint
+    if (isCover) {
+      ctx.fillStyle = COLORS.gold;
+      ctx.font = "700 22px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("S W I P E   →", 540, 1220);
+    }
+
+    // 7. CTA-specific: crest + pill + footer
+    if (isCta) {
+      // Crest — gold rounded square with "T"
+      const crestX = (1080 - 130) / 2, crestY = 380;
+      ctx.strokeStyle = COLORS.gold;
+      ctx.lineWidth = 4;
+      roundedRectPath(ctx, crestX, crestY, 130, 130, 22);
+      ctx.stroke();
+      ctx.fillStyle = COLORS.gold;
+      ctx.font = "800 80px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("T", 540, crestY + 70);
+      ctx.textBaseline = "alphabetic";
+
+      // CTA pill
+      const pillW = 580, pillH = 90, pillX = (1080 - pillW) / 2, pillY = 970;
+      ctx.fillStyle = COLORS.gold;
+      roundedRectPath(ctx, pillX, pillY, pillW, pillH, 18);
+      ctx.fill();
+      ctx.fillStyle = COLORS.navy;
+      ctx.font = "800 34px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("lounge.thenextcigar.com", 540, pillY + 58);
+
+      // Footer mark
+      ctx.fillStyle = "rgba(201,169,97,0.6)";
+      ctx.font = "600 18px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+      ctx.fillText("THE LOUNGE · THE NEXT CIGAR", 540, 1230);
+    }
+
+    // 8. Slide counter (bottom-right)
+    const counter = slide.querySelector(".slide-counter");
+    if (counter) {
+      ctx.fillStyle = "rgba(201,169,97,0.55)";
+      ctx.font = "700 18px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(counter.textContent.trim(), 1010, 1300);
+    }
+
+    return canvas;
+  }
+
+  async function dl(n) {
+    // Make sure screenshot is fully decoded before painting
+    if (screenshotLoadPromises[n]) {
+      await screenshotLoadPromises[n];
+    }
+    const canvas = paintSlide(n);
+    if (!canvas) return;
+    const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `lounge-carousel-${String(n).padStart(2, "0")}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function downloadAll() {
+    for (let i = 1; i <= 8; i++) {
+      await dl(i);
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+</script>
+
+</body>
+</html>
