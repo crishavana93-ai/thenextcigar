@@ -271,6 +271,58 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   const url = new URL(request.url);
   const dryRun = url.searchParams.get("dry") === "1";
   const limitParam = parseInt(url.searchParams.get("limit") || "0", 10);
+  const testEmail = url.searchParams.get("test"); // ?test=you@example.com → fire one sample email + return
+
+  // ── TEST MODE: send a single hardcoded sample alert to verify Resend +
+  // domain verification work end-to-end, without needing a real price diff.
+  if (testEmail) {
+    if (!env.RESEND_API_KEY) {
+      return json({ ok: false, error: "RESEND_API_KEY not configured" }, 500);
+    }
+    const fakeEvent: AlertEvent = {
+      type: "price_drop",
+      watchlist: {
+        watchlist_id: "test-watchlist",
+        sku: "cohiba-robustos",
+        target_price_eur: null,
+        baseline_price_eur: 2050.0,
+        last_alert_sent_at: null,
+        subscriber_id: "test-subscriber",
+        email: testEmail,
+      },
+      newest: {
+        id: "test-snapshot",
+        sku: "cohiba-robustos",
+        retailer_id: "de-noblego",
+        pack_size: 25,
+        price: 1930.3,
+        currency: "EUR",
+        price_eur: 1930.3,
+        price_per_cigar_eur: 77.21,
+        in_stock: true,
+        source_url: "https://www.noblego.de/cohiba-robusto-zigarre/",
+        scraped_at: new Date().toISOString(),
+      },
+      previous: null,
+      sku: "cohiba-robustos",
+      retailerId: "de-noblego",
+      packSize: 25,
+      alertPriceEur: 1930.3,
+    };
+    const rendered = renderEmail(fakeEvent);
+    // Override the lead so it's obvious this is a test, not a real alert.
+    rendered.subject = "[TEST] " + rendered.subject;
+    const sendRes = await sendEmail(env, testEmail, rendered);
+    return json({
+      ok: sendRes.ok,
+      mode: "test",
+      to: testEmail,
+      from: env.ALERT_FROM_EMAIL || "alerts@thenextcigar.com",
+      subject: rendered.subject,
+      resendId: sendRes.id,
+      error: sendRes.error,
+    });
+  }
 
   // ── 1. Load active watchlists (confirmed, not unsubscribed, not archived).
   const watchlists = await supaSelect<WatchlistRow>(env, "finder_active_watchlist_v", {
