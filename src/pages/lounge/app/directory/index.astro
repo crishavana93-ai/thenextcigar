@@ -820,7 +820,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
             <div class="disc-row__main">
               <p class="disc-row__name">${escapeHtml(p.display_name || "Member")} ${
                 (p as any).founder_member
-                  ? `<span style="color:#1a1612;background:linear-gradient(135deg,#c9a961,#b08e4a);padding:2px 7px;border-radius:3px;font-size:10px;font-weight:800;letter-spacing:0.08em;margin-left:6px;">★ FOUNDER ${(p as any).founder_number ? "#" + String((p as any).founder_number).padStart(2,"0") : ""}</span>`
+                  ? `<span style="color:#1a1612;background:linear-gradient(135deg,#c9a961,#b08e4a);padding:2px 7px;border-radius:3px;font-size:10px;font-weight:800;letter-spacing:0.08em;margin-left:6px;">★ OG MEMBER</span>`
                   : p.is_founding
                   ? `<span style="color:var(--color-gold);font-size:10px;font-weight:800;letter-spacing:0.1em;">★ FOUNDING</span>`
                   : ""

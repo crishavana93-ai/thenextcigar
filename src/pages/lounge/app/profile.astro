@@ -44,9 +44,14 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
           Email stays private. You can change any of this anytime.
         </p>
 
-        {/* Founder Member banner — visible only when profile.founder_member = true.
-            Populated by the profile-load script; hidden by default to avoid a
-            flash for non-founders. */}
+        {/* OG Member banner — shown to profiles with founder_member = true.
+            Two variants depending on founder_path:
+              pre_launch → "OG Member · joined before launch"
+              earned     → "OG Member · here for the build"
+            Both get the same gold gradient + crest icon and same functional
+            perks (lifetime free TNC Pro). The differentiator is the eyebrow
+            line copy, which signals which path qualified them. No ordinal
+            number is ever rendered — late joiners shouldn't feel small. */}
         <div class="founder-banner" id="founder-banner" hidden>
           <div class="founder-banner__crest" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -54,11 +59,11 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
             </svg>
           </div>
           <div class="founder-banner__body">
-            <p class="founder-banner__eyebrow">Founder Member · <span id="founder-banner-number">#01</span></p>
-            <p class="founder-banner__title">You were one of the first 100.</p>
+            <p class="founder-banner__eyebrow" id="founder-banner-eyebrow">OG Member · joined before launch</p>
+            <p class="founder-banner__title">Thank you for being early.</p>
             <p class="founder-banner__lead">
-              Every paid feature The Next Cigar ever ships is free for you. Forever. This badge shows on your
-              public profile and on the directory so other members can see who built this place early.
+              Every paid feature The Next Cigar ever ships is free for you. Forever. The OG badge shows on your
+              public profile and on the directory so other members can see who built this place with us.
             </p>
           </div>
         </div>
@@ -343,7 +348,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   }
   .profile-form__status.is-error { background: #fde9e9; border-color: #c62828; }
 
-  /* ─── Founder Member banner ──────────────────────────────────────────── */
+  /* ─── OG Member banner ───────────────────────────────────────────────── */
   .founder-banner {
     margin-top: 1.5rem;
     padding: 1.25rem 1.5rem;
@@ -491,16 +496,12 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     (form.elements.namedItem("display_name") as HTMLInputElement).value = profile.display_name || "";
     (form.elements.namedItem("full_name") as HTMLInputElement).value = profile.full_name || "";
 
-    // ── Founder Member banner — show only when profile.founder_member is true.
-    // Surfaces the badge + their ordinal so the user sees the promised reward
-    // the moment they open profile after the announcement email lands.
+    // ── OG Member banner — show only when profile.founder_member is true.
+    // The badge is intentionally binary (no ordinal number) so member #500
+    // doesn't feel smaller than member #5. The banner unhides the moment
+    // the profile loads.
     const founderBanner = document.getElementById("founder-banner");
-    const founderNumberEl = document.getElementById("founder-banner-number");
     if (founderBanner && (profile as any).founder_member === true) {
-      const n = (profile as any).founder_number as number | null;
-      if (founderNumberEl) {
-        founderNumberEl.textContent = n != null ? `#${String(n).padStart(2, "0")}` : "";
-      }
       founderBanner.hidden = false;
     }
     (form.elements.namedItem("city") as HTMLInputElement).value = profile.city || "";

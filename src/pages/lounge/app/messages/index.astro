@@ -303,6 +303,42 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     color: var(--color-text-muted);
   }
 
+  /* Optimistic-send state — the bubble shows immediately on submit and stays
+     muted/dimmed until the server confirms (via the .insert() response or
+     the realtime echo, whichever lands first). Removes the perceived freeze
+     between clicking Send and seeing your message. */
+  .thread-msg.is-pending {
+    opacity: 0.55;
+    transition: opacity 0.18s ease;
+  }
+  .thread-msg.is-pending::after {
+    content: "·";
+    display: inline-block;
+    margin-left: 6px;
+    font-weight: 700;
+    color: rgba(26, 29, 46, 0.6);
+    animation: msg-pending-pulse 1.1s ease-in-out infinite;
+  }
+  @keyframes msg-pending-pulse {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 1; }
+  }
+
+  /* Failed-send state — bubble turns rust-red and is clickable to retry. */
+  .thread-msg.is-failed {
+    background: #fae3e0;
+    color: #6a1f1a;
+    cursor: pointer;
+    border: 1px solid #d76258;
+  }
+  .thread-msg.is-failed::after {
+    content: " ⤴ Tap to retry";
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.85;
+    margin-left: 6px;
+  }
+
   .thread-empty {
     text-align: center;
     color: var(--color-text-muted);
@@ -375,6 +411,19 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   let myUserId = "";
   let pollTimer: any = null;
   let realtimeChannel: any = null;
+
+  // Set of message IDs we've already rendered into the DOM. Lets the realtime
+  // handler skip messages we've already appended (echo of our own optimistic
+  // sends, or echoes from a poll that beat the subscribe to the punch). Reset
+  // whenever the thread switches.
+  let renderedIds: Set<string> = new Set();
+  // Last "day" header we rendered, so appendMessage can decide whether to
+  // emit a new day separator without re-scanning the whole DOM.
+  let lastDayHeader: string = "";
+  // The user might scroll up to read history — we shouldn't yank them back to
+  // bottom every time a message arrives. Track whether they're "near bottom"
+  // and only autoscroll when they are.
+  let userIsAtBottom = true;
 
   // Clean up the realtime channel + poll on full page navigation away.
   window.addEventListener("beforeunload", () => {
@@ -506,6 +555,87 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   }
 
+  // Decide if the user is "near bottom" (within 80px of the scroll end). We
+  // use this BEFORE appending so the autoscroll doesn't fight a user who's
+  // scrolled up to re-read older messages.
+  function isNearBottom(): boolean {
+    // Most messaging UIs scroll the page itself, not an inner container.
+    // We treat the document scroll position as the source of truth, matching
+    // what scrollThreadToBottom does.
+    const scrollPos = window.scrollY + window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    return docHeight - scrollPos < 80;
+  }
+
+  // Render a single message DOM node, including a leading day-header element
+  // if this message starts a new day relative to the previous one. Returns
+  // an array of nodes so the caller can append them in one go.
+  function buildMessageNodes(m: DM): HTMLElement[] {
+    const out: HTMLElement[] = [];
+    const day = dayHeader(m.created_at);
+    if (day !== lastDayHeader) {
+      const sep = document.createElement("div");
+      sep.className = "thread-msg__time";
+      sep.textContent = day;
+      out.push(sep);
+      lastDayHeader = day;
+    }
+    const mine = m.sender_id === myUserId;
+    const bubble = document.createElement("div");
+    bubble.className = `thread-msg ${mine ? "thread-msg--mine" : "thread-msg--theirs"}`;
+    bubble.dataset.messageId = m.id;
+    const p = document.createElement("p");
+    p.textContent = m.body;       // textContent auto-escapes; no need to call escapeHtml
+    bubble.appendChild(p);
+    out.push(bubble);
+    return out;
+  }
+
+  // Append a single message into the thread without re-rendering the rest.
+  // Idempotent — skips messages whose id we've already rendered.
+  function appendMessage(m: DM): void {
+    if (renderedIds.has(m.id)) return;
+
+    // If an optimistic placeholder matches this incoming message (same sender
+    // + same body within the last 30s), replace it instead of creating a
+    // duplicate bubble. This is what lets the user's own send go from
+    // "is-pending" gold to confirmed seamlessly.
+    if (m.sender_id === myUserId) {
+      const pending = document.querySelector<HTMLElement>(
+        `.thread-msg.is-pending[data-pending-body="${cssEscape(m.body)}"]`,
+      );
+      if (pending) {
+        pending.classList.remove("is-pending");
+        pending.dataset.messageId = m.id;
+        delete pending.dataset.pendingBody;
+        renderedIds.add(m.id);
+        return;
+      }
+    }
+
+    const wrap = document.getElementById("thread-messages") as HTMLElement;
+    const emptyEl = document.getElementById("thread-empty") as HTMLElement;
+    if (emptyEl) emptyEl.hidden = true;
+    const nodes = buildMessageNodes(m);
+    const wasAtBottom = userIsAtBottom;
+    nodes.forEach((n) => wrap.appendChild(n));
+    renderedIds.add(m.id);
+    if (wasAtBottom) {
+      // Defer one tick so layout has settled before we measure.
+      requestAnimationFrame(scrollThreadToBottom);
+    }
+  }
+
+  // CSS attribute selectors choke on quotes / brackets — defensively escape
+  // the body before using it in a querySelector.
+  function cssEscape(s: string): string {
+    // Native CSS.escape if present (every evergreen browser), otherwise a
+    // minimal hand-roll covering the chars we actually see in message bodies.
+    const w = window as any;
+    if (w.CSS && typeof w.CSS.escape === "function") return w.CSS.escape(s);
+    return s.replace(/["\\\n\r]/g, (c) => "\\" + c);
+  }
+
   async function loadThread(initial = false): Promise<void> {
     const supabase = getSupabase();
     const { data: msgs } = await supabase
@@ -525,23 +655,33 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     if (rows.length === 0) {
       wrap.innerHTML = "";
       emptyEl.hidden = false;
+      renderedIds.clear();
+      lastDayHeader = "";
       return;
     }
     emptyEl.hidden = true;
 
-    // Build HTML with day headers between groups
-    let html = "";
-    let lastDay = "";
-    for (const m of rows) {
-      const day = dayHeader(m.created_at);
-      if (day !== lastDay) {
-        html += `<div class="thread-msg__time">${day}</div>`;
-        lastDay = day;
+    // Reconcile: figure out which rows we haven't rendered yet. On initial
+    // load `renderedIds` is empty so this is a full render; on a reconciling
+    // call (e.g. status-fallback poll) it's effectively a no-op.
+    const toRender = rows.filter((m) => !renderedIds.has(m.id));
+
+    // First-time render of an existing thread: clear DOM + reset trackers so
+    // a thread-switch starts clean.
+    if (initial) {
+      wrap.innerHTML = "";
+      renderedIds.clear();
+      lastDayHeader = "";
+      for (const m of rows) {
+        const nodes = buildMessageNodes(m);
+        nodes.forEach((n) => wrap.appendChild(n));
+        renderedIds.add(m.id);
       }
-      const mine = m.sender_id === myUserId;
-      html += `<div class="thread-msg ${mine ? "thread-msg--mine" : "thread-msg--theirs"}"><p>${escapeHtml(m.body)}</p></div>`;
+    } else {
+      // Incremental: append only what's new (handles cases where realtime
+      // dropped and the status fallback caught up).
+      for (const m of toRender) appendMessage(m);
     }
-    wrap.innerHTML = html;
 
     // Mark unread messages addressed to me as read.
     // Uses the mark_messages_read RPC (migration 019) which is SECURITY DEFINER
@@ -565,10 +705,15 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       }
     }
 
-    // Scroll to bottom if new messages arrived (or initial)
-    if (initial || rows.length !== lastRenderedCount) {
+    // Scroll to bottom only on the initial render (or when we actually
+    // appended new content AND the user was already at the bottom). The old
+    // logic scrolled on every poll, fighting the user.
+    if (initial) {
       lastRenderedCount = rows.length;
       setTimeout(scrollThreadToBottom, 50);
+    } else if (toRender.length > 0 && userIsAtBottom) {
+      lastRenderedCount = rows.length;
+      requestAnimationFrame(scrollThreadToBottom);
     }
   }
 
@@ -626,21 +771,70 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       e.preventDefault();
       const body = input.value.trim();
       if (!body) return;
-      sendBtn.disabled = true;
+      const trimmed = body.slice(0, 2000);
+
+      // ── Optimistic send ─────────────────────────────────────────────────
+      // Build a placeholder bubble with .is-pending so the user sees their
+      // message immediately. The realtime echo or the .insert() response
+      // will reconcile it; if the server rejects, we mark it failed and
+      // restore the input so the user can retry.
+      const wrap = document.getElementById("thread-messages") as HTMLElement;
+      const emptyEl = document.getElementById("thread-empty") as HTMLElement;
+      if (emptyEl) emptyEl.hidden = true;
+      const day = dayHeader(new Date().toISOString());
+      if (day !== lastDayHeader) {
+        const sep = document.createElement("div");
+        sep.className = "thread-msg__time";
+        sep.textContent = day;
+        wrap.appendChild(sep);
+        lastDayHeader = day;
+      }
+      const pending = document.createElement("div");
+      pending.className = "thread-msg thread-msg--mine is-pending";
+      pending.dataset.pendingBody = trimmed;
+      const p = document.createElement("p");
+      p.textContent = trimmed;
+      pending.appendChild(p);
+      wrap.appendChild(pending);
+      // Clear input + reset textarea height immediately — that's the
+      // single biggest UX gain: send feels instant even on slow networks.
+      input.value = "";
+      input.style.height = "auto";
+      requestAnimationFrame(scrollThreadToBottom);
+
       try {
-        const { error } = await supabase.from("direct_messages").insert({
-          sender_id: myUserId,
-          recipient_id: threadOtherId,
-          body: body.slice(0, 2000),
-        });
+        const { data, error } = await supabase
+          .from("direct_messages")
+          .insert({
+            sender_id: myUserId,
+            recipient_id: threadOtherId,
+            body: trimmed,
+          })
+          .select("id, sender_id, recipient_id, body, read_at, created_at")
+          .maybeSingle();
         if (error) throw error;
-        input.value = "";
-        input.style.height = "auto";
-        await loadThread();
+        // Reconcile the placeholder using the server-returned row. If realtime
+        // beat us to it, appendMessage will already have removed .is-pending
+        // and renderedIds will contain the id — in that case this is a no-op.
+        if (data && !renderedIds.has((data as DM).id)) {
+          pending.classList.remove("is-pending");
+          pending.dataset.messageId = (data as DM).id;
+          delete pending.dataset.pendingBody;
+          renderedIds.add((data as DM).id);
+        }
       } catch (err: any) {
-        alert(err?.message || "Could not send. The introduction may have been declined.");
-      } finally {
-        sendBtn.disabled = false;
+        // Mark the bubble as failed and let the user retry by clicking it.
+        pending.classList.remove("is-pending");
+        pending.classList.add("is-failed");
+        pending.title = "Tap to retry — message not sent.";
+        pending.onclick = () => {
+          input.value = trimmed;
+          input.dispatchEvent(new Event("input"));
+          pending.remove();
+        };
+        // Don't alert() — that's the kind of friction that makes the UI feel
+        // janky. The visual state on the bubble itself is enough signal.
+        console.warn("[messages] send failed:", err?.message || err);
       }
     };
 
@@ -653,7 +847,8 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     });
 
     // Realtime subscription — when a new message lands for this conversation,
-    // refetch + render immediately. Replaces the 8s poll for an instant feel.
+    // APPEND it directly. The old code called loadThread() on every event,
+    // which rebuilt the whole DOM and yanked the user's scroll position.
     if (realtimeChannel) {
       try { supabase.removeChannel(realtimeChannel); } catch {}
     }
@@ -663,22 +858,46 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "direct_messages" },
         (payload: any) => {
-          const m = payload.new;
+          const m = payload.new as DM;
           // Only react to messages that belong to THIS thread.
-          if (
+          const inThread =
             (m.sender_id === myUserId && m.recipient_id === otherId) ||
-            (m.sender_id === otherId && m.recipient_id === myUserId)
-          ) {
-            loadThread();
+            (m.sender_id === otherId && m.recipient_id === myUserId);
+          if (!inThread) return;
+          appendMessage(m);
+          // If the new message is from the other party AND it's unread on
+          // our side, mark it read now — saves a roundtrip vs. waiting for
+          // the next loadThread.
+          if (m.sender_id === otherId && !m.read_at) {
+            supabase.rpc("mark_messages_read", { message_ids: [m.id] })
+              .then((r: any) => { if (r?.error) console.warn("[messages] mark_read failed:", r.error.message); });
           }
         },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        // ── Status-aware fallback ────────────────────────────────────────
+        // Only run the reconcile poll if realtime drops. The old code polled
+        // every 15s unconditionally, causing double-renders on every cycle.
+        if (status === "SUBSCRIBED") {
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+          // Reconcile once on (re-)connect in case we missed anything during
+          // the disconnect window.
+          loadThread();
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          if (!pollTimer) {
+            console.warn("[messages] realtime", status, "— starting 15s reconcile fallback");
+            pollTimer = setInterval(() => loadThread(), 15000);
+          }
+        }
+      });
 
-    // Belt-and-suspenders poll every 15 seconds in case Realtime drops the
-    // connection (rare, but happens on slow mobile networks).
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(() => loadThread(), 15000);
+    // Track user scroll position so appendMessage doesn't fight a user who
+    // scrolled up to re-read history. Throttled via passive listener.
+    const onScroll = () => { userIsAtBottom = isNearBottom(); };
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     (document.getElementById("msg-thread-mode") as HTMLElement).hidden = false;
   }

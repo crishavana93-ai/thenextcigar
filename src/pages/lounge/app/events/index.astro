@@ -64,7 +64,21 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           </div>
           <p class="lounge-empty__kicker">Calendar's open</p>
           <h3 class="lounge-empty__title">No events match this filter.</h3>
-          <p class="lounge-empty__body">Try a different city or check back soon. New events show up here the moment they're approved.</p>
+          <p class="lounge-empty__body">Try a different city or clear the filter to see all of Europe. The calendar grows as members submit and we verify — if you know a herf, brand night, or festival, email <a href="mailto:cris@thenextcigar.com?subject=Event%20submission" style="color:var(--color-gold,#c9a961);font-weight:600;">cris@thenextcigar.com</a> with the details.</p>
+        </div>
+
+        {/* Data source footer — visible whether the grid has events or not, so
+            members know how the calendar is built and how to contribute. */}
+        <div class="evt-source">
+          <p class="evt-source__title">How the calendar gets built</p>
+          <p class="evt-source__body">
+            Events here are member-submitted and admin-verified — we don't auto-scrape
+            social media because half of those listings are wrong by the time you arrive.
+            Brand nights, festivals (Habanos World Days, Inter-Tabac, Festival del Habano),
+            casa-del-habano openings, and member-hosted smokes are all welcome. Submit by
+            email: <a href="mailto:cris@thenextcigar.com?subject=Event%20submission">cris@thenextcigar.com</a> —
+            include date, venue, city, and a link. Verified events appear within 24h.
+          </p>
         </div>
       </section>
     </div>
@@ -224,6 +238,34 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   .evt-card__pill--going {
     background: rgba(45, 106, 79, 0.18);
     color: #2d6a4f;
+  }
+
+  /* Data-source footer — small, muted, sits at the bottom of the grid section */
+  .evt-source {
+    margin-top: 28px;
+    padding: 16px 18px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-soft);
+  }
+  .evt-source__title {
+    margin: 0 0 6px 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .evt-source__body {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+  .evt-source__body a {
+    color: var(--color-gold, #c9a961);
+    font-weight: 600;
+    text-decoration: underline;
   }
 
   /* Sheet */
@@ -795,10 +837,15 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     cityList.innerHTML = cities
       .map((c) => `<option value="${c.replace(/"/g, "&quot;")}"></option>`)
       .join("");
-    // Pre-fill with member's city if it's in the list
-    if (profile?.city && cities.includes(profile.city)) {
-      cityInput.value = profile.city;
-    }
+    // Default: leave the City filter EMPTY so members see every event across
+    // Europe on first load. Previously we pre-filled with the member's own
+    // city, which hid all out-of-city events behind a filter the member
+    // didn't realise was applied — a Stockholm-based member would see "no
+    // events" even when Berlin and Madrid had verified events that week.
+    // We surface a hint instead, prompting them to type to narrow.
+    cityInput.placeholder = profile?.city
+      ? `All cities — type to filter (e.g. ${profile.city})`
+      : "All cities — type to filter";
 
     // Filter change listeners
     cityInput.addEventListener("input", render);

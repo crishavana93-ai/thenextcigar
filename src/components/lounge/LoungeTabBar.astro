@@ -3,13 +3,15 @@
  * Bottom tab bar — primary mobile navigation for the Lounge app.
  *
  * Shows up to 1024px wide; above that the desktop top-nav in LoungeHeader takes over.
- * Five destinations: Home / Map / Members / Travel / Inbox.
+ * Six destinations: Home / Map / Members / Finder / Travel / Inbox.
+ * Finder lives in the primary nav because price-discovery is the most
+ * frequent member action and used to be invisible on mobile.
  * Profile is reached via the top-right avatar in the header (Hodinkee pattern).
  *
  * Inbox badge live-counts pending `introductions` rows where to_member_id = me.
  */
 interface Props {
-  active?: "home" | "map" | "members" | "travel" | "inbox";
+  active?: "home" | "map" | "members" | "finder" | "travel" | "inbox";
 }
 const { active = "home" } = Astro.props as Props;
 ---
@@ -34,6 +36,13 @@ const { active = "home" } = Astro.props as Props;
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
     <span class="lounge-tab__label">Discover</span>
+  </a>
+
+  <a href="/lounge/app/finder/" class:list={["lounge-tab", active === "finder" && "is-active"]}>
+    <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
+    </svg>
+    <span class="lounge-tab__label">Finder</span>
   </a>
 
   <a href="/lounge/app/travel/" class:list={["lounge-tab", active === "travel" && "is-active"]}>
@@ -76,12 +85,13 @@ const { active = "home" } = Astro.props as Props;
 
   .lounge-tab {
     flex: 1 1 0;
+    min-width: 0;        /* allow flex shrink below content size at 6-tab layout */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    padding: 6px 4px 4px;
+    padding: 6px 2px 4px;
     text-decoration: none;
     color: #9a9a9a;
     min-height: 52px;

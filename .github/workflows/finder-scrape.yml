@@ -61,7 +61,15 @@ jobs:
           TOTAL_INSERTED=0
           TOTAL_EXTRACTED=0
           TOTAL_ERRORS=0
+          TOTAL_NOTICES=0
+          TOTAL_404=0
+          TOTAL_PARSER_ZERO=0
+          TOTAL_FETCH_EXC=0
+          TOTAL_FLOOR=0
           ANY_FAIL=0
+          # Collect every HTTP-404 URL across slices so we can list them in the
+          # summary — these are the slugs that need cleanup.
+          NOT_FOUND_URLS=""
           for SLICE in 0 1 2; do
             echo "→ POST /api/scraper/${{ matrix.retailer }}?slice=$SLICE&total=3"
             response=$(curl -sS -w "\n%{http_code}" \
@@ -81,9 +89,26 @@ jobs:
             ins=$(echo "$body" | jq -r '.stats.inserted // 0')
             ext=$(echo "$body" | jq -r '.stats.rowsExtracted // 0')
             err=$(echo "$body" | jq -r '.errors // [] | length')
+            not=$(echo "$body" | jq -r '.notices // [] | length')
+            s404=$(echo "$body" | jq -r '.stats.pdpsHttp404 // 0')
+            spz=$(echo "$body" | jq -r '.stats.pdpsParserZero // 0')
+            sfe=$(echo "$body" | jq -r '.stats.pdpsFetchException // 0')
+            sfl=$(echo "$body" | jq -r '.stats.offersRejectedByFloor // 0')
             TOTAL_INSERTED=$((TOTAL_INSERTED + ins))
             TOTAL_EXTRACTED=$((TOTAL_EXTRACTED + ext))
             TOTAL_ERRORS=$((TOTAL_ERRORS + err))
+            TOTAL_NOTICES=$((TOTAL_NOTICES + not))
+            TOTAL_404=$((TOTAL_404 + s404))
+            TOTAL_PARSER_ZERO=$((TOTAL_PARSER_ZERO + spz))
+            TOTAL_FETCH_EXC=$((TOTAL_FETCH_EXC + sfe))
+            TOTAL_FLOOR=$((TOTAL_FLOOR + sfl))
+            # Pull just the URLs that returned HTTP 404 — these are slugs to
+            # remove from the PDP list in functions/api/scraper/[retailer].ts.
+            slice_404=$(echo "$body" | jq -r '.errors[] | select(test(" HTTP 404$"))' || true)
+            if [ -n "$slice_404" ]; then
+              NOT_FOUND_URLS="${NOT_FOUND_URLS}${slice_404}
+"
+            fi
           done
           {
             echo "## ${{ matrix.retailer }} (3 slices)"
@@ -92,8 +117,22 @@ jobs:
             echo "|---|---|"
             echo "| rows extracted (total) | $TOTAL_EXTRACTED |"
             echo "| rows inserted (total)  | $TOTAL_INSERTED |"
-            echo "| errors (total)         | $TOTAL_ERRORS |"
+            echo "| **errors (hard)**      | $TOTAL_ERRORS |"
+            echo "| · HTTP 404 (slug to fix)  | $TOTAL_404 |"
+            echo "| · parser found 0 offers   | $TOTAL_PARSER_ZERO |"
+            echo "| · fetch exception         | $TOTAL_FETCH_EXC |"
+            echo "| notices (soft)         | $TOTAL_NOTICES |"
+            echo "| · offers under €20 floor  | $TOTAL_FLOOR |"
             echo "| any slice 500'd        | $ANY_FAIL |"
+            if [ -n "$NOT_FOUND_URLS" ]; then
+              echo ""
+              echo "<details><summary>404 URLs to clean up</summary>"
+              echo ""
+              echo '```'
+              printf '%s' "$NOT_FOUND_URLS"
+              echo '```'
+              echo "</details>"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "$ANY_FAIL" = "1" ]; then
             echo "::warning::At least one slice returned non-200 — see logs above"

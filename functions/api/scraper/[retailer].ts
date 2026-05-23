@@ -922,7 +922,22 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   }
   const rowsToInsert: Array<Record<string, unknown>> = [];
   const debugLog: Array<Record<string, unknown>> = [];
+  // Hard errors — things that block a row from being inserted and represent
+  // a problem we can fix (404 = slug needs updating, parser=0 = page structure
+  // changed, exception = retailer is rate-limiting or down).
   const errors: string[] = [];
+  // Soft notices — things that worked as designed but we want a count of.
+  // Sanity-floor rejections used to live in `errors` and polluted the
+  // workflow logs, making real problems hard to spot.
+  const notices: string[] = [];
+  // Per-category counters for the GH Actions step summary so we can see at
+  // a glance how many PDPs failed for what reason.
+  const stats = {
+    pdpsHttp404: 0,
+    pdpsParserZero: 0,
+    pdpsFetchException: 0,
+    offersRejectedByFloor: 0,
+  };
   let bytesDownloaded = 0;
 
   // ── Parallel-batch fetches ────────────────────────────────────────────────
@@ -939,6 +954,11 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         cf: { cacheTtl: 0 },
       });
       if (!res.ok) {
+        // HTTP 404 = the PDP slug doesn't exist (retailer renamed or removed
+        // the product). Counts toward stats so we can list them in a future
+        // cleanup pass. 5xx counts as a separate "retailer error" — usually
+        // transient and not actionable from our side.
+        if (res.status === 404) stats.pdpsHttp404 += 1;
         errors.push(`${pdp.url}: HTTP ${res.status}`);
         debugLog.push({ url: pdp.url, status: res.status, offers: 0 });
         return;
@@ -972,7 +992,12 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         return eur >= minEur;
       });
       if (beforeFloor > parsed.length) {
-        errors.push(`${pdp.url}: ${beforeFloor - parsed.length} offer(s) rejected by €${minEur} sanity floor`);
+        // Move sanity-floor rejections out of `errors` and into `notices` —
+        // these are working-as-designed filters, not failures. Each rejected
+        // offer also bumps the per-retailer counter.
+        const rejected = beforeFloor - parsed.length;
+        stats.offersRejectedByFloor += rejected;
+        notices.push(`${pdp.url}: ${rejected} offer(s) under €${minEur} sanity floor`);
       }
 
       debugLog.push({
@@ -984,7 +1009,12 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       });
 
       if (parsed.length === 0) {
-        errors.push(`${pdp.url}: parser found 0 offers`);
+        // After-floor zero is most often: (a) every pack was below the floor
+        // (rare; the floor catches data-quality bugs, not real products), or
+        // (b) the PDP doesn't have JSON-LD / has a layout we don't parse.
+        // Either way it blocks insertion, so it stays a hard error.
+        stats.pdpsParserZero += 1;
+        errors.push(`${pdp.url}: parser found 0 offers (after sanity floor)`);
         return;
       }
 
@@ -1004,6 +1034,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         });
       }
     } catch (e: any) {
+      stats.pdpsFetchException += 1;
       errors.push(`${pdp.url}: ${e?.message || "fetch failed"}`);
     }
   }
@@ -1053,8 +1084,15 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       bytesDownloaded,
       rowsExtracted: rowsToInsert.length,
       inserted,
+      // Categorised failure counts — feed the workflow summary so we can
+      // triage at a glance (slugs to fix vs retailer-side issues vs noise).
+      pdpsHttp404: stats.pdpsHttp404,
+      pdpsParserZero: stats.pdpsParserZero,
+      pdpsFetchException: stats.pdpsFetchException,
+      offersRejectedByFloor: stats.offersRejectedByFloor,
     },
     errors,
+    notices,
     debugLog,
     sampleRows: rowsToInsert.slice(0, 5),
   });
