@@ -192,11 +192,18 @@ const ogDescription = best
         </thead>
         <tbody>
           {offers.map((o, i) => (
-            <tr class={!o.snap.inStock ? "is-oos" : ""} data-retailer-id={o.retailer.id}>
+            {/* Row class is 'is-unverified' by default — no 'is-oos' lie.
+                The hydration script adds 'is-oos' only when a LIVE scrape
+                actually reports the retailer as out of stock. */}
+            <tr class="is-unverified" data-retailer-id={o.retailer.id}>
               <td data-cell="retailer" data-label="Retailer">
                 <span class="finder-table__retailer">{o.retailer.name}</span>
                 {o.retailer.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
-                {i === 0 && o.snap.inStock && <span class="finder-badge finder-badge--accent" data-best-value-badge>Best value</span>}
+                {/* 'Best value' badge intentionally NOT rendered here — it
+                    used to be shown for the first row based on the static
+                    inStock claim. We now only let the hydration script
+                    surface that badge once it knows which LIVE row is
+                    actually cheapest AND in stock. */}
               </td>
               <td data-label="Country">{o.country.flag} {o.country.name}</td>
               <td data-label="Status">
@@ -223,9 +230,18 @@ const ogDescription = best
               <td class="finder-table__num" data-cell="eur" data-label="≈ EUR">€{o.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</td>
               <td class="finder-table__num" data-cell="per-cigar" data-label="€ / cigar">€{o.perCigarEur.toFixed(2)}</td>
               <td data-cell="stock" data-label="Stock">
-                {o.snap.inStock
-                  ? <span class="finder-stock finder-stock--yes">In stock</span>
-                  : <span class="finder-stock finder-stock--no">Out of stock</span>}
+                {/* Default rendering: NEVER claim stock from static research.
+                    We only show 'In stock' / 'Out of stock' badges on rows
+                    backed by a live scrape — the hydration script overwrites
+                    this cell with the real badge when fresh data arrives.
+                    For unverified rows we honestly say 'Last verified' so
+                    users know the data is historical, not real-time. */}
+                <span class="finder-stock finder-stock--unverified" title="No live scrape for this retailer yet — please verify availability on their site before purchasing">
+                  Last verified · {(() => {
+                    const d = new Date(o.snap.scrapedAt);
+                    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+                  })()}
+                </span>
               </td>
               <td class="finder-table__cta">
                 <a href={o.snap.sourceUrl} class="finder-table__compare" target="_blank" rel="noopener noreferrer sponsored" data-cell="shop">
@@ -239,9 +255,13 @@ const ogDescription = best
     </div>
 
     <p class="sku-hero__verification" data-verification>
-      Manual research verified <strong>15 May 2026</strong>.
-      Live-scraped rows refresh automatically — look for the <span class="finder-badge finder-badge--live">● LIVE</span> badge.
-      Tap any retailer name to verify the price on their site before purchasing.
+      <strong>Two data sources:</strong>
+      Rows with a <span class="finder-badge finder-badge--live">● LIVE</span> badge are scraped every 6 hours
+      and reflect the retailer's current price + stock state.
+      Rows showing <span class="finder-stock finder-stock--unverified">Last verified · 15 May</span>
+      are historical manual research — the retailer <em>may not currently carry this SKU or may be sold out</em>.
+      <strong>Always tap "Shop →" and verify availability on the retailer's site before purchasing.</strong>
+      We're expanding live-scraping coverage to every SKU monthly.
     </p>
 
     {/* ─── Duty-paid shipping clarification ─────────────────────────────────
@@ -469,7 +489,9 @@ const ogDescription = best
         }
         if (!tr) continue;
 
-        // Update visual stock state
+        // Update visual stock state. Drop the 'is-unverified' class as soon
+        // as we have a live data point — the row is no longer historical.
+        tr.classList.remove("is-unverified");
         tr.classList.toggle("is-oos", !row.in_stock);
 
         const r = RETAILER_BY_ID[retailerId];
@@ -527,11 +549,15 @@ const ogDescription = best
         }
       }
 
-      // Re-evaluate "Best value" — if a live retailer is now cheaper than the
-      // currently-badged static one, move the badge.
+      // Re-evaluate "Best value" — only consider rows that are BOTH live-scraped
+      // AND confirmed in-stock. Static (unverified) rows are excluded entirely
+      // because we don't know if the retailer actually carries the SKU.
       const inStockRows = Array.from(
         document.querySelectorAll<HTMLTableRowElement>("tr[data-retailer-id]")
-      ).filter((tr) => !tr.classList.contains("is-oos"));
+      ).filter((tr) =>
+        !tr.classList.contains("is-oos") &&
+        !tr.classList.contains("is-unverified")
+      );
       if (inStockRows.length > 0) {
         const ranked = inStockRows
           .map((tr) => {
@@ -868,6 +894,27 @@ const ogDescription = best
   }
 
   .finder-stock { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .finder-stock--unverified {
+    color: var(--color-text-muted);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font-style: italic;
+    cursor: help;
+    border-bottom: 1px dotted var(--color-text-muted);
+  }
+  /* Unverified rows = static research data, no live confirmation that the
+     retailer actually carries this SKU or has it in stock. Slightly muted
+     so users visually distinguish them from live rows without us hiding
+     the information entirely. */
+  tr.is-unverified td {
+    background: rgba(248, 246, 240, 0.4);
+  }
+  tr.is-unverified .finder-table__price,
+  tr.is-unverified [data-cell="eur"],
+  tr.is-unverified [data-cell="per-cigar"] {
+    color: var(--color-text-soft);
+  }
   .finder-stock--yes { color: #2a8a2a; }
   .finder-stock--no  { color: var(--color-text-muted); }
   .finder-ships { font-size: 0.78rem; color: var(--color-text-soft); cursor: help; }
