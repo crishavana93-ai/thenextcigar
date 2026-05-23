@@ -574,7 +574,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, joined_at, last_active_at, favorite_brands, flavor_notes, strength_preference")
+      .select("id, display_name, city, country_code, bio, avatar_url, is_host, is_founding, founder_member, founder_number, joined_at, last_active_at, favorite_brands, flavor_notes, strength_preference")
       .order("last_active_at", { ascending: false, nullsFirst: false });
 
     if (error) {
@@ -818,7 +818,13 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           <a class="disc-row" href="/lounge/app/member/?id=${p.id}">
             <div class="disc-row__avatar">${av}</div>
             <div class="disc-row__main">
-              <p class="disc-row__name">${escapeHtml(p.display_name || "Member")} ${p.is_founding ? `<span style="color:var(--color-gold);font-size:10px;font-weight:800;letter-spacing:0.1em;">★ FOUNDING</span>` : ""}</p>
+              <p class="disc-row__name">${escapeHtml(p.display_name || "Member")} ${
+                (p as any).founder_member
+                  ? `<span style="color:#1a1612;background:linear-gradient(135deg,#c9a961,#b08e4a);padding:2px 7px;border-radius:3px;font-size:10px;font-weight:800;letter-spacing:0.08em;margin-left:6px;">★ FOUNDER ${(p as any).founder_number ? "#" + String((p as any).founder_number).padStart(2,"0") : ""}</span>`
+                  : p.is_founding
+                  ? `<span style="color:var(--color-gold);font-size:10px;font-weight:800;letter-spacing:0.1em;">★ FOUNDING</span>`
+                  : ""
+              }</p>
               <p class="disc-row__meta">Joined ${daysAgo === 0 ? "today" : daysAgo + " day" + (daysAgo === 1 ? "" : "s") + " ago"}${p.city ? " · " + escapeHtml(p.city) : ""}</p>
             </div>
           </a>
