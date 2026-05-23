@@ -11,6 +11,7 @@ import {
   toEUR,
   COUNTRY_BY_CODE,
   RETAILER_BY_ID,
+  effectiveShopUrl,
 } from "../../../data/finder-data.ts";
 
 export async function getStaticPaths() {
@@ -244,9 +245,23 @@ const ogDescription = best
                 </span>
               </td>
               <td class="finder-table__cta">
-                <a href={o.snap.sourceUrl} class="finder-table__compare" target="_blank" rel="noopener noreferrer sponsored" data-cell="shop">
-                  Shop →
-                </a>
+                {(() => {
+                  const link = effectiveShopUrl(o.snap.sourceUrl, sku, o.retailer);
+                  return (
+                    <a
+                      href={link.url}
+                      class={`finder-table__compare ${link.isExact ? "" : "finder-table__compare--search"}`}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      data-cell="shop"
+                      title={link.isExact
+                        ? "Opens the retailer's product page in a new tab"
+                        : `We don't have a direct link to this cigar on ${o.retailer.name} yet — this opens their site search for "${sku.brand} ${sku.vitola}".`}
+                    >
+                      {link.isExact ? "Shop →" : "Search on site →"}
+                    </a>
+                  );
+                })()}
               </td>
             </tr>
           ))}
@@ -529,9 +544,15 @@ const ogDescription = best
             ? '<span class="finder-stock finder-stock--yes">In stock</span>'
             : '<span class="finder-stock finder-stock--no">Out of stock</span>';
         }
-        // Shop link → live source_url
+        // Shop link → live source_url (scraper always sends exact PDP URLs,
+        // so we restore the "Shop →" label + drop the search-fallback class).
         const shopLink = tr.querySelector<HTMLAnchorElement>('[data-cell="shop"]');
-        if (shopLink) shopLink.href = row.source_url;
+        if (shopLink) {
+          shopLink.href = row.source_url;
+          shopLink.textContent = "Shop →";
+          shopLink.classList.remove("finder-table__compare--search");
+          shopLink.title = "Opens the retailer's product page in a new tab";
+        }
 
         // Live badge on retailer cell (only add once)
         const retailerCell = tr.querySelector<HTMLElement>('[data-cell="retailer"]');
@@ -857,6 +878,19 @@ const ogDescription = best
     transition: background 180ms ease;
   }
   .finder-table__compare:hover { background: var(--color-accent); }
+  /* "Search on site" variant — used when we don't have an exact PDP URL.
+     Outlined rather than filled so it visually reads as a secondary CTA.
+     The hydration script removes this modifier when LIVE data arrives. */
+  .finder-table__compare--search {
+    background: transparent !important;
+    color: var(--color-text-soft) !important;
+    border: 1px solid var(--color-border);
+  }
+  .finder-table__compare--search:hover {
+    background: var(--color-bg-soft) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-text-soft);
+  }
 
   .finder-badge {
     display: inline-block;
