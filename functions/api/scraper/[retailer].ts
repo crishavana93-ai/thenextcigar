@@ -49,6 +49,15 @@ interface ScraperConfig {
   // Pack size to scrape — typically 25 for box-of-25 Cuban premium SKUs.
   // The parser will pick that pack out of multi-pack PDPs.
   preferredPackSize: number;
+  // Skip the live scrape entirely — keep config (PDP URLs, etc.) for
+  // documentation but don't write rows to Supabase. Use when a retailer's
+  // markup hides prices from server-side scraping (e.g. Havana House
+  // renders prices client-side via JS, blocking regex extraction).
+  disabled?: boolean;
+  // Sanity floor — reject any offer with price_eur below this. No Cuban
+  // box-of-25 costs < €20, so anything below catches accessory upsells,
+  // sample items, or VAT/shipping notices that match the price regex.
+  minPriceEur?: number;
   // PDPs to scrape. One product page per canonical SKU we want priced.
   pdps: PdpUrl[];
 }
@@ -117,10 +126,14 @@ const SCRAPERS: Record<string, ScraperConfig> = {
   },
   "uk-havanahouse": {
     country: "uk",
-    // WooCommerce backend — emits Yoast SEO JSON-LD with no Product node, so
-    // we fall back to the standard WooCommerce price/stock markup. Each pack
-    // size is a SEPARATE product page (unlike Noblego's all-in-one), so we
-    // list only the canonical pack-size PDPs and set packSize per-PDP.
+    // ⚠️ DISABLED — Havana House declares product pages as og:type='article'
+    // (not 'product') with no JSON-LD Product node and no og:price meta. The
+    // actual price is rendered client-side via JS, blocking regex extraction.
+    // We keep the static research data in PRICE_SNAPSHOTS so the SKU page
+    // still shows a Havana House row; only the live scrape is disabled.
+    // TODO: replace with EGM Cigars (egmcigars.com) which exposes Schema.org
+    // Product JSON-LD on PDPs and is the next-most-trafficked UK Habanos shop.
+    disabled: true,
     stack: "havanahouse_html",
     preferredPackSize: 25,
     pdps: [
@@ -412,15 +425,39 @@ function parseHavanaHouseHtml(html: string): ParsedOffer[] {
 // Stock state isn't in OG, so we look for the "In Stock" / "Out of Stock"
 // text and the addtocart button's data-available attribute.
 function parseCigarmustHtml(html: string): ParsedOffer[] {
-  // 1. Price.
-  const priceMatch = html.match(/<meta[^>]+property=["']product:price:amount["'][^>]+content=["']([\d.]+)["']/i);
-  if (!priceMatch) return [];
-  const price = parseFloat(priceMatch[1]);
+  // Helper — read a <meta> tag's content regardless of attribute order
+  // (property=... can come before OR after content=...). PrestaShop themes
+  // are inconsistent about this.
+  function readMeta(propertyName: string): string | null {
+    // Try property→content order
+    let m = html.match(new RegExp(`<meta[^>]+property=["']${propertyName}["'][^>]+content=["']([^"']+)["']`, "i"));
+    if (m) return m[1];
+    // Try content→property order
+    m = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${propertyName}["']`, "i"));
+    if (m) return m[1];
+    // Try itemprop instead of property (microdata, some themes)
+    m = html.match(new RegExp(`<meta[^>]+itemprop=["']${propertyName.split(":").pop()}["'][^>]+content=["']([^"']+)["']`, "i"));
+    if (m) return m[1];
+    return null;
+  }
+
+  // 1. Price — try og meta first, then fall back to itemprop="price".
+  let priceStr = readMeta("product:price:amount") || readMeta("og:price:amount") || readMeta("product:price");
+  if (!priceStr) {
+    // PrestaShop also exposes itemprop="price" on a <meta> or <span>.
+    const ipMatch = html.match(/<meta[^>]+itemprop=["']price["'][^>]+content=["']([\d.,]+)["']/i)
+      || html.match(/<span[^>]+itemprop=["']price["'][^>]+content=["']([\d.,]+)["']/i);
+    if (ipMatch) priceStr = ipMatch[1];
+  }
+  if (!priceStr) return [];
+  const price = parseFloat(priceStr.replace(/,/g, ""));
   if (!price || price <= 0) return [];
 
   // 2. Currency.
-  const curMatch = html.match(/<meta[^>]+property=["']product:price:currency["'][^>]+content=["']([A-Z]{3})["']/i);
-  const currency = curMatch ? curMatch[1] : "CHF";
+  const currency = readMeta("product:price:currency")
+    || readMeta("og:price:currency")
+    || readMeta("product:priceCurrency")
+    || "CHF";
   if (!FX_TO_EUR[currency]) return [];
 
   // 3. Stock state. PrestaShop typically renders this as:
@@ -497,6 +534,15 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   const retailerId = String(params.retailer || "").toLowerCase();
   const config = SCRAPERS[retailerId];
   if (!config) return json({ ok: false, error: "unknown retailer", retailerId }, 404);
+  if (config.disabled) {
+    return json({
+      ok: true,
+      retailerId,
+      disabled: true,
+      note: "Scraper disabled for this retailer; static research data remains in PRICE_SNAPSHOTS.",
+      stats: { pdpsScraped: 0, bytesDownloaded: 0, rowsExtracted: 0, inserted: 0 },
+    });
+  }
 
   // ?debug=html → fetch only the first PDP and return a snippet of the raw HTML.
   // Used to verify what bytes the Worker actually receives from the target site
@@ -642,6 +688,20 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       // most reliable source. We rewrite every parsed offer to the override.
       if (typeof pdp.packSize === "number") {
         parsed = parsed.map((o) => ({ ...o, packSize: pdp.packSize! }));
+      }
+
+      // Sanity floor — reject offers with EUR price below the configured
+      // minimum (default €20). No Cuban box-of-N costs less than that, so
+      // anything that does is almost certainly a regex match on an accessory
+      // upsell or VAT/shipping notice rather than the real product price.
+      const minEur = config.minPriceEur ?? 20;
+      const beforeFloor = parsed.length;
+      parsed = parsed.filter((o) => {
+        const eur = o.price * (FX_TO_EUR[o.currency] || 0);
+        return eur >= minEur;
+      });
+      if (beforeFloor > parsed.length) {
+        errors.push(`${pdp.url}: ${beforeFloor - parsed.length} offer(s) rejected by €${minEur} sanity floor`);
       }
 
       debugLog.push({
