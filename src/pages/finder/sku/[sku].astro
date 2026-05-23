@@ -12,6 +12,7 @@ import {
   COUNTRY_BY_CODE,
   RETAILER_BY_ID,
   effectiveShopUrl,
+  dutyPaidCountries,
 } from "../../../data/finder-data.ts";
 
 export async function getStaticPaths() {
@@ -38,7 +39,28 @@ const offers = snapshots
       : "We don't have a direct link to this cigar on " + retailer.name + " yet — this opens their site search for " + sku.brand + " " + sku.vitola + ".";
     // Pre-format the "Last verified" date so the template doesn't need an IIFE
     const verifiedDate = new Date(snap.scrapedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-    return { snap, retailer, country, eur, perCigarEur: eur / sku.boxSize, link, shopLabel, shopClass, shopTitle, verifiedDate };
+    // Resolve where this retailer's listed price is genuinely all-in (excise duty
+    // + VAT already baked in). Defaults to home country only. Used to render the
+    // per-row "Duty-paid in 🇩🇪" badge and the optional "all-in for you" highlight
+    // when we know the buyer's country.
+    const dutyCodes  = dutyPaidCountries(retailer);
+    const dutyCountries = dutyCodes
+      .map((cc) => COUNTRY_BY_CODE[cc])
+      .filter((c): c is NonNullable<typeof country> => !!c);
+    const dutyFlags  = dutyCountries.map((c) => c.flag).join(" ");
+    const dutyNames  = dutyCountries.map((c) => c.name).join(", ");
+    const shipsLabel = retailer.shipsTo === "domestic"
+      ? "Ships in-country"
+      : retailer.shipsTo === "eu"   ? "Ships EU · duty extra"
+      :                               "Ships worldwide · duty extra";
+    const dutyTitle = retailer.shipsTo === "domestic"
+      ? `Listed price is all-in for ${dutyNames}. Retailer doesn't ship cross-border.`
+      : `Listed price is all-in for ${dutyNames}. Buyers outside these countries pay destination-country tobacco excise duty + VAT on top of the listed price.`;
+    return {
+      snap, retailer, country, eur, perCigarEur: eur / sku.boxSize,
+      link, shopLabel, shopClass, shopTitle, verifiedDate,
+      dutyCodes, dutyFlags, dutyNames, shipsLabel, dutyTitle,
+    };
   })
   .sort((a, b) => {
     // In-stock first, then by EUR price ascending
@@ -191,7 +213,7 @@ const ogDescription = best
           <tr>
             <th>Retailer</th>
             <th>Country</th>
-            <th>Status</th>
+            <th title="Where the listed price is genuinely all-in (excise duty + VAT included) vs where the retailer will ship the parcel">Duty / Ships</th>
             <th class="finder-table__num">Box price</th>
             <th class="finder-table__num">≈ EUR</th>
             <th class="finder-table__num">€ / cigar</th>
@@ -204,7 +226,7 @@ const ogDescription = best
               The hydration script adds 'is-oos' only when a LIVE scrape
               actually reports the retailer as out of stock. */}
           {offers.map((o, i) => (
-            <tr class="is-unverified" data-retailer-id={o.retailer.id}>
+            <tr class="is-unverified" data-retailer-id={o.retailer.id} data-duty-paid={o.dutyCodes.join(",")}>
               <td data-cell="retailer" data-label="Retailer">
                 <span class="finder-table__retailer">{o.retailer.name}</span>
                 {o.retailer.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
@@ -215,20 +237,23 @@ const ogDescription = best
                     actually cheapest AND in stock. */}
               </td>
               <td data-label="Country">{o.country.flag} {o.country.name}</td>
-              <td data-label="Status">
-                <span
-                  class="finder-ships"
-                  title={
-                    o.retailer.shipsTo === "domestic"
-                      ? `Domestic shipping only — duty-paid within ${o.country.name}.`
-                      : "Cross-border shipping accepted, but destination-country tobacco duty + VAT applies. SE/DK/FI/IE/UK/CH buyers: expect a surcharge at customs."
-                  }
-                >
-                  Ships {o.retailer.shipsTo === "domestic" ? "domestic" : o.retailer.shipsTo === "eu" ? "EU" : "worldwide"}
-                  {o.retailer.shipsTo !== "domestic" && (
-                    <span class="finder-ships-warn" aria-label="Cross-border duty warning">ⓘ</span>
-                  )}
-                </span>
+              <td data-label="Duty / Ships">
+                {/* Two stacked lines so the buyer can answer two distinct
+                    questions in one glance:
+                      1. Is the listed price all-in for me? (top line)
+                      2. Will they even ship to my address? (bottom line)
+                    The 'data-duty-row' / 'data-ships-row' hooks let the
+                    country-aware highlight script set 'finder-duty--match'
+                    on rows whose duty list includes the buyer's country. */}
+                <div class="finder-duty" title={o.dutyTitle}>
+                  <span class="finder-duty__paid" data-duty-row>
+                    <span class="finder-duty__paid-label">Duty-paid</span>
+                    <span class="finder-duty__paid-flags">{o.dutyFlags}</span>
+                  </span>
+                  <span class="finder-duty__ships" data-ships-row>
+                    {o.shipsLabel}
+                  </span>
+                </div>
               </td>
               <td class="finder-table__num finder-table__price" data-cell="price" data-label="Box price">
                 {formatPrice(o.snap.price, o.snap.currency)}
@@ -277,30 +302,29 @@ const ogDescription = best
       We're expanding live-scraping coverage to every SKU monthly.
     </p>
 
-    {/* ─── Duty-paid shipping clarification ─────────────────────────────────
-        Critical buyer transparency: "Ships EU" means the retailer accepts EU
-        addresses, NOT that no destination-country tobacco duty applies. Sweden
-        in particular has been levying tobacco tax on inbound EU shipments
-        since 2018 case law; Denmark, Finland, Ireland enforce similar rules;
-        UK + Switzerland are outside the EU customs union so all shipments
-        face destination duty + VAT. Better to surface this than risk a buyer
-        getting a 50% surcharge surprise at the door. */}
+    {/* ─── Duty-paid explainer ─────────────────────────────────────────────
+        The per-row "Duty-paid 🇩🇪" / "Ships EU · duty extra" labels carry the
+        operative information. This block is the once-per-page explainer of
+        the model, with the worst-case destinations broken out so buyers in
+        SE/DK/FI/IE/UK/CH know what cross-border actually costs them. */}
     <div class="finder-duty-notice">
       <p>
-        <strong>About "Ships EU" and "Ships worldwide".</strong>
-        Most retailers ship duty-paid only within their <strong>own country</strong>.
-        Cross-border tobacco shipments are subject to <strong>destination-country
-        excise duty + VAT</strong>, which the retailer's listed price does not include:
+        <strong>Reading the "Duty / Ships" column.</strong>
+        <span class="finder-duty__paid-label" style="display:inline-block;background:rgba(30,140,96,0.14);color:#1e8c60;padding:0.05rem 0.45rem;border-radius:3px;font-size:0.62rem;letter-spacing:0.06em;">Duty-paid</span>
+        is where the listed price is genuinely all-in — excise duty + VAT already baked in.
+        Buy from a duty-paid country and what you see is what you pay.
+        Buy <em>across borders</em> and the destination country charges its own
+        tobacco excise + VAT on top:
       </p>
       <ul>
-        <li><strong>🇸🇪 Sweden, 🇩🇰 Denmark, 🇫🇮 Finland, 🇮🇪 Ireland:</strong> Customs intercepts cross-border tobacco mail orders and levies the destination country's tobacco tax. On a box of 25 Cuban premiums this typically adds <strong>€100–€300</strong>.</li>
-        <li><strong>🇬🇧 UK (post-Brexit):</strong> Every EU→UK tobacco shipment faces UK Tobacco Products Duty (~£5.31/kg + 16.5% ad valorem on cigars) + UK VAT (20%). A €765 box typically becomes <strong>£1,250–1,400 delivered</strong>.</li>
-        <li><strong>🇨🇭 Switzerland → EU and EU → Switzerland:</strong> Outside the EU customs union — destination duty + VAT applies in both directions.</li>
+        <li><strong>🇸🇪 SE, 🇩🇰 DK, 🇫🇮 FI, 🇮🇪 IE:</strong> Customs intercepts inbound tobacco mail orders. A box of 25 Cuban premiums typically gets a <strong>€100–€300 surcharge at the door</strong>.</li>
+        <li><strong>🇬🇧 UK (post-Brexit):</strong> UK Tobacco Products Duty (~£5.31/kg + 16.5% ad valorem on cigars) + 20% VAT. A €765 box typically becomes <strong>£1,250–1,400 delivered</strong>.</li>
+        <li><strong>🇨🇭 CH ↔ EU:</strong> Outside the EU customs union — destination duty + VAT applies in both directions.</li>
       </ul>
       <p>
-        Always verify the <strong>total delivered cost</strong> on the retailer's checkout page before buying.
-        Domestic orders (German buyer → German shop, Swiss → Swiss, etc.) face <strong>no additional duty</strong>
-        because the listed price already includes the local tobacco excise.
+        Tip: tap <a href="#" data-duty-show-mine style="color:var(--color-gold-hover);text-decoration:underline;">show all-in rows for my country</a>
+        to dim every retailer whose listed price isn't fully duty-paid where you live.
+        Always verify the total delivered cost on the retailer's checkout before buying.
       </p>
     </div>
   </section>
@@ -465,7 +489,22 @@ const ogDescription = best
         const country = COUNTRY_BY_CODE[retailer.country] || { name: retailer.country.toUpperCase(), flag: "" };
         const tr = document.createElement("tr");
         tr.dataset.retailerId = retailerId;
-        const shipsLabel = retailer.shipsTo === "domestic" ? "domestic" : retailer.shipsTo === "eu" ? "EU" : "worldwide";
+        // Mirror the Astro template's duty-paid attribute + cell so live-injected
+        // rows benefit from the same per-row highlighting + tooltip behaviour.
+        const dutyCodes = (retailer.dutyPaidTo && retailer.dutyPaidTo.length > 0)
+          ? retailer.dutyPaidTo
+          : [retailer.country];
+        const dutyCountries = dutyCodes.map((cc) => COUNTRY_BY_CODE[cc]).filter(Boolean);
+        const dutyFlags = dutyCountries.map((c: any) => c.flag).join(" ");
+        const dutyNames = dutyCountries.map((c: any) => c.name).join(", ");
+        tr.dataset.dutyPaid = dutyCodes.join(",");
+        const shipsLabel = retailer.shipsTo === "domestic"
+          ? "Ships in-country"
+          : retailer.shipsTo === "eu" ? "Ships EU · duty extra"
+          :                              "Ships worldwide · duty extra";
+        const dutyTitle = retailer.shipsTo === "domestic"
+          ? `Listed price is all-in for ${dutyNames}. Retailer doesn't ship cross-border.`
+          : `Listed price is all-in for ${dutyNames}. Buyers outside these countries pay destination-country tobacco excise duty + VAT on top.`;
         const statusBadge = retailer.status === "lcdh" ? '<span class="finder-badge finder-badge--gold">LCDH</span>' : "";
         tr.innerHTML = `
           <td data-cell="retailer">
@@ -473,7 +512,15 @@ const ogDescription = best
             ${statusBadge}
           </td>
           <td>${country.flag} ${country.name}</td>
-          <td><span class="finder-ships">Ships ${shipsLabel}</span></td>
+          <td>
+            <div class="finder-duty" title="${dutyTitle.replace(/"/g, "&quot;")}">
+              <span class="finder-duty__paid" data-duty-row>
+                <span class="finder-duty__paid-label">Duty-paid</span>
+                <span class="finder-duty__paid-flags">${dutyFlags}</span>
+              </span>
+              <span class="finder-duty__ships" data-ships-row>${shipsLabel}</span>
+            </div>
+          </td>
           <td class="finder-table__num finder-table__price" data-cell="price"></td>
           <td class="finder-table__num" data-cell="eur"></td>
           <td class="finder-table__num" data-cell="per-cigar"></td>
@@ -612,6 +659,81 @@ const ogDescription = best
             `Tap any retailer name to verify the price on their site before purchasing.`;
         }
       }
+    }
+
+    // ─── Country-aware duty highlight ────────────────────────────────────
+    // Resolves the buyer's destination country from (in order):
+    //   1. ?country=XX query param        (sticky after the user picks it)
+    //   2. localStorage 'finder.country'  (persisted across sessions)
+    //   3. Lounge profile.city → its country (signed-in members)
+    // For every retailer row, if `dutyPaidTo` includes the destination →
+    // row gets .finder-duty--match (green tint). Otherwise — .finder-duty--mismatch
+    // (dimmed). Lets a 🇩🇪 buyer scan a Cohiba Robustos page and instantly see
+    // which prices are honestly all-in for them.
+    async function highlightDutyForDestination() {
+      // Resolve destination — query param first, then localStorage, then profile.
+      const params = new URLSearchParams(window.location.search);
+      let dest = (params.get("country") || "").toLowerCase().trim();
+      if (!dest) {
+        try { dest = (localStorage.getItem("finder.country") || "").toLowerCase().trim(); } catch {}
+      }
+      if (!dest) {
+        try {
+          const { getCurrentProfile } = await import("../../../lib/supabase");
+          const profile = await getCurrentProfile();
+          // profiles.country_code is the canonical signal; fall back to nothing
+          // rather than guess from `city` (Berlin → DE is easy, Lugano → CH is
+          // not, and we don't want to mislead a Swiss buyer with a DE highlight).
+          dest = String((profile as any)?.country_code || "").toLowerCase().trim();
+        } catch {}
+      }
+      if (!dest) return; // no destination known — leave rows neutral
+
+      // Cache the resolution so subsequent SKU pages render highlighted
+      // immediately, without waiting on the profile query.
+      try { localStorage.setItem("finder.country", dest); } catch {}
+
+      document.querySelectorAll<HTMLTableRowElement>("tr[data-retailer-id]").forEach((tr) => {
+        const codes = (tr.dataset.dutyPaid || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+        if (codes.length === 0) return;
+        if (codes.includes(dest)) {
+          tr.classList.add("finder-duty--match");
+          tr.classList.remove("finder-duty--mismatch");
+        } else {
+          tr.classList.add("finder-duty--mismatch");
+          tr.classList.remove("finder-duty--match");
+        }
+      });
+    }
+
+    // "Show all-in rows for my country" link in the explainer block — when
+    // the user has no destination set, this prompts for one and stores it.
+    function bindDutyShowMine() {
+      const link = document.querySelector<HTMLAnchorElement>("[data-duty-show-mine]");
+      if (!link) return;
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const code = window.prompt(
+          "Country code (de, ch, uk, fr, …) for the destination where you'll receive the parcel:",
+          (localStorage.getItem("finder.country") || "").trim()
+        );
+        if (!code) return;
+        try { localStorage.setItem("finder.country", code.toLowerCase().trim()); } catch {}
+        highlightDutyForDestination();
+      });
+    }
+
+    // Run after hydration so live-injected rows also pick up the highlight.
+    function initDutyHighlight() {
+      bindDutyShowMine();
+      // Small defer: lets hydrateLivePrices append any new live rows first
+      // (those rows include the data-duty-paid attribute via buildRetailerRow).
+      setTimeout(() => { highlightDutyForDestination(); }, 50);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initDutyHighlight);
+    } else {
+      initDutyHighlight();
     }
 
     // Hydrate after DOM is ready
@@ -963,6 +1085,64 @@ const ogDescription = best
     font-size: 0.62rem;
     font-weight: 800;
     vertical-align: middle;
+  }
+
+  /* Duty / Ships column — two stacked lines per row.
+     Top line: "Duty-paid 🇩🇪" (the operative answer to "is the price all-in?").
+     Bottom line: "Ships EU · duty extra" (the secondary question).
+     Country-aware highlight: when ?country=de or the member profile sets
+     a destination, rows whose duty-paid list matches get .finder-duty--match
+     (green tint) and rows that don't are dimmed. */
+  .finder-duty {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    color: var(--color-text-soft);
+    cursor: help;
+  }
+  .finder-duty__paid {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .finder-duty__paid-label {
+    display: inline-block;
+    background: rgba(30, 140, 96, 0.14);
+    color: #1e8c60;
+    padding: 0.05rem 0.45rem;
+    border-radius: 3px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .finder-duty__paid-flags {
+    font-size: 0.92rem;
+    line-height: 1;
+    letter-spacing: 0.05em;
+  }
+  .finder-duty__ships {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  /* Country-aware highlight states. JS toggles these classes on matching
+     rows based on a query param or the signed-in member's home country. */
+  tr[data-retailer-id].finder-duty--match {
+    background: rgba(30, 140, 96, 0.04);
+  }
+  tr[data-retailer-id].finder-duty--match .finder-duty__paid-label {
+    background: rgba(30, 140, 96, 0.22);
+  }
+  tr[data-retailer-id].finder-duty--mismatch {
+    opacity: 0.62;
+  }
+  tr[data-retailer-id].finder-duty--mismatch .finder-duty__paid-label {
+    background: rgba(165, 42, 42, 0.14);
+    color: #a52a2a;
   }
 
   /* Duty-paid shipping clarification — sits below the offer table on each

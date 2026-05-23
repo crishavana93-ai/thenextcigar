@@ -11,6 +11,8 @@ import {
   bestPriceInCountry,
   formatPrice,
   toEUR,
+  dutyPaidCountries,
+  isPriceAllInFor,
   type CountryCode,
 } from "../../data/finder-data.ts";
 import { policyFor } from "../../data/country-config.ts";
@@ -272,23 +274,37 @@ const ogDescription = country.note
       </p>
 
       <div class="finder-retailer-grid">
-        {retailers.map((r) => (
-          <a href={r.url} class="finder-retailer" target="_blank" rel="noopener noreferrer sponsored">
-            <div class="finder-retailer__head">
-              <h3 class="finder-retailer__name">{r.name}</h3>
-              {r.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
-              {r.status === "habanos-specialist" && <span class="finder-badge">Habanos Specialist</span>}
-              {r.status === "reservation" && <span class="finder-badge finder-badge--burgundy">Reservation</span>}
-              {r.status === "mixed" && <span class="finder-badge finder-badge--muted">Mixed catalogue</span>}
-            </div>
-            {r.city && <p class="finder-retailer__city">{r.city}</p>}
-            <p class="finder-retailer__meta">
-              Ships {r.shipsTo === "domestic" ? "domestic only" : r.shipsTo === "eu" ? "within EU" : "worldwide"}
-              {!r.hasPublicPricing && " · catalogue only"}
-            </p>
-            <p class="finder-retailer__url">{new URL(r.url).hostname.replace("www.", "")} →</p>
-          </a>
-        ))}
+        {retailers.map((r) => {
+          // Every retailer on a country dashboard is in *that* country, so by
+          // construction the listed price IS all-in for visitors of this page.
+          // Still surface it explicitly — buyers absorb a green check faster
+          // than they parse "Ships within EU."
+          const allIn = isPriceAllInFor(r, country.code);
+          return (
+            <a href={r.url} class="finder-retailer" target="_blank" rel="noopener noreferrer sponsored">
+              <div class="finder-retailer__head">
+                <h3 class="finder-retailer__name">{r.name}</h3>
+                {r.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
+                {r.status === "habanos-specialist" && <span class="finder-badge">Habanos Specialist</span>}
+                {r.status === "reservation" && <span class="finder-badge finder-badge--burgundy">Reservation</span>}
+                {r.status === "mixed" && <span class="finder-badge finder-badge--muted">Mixed catalogue</span>}
+              </div>
+              {r.city && <p class="finder-retailer__city">{r.city}</p>}
+              <p class="finder-retailer__meta">
+                {allIn && (
+                  <span class="finder-retailer__duty" title={`Listed price includes excise duty + VAT in ${country.name}.`}>
+                    ✓ Duty-paid in {country.flag} {country.name}
+                  </span>
+                )}
+                <span class="finder-retailer__ships">
+                  Ships {r.shipsTo === "domestic" ? "domestic only" : r.shipsTo === "eu" ? "within EU · duty extra cross-border" : "worldwide · duty extra cross-border"}
+                </span>
+                {!r.hasPublicPricing && <span class="finder-retailer__catalog"> · catalogue only</span>}
+              </p>
+              <p class="finder-retailer__url">{new URL(r.url).hostname.replace("www.", "")} →</p>
+            </a>
+          );
+        })}
       </div>
     </div>
   </section>
@@ -520,6 +536,24 @@ const ogDescription = country.note
     font-size: 0.78rem;
     color: var(--color-text-soft);
     margin: 0 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .finder-retailer__duty {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    background: rgba(30, 140, 96, 0.14);
+    color: #1e8c60;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .finder-retailer__ships,
+  .finder-retailer__catalog {
+    color: var(--color-text-muted);
   }
   .finder-retailer__url {
     font-size: 0.78rem;
