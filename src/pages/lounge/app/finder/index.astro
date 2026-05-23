@@ -45,6 +45,37 @@ const dropRows = PRICE_SNAPSHOTS
 const totalSnapshots = PRICE_SNAPSHOTS.length;
 const totalRetailers = RETAILERS.length;
 const totalCountries = COUNTRIES.length;
+
+// ─── Catalogue search data layer ───────────────────────────────────────────
+// Reuses the same pattern as /finder/index.astro so the search behaviour is
+// consistent across the public Finder and the member-app Finder.
+const allBrands = Array.from(new Set(SKUS.map((s) => s.brand))).sort();
+const countriesWithRetailers = Array.from(new Set(RETAILERS.map((r) => r.country)));
+const searchCountries = COUNTRIES.filter((c) => countriesWithRetailers.includes(c.code));
+
+// Pre-compute (sku -> countries) and (sku -> in-stock-countries) at build time
+// so the client-side filter doesn't need to walk PRICE_SNAPSHOTS.
+const skuCountryMap: Record<string, string[]> = {};
+const skuInStockCountries: Record<string, string[]> = {};
+for (const sku of SKUS) {
+  const snaps = PRICE_SNAPSHOTS.filter((s) => s.skuId === sku.id);
+  skuCountryMap[sku.id] = Array.from(new Set(snaps.map((s) => {
+    const r = RETAILERS.find((x) => x.id === s.retailerId);
+    return r ? r.country : null;
+  }).filter((c): c is string => !!c)));
+  skuInStockCountries[sku.id] = Array.from(new Set(snaps.filter((s) => s.inStock).map((s) => {
+    const r = RETAILERS.find((x) => x.id === s.retailerId);
+    return r ? r.country : null;
+  }).filter((c): c is string => !!c)));
+}
+
+// Quick-lookup of best price per SKU for the catalogue cards
+const cataloguePerSku = SKUS.map((sku) => ({
+  sku,
+  best: bestPriceForSku(sku.id),
+  countries: skuCountryMap[sku.id],
+  inStockCountries: skuInStockCountries[sku.id],
+})).sort((a, b) => (a.best?.eur ?? Infinity) - (b.best?.eur ?? Infinity));
 ---
 
 <BaseLayout
@@ -115,6 +146,93 @@ const totalCountries = COUNTRIES.length;
             </div>
           </a>
         ))}
+      </div>
+    </section>
+
+    {/* Region B½ — Catalogue search.
+        Lets a member type any cigar name to find SKUs they can add to
+        their watchlist. Same filter pattern as /finder/ (free text + brand
+        chip + country + in-stock), rendered as a compact card grid suited
+        to the member-app layout. */}
+    <section class="container-wide pt-2 pb-8 reveal">
+      <div class="finder-section-head">
+        <p class="lounge-label">Browse the catalogue</p>
+        <span class="finder-section-head__meta" data-lcat-count>{SKUS.length} cigars</span>
+      </div>
+      <div class="lcat-search">
+        <div class="lcat-search__row">
+          <div class="lcat-search__input-wrap">
+            <svg class="lcat-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="search"
+              class="lcat-search__input"
+              id="lcat-search-input"
+              placeholder="Search 'Cohiba', 'Petit Edmundo', 'Trinidad'…"
+              autocomplete="off"
+              aria-label="Search Cuban cigars"
+            />
+            <button type="button" class="lcat-search__clear" data-lcat-clear aria-label="Clear search">×</button>
+          </div>
+          <select class="lcat-search__country" id="lcat-search-country" aria-label="Filter by country">
+            <option value="">All countries</option>
+            {searchCountries.map((c) => (
+              <option value={c.code}>{c.flag} {c.name}</option>
+            ))}
+          </select>
+          <label class="lcat-search__instock">
+            <input type="checkbox" id="lcat-search-instock" />
+            <span>In stock only</span>
+          </label>
+        </div>
+        <div class="lcat-search__chips" role="group" aria-label="Filter by brand">
+          <button type="button" class="lcat-search__chip is-active" data-brand-chip="">All</button>
+          {allBrands.map((brand) => (
+            <button type="button" class="lcat-search__chip" data-brand-chip={brand}>{brand}</button>
+          ))}
+        </div>
+      </div>
+
+      <div class="lcat-grid">
+        {cataloguePerSku.map(({ sku, best, countries, inStockCountries }) => {
+          const searchName = `${sku.brand} ${sku.vitola} ${sku.id}`.toLowerCase();
+          return (
+            <a
+              href={`/finder/sku/${sku.slug}/`}
+              class="lcat-card"
+              data-lcat-card
+              data-sku-name={searchName}
+              data-sku-brand={sku.brand}
+              data-sku-countries={countries.join(",")}
+              data-sku-instock-countries={inStockCountries.join(",")}
+              data-sku-any-instock={inStockCountries.length > 0 ? "1" : "0"}
+            >
+              <div class="lcat-card__head">
+                <span class="lcat-card__brand">{sku.brand}</span>
+                <span class="lcat-card__vitola">{sku.vitola}</span>
+              </div>
+              <p class="lcat-card__spec">{sku.shape} · ring {sku.ring} · box {sku.boxSize}</p>
+              {best ? (
+                <div class="lcat-card__price">
+                  <span class="lcat-card__price-now">{formatPrice(best.snap.price, best.snap.currency)}</span>
+                  {best.snap.currency !== "EUR" && (
+                    <span class="lcat-card__price-eur">≈ €{Math.round(best.eur).toLocaleString("en-US")}</span>
+                  )}
+                </div>
+              ) : (
+                <div class="lcat-card__price">
+                  <span class="lcat-card__price-empty">No live price</span>
+                </div>
+              )}
+            </a>
+          );
+        })}
+      </div>
+      <div class="lcat-empty" data-lcat-empty hidden>
+        <p><strong>No cigars match those filters.</strong></p>
+        <button type="button" class="lcat-empty__reset" data-lcat-reset>Reset filters</button>
       </div>
     </section>
 
@@ -244,6 +362,90 @@ const totalCountries = COUNTRIES.length;
   }
   document.addEventListener("astro:page-load", hydrateWatchlist);
   hydrateWatchlist();
+
+  // ─── Catalogue search — filter the SKU card grid in real time. ────────
+  // Mirrors the public /finder/ filter pattern: free-text + brand chip +
+  // country + in-stock toggle. All client-side; no API calls.
+  (function initLoungeCatalogSearch() {
+    const input    = document.getElementById("lcat-search-input") as HTMLInputElement | null;
+    const country  = document.getElementById("lcat-search-country") as HTMLSelectElement | null;
+    const instock  = document.getElementById("lcat-search-instock") as HTMLInputElement | null;
+    const wrap     = document.querySelector<HTMLElement>(".lcat-search");
+    const clearBtn = document.querySelector<HTMLButtonElement>("[data-lcat-clear]");
+    const resetBtn = document.querySelector<HTMLButtonElement>("[data-lcat-reset]");
+    const empty    = document.querySelector<HTMLElement>("[data-lcat-empty]");
+    const count    = document.querySelector<HTMLElement>("[data-lcat-count]");
+    const cards    = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("[data-lcat-card]")
+    );
+    const chips    = Array.from(
+      document.querySelectorAll<HTMLButtonElement>(".lcat-search__chip")
+    );
+    if (!input || !country || !instock || cards.length === 0) return;
+
+    let activeBrand = "";
+
+    function apply() {
+      const q          = input.value.trim().toLowerCase();
+      const wantCty    = country.value;
+      const wantStock  = instock.checked;
+      let visible      = 0;
+
+      const tokens = q.split(/\s+/).filter(Boolean);
+      for (const card of cards) {
+        const name       = card.dataset.skuName || "";
+        const brand      = card.dataset.skuBrand || "";
+        const cties      = (card.dataset.skuCountries || "").split(",");
+        const stockCties = (card.dataset.skuInstockCountries || "").split(",");
+        const anyStock   = card.dataset.skuAnyInstock === "1";
+
+        const textOk    = tokens.every((t) => name.includes(t));
+        const brandOk   = !activeBrand || brand === activeBrand;
+        const countryOk = !wantCty || (wantStock ? stockCties.includes(wantCty) : cties.includes(wantCty));
+        const stockOk   = !wantStock || (wantCty ? stockCties.includes(wantCty) : anyStock);
+
+        const show = textOk && brandOk && countryOk && stockOk;
+        if (show) visible++;
+        card.toggleAttribute("hidden", !show);
+      }
+
+      if (wrap) wrap.classList.toggle("has-text", q.length > 0);
+      if (empty) empty.toggleAttribute("hidden", visible !== 0);
+      if (count) {
+        if (visible === cards.length && !q && !wantCty && !wantStock && !activeBrand) {
+          count.textContent = `${cards.length} cigars`;
+        } else if (visible === 0) {
+          count.textContent = "No matches";
+        } else {
+          count.textContent = `${visible} of ${cards.length} cigars`;
+        }
+      }
+    }
+
+    input.addEventListener("input", apply);
+    country.addEventListener("change", apply);
+    instock.addEventListener("change", apply);
+
+    clearBtn?.addEventListener("click", () => { input.value = ""; input.focus(); apply(); });
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        activeBrand = chip.dataset.brandChip || "";
+        chips.forEach((c) => c.classList.remove("is-active"));
+        chip.classList.add("is-active");
+        apply();
+      });
+    });
+
+    resetBtn?.addEventListener("click", () => {
+      input.value     = "";
+      country.value   = "";
+      instock.checked = false;
+      activeBrand     = "";
+      chips.forEach((c, i) => c.classList.toggle("is-active", i === 0));
+      apply();
+    });
+  })();
 </script>
 
   <LoungeTabBar />
@@ -498,5 +700,196 @@ const totalCountries = COUNTRIES.length;
     text-align: center;
   }
   [data-state="live"] .finder-watch__demo-pill { display: none; }
+
+  /* ─── Catalogue search (Region B½) ─────────────────────────────────── */
+  .lcat-search {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .lcat-search__row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  @media (max-width: 640px) {
+    .lcat-search__row { grid-template-columns: 1fr; }
+  }
+  .lcat-search__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .lcat-search__icon {
+    position: absolute;
+    left: 0.7rem;
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+  .lcat-search__input {
+    width: 100%;
+    padding: 0.55rem 2.2rem 0.55rem 2.3rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-soft);
+    font-size: 0.92rem;
+    color: var(--color-text);
+  }
+  .lcat-search__input:focus {
+    outline: none;
+    border-color: var(--color-gold);
+    background: #fff;
+  }
+  .lcat-search__clear {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 0;
+    font-size: 1.3rem;
+    width: 1.4rem;
+    height: 1.4rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: none;
+  }
+  .lcat-search.has-text .lcat-search__clear { display: block; }
+  .lcat-search__country {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-soft);
+    font-size: 0.88rem;
+    min-width: 8.5rem;
+  }
+  .lcat-search__instock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.8rem;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .lcat-search__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.7rem;
+  }
+  .lcat-search__chip {
+    padding: 0.28rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-bg-soft);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-text-soft);
+    cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+  }
+  .lcat-search__chip:hover {
+    border-color: var(--color-gold);
+    color: var(--color-text);
+  }
+  .lcat-search__chip.is-active {
+    background: var(--color-gold);
+    border-color: var(--color-gold);
+    color: #1a1612;
+    font-weight: 700;
+  }
+  .lcat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.7rem;
+  }
+  .lcat-card {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    transition: border-color 0.12s ease, transform 0.12s ease;
+  }
+  .lcat-card:hover {
+    border-color: var(--color-gold);
+    transform: translateY(-1px);
+  }
+  .lcat-card[hidden] { display: none !important; }
+  .lcat-card__head {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .lcat-card__brand {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+    font-weight: 700;
+  }
+  .lcat-card__vitola {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-top: 0.15rem;
+  }
+  .lcat-card__spec {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+  .lcat-card__price {
+    margin-top: auto;
+    padding-top: 0.45rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+  .lcat-card__price-now {
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 0.95rem;
+  }
+  .lcat-card__price-eur {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+  .lcat-card__price-empty {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+  .lcat-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--color-text-soft);
+    font-size: 0.9rem;
+  }
+  .lcat-empty p { margin: 0 0 0.5rem; }
+  .lcat-empty__reset {
+    background: transparent;
+    border: 0;
+    color: var(--color-gold-hover);
+    cursor: pointer;
+    text-decoration: underline;
+    font: inherit;
+    padding: 0;
+  }
 
 </style>
