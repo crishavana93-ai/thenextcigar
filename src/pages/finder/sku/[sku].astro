@@ -45,9 +45,15 @@ const offers = snapshots
     // per-row "Duty-paid in 🇩🇪" badge and the optional "all-in for you" highlight
     // when we know the buyer's country.
     const dutyCodes  = dutyPaidCountries(retailer);
-    const dutyCountries = dutyCodes
-      .map((cc) => COUNTRY_BY_CODE[cc])
-      .filter((c): c is NonNullable<typeof country> => !!c);
+    // Resolve country objects, dropping any that aren't in COUNTRY_BY_CODE.
+    // Plain Boolean filter (no TS type predicate) — esbuild's Astro-frontmatter
+    // parser chokes on `(c): c is NonNullable<typeof country>` predicates and
+    // bails out reporting an unrelated "Unexpected export" further down.
+    const dutyCountries: Array<{ flag: string; name: string }> = [];
+    for (const cc of dutyCodes) {
+      const c = COUNTRY_BY_CODE[cc];
+      if (c) dutyCountries.push(c);
+    }
     const dutyFlags  = dutyCountries.map((c) => c.flag).join(" ");
     const dutyNames  = dutyCountries.map((c) => c.name).join(", ");
     const shipsLabel = retailer.shipsTo === "domestic"
