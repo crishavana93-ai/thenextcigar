@@ -30,7 +30,8 @@ const offers = snapshots
     const retailer = RETAILER_BY_ID[snap.retailerId];
     const country  = COUNTRY_BY_CODE[retailer.country];
     const eur      = toEUR(snap.price, snap.currency);
-    return { snap, retailer, country, eur, perCigarEur: eur / sku.boxSize };
+    const link     = effectiveShopUrl(snap.sourceUrl, sku, retailer);
+    return { snap, retailer, country, eur, perCigarEur: eur / sku.boxSize, link };
   })
   .sort((a, b) => {
     // In-stock first, then by EUR price ascending
@@ -245,23 +246,18 @@ const ogDescription = best
                 </span>
               </td>
               <td class="finder-table__cta">
-                {(() => {
-                  const link = effectiveShopUrl(o.snap.sourceUrl, sku, o.retailer);
-                  return (
-                    <a
-                      href={link.url}
-                      class={`finder-table__compare ${link.isExact ? "" : "finder-table__compare--search"}`}
-                      target="_blank"
-                      rel="noopener noreferrer sponsored"
-                      data-cell="shop"
-                      title={link.isExact
-                        ? "Opens the retailer's product page in a new tab"
-                        : `We don't have a direct link to this cigar on ${o.retailer.name} yet — this opens their site search for "${sku.brand} ${sku.vitola}".`}
-                    >
-                      {link.isExact ? "Shop →" : "Search on site →"}
-                    </a>
-                  );
-                })()}
+                <a
+                  href={o.link.url}
+                  class={o.link.isExact ? "finder-table__compare" : "finder-table__compare finder-table__compare--search"}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  data-cell="shop"
+                  title={o.link.isExact
+                    ? "Opens the retailer's product page in a new tab"
+                    : `We don't have a direct link to this cigar on ${o.retailer.name} yet — this opens their site search for "${sku.brand} ${sku.vitola}".`}
+                >
+                  {o.link.isExact ? "Shop →" : "Search on site →"}
+                </a>
               </td>
             </tr>
           ))}
