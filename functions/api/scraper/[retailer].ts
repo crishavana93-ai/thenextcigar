@@ -912,7 +912,14 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   const errors: string[] = [];
   let bytesDownloaded = 0;
 
-  for (const pdp of config.pdps) {
+  // ── Parallel-batch fetches ────────────────────────────────────────────────
+  // Sequential fetches of 52 PDPs were exceeding Cloudflare's ~100s connection
+  // timeout. We now fetch in batches of CONCURRENCY at a time using Promise.all
+  // so 52 URLs complete in ~12s instead of ~100s. CPU work (parsing) still
+  // happens inline per response, well under the 30s CPU limit.
+  const CONCURRENCY = 8;
+
+  async function processPdp(pdp: PdpUrl): Promise<void> {
     try {
       const res = await fetch(pdp.url, {
         headers: BROWSER_HEADERS,
@@ -921,7 +928,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       if (!res.ok) {
         errors.push(`${pdp.url}: HTTP ${res.status}`);
         debugLog.push({ url: pdp.url, status: res.status, offers: 0 });
-        continue;
+        return;
       }
       const html = await res.text();
       bytesDownloaded += html.length;
@@ -938,18 +945,13 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         default:                 parsed = parseSchemaOrg(html);
       }
 
-      // Apply per-PDP pack-size override. Used when the retailer splits each
-      // pack-size into a separate PDP (Havana House WooCommerce style) and the
-      // JSON-LD doesn't expose eligibleQuantity — the URL slug is then the
-      // most reliable source. We rewrite every parsed offer to the override.
+      // Apply per-PDP pack-size override.
       if (typeof pdp.packSize === "number") {
         parsed = parsed.map((o) => ({ ...o, packSize: pdp.packSize! }));
       }
 
       // Sanity floor — reject offers with EUR price below the configured
-      // minimum (default €20). No Cuban box-of-N costs less than that, so
-      // anything that does is almost certainly a regex match on an accessory
-      // upsell or VAT/shipping notice rather than the real product price.
+      // minimum (default €20). No Cuban box-of-N costs less than that.
       const minEur = config.minPriceEur ?? 20;
       const beforeFloor = parsed.length;
       parsed = parsed.filter((o) => {
@@ -970,13 +972,9 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
 
       if (parsed.length === 0) {
         errors.push(`${pdp.url}: parser found 0 offers`);
-        continue;
+        return;
       }
 
-      // Write ALL pack-size variants — the migration 023 view dedups on
-      // (sku, retailer_id, pack_size) so per-pack price comparison works.
-      // The SKU page hydration prefers the canonical box size and falls
-      // back to in-stock packs at the same per-cigar price.
       for (const offer of parsed) {
         rowsToInsert.push({
           sku: pdp.skuHint || null,
@@ -997,9 +995,21 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
     }
   }
 
-  // Insert into Supabase
+  // Slice the pdps array into chunks of CONCURRENCY and await each chunk.
+  // Maintains a hard cap on simultaneous fetches so we don't trip any per-host
+  // rate limit while still drastically cutting total wall-clock time.
+  for (let i = 0; i < config.pdps.length; i += CONCURRENCY) {
+    const batch = config.pdps.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(processPdp));
+  }
+
+  // Insert into Supabase in chunks of 50 to avoid hitting body-size limits
+  // when scraping the larger configs (52 PDPs × multiple packs can produce
+  // 100+ rows in a single run).
   let inserted = 0;
-  if (rowsToInsert.length) {
+  const SUPABASE_CHUNK = 50;
+  for (let i = 0; i < rowsToInsert.length; i += SUPABASE_CHUNK) {
+    const chunk = rowsToInsert.slice(i, i + SUPABASE_CHUNK);
     const r = await fetch(
       `${env.PUBLIC_SUPABASE_URL}/rest/v1/finder_price_snapshots`,
       {
@@ -1010,11 +1020,14 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
           "content-type": "application/json",
           Prefer: "return=minimal",
         },
-        body: JSON.stringify(rowsToInsert),
+        body: JSON.stringify(chunk),
       }
     );
-    if (r.ok) inserted = rowsToInsert.length;
-    else errors.push(`supabase insert failed: HTTP ${r.status} ${await r.text()}`);
+    if (r.ok) {
+      inserted += chunk.length;
+    } else {
+      errors.push(`supabase insert failed (chunk ${i / SUPABASE_CHUNK + 1}): HTTP ${r.status} ${await r.text()}`);
+    }
   }
 
   return json({
