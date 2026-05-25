@@ -21,32 +21,38 @@ const fmtDate = (d: Date | string) =>
 ---
 
 <section class:list={[
-  "py-20",
-  variant === "dark" && "bg-[color:var(--color-bg-soft)]",
-  variant === "warm" && "bg-[color:var(--color-surface)]",
+  "editorial py-20 md:py-24",
+  "border-t border-[color:var(--color-rule)]",
+  variant === "dark" && "bg-[color:var(--color-paper-soft)]",
 ]}>
   <div class="container-wide">
-    <div class="flex items-end justify-between mb-10 reveal flex-wrap gap-4">
+    {/* Direction A masthead — replaces "What's hot in" SaaS style */}
+    <header class="flex items-end justify-between mb-12 md:mb-16 flex-wrap gap-4" data-reveal>
       <div>
-        <p class="text-[0.78rem] font-bold tracking-[0.18em] uppercase text-[color:var(--color-text-muted)] mb-2">
-          What's hot in
-        </p>
-        <h2 class="section-eyebrow text-[color:var(--color-accent)]">{categoryName}</h2>
+        <p class="editorial-eyebrow mb-3">Department</p>
+        <h2 class="editorial-h leading-[1.05] tracking-[-0.012em]" style="font-size: clamp(2rem, 4vw, 3.2rem);">
+          {categoryName}
+        </h2>
       </div>
-      <a href={`/category/${categorySlug}`} class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
+      <a
+        href={`/category/${categorySlug}`}
+        class="text-[0.82rem] font-semibold tracking-[0.05em] underline underline-offset-[6px] transition-colors duration-200"
+        style="color: var(--color-gold-hover); text-decoration-color: var(--color-rule);"
+      >
         See all in {categoryName} →
       </a>
-    </div>
+    </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-      {/* Featured of category */}
-      <a href={`/blog/${featured.data.slug}`} class="reveal group block">
-        <div class="relative overflow-hidden rounded aspect-[16/10] bg-[color:var(--color-surface)] mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+      {/* Featured story — Direction A editorial card with serif title */}
+      <a href={`/blog/${featured.data.slug}`} class="block group editorial-card" data-reveal>
+        <div class="relative overflow-hidden aspect-[16/10] mb-6" style="background: var(--color-paper-soft);">
           {featured.data.cover && (typeof featured.data.cover === "string" ? (
             <img
               src={featured.data.cover}
               alt={featured.data.title}
-              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              class="w-full h-full object-cover"
+              style="filter: saturate(0.85) contrast(1.02);"
               loading="lazy"
             />
           ) : (
@@ -55,35 +61,42 @@ const fmtDate = (d: Date | string) =>
               alt={featured.data.title}
               widths={[600, 1200]}
               sizes="(min-width: 1024px) 50vw, 100vw"
-              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              class="w-full h-full object-cover"
+              style="filter: saturate(0.85) contrast(1.02);"
               loading="lazy"
             />
           ))}
         </div>
-        <p class="category-tag mb-3">{categoryName}</p>
-        <h3 class="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.1] tracking-tight text-[color:var(--color-text)] group-hover:text-[color:var(--color-headline-hover-on-light)] transition-colors duration-300">
+        <p class="editorial-eyebrow mb-3">{categoryName} · {fmtDate(featured.data.publishedAt)}</p>
+        <h3
+          class="editorial-h leading-[1.08] tracking-[-0.01em] mb-4"
+          style="font-size: clamp(1.5rem, 2.6vw, 2.1rem);"
+        >
           {featured.data.title}
         </h3>
         {featured.data.excerpt && (
-          <p class="mt-4 text-[color:var(--color-text-muted)] line-clamp-2 text-sm md:text-base">
+          <p class="leading-[1.6] line-clamp-2" style="color: var(--color-ink-soft); font-size: 1rem;">
             {featured.data.excerpt}
           </p>
         )}
-        <p class="mt-4 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
-          {fmtDate(featured.data.publishedAt)}
-        </p>
       </a>
 
-      {/* List of 3 secondary stories */}
-      <div class="flex flex-col divide-y divide-[color:var(--color-border)]">
+      {/* 3 secondary stories — editorial list, hairline rules between */}
+      <div class="flex flex-col" style="border-top: 1px solid var(--color-rule);">
         {rest.map((p, i) => (
-          <a href={`/blog/${p.data.slug}`} class="reveal group flex gap-4 py-5 first:pt-0" data-reveal-delay={(i + 1) as 1 | 2 | 3}>
-            <div class="relative overflow-hidden rounded w-32 h-24 lg:w-40 lg:h-28 flex-shrink-0 bg-[color:var(--color-surface)]">
+          <a
+            href={`/blog/${p.data.slug}`}
+            class="group flex gap-5 py-6 editorial-card"
+            style="border-bottom: 1px solid var(--color-rule);"
+            data-reveal
+          >
+            <div class="relative overflow-hidden w-28 h-20 lg:w-36 lg:h-24 flex-shrink-0" style="background: var(--color-paper-soft);">
               {p.data.cover && (typeof p.data.cover === "string" ? (
                 <img
                   src={p.data.cover}
                   alt={p.data.title}
-                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  class="w-full h-full object-cover"
+                  style="filter: saturate(0.85) contrast(1.02);"
                   loading="lazy"
                 />
               ) : (
@@ -92,19 +105,20 @@ const fmtDate = (d: Date | string) =>
                   alt={p.data.title}
                   widths={[200, 400]}
                   sizes="160px"
-                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  class="w-full h-full object-cover"
+                  style="filter: saturate(0.85) contrast(1.02);"
                   loading="lazy"
                 />
               ))}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="category-tag mb-2 text-[0.65rem]">{categoryName}</p>
-              <h4 class="font-display text-base lg:text-lg leading-snug text-[color:var(--color-text)] group-hover:text-[color:var(--color-headline-hover-on-light)] transition-colors duration-300 line-clamp-3">
+              <p class="editorial-eyebrow mb-2" style="font-size: 0.62rem;">{fmtDate(p.data.publishedAt)}</p>
+              <h4
+                class="editorial-h leading-snug line-clamp-3"
+                style="font-size: clamp(1rem, 1.4vw, 1.18rem);"
+              >
                 {p.data.title}
               </h4>
-              <p class="mt-2 text-xs text-[color:var(--color-text-muted)] uppercase tracking-wider">
-                {fmtDate(p.data.publishedAt)}
-              </p>
             </div>
           </a>
         ))}
