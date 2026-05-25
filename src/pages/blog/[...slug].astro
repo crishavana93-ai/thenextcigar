@@ -163,49 +163,62 @@ const itemListSchema = Array.isArray(products) && products.length > 0
   description={data.excerpt || data.title}
   image={coverUrl}
 >
-  <article>
-    {/* ─── HEADLINE BLOCK ─── */}
-    <header class="container-narrow pt-12 md:pt-20 pb-10">
-      <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-text-muted)]" aria-label="Breadcrumb">
-        <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
-        <span class="mx-2">/</span>
-        <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">News</a>
+  {/* Reading progress bar — Direction A standard for long-form */}
+  <div
+    id="reading-progress"
+    class="fixed top-0 left-0 right-0 h-[2px] z-[60] pointer-events-none"
+    aria-hidden="true"
+  >
+    <div
+      id="reading-progress-bar"
+      class="h-full origin-left"
+      style="background: var(--color-gold-hover, #c9a961); transform: scaleX(0); transition: transform 60ms linear;"
+    ></div>
+  </div>
+
+  <article class="editorial">
+    {/* ─── HEADLINE BLOCK — Direction A magazine masthead ─── */}
+    <header class="container-narrow pt-16 md:pt-24 pb-10" data-reveal>
+      <nav class="mb-10 text-[0.7rem] tracking-[0.16em] uppercase font-semibold" style="color: var(--color-ink-muted);" aria-label="Breadcrumb">
+        <a href="/" class="hover:opacity-70 transition-opacity">Home</a>
+        <span class="mx-2 opacity-50">/</span>
+        <a href="/blog" class="hover:opacity-70 transition-opacity">Magazine</a>
         {category && (<>
-          <span class="mx-2">/</span>
-          <a href={`/category/${category.data.slug}`} class="hover:text-[color:var(--color-accent)] transition-colors">{category.data.name}</a>
+          <span class="mx-2 opacity-50">/</span>
+          <a href={`/category/${category.data.slug}`} class="hover:opacity-70 transition-opacity">{category.data.name}</a>
         </>)}
       </nav>
 
-      <div class="flex items-center gap-3 mb-6">
-        {data.isPremium && (
-          <span class="px-2.5 py-1 text-[0.62rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-[color:var(--color-text)] rounded-sm">
-            Premium
-          </span>
-        )}
-        {category && (
-          <a href={`/category/${category.data.slug}`} class="category-tag hover:opacity-80 transition-opacity">
-            {category.data.name}
-          </a>
-        )}
-      </div>
+      {/* Editorial eyebrow — category + read time */}
+      <p class="editorial-eyebrow mb-6 md:mb-8">
+        {data.isPremium && <span>Members only · </span>}
+        {category ? category.data.name : "Editorial"} · {readMinutes} min read
+      </p>
 
-      <h1 class="font-display text-4xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-[color:var(--color-text)]">
+      <h1
+        class="editorial-h leading-[1.05] tracking-[-0.014em]"
+        style="font-size: clamp(2.4rem, 5.4vw, 4.4rem);"
+      >
         {data.title}
       </h1>
 
       {data.excerpt && (
-        <p class="lead mt-8 max-w-3xl">{data.excerpt}</p>
+        <p
+          class="mt-8 max-w-3xl text-[1.15rem] md:text-[1.28rem] leading-[1.5] font-normal italic"
+          style="color: var(--color-ink-soft); font-family: var(--font-serif);"
+        >
+          {data.excerpt}
+        </p>
       )}
 
-      <div class="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[color:var(--color-text-muted)] uppercase tracking-wider">
+      <div class="mt-12 flex flex-wrap items-center gap-x-8 gap-y-2 text-[0.78rem] tracking-[0.08em] uppercase" style="color: var(--color-ink-muted);">
         {author && (
           <span class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)]"></span>
-            <span>By <span class="text-[color:var(--color-text)]">{author.data.name}</span></span>
+            <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-gold-hover);"></span>
+            <span>By <span style="color: var(--color-ink);">{author.data.name}</span></span>
           </span>
         )}
         <time datetime={new Date(data.publishedAt).toISOString()}>{longDate}</time>
-        <span>{readMinutes} min read</span>
       </div>
     </header>
 
@@ -395,6 +408,34 @@ const itemListSchema = Array.isArray(products) && products.length > 0
 </BaseLayout>
 
 <script>
+  // Direction A — reading progress bar. Fills left-to-right as the user
+  // scrolls the article. Sticky at top:0 above the sticky header (z 60 > 40).
+  function setupReadingProgress() {
+    const bar = document.getElementById("reading-progress-bar");
+    const article = document.querySelector("article");
+    if (!bar || !article) return;
+    let ticking = false;
+    function update() {
+      const rect = article!.getBoundingClientRect();
+      const total = rect.height - window.innerHeight;
+      const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(total, 1));
+      const pct = total > 0 ? scrolled / total : 0;
+      bar!.style.transform = `scaleX(${pct})`;
+      ticking = false;
+    }
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+  }
+  document.addEventListener("astro:page-load", setupReadingProgress);
+  setupReadingProgress();
+
   // Copy-link button (desktop share rail)
   function setupCopyLink() {
     const btn = document.getElementById("copy-link-btn") as HTMLButtonElement | null;

@@ -389,6 +389,17 @@ header { z-index: 40; }
   margin-top: 0.08em;
   color: var(--color-accent);
 }
+/* Direction A drop cap — serif + gold, magazine-grade.
+   Applies on .editorial .prose-dropcap so it doesn't override globally. */
+.editorial .prose-dropcap > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  float: left;
+  font-size: 5.2em;
+  line-height: 0.85;
+  font-weight: 400;
+  margin: 0.04em 0.1em 0 -0.04em;
+  color: var(--color-gold-hover);
+}
 
 /* ----------------------------------------------------------------------------
  * Animations
