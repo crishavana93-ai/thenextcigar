@@ -45,6 +45,13 @@ const dropRows = PRICE_SNAPSHOTS
 const totalSnapshots = PRICE_SNAPSHOTS.length;
 const totalRetailers = RETAILERS.length;
 const totalCountries = COUNTRIES.length;
+const totalSkus      = SKUS.length;
+
+// Country picker — same split as public /finder/ so the member-app surfaces
+// the full geographic Finder, not just the watchlist + catalogue search.
+const openCountries       = COUNTRIES.filter((c) => c.status === "open");
+const restrictedCountries = COUNTRIES.filter((c) => c.status === "restricted");
+const closedCountries     = COUNTRIES.filter((c) => c.status === "closed");
 
 // ─── Catalogue search data layer ───────────────────────────────────────────
 // Reuses the same pattern as /finder/index.astro so the search behaviour is
@@ -107,6 +114,62 @@ const cataloguePerSku = SKUS.map((sku) => ({
         </div>
         <a href="/finder/" class="lbtn lbtn-secondary">Public catalogue →</a>
       </div>
+    </section>
+
+    {/* Region A½ — Browse by country.
+        Mirrors the public /finder/ country picker so the member-app
+        surfaces the full geographic Finder, not just watchlist + search.
+        Split into open / restricted / closed markets — same UX as public. */}
+    <section class="container-wide pt-2 pb-6 reveal">
+      <div class="finder-section-head">
+        <p class="lounge-label">Browse by country</p>
+        <span class="finder-section-head__meta">{openCountries.length + restrictedCountries.length + closedCountries.length} European markets</span>
+      </div>
+      <p class="lounge-country-lead">
+        Tobacco excise is country-specific in the EU, so most retailers ship within their own borders.
+        Pick a market to see retailers and current prices that will actually ship to you.
+      </p>
+
+      <p class="lounge-country-h">Open markets — domestic & EU shipping</p>
+      <div class="lounge-country-grid mb-3">
+        {openCountries.map((c) => (
+          <a href={`/finder/${c.code}/`} class="lounge-country">
+            <span class="lounge-country__flag">{c.flag}</span>
+            <span class="lounge-country__name">{c.name}</span>
+            <span class="lounge-country__currency">{c.currency}</span>
+          </a>
+        ))}
+      </div>
+
+      {restrictedCountries.length > 0 && (
+        <>
+          <p class="lounge-country-h">Restricted — domestic only</p>
+          <div class="lounge-country-grid mb-3">
+            {restrictedCountries.map((c) => (
+              <a href={`/finder/${c.code}/`} class="lounge-country lounge-country--restricted">
+                <span class="lounge-country__flag">{c.flag}</span>
+                <span class="lounge-country__name">{c.name}</span>
+                <span class="lounge-country__currency">{c.currency}</span>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      {closedCountries.length > 0 && (
+        <>
+          <p class="lounge-country-h">In-store only</p>
+          <div class="lounge-country-grid">
+            {closedCountries.map((c) => (
+              <a href={`/finder/${c.code}/`} class="lounge-country lounge-country--closed">
+                <span class="lounge-country__flag">{c.flag}</span>
+                <span class="lounge-country__name">{c.name}</span>
+                <span class="lounge-country__currency">In-store</span>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </section>
 
     {/* Region B — Watchlist */}
@@ -804,6 +867,57 @@ const cataloguePerSku = SKUS.map((sku) => ({
     color: var(--color-text-muted);
     letter-spacing: 0.08em;
   }
+
+  /* Country picker (Region A½) */
+  .lounge-country-lead {
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+    max-width: 56ch;
+    margin: 0.5rem 0 1rem;
+    line-height: 1.55;
+  }
+  .lounge-country-h {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    margin: 1rem 0 0.5rem;
+    font-weight: 600;
+  }
+  .lounge-country-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  @media (min-width: 640px) { .lounge-country-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { .lounge-country-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .lounge-country {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.65rem 0.8rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    text-decoration: none;
+    color: #f4f4f4;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .lounge-country:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: var(--color-gold-hover, #c9a961);
+    transform: translateY(-1px);
+  }
+  .lounge-country__flag { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
+  .lounge-country__name { font-size: 0.85rem; font-weight: 500; flex: 1; }
+  .lounge-country__currency {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+  }
+  .lounge-country--restricted { opacity: 0.78; }
+  .lounge-country--closed { opacity: 0.55; }
 
   /* Watchlist */
   .finder-watchlist {
