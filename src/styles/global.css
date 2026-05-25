@@ -186,7 +186,11 @@ body {
 }
 
 main { position: relative; z-index: 2; }
-header, footer { position: relative; z-index: 10; }
+/* Footer needs stacking-context above siblings; header position is set by
+   per-instance utility classes (Tailwind's `sticky` etc.) so we don't lock
+   it here — the old `position: relative` was silently overriding `sticky`. */
+footer { position: relative; z-index: 10; }
+header { z-index: 40; }
 
 ::selection {
   background: var(--color-accent);
