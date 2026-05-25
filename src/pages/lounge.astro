@@ -21,6 +21,9 @@ import {
   PRICE_SNAPSHOTS as FINDER_SNAPSHOTS,
   COUNTRIES as FINDER_COUNTRIES,
 } from "../data/finder-data";
+import MagazineMasthead from "../components/ui/MagazineMasthead.astro";
+import EditorialSectionHead from "../components/ui/EditorialSectionHead.astro";
+import WordStaggerHeadline from "../components/ui/WordStaggerHeadline.tsx";
 
 const heroPlaces = places.slice(0, 6);
 const cityCount = new Set(places.map((p) => p.city)).size;
@@ -36,48 +39,88 @@ const countryCount   = FINDER_COUNTRIES.length;
   title="The Lounge — Cuban cigar price tracking + members' network"
   description={`The Next Cigar's members' room. Track ${snapshotCount} Cuban cigar prices across ${retailerCount} European retailers, get drop alerts, and find verified members at the lounge tonight. From $9/month or free for everything public.`}
 >
-  {/* ─── HERO ─── */}
-  <section class="lounge-hero">
-    <div class="container-wide pt-24 md:pt-32 pb-20 reveal">
-      <p class="lounge-eyebrow">Live · OG Member tier closes 1 June 2026</p>
-      <h1 class="lounge-title">
-        The room behind<br/>
-        the price tag.
-      </h1>
-      <p class="lounge-lead">
-        The Lounge is two things in one place. <strong>The Finder</strong> tracks
-        {snapshotCount.toLocaleString("en-US")} live Cuban cigar prices across
-        {retailerCount} European retailers, refreshed every six hours — so you
-        never overpay by €100 for a box that's cheaper at the shop next door.
-        <strong>The members' app</strong> shows you which verified smokers are
-        in your city tonight, where they're sitting, and which lounges abroad
-        will welcome you when you land.
-      </p>
-      <p class="lounge-lead lounge-lead--soft">
-        Free public Finder for everyone. Lounge membership unlocks unlimited
-        watchlists, price-drop alerts, travel mode, direct messaging, and
-        every feature we ship next. Sign up before 1 June and you're an
-        <strong>OG Member</strong> — every paid feature, free for you, forever.
-      </p>
+  {/* Direction A — magazine masthead (different label than / to mark room) */}
+  <MagazineMasthead
+    volume="Volume III"
+    issue="Issue 04 · The Lounge"
+    date="May 2026"
+    tagline="A private network of European Cuban-cigar smokers. Members' room behind the magazine."
+  />
 
-      <div class="lounge-hero__cta-row">
-        <a href="/lounge/signup/" class="btn btn-accent">Become an OG Member →</a>
-        <a href="/finder/" class="btn btn-ghost">Try the free Finder →</a>
+  {/* ─── HERO — Direction A (Vitra word-stagger + cream paper) ─── */}
+  <section class="editorial relative py-16 md:py-24 lg:py-28">
+    <div class="container-wide">
+      <div class="max-w-5xl">
+        <p class="editorial-eyebrow mb-6 md:mb-8">
+          Live · OG Member tier closes 1 June 2026
+        </p>
+
+        <WordStaggerHeadline
+          lines={["The room behind", "the price tag."]}
+          accentLine={1}
+          client:load
+        />
+
+        <p
+          class="mt-10 max-w-3xl italic"
+          style="font-family: var(--font-serif); font-size: clamp(1.1rem, 1.55vw, 1.32rem); line-height: 1.55; color: var(--color-ink-soft);"
+        >
+          The Lounge is two things in one place. <strong>The Finder</strong> tracks
+          {snapshotCount.toLocaleString("en-US")} live Cuban cigar prices across
+          {retailerCount} European retailers, refreshed every six hours — so you
+          never overpay by €100 for a box that's cheaper at the shop next door.
+          <strong>The members' app</strong> shows you which verified smokers are
+          in your city tonight, where they're sitting, and which lounges abroad
+          will welcome you when you land.
+        </p>
+
+        <p
+          class="mt-6 max-w-3xl"
+          style="font-size: 1rem; line-height: 1.65; color: var(--color-ink-muted);"
+        >
+          Free public Finder for everyone. Lounge membership unlocks unlimited
+          watchlists, price-drop alerts, travel mode, direct messaging, and
+          every feature we ship next. Sign up before 1 June and you're an
+          <strong style="color: var(--color-ink);">OG Member</strong> — every paid feature, free for you, forever.
+        </p>
+
+        <div class="mt-12 flex flex-wrap items-center gap-6">
+          <a
+            href="/lounge/signup/"
+            class="inline-flex items-center justify-center px-8 py-4 text-sm font-medium tracking-wide rounded-none transition-[transform,background,border-color] duration-200"
+            style="background: var(--color-ink); color: var(--color-paper); border: 1px solid var(--color-ink);"
+            onmouseover="this.style.background='var(--color-gold-hover)'; this.style.borderColor='var(--color-gold-hover)';"
+            onmouseout="this.style.background='var(--color-ink)'; this.style.borderColor='var(--color-ink)';"
+          >
+            Become an OG Member →
+          </a>
+          <a
+            href="/finder/"
+            class="text-sm font-medium tracking-wide underline underline-offset-[6px] transition-colors duration-200"
+            style="color: var(--color-ink-soft); text-decoration-color: var(--color-rule);"
+          >
+            Try the free Finder
+          </a>
+        </div>
+
+        <p
+          class="mt-10 max-w-2xl"
+          style="font-size: 0.82rem; line-height: 1.55; color: var(--color-ink-muted);"
+        >
+          OG Member is a one-time, date-based grant — not a tier you can upgrade
+          into. After 1 June 2026 the door closes and the path to a free
+          membership is earned through referrals + event hosting. 21+ only.
+        </p>
       </div>
-      <p class="lounge-fineprint">
-        OG Member is a one-time, date-based grant — not a tier you can upgrade
-        into. After 1 June 2026 the door closes and the path to a free
-        membership is earned through referrals + event hosting. 21+ only.
-      </p>
     </div>
   </section>
 
   {/* ─── HOW IT WORKS ─── */}
-  <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
-    <p class="section-eyebrow">What you get</p>
-    <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
-      Two products, one membership.
-    </h2>
+  <section class="editorial container-wide py-20 border-t border-[color:var(--color-rule)]">
+    <EditorialSectionHead
+      eyebrow="What you get"
+      title="Two products, one membership."
+    />
 
     <div class="lounge-features">
       <div class="lounge-feature reveal">
@@ -164,17 +207,12 @@ const countryCount   = FINDER_COUNTRIES.length;
   </section>
 
   {/* ─── PRICING ─── */}
-  <section class="container-wide py-20 border-t border-[color:var(--color-border)]">
-    <p class="section-eyebrow">Membership</p>
-    <h2 class="font-display text-3xl md:text-5xl leading-tight mt-2 max-w-3xl">
-      Free to start. Pay when the Finder pays you back.
-    </h2>
-    <p class="mt-4 text-base text-[color:var(--color-text-soft)] max-w-2xl">
-      The public Finder is free forever — most Cuban cigar buyers save more than
-      the Lounge price on their first box. The paid tier unlocks unlimited alerts,
-      travel mode, and the members' app. Sign up before 1 June 2026 and the
-      paid tier is free for you for life.
-    </p>
+  <section class="editorial container-wide py-20 border-t border-[color:var(--color-rule)]">
+    <EditorialSectionHead
+      eyebrow="Membership"
+      title="Free to start. Pay when the Finder pays you back."
+      dek="The public Finder is free forever — most Cuban cigar buyers save more than the Lounge price on their first box. The paid tier unlocks unlimited alerts, travel mode, and the members' app. Sign up before 1 June 2026 and the paid tier is free for you for life."
+    />
 
     <div class="lounge-pricing lounge-pricing--three">
       {/* Free tier */}
@@ -265,9 +303,11 @@ const countryCount   = FINDER_COUNTRIES.length;
   </section>
 
   {/* ─── FAQ ─── */}
-  <section class="container-wide pb-24">
-    <p class="section-eyebrow">Common questions</p>
-    <h2 class="font-display text-3xl md:text-4xl leading-tight mt-2">Honest answers.</h2>
+  <section class="editorial container-wide pb-24">
+    <EditorialSectionHead
+      eyebrow="Common questions"
+      title="Honest answers."
+    />
 
     <div class="lounge-faq reveal">
       <details>
