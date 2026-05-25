@@ -12,11 +12,22 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^4.2.4",
+    "@astrojs/react": "^5.0.5",
     "@astrojs/rss": "^4.0.10",
     "@astrojs/sitemap": "^3.2.1",
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
     "astro": "^5.4.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.16.0",
+    "motion": "^12.40.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.0.0"
   }
 }

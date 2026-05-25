@@ -1172,11 +1172,26 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const submit = document.getElementById("checkin-submit") as HTMLButtonElement;
     const status = document.getElementById("checkin-status") as HTMLParagraphElement;
     const alreadyHere = active.some((c) => c.member_id === myUserId);
-    submit.disabled = alreadyHere;
-    submit.textContent = alreadyHere ? "Already checked in" : "Check in";
-    if (status) {
-      status.hidden = true;
-      status.classList.remove("is-error");
+
+    // Static curated pins (id prefix "static:") aren't TNC partner venues yet —
+    // they exist on the map for discovery but check-in writes a partner_lounges
+    // FK which would fail. Disable the form and show why.
+    const isStaticPin = typeof l.id === "string" && l.id.startsWith("static:");
+    if (isStaticPin) {
+      submit.disabled = true;
+      submit.textContent = "Not yet a TNC partner";
+      if (status) {
+        status.hidden = false;
+        status.classList.remove("is-error");
+        status.textContent = "This venue is on the curated map but isn't an active TNC partner yet — check-ins coming once they onboard.";
+      }
+    } else {
+      submit.disabled = alreadyHere;
+      submit.textContent = alreadyHere ? "Already checked in" : "Check in";
+      if (status) {
+        status.hidden = true;
+        status.classList.remove("is-error");
+      }
     }
 
     form.onsubmit = async (e) => {
@@ -1471,7 +1486,17 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     });
   }
 
+  // Double-init guard: the script registers `init()` on astro:page-load AND
+  // calls it immediately at the bottom. On first paint that's a no-op (the
+  // listener hasn't fired yet); on view-transition revisits both can fire.
+  // Leaflet throws "Map container is already initialized" on the second call
+  // without this guard.
+  let initInFlight = false;
+
   async function init(): Promise<void> {
+    if (initInFlight || map !== null) return;
+    initInFlight = true;
+    try {
     const user = await getCurrentUser();
     if (!user) {
       window.location.href = "/lounge/login/";
@@ -1691,6 +1716,9 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         );
         if (lounge) map.setView([lounge.lat, lounge.lng], 12);
       }
+    }
+    } finally {
+      initInFlight = false;
     }
   }
 

@@ -180,6 +180,32 @@ const json = (data: unknown, status = 200): Response =>
     headers: { "content-type": "application/json", "cache-control": "no-store" },
   });
 
+// ─── In-memory rate limiter ────────────────────────────────────────────────
+// Cloudflare Pages Functions spin up new isolates per region — this limiter
+// is per-isolate, not global, so a determined attacker on multiple regions
+// can still flood. But it raises the floor: 10 req/min from one IP cap, 5
+// req/min from one email cap. Together that defeats casual abuse.
+//
+// We don't pull in Cloudflare KV here because that's a $5/mo billable
+// dependency for a feature that has no abuse pressure today. If/when abuse
+// shows up, swap this for KV or Durable Objects.
+const rateLimits = new Map<string, { count: number; resetAt: number }>();
+const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT_IP = 10;
+const RATE_LIMIT_EMAIL = 5;
+
+function rateLimitCheck(key: string, limit: number): boolean {
+  const now = Date.now();
+  const entry = rateLimits.get(key);
+  if (!entry || entry.resetAt < now) {
+    rateLimits.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= limit) return false;
+  entry.count++;
+  return true;
+}
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
@@ -187,6 +213,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const ct = request.headers.get("content-type") || "";
   if (!ct.includes("application/json")) {
     return json({ ok: false, error: "content-type must be application/json" }, 400);
+  }
+
+  // Per-IP rate limit before parsing the body — cheap throttle for floods.
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!rateLimitCheck(`ip:${ip}`, RATE_LIMIT_IP)) {
+    return json({ ok: false, error: "too many requests — try again in a minute" }, 429);
   }
 
   let body: SavePayload;
@@ -209,6 +241,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
   if (!email || !EMAIL_RX.test(email) || email.length > 320) {
     return json({ ok: false, error: "valid email required" }, 400);
+  }
+
+  // Per-email rate limit — prevents one IP cycling many emails to bypass
+  // the per-IP cap, and prevents a stolen IP rotation from abusing a single
+  // email address.
+  if (!rateLimitCheck(`email:${email}`, RATE_LIMIT_EMAIL)) {
+    return json({ ok: false, error: "too many requests for this email — try again in a minute" }, 429);
   }
 
   // ── 1. UPSERT subscriber ─────────────────────────────────────────────────
