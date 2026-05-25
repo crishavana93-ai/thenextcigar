@@ -11,6 +11,7 @@ import MagazineMasthead from "../components/ui/MagazineMasthead.astro";
 import EditorialSectionHead from "../components/ui/EditorialSectionHead.astro";
 import HomepageHero from "../components/ui/HomepageHero.tsx";
 import ThreePillars from "../components/ui/ThreePillars.tsx";
+import EditorialStoriesRail from "../components/ui/EditorialStoriesRail.tsx";
 
 // ─── Direction A masthead — Volume / Issue / Date label ──────────────────
 // Issue number increments with each new issue release; tagline reflects TNC's
@@ -48,6 +49,32 @@ const cigar101 = postsByCategory("cigar-101");
 const havana = postsByCategory("havana-cigar-life");
 const culture = postsByCategory("cigar-culture");
 const news = postsByCategory("latest-news");
+
+// ─── Direction A — "This week's stories" rail data ────────────────────────
+// 8 most-recent posts (after the cover story trio) rendered as the Apple-Cards
+// editorial rail. Each card → /blog/[slug]. Categories are looked up from the
+// category collection so the eyebrow renders the proper display name.
+const railPostsRaw = allPosts
+  .filter((p) => !usedIds.has(p.id))
+  .slice(0, 8);
+
+function coverOf(post: typeof railPostsRaw[number]): string {
+  const c = post.data.cover;
+  if (!c) return "/og-default.svg";
+  if (typeof c === "string") return c;
+  return (c as { src: string }).src;
+}
+
+const storiesRail = railPostsRaw.map((p) => {
+  const cat = p.data.category ? categoryByslug.get(p.data.category) : null;
+  return {
+    href: `/blog/${p.data.slug}/`,
+    image: coverOf(p),
+    category: cat?.name ?? "Editorial",
+    title: p.data.title,
+    alt: p.data.title,
+  };
+});
 ---
 
 <BaseLayout
@@ -119,11 +146,24 @@ const news = postsByCategory("latest-news");
     <HighlightHero featured={featured} side={side} categoryByslug={categoryByslug} />
   )}
 
+  {/* Direction A — Apple-Cards-style horizontal stories rail.
+      Lives between the cover-story spread and the archive grid. Cards link
+      straight to /blog/[slug] (no modal expansion — quieter than the original
+      Aceternity pattern, more "read this" less "open this card"). */}
+  {storiesRail.length > 0 && (
+    <EditorialStoriesRail
+      eyebrow="This Week"
+      title="Stories from the magazine"
+      items={storiesRail}
+      client:visible
+    />
+  )}
+
   {/* LATEST NEWS — editorial archival-index grid */}
   <section class="editorial container-wide py-16 md:py-20 border-t border-[color:var(--color-rule)]">
     <EditorialSectionHead
-      eyebrow="This week"
-      title="From the archive"
+      eyebrow="The Archive"
+      title="From the magazine library"
       dek={`The most recent ${latest.length} stories — every Habano shipment shift, every retailer change, every long read we've published.`}
       cta={{ label: `See all ${allPosts.length} stories`, href: "/blog" }}
     />
