@@ -3,6 +3,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Newsletter from "../../components/Newsletter.astro";
 import MagazineHero from "../../components/ui/MagazineHero.tsx";
 import EditorialStats from "../../components/ui/EditorialStats.tsx";
+import EditorialSectionHead from "../../components/ui/EditorialSectionHead.astro";
+import EditorialDivider from "../../components/ui/EditorialDivider.astro";
 import {
   COUNTRIES,
   SKUS,
@@ -138,13 +140,13 @@ const breadcrumbJsonLd = {
   />
 
   {/* ─── COUNTRY PICKER ─────────────────────────────────────────────────── */}
-  <section id="browse-by-country" class="editorial container-wide pt-16 md:pt-20 pb-16 reveal" data-finder-country-section>
-    <p class="section-eyebrow" style="font-size:clamp(1.4rem,3.2vw,2.25rem);">Browse by country</p>
-    <p class="mt-3 mb-8 text-[color:var(--color-text-soft)] max-w-2xl text-base leading-relaxed">
-      Tobacco excise is country-specific in the EU, so most retailers ship within their own borders.
-      Pick a market to see retailers and current prices that will actually ship to you —
-      or <a href="#finder-catalogue" style="color:var(--color-gold-hover);text-decoration:underline;">jump to the catalogue search ↓</a> if you already know which cigar you want.
-    </p>
+  <section id="browse-by-country" class="editorial container-wide pt-16 md:pt-20 pb-16" data-finder-country-section>
+    <EditorialSectionHead
+      eyebrow="The Geography"
+      title="Browse by country"
+      dek="Tobacco excise is country-specific in the EU, so most retailers ship within their own borders. Pick a market to see retailers and current prices that will actually ship to you."
+      cta={{ label: "Or jump to the catalogue search", href: "#finder-catalogue" }}
+    />
 
     <h3 class="finder-section-h">Open markets — domestic & EU shipping</h3>
     <div class="finder-country-grid mb-8">
@@ -180,21 +182,18 @@ const breadcrumbJsonLd = {
     </div>
   </section>
 
+  <EditorialDivider ornament />
+
   {/* ─── BIGGEST DROPS RAIL ─────────────────────────────────────────────── */}
   {dropRows.length > 0 && (
-    <section class="finder-strip section-cream">
-      <div class="container-wide py-12 md:py-16 reveal">
-        <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
-          <div>
-            <p class="lounge-label">Today's drops</p>
-            <h2 class="finder-h2 mt-2">Biggest price cuts this week</h2>
-            <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
-              Snapshots flagged with a discount versus their last refresh. Cohiba and Partagás
-              move most often; the bigger boxes carry the bigger absolute savings.
-            </p>
-          </div>
-          <a href="/finder/de/" class="btn btn-ghost">View Germany dashboard →</a>
-        </div>
+    <section class="editorial finder-strip">
+      <div class="container-wide py-12 md:py-16">
+        <EditorialSectionHead
+          eyebrow="Today's drops"
+          title="Biggest price cuts this week"
+          dek="Snapshots flagged with a discount versus their last refresh. Cohiba and Partagás move most often; the bigger boxes carry the bigger absolute savings."
+          cta={{ label: "View Germany dashboard", href: "/finder/de/" }}
+        />
         <div class="finder-drop-grid">
           {dropRows.map(({ snap, sku, retailer, pct }) => (
             <a href={`/finder/sku/${sku.slug}/`} class="finder-drop">
@@ -220,18 +219,12 @@ const breadcrumbJsonLd = {
       country picker above is the "browse by geography" path, this is the
       "find a specific cigar" path. Brand chips + country dropdown + in-stock
       toggle + free-text input, all client-side. ─────────────────────────── */}
-  <section class="container-wide py-16 md:py-20 reveal" id="finder-catalogue">
-    <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
-      <div>
-        <p class="lounge-label">The catalogue</p>
-        <h2 class="finder-h2 mt-2">Or search by cigar</h2>
-        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
-          The flagship Habanos catalogue, sorted by the cheapest verified box price in Europe.
-          Search by name, filter by brand or country, click any cigar to compare every retailer.
-        </p>
-      </div>
-    </div>
-
+  <section class="editorial container-wide py-16 md:py-20" id="finder-catalogue">
+    <EditorialSectionHead
+      eyebrow="The Catalogue"
+      title="Or search by cigar"
+      dek="The flagship Habanos catalogue, sorted by the cheapest verified box price in Europe. Search by name, filter by brand or country, click any cigar to compare every retailer."
+    />
     {/* Search + filter controls — applied to the table below */}
     <div class="finder-search mb-8" id="finder-search-section">
       <label class="finder-search__label" for="finder-search-input">
@@ -378,17 +371,11 @@ const breadcrumbJsonLd = {
        one SKU as guest; serious buyer → register. */}
   <section class="section-dark" id="finder-tiers">
     <div class="container-wide py-16 md:py-24 reveal">
-      <div class="flex items-end justify-between mb-10 flex-wrap gap-4">
-        <div>
-          <p class="lounge-label lounge-label--gold">How the Finder works</p>
-          <h2 class="finder-h2 mt-2 text-[color:var(--color-text-on-dark)]">Free for everyone. More for members.</h2>
-          <p class="mt-3 text-[color:var(--color-text-on-dark-soft)] max-w-2xl">
-            The public Finder stays free, forever. One email-only watchlist included with no signup.
-            Multi-cigar comparison, unlimited alerts, price history, and travel mode are reserved for
-            registered Lounge members — and free for life if you sign up before 1 June 2026.
-          </p>
-        </div>
-      </div>
+      <EditorialSectionHead
+        eyebrow="How the Finder works"
+        title="Free for everyone. More for members."
+        dek="The public Finder stays free, forever. One email-only watchlist included with no signup. Multi-cigar comparison, unlimited alerts, price history, and travel mode are reserved for registered Lounge members — and free for life if you sign up before 1 June 2026."
+      />
 
       <div class="finder-tiers__grid">
         {/* FREE / GUEST */}
@@ -436,17 +423,12 @@ const breadcrumbJsonLd = {
   </section>
 
   {/* ─── FROM THE EDITORIAL ────────────────────────────────────────────── */}
-  <section class="container-wide py-12 md:py-16 reveal">
-    <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
-      <div>
-        <p class="lounge-label">From the editorial</p>
-        <h2 class="finder-h2 mt-2">Read before you buy</h2>
-        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
-          Long-form pieces that go deeper than the price tables — retailer history, regulatory context,
-          and the economics of Cuban-cigar buying in 2026.
-        </p>
-      </div>
-    </div>
+  <section class="editorial container-wide py-12 md:py-16">
+    <EditorialSectionHead
+      eyebrow="From the editorial"
+      title="Read before you buy"
+      dek="Long-form pieces that go deeper than the price tables — retailer history, regulatory context, and the economics of Cuban-cigar buying in 2026."
+    />
     <a href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/" class="finder-editorial">
       <div class="finder-editorial__body">
         <p class="lounge-label lounge-label--gold">Long read · 12 min</p>

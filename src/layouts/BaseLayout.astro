@@ -336,5 +336,11 @@ const skipPublicChrome = bareChrome || isLoungeApp;
         })();
       </script>
     )}
+
+    {/* Direction A — scroll-into-view reveal helper. Vanilla JS, no React,
+        observes any element with [data-reveal] and toggles .is-visible. */}
+    <script>
+      import "../scripts/editorial-reveal.ts";
+    </script>
   </body>
 </html>

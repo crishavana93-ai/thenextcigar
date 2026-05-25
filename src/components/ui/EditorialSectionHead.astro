@@ -1,0 +1,113 @@
+---
+/**
+ * EditorialSectionHead — Direction A section masthead.
+ *
+ * Replaces the existing `<p class="lounge-label">` + `<h2 class="finder-h2">`
+ * pattern across the Finder + Lounge marketing surfaces with a magazine-style
+ * three-line block: eyebrow / title / dek.
+ *
+ * Pure Astro (no React). Animates on scroll-into-view via Motion-One, wired
+ * by the parent layout's scroll-reveal script (data-reveal attribute).
+ *
+ * Usage:
+ *   <EditorialSectionHead
+ *     eyebrow="Today's drops"
+ *     title="Biggest price cuts this week"
+ *     dek="Snapshots flagged with a discount versus their last refresh. Cohiba and Partagás move most often; the bigger boxes carry the bigger absolute savings."
+ *   />
+ */
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  dek?: string;
+  align?: "left" | "center";
+  /** Optional anchor href, e.g. "/finder/de/" — renders a small link after the dek. */
+  cta?: { label: string; href: string };
+}
+
+const { eyebrow, title, dek, align = "left", cta } = Astro.props;
+---
+
+<header
+  class:list={[
+    "editorial-section-head",
+    align === "center" && "editorial-section-head--center",
+  ]}
+  data-reveal
+>
+  <p class="editorial-section-head__eyebrow">{eyebrow}</p>
+  <h2 class="editorial-section-head__title">{title}</h2>
+  {dek && <p class="editorial-section-head__dek">{dek}</p>}
+  {cta && (
+    <a class="editorial-section-head__cta" href={cta.href}>
+      {cta.label} <span aria-hidden="true">→</span>
+    </a>
+  )}
+</header>
+
+<style>
+  .editorial-section-head {
+    max-width: 56rem;
+    margin-bottom: 2.5rem;
+  }
+  @media (min-width: 768px) {
+    .editorial-section-head { margin-bottom: 3rem; }
+  }
+  .editorial-section-head--center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  .editorial-section-head__eyebrow {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-gold-hover);
+    margin: 0 0 0.85rem;
+  }
+
+  .editorial-section-head__title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.012em;
+    color: var(--color-ink, var(--color-text));
+    margin: 0;
+  }
+  /* When the head sits on a dark surface, flip the title to paper */
+  .section-dark .editorial-section-head__title {
+    color: var(--color-text-on-dark);
+  }
+
+  .editorial-section-head__dek {
+    margin: 1rem 0 0;
+    max-width: 42rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--color-ink-soft, var(--color-text-soft));
+  }
+  .section-dark .editorial-section-head__dek {
+    color: var(--color-text-on-dark-soft);
+  }
+
+  .editorial-section-head__cta {
+    display: inline-block;
+    margin-top: 1.1rem;
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--color-gold-hover);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+    transition: opacity 180ms var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+  .editorial-section-head__cta:hover { opacity: 0.7; }
+</style>

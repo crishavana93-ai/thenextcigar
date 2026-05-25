@@ -1,0 +1,73 @@
+---
+/**
+ * EditorialDivider — Direction A's gold hairline ornament.
+ *
+ * Draws in left-to-right over 700ms when it scrolls into view (Motion-One,
+ * vanilla — no React needed). Sits between major sections as a quiet visual
+ * pause.
+ *
+ * Usage:
+ *   <EditorialDivider />
+ *   <EditorialDivider ornament />   — adds the small gold cigar-band glyph
+ */
+
+interface Props {
+  /** If true, renders the cigar-band SVG ornament in the centre of the rule. */
+  ornament?: boolean;
+}
+
+const { ornament = false } = Astro.props;
+---
+
+<div class="editorial-divider" data-reveal>
+  <span class="editorial-divider__rule editorial-divider__rule--left" aria-hidden="true"></span>
+  {ornament && (
+    <span class="editorial-divider__ornament" aria-hidden="true">
+      <svg viewBox="0 0 40 12" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="6" x2="13" y2="6" stroke="currentColor" stroke-width="1" />
+        <circle cx="20" cy="6" r="2.4" fill="none" stroke="currentColor" stroke-width="1" />
+        <circle cx="20" cy="6" r="0.8" fill="currentColor" />
+        <line x1="27" y1="6" x2="40" y2="6" stroke="currentColor" stroke-width="1" />
+      </svg>
+    </span>
+  )}
+  <span class="editorial-divider__rule editorial-divider__rule--right" aria-hidden="true"></span>
+</div>
+
+<style>
+  .editorial-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    max-width: 32rem;
+    margin: 4rem auto;
+    opacity: 0.85;
+  }
+  .editorial-divider__rule {
+    flex: 1;
+    height: 1px;
+    background: var(--color-gold);
+    opacity: 0.6;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 700ms var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1));
+  }
+  .editorial-divider__rule--right { transform-origin: right center; }
+  [data-reveal].is-visible .editorial-divider__rule {
+    transform: scaleX(1);
+  }
+  .editorial-divider__ornament {
+    color: var(--color-gold);
+    display: inline-flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 600ms var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)) 300ms;
+  }
+  [data-reveal].is-visible .editorial-divider__ornament {
+    opacity: 0.85;
+  }
+  .editorial-divider__ornament svg {
+    width: 40px;
+    height: 12px;
+  }
+</style>

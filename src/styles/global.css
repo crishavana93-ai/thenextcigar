@@ -136,6 +136,33 @@
 }
 
 /* ----------------------------------------------------------------------------
+ * Direction A — scroll reveal
+ * Add `data-reveal` to any element. It starts faded + 16px down, then fades
+ * up to full opacity when the editorial-reveal.ts observer adds .is-visible.
+ * Respect prefers-reduced-motion — instant reveal for those users.
+ * -------------------------------------------------------------------------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--motion-slow, 720ms) var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform var(--motion-slow, 720ms) var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: opacity, transform;
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ----------------------------------------------------------------------------
  * Base
  * -------------------------------------------------------------------------- */
 
