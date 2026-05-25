@@ -80,13 +80,59 @@
   --color-text-on-light-soft: #282828;
 
   /* === Typography === */
-  --font-display: "Inter", "Inter Display", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-body: "Inter", "Source Sans 3", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-body: "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+  /* Direction A magazine serif — used on hero headlines, pull-quotes, and
+     editorial section titles. Stays optical-size aware via Source Serif 4. */
+  --font-serif: "Source Serif 4", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+
+  /* === Direction A — Quiet Luxury Editorial palette overrides ===
+     These supplement the v4 tokens above. Pages can opt into the editorial
+     palette by adding `class="editorial"` to <body> or wrapping section. */
+  --color-paper:        #fafaf6;      /* warm cream, the magazine surface */
+  --color-paper-soft:   #f3efe6;      /* deeper warm cream for alt sections */
+  --color-ink:          #1a1a1a;      /* slightly-off black, paper-readable */
+  --color-ink-soft:     #2a2a2a;
+  --color-ink-muted:    #5a5a5a;
+  --color-rule:         rgba(26, 26, 26, 0.12);
 
   /* === Animation timing === */
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
   --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+  /* Direction A motion — restrained ease-out, no bounce. Used by both
+     Framer Motion islands and Motion-One vanilla scripts. */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast:    180ms;
+  --motion-medium:  420ms;
+  --motion-slow:    720ms;
+}
+
+/* ----------------------------------------------------------------------------
+ * Direction A — Editorial section utility
+ * Opt-in: <main class="editorial"> or <section class="editorial">
+ * Swaps the surface to cream paper + serif headlines for the magazine feel.
+ * -------------------------------------------------------------------------- */
+.editorial {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+.editorial h1,
+.editorial h2,
+.editorial h3,
+.editorial .editorial-h {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  color: var(--color-ink);
+}
+.editorial .editorial-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-gold-hover);
 }
 
 /* ----------------------------------------------------------------------------

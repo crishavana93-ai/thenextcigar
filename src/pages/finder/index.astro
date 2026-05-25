@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Newsletter from "../../components/Newsletter.astro";
+import MagazineHero from "../../components/ui/MagazineHero.tsx";
+import EditorialStats from "../../components/ui/EditorialStats.tsx";
 import {
   COUNTRIES,
   SKUS,
@@ -114,45 +116,29 @@ const breadcrumbJsonLd = {
   {/* Structured data — CollectionPage + ItemList */}
   <script type="application/ld+json" is:inline set:html={JSON.stringify(collectionJsonLd)}></script>
   <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
-  {/* ─── HERO ──────────────────────────────────────────────────────────── */}
-  <section class="finder-hero">
-    <div class="container-wide pt-16 md:pt-24 pb-12 md:pb-16 reveal">
-      <p class="finder-hero__eyebrow">The Next Cigar · Finder</p>
-      <h1 class="finder-hero__title">
-        Cuban cigar prices,<br/>
-        <span class="finder-hero__title-sub">all of Europe, one page.</span>
-      </h1>
-      <p class="finder-hero__lead">
-        The first European price comparison built for Cuban (Habanos) cigars.
-        We track <strong>{snapshotCount} current prices</strong> across
-        <strong>{retailerCount} licensed retailers</strong> in
-        <strong>{countryCount} countries</strong>. Free to use. No signup. Click through to the
-        cheapest retailer in your country.
-      </p>
+  {/* ─── HERO — Direction A (Quiet Luxury Editorial) ───────────────────── */}
+  <MagazineHero
+    eyebrow={`Issue 02 · May 2026 · The Finder`}
+    title="Cuban cigar prices, all of Europe, one page."
+    subtitle={`The first European price comparison built for Habanos. ${snapshotCount} current prices across ${retailerCount} licensed retailers in ${countryCount} countries. Free, no signup, click through to the cheapest retailer in your country.`}
+    ctaPrimary={{ label: "Browse the catalogue", href: "#finder-catalogue" }}
+    ctaSecondary={{ label: "Pick a country", href: "#browse-by-country" }}
+    client:load
+  />
 
-      <div class="finder-hero__stats">
-        <div class="finder-hero__stat">
-          <span class="finder-hero__stat-n">{skuCount}</span>
-          <span class="finder-hero__stat-l">Flagship SKUs</span>
-        </div>
-        <div class="finder-hero__stat">
-          <span class="finder-hero__stat-n">{retailerCount}</span>
-          <span class="finder-hero__stat-l">Tracked retailers</span>
-        </div>
-        <div class="finder-hero__stat">
-          <span class="finder-hero__stat-n">{countryCount}</span>
-          <span class="finder-hero__stat-l">European markets</span>
-        </div>
-        <div class="finder-hero__stat">
-          <span class="finder-hero__stat-n">{lastUpdated}</span>
-          <span class="finder-hero__stat-l">Last refreshed</span>
-        </div>
-      </div>
-    </div>
-  </section>
+  {/* Editorial stats strip — paper background, animated counters */}
+  <EditorialStats
+    items={[
+      { value: skuCount.toString(), label: "Flagship SKUs" },
+      { value: retailerCount.toString(), label: "Tracked retailers" },
+      { value: countryCount.toString(), label: "European markets" },
+      { value: lastUpdated, label: "Last refreshed" },
+    ]}
+    client:visible
+  />
 
   {/* ─── COUNTRY PICKER ─────────────────────────────────────────────────── */}
-  <section class="container-wide pb-16 reveal" data-finder-country-section>
+  <section id="browse-by-country" class="editorial container-wide pt-16 md:pt-20 pb-16 reveal" data-finder-country-section>
     <p class="section-eyebrow" style="font-size:clamp(1.4rem,3.2vw,2.25rem);">Browse by country</p>
     <p class="mt-3 mb-8 text-[color:var(--color-text-soft)] max-w-2xl text-base leading-relaxed">
       Tobacco excise is country-specific in the EU, so most retailers ship within their own borders.

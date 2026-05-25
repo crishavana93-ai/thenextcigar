@@ -131,10 +131,14 @@ const skipPublicChrome = bareChrome || isLoungeApp;
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Inter only (Cormorant Garamond removed in v4 Newsplate redesign) -->
+    {/* Direction A — Quiet Luxury Editorial typography stack:
+        - Source Serif 4 (display + headlines) — refined modern serif
+        - Inter Tight (body + UI) — denser than Inter, magazine-ready
+        - Inter (legacy fallback for components still using --font-body)
+    */}
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600;8..60,700&family=Inter+Tight:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
     />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
