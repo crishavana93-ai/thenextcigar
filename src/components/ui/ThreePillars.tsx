@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { NumberTicker } from "./number-ticker";
 
 /**
  * ThreePillars — Direction A's structural identity block.
@@ -21,13 +22,19 @@ type Pillar = {
   cta?: { label: string; href: string };
 };
 
+type Stat = {
+  value: number;
+  label: string;
+};
+
 type Props = {
   eyebrow: string;
   intro: string;
+  stats?: Stat[];
   pillars: Pillar[];
 };
 
-export default function ThreePillars({ eyebrow, intro, pillars }: Props) {
+export default function ThreePillars({ eyebrow, intro, stats, pillars }: Props) {
   return (
     <section className="editorial border-t border-[color:var(--color-rule)] py-20 md:py-28">
       <div className="container-wide">
@@ -51,6 +58,38 @@ export default function ThreePillars({ eyebrow, intro, pillars }: Props) {
         >
           {intro}
         </motion.h2>
+
+        {stats && stats.length > 0 && (
+          <div className="grid grid-cols-3 gap-x-0 border-y border-[color:var(--color-rule)] py-8 mb-16 md:mb-20">
+            {stats.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                className={cn(
+                  "flex flex-col items-start pl-0 md:pl-8",
+                  "md:border-l md:border-[color:var(--color-rule)]",
+                  i === 0 && "md:border-l-0 md:pl-0",
+                )}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+                transition={{ duration: 0.6, ease: EASE_EDITORIAL, delay: i * 0.08 }}
+              >
+                <span
+                  className="font-normal leading-none text-[color:var(--color-ink)] tracking-[-0.01em]"
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "clamp(2rem, 3vw, 2.6rem)",
+                  }}
+                >
+                  <NumberTicker value={stat.value} delay={i * 0.1} />
+                </span>
+                <span className="mt-3 text-[0.7rem] uppercase tracking-[0.16em] font-semibold text-[color:var(--color-gold-hover)]">
+                  {stat.label}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-10 lg:gap-16">
           {pillars.map((pillar, i) => (

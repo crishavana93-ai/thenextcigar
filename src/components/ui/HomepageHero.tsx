@@ -15,12 +15,21 @@ import WordStaggerHeadline from "./WordStaggerHeadline";
 
 const EASE_EDITORIAL = [0.22, 1, 0.36, 1] as const;
 
+type HeroImage = {
+  src: string;
+  alt: string;
+  focal?: string;
+};
+
 type Props = {
   lineOne: string;
   lineTwo: string;
   subtitle: string;
   ctaPrimary: { label: string; href: string };
   ctaSecondary?: { label: string; href: string };
+  /** Optional background photograph — when present, hero becomes photo-led
+      with cream paper overlay for legibility. Matches /finder/ MagazineHero. */
+  image?: HeroImage;
 };
 
 export default function HomepageHero({
@@ -29,10 +38,63 @@ export default function HomepageHero({
   subtitle,
   ctaPrimary,
   ctaSecondary,
+  image,
 }: Props) {
+  const hasImage = Boolean(image?.src);
+
   return (
-    <section className={cn("editorial relative", "py-16 md:py-24 lg:py-28")}>
-      <div className="container-wide">
+    <section
+      className={cn(
+        "editorial relative overflow-hidden",
+        "py-16 md:py-24 lg:py-28",
+        hasImage && "min-h-[78vh] max-h-[920px] flex items-center",
+      )}
+    >
+      {/* Photo-led hero — slow ken-burns + cream overlay + grain */}
+      {hasImage && (
+        <>
+          <motion.div
+            aria-hidden="true"
+            className="absolute inset-0 z-0"
+            initial={{ scale: 1.0 }}
+            animate={{ scale: 1.05 }}
+            transition={{ duration: 14, ease: "linear" }}
+          >
+            <img
+              src={image!.src}
+              alt={image!.alt}
+              className="w-full h-full object-cover"
+              style={{
+                objectPosition: image!.focal || "50% 50%",
+                filter: "saturate(0.7) contrast(1.06) brightness(0.94)",
+              }}
+              loading="eager"
+              fetchPriority="high"
+            />
+          </motion.div>
+          {/* Cream paper wash — strong left, fades right */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 z-[1]"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(250,250,246,0.94) 0%, rgba(250,250,246,0.84) 32%, rgba(250,250,246,0.42) 68%, rgba(250,250,246,0.18) 100%)",
+            }}
+          />
+          {/* Paper grain overlay */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 z-[2] pointer-events-none mix-blend-multiply"
+            style={{
+              opacity: 0.05,
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E\")",
+            }}
+          />
+        </>
+      )}
+
+      <div className={cn("container-wide", hasImage && "relative z-10")}>
         <div className="max-w-5xl">
           {/* Vitra-pattern word stagger — each word emerges from below the
               baseline with ease [0.16,1,0.3,1] · 70ms apart · clipped per line */}

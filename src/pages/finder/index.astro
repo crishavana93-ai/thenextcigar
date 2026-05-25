@@ -136,9 +136,9 @@ const breadcrumbJsonLd = {
   {/* Editorial stats strip — paper background, animated counters */}
   <EditorialStats
     items={[
-      { value: skuCount.toString(), label: "Flagship SKUs" },
-      { value: retailerCount.toString(), label: "Tracked retailers" },
-      { value: countryCount.toString(), label: "European markets" },
+      { value: snapshotCount, label: "Live prices" },
+      { value: retailerCount, label: "Tracked retailers" },
+      { value: countryCount, label: "European markets" },
       { value: lastUpdated, label: "Last refreshed" },
     ]}
     client:visible

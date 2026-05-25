@@ -62,13 +62,20 @@ const news = postsByCategory("latest-news");
     tagline={masthead.tagline}
   />
 
-  {/* Direction A — Visia-scale headline hero (the brand declaration) */}
+  {/* Direction A — Visia-scale headline hero (the brand declaration)
+      Now photo-led: Cuban torcedor hand-rolling, cream wash + grain,
+      14s ken-burns. Matches /finder/ hero treatment for visual cohesion. */}
   <HomepageHero
     lineOne="Read the leaf."
     lineTwo="Find the price."
     subtitle="The Next Cigar is a European magazine, price-comparison engine, and community for Cuban-cigar smokers. One masthead. Three rooms. No noise."
     ctaPrimary={{ label: "Open the Finder", href: "/finder/" }}
     ctaSecondary={{ label: "Read the magazine", href: "/blog/" }}
+    image={{
+      src: "https://images.pexels.com/photos/14017013/pexels-photo-14017013.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      alt: "Close-up of Cohiba Cuban cigars in a cedar humidor",
+      focal: "55% 50%",
+    }}
     client:load
   />
 
@@ -76,6 +83,11 @@ const news = postsByCategory("latest-news");
   <ThreePillars
     eyebrow="The Architecture"
     intro="Three rooms under one roof — a price engine for the buyer, a private club for the traveler, and an editorial desk for the curious."
+    stats={[
+      { value: 162, label: "Live prices" },
+      { value: 116, label: "Licensed retailers" },
+      { value: 18, label: "Countries" },
+    ]}
     pillars={[
       {
         number: "01",

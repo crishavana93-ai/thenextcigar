@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { NumberTicker } from "./number-ticker";
 
 /**
  * EditorialStats — Direction A stats strip.
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const EASE_EDITORIAL = [0.22, 1, 0.36, 1] as const;
 
-type StatItem = { value: string; label: string };
+type StatItem = { value: number | string; label: string };
 type Props = { items: StatItem[]; className?: string };
 
 export default function EditorialStats({ items, className }: Props) {
@@ -49,7 +50,11 @@ export default function EditorialStats({ items, className }: Props) {
                 className="font-[var(--font-serif)] text-[2.4rem] md:text-[3rem] leading-none font-normal text-[color:var(--color-ink)] tracking-[-0.01em]"
                 style={{ fontFamily: "var(--font-serif)" }}
               >
-                {item.value}
+                {typeof item.value === "number" ? (
+                  <NumberTicker value={item.value} delay={i * 0.1} />
+                ) : (
+                  item.value
+                )}
               </span>
               <span className="mt-3 text-[0.7rem] uppercase tracking-[0.16em] font-semibold text-[color:var(--color-gold-hover)]">
                 {item.label}
