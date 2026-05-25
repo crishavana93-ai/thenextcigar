@@ -4,6 +4,7 @@ import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PostCard from "../../components/PostCard.astro";
 import AdSlot from "../../components/AdSlot.astro";
+import EditorialImage from "../../components/ui/EditorialImage.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -222,32 +223,22 @@ const itemListSchema = Array.isArray(products) && products.length > 0
       </div>
     </header>
 
-    {/* ─── HERO IMAGE BELOW THE HEADLINE (Newsplate pattern) ─── */}
+    {/* ─── HERO IMAGE — Direction A Floema clip-path reveal ───────────────
+        Replaces the old parallax-cover with EditorialImage which:
+         · slides the cover up from behind a clip-path mask on scroll-in
+         · pairs with a small-caps caption underneath (magazine print convention)
+         · ken-burns scale settles from 1.04 → 1.0 over 1.8s
+         · respects prefers-reduced-motion (instant reveal for those users)
+    */}
     {data.cover && (
-      <div class="container-wide mb-16 reveal">
-        <div class="relative overflow-hidden rounded-sm aspect-[16/9] md:aspect-[16/8]">
-          {typeof data.cover === "string" ? (
-            <img
-              src={data.cover}
-              alt={data.title}
-              class="parallax-cover w-full h-full object-cover"
-              data-parallax
-              data-parallax-speed="0.08"
-              loading="eager"
-            />
-          ) : (
-            <Image
-              src={data.cover}
-              alt={data.title}
-              widths={[800, 1200, 1800, 2400]}
-              sizes="(min-width: 1280px) 1280px, 100vw"
-              class="parallax-cover w-full h-full object-cover"
-              data-parallax
-              data-parallax-speed="0.08"
-              loading="eager"
-            />
-          )}
-        </div>
+      <div class="container-wide mb-16">
+        <EditorialImage
+          src={typeof data.cover === "string" ? data.cover : data.cover.src}
+          alt={data.title}
+          aspect="16/9"
+          eager
+          caption={`Cover · ${data.title}`}
+        />
       </div>
     )}
 
