@@ -19,7 +19,21 @@ export function initEditorialReveal() {
   if (registered) return;
   registered = true;
 
-  const els = document.querySelectorAll<HTMLElement>("[data-reveal]");
+  // i-D Spotlight pattern — every H2/H3 inside an editorial article gets
+  // auto-revealed on viewport entry. Tagging them here means MDX authors
+  // don't need to add `data-reveal` to every heading.
+  document.querySelectorAll<HTMLElement>(
+    ".editorial .prose h2, .editorial .prose h3",
+  ).forEach((h) => {
+    if (!h.hasAttribute("data-reveal-heading")) {
+      h.setAttribute("data-reveal-heading", "");
+    }
+  });
+
+  const els = [
+    ...document.querySelectorAll<HTMLElement>("[data-reveal]"),
+    ...document.querySelectorAll<HTMLElement>("[data-reveal-heading]"),
+  ];
   if (els.length === 0) return;
 
   if (!("IntersectionObserver" in window)) {

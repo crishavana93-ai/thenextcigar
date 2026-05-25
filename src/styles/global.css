@@ -456,7 +456,8 @@ header { z-index: 40; }
   color: var(--color-accent);
 }
 /* Direction A drop cap — serif + gold, magazine-grade.
-   Applies on .editorial .prose-dropcap so it doesn't override globally. */
+   Applies on .editorial .prose-dropcap so it doesn't override globally.
+   The drop cap also scales in on page-load (i-D Spotlight scaffold). */
 .editorial .prose-dropcap > p:first-of-type::first-letter {
   font-family: var(--font-serif);
   float: left;
@@ -465,6 +466,52 @@ header { z-index: 40; }
   font-weight: 400;
   margin: 0.04em 0.1em 0 -0.04em;
   color: var(--color-gold-hover);
+  /* i-D Spotlight pattern — scale up from 0.8 over 800ms when the page lands.
+     ::first-letter doesn't support full motion, but transform on the pseudo
+     works in modern browsers (Safari 16+, Chrome, Firefox). */
+  display: inline-block;
+  transform-origin: top left;
+  animation: dropcap-scale-in 900ms var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)) 250ms backwards;
+}
+@keyframes dropcap-scale-in {
+  from { transform: scale(0.78); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+/* Direction A — H2/H3 viewport scroll-reveal inside articles.
+   i-D Spotlight pattern: each heading "scene" enters with a soft fade + rise
+   when it crosses into the viewport. Triggered by adding `data-reveal` on each
+   heading via a tiny enhancer script (or applied universally below).
+
+   Universal approach: `prose .editorial-h-reveal` opacity 0 → 1 on viewport
+   intersection. Wired by editorial-reveal.ts which already targets
+   [data-reveal] elements. */
+.editorial .prose h2,
+.editorial .prose h3 {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 720ms var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 720ms var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: opacity, transform;
+}
+.editorial .prose h2.is-visible,
+.editorial .prose h3.is-visible,
+.editorial .prose h2.in-view,
+.editorial .prose h3.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .editorial .prose h2,
+  .editorial .prose h3 {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .editorial .prose-dropcap > p:first-of-type::first-letter {
+    animation: none !important;
+  }
 }
 
 /* ----------------------------------------------------------------------------
@@ -634,16 +681,53 @@ header { z-index: 40; }
 .container-prose  { max-width: 760px;  margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
 .container-wide   { max-width: 1440px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
 
-/* View transitions */
+/* View transitions — Direction A Obys-pattern blur crossfade.
+   Reference: obys.agency · Each route treated as an editorial spread.
+   Outgoing page fades + blurs to 8px; new page enters from blur 8px → 0. */
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) {
-  animation-duration: 380ms;
-  animation-timing-function: var(--ease-out-expo);
+  animation-duration: 500ms;
+  animation-timing-function: var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1));
 }
-::view-transition-old(root) { animation-name: vt-fade-out; }
-::view-transition-new(root) { animation-name: vt-fade-in; }
-@keyframes vt-fade-out { to { opacity: 0; } }
-@keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+::view-transition-old(root) { animation-name: vt-blur-out; }
+::view-transition-new(root) { animation-name: vt-blur-in; }
+@keyframes vt-blur-out {
+  from { opacity: 1; filter: blur(0px); }
+  to   { opacity: 0; filter: blur(8px); }
+}
+@keyframes vt-blur-in {
+  from { opacity: 0; filter: blur(8px); }
+  to   { opacity: 1; filter: blur(0px); }
+}
+
+/* Direction A — Cereal 8-column editorial grid utility.
+   Reference: readcereal.com · Print-grade column discipline.
+   Use as a wrapper for editorial layouts that want magazine-style columns:
+     <div class="cereal-grid">
+       <div class="cereal-col-span-5">Lead story</div>
+       <div class="cereal-col-span-3">Sidebar</div>
+     </div>
+*/
+.cereal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: clamp(1rem, 2.5vw, 2rem);
+  row-gap: clamp(2rem, 4vw, 3.5rem);
+}
+@media (min-width: 768px) {
+  .cereal-grid { grid-template-columns: repeat(8, 1fr); }
+}
+.cereal-col-span-1  { grid-column: span 1; }
+.cereal-col-span-2  { grid-column: span 2; }
+.cereal-col-span-3  { grid-column: span 3; }
+.cereal-col-span-4  { grid-column: span 4; }
+.cereal-col-span-5  { grid-column: span 5; }
+.cereal-col-span-6  { grid-column: span 6; }
+.cereal-col-span-7  { grid-column: span 7; }
+.cereal-col-span-8  { grid-column: span 8; }
+@media (max-width: 767px) {
+  [class*="cereal-col-span-"] { grid-column: span 4; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

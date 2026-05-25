@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import WordStaggerHeadline from "./WordStaggerHeadline";
 
 /**
  * HomepageHero — Direction A's "Visia-scale" headline hero for /.
@@ -33,24 +34,12 @@ export default function HomepageHero({
     <section className={cn("editorial relative", "py-16 md:py-24 lg:py-28")}>
       <div className="container-wide">
         <div className="max-w-5xl">
-          <motion.h1
-            className="editorial-h leading-[0.95] tracking-[-0.022em]"
-            style={{ fontSize: "clamp(2.8rem, 9vw, 7.2rem)" }}
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.85, ease: EASE_EDITORIAL }}
-          >
-            <span className="block">{lineOne}</span>
-            <motion.span
-              className="block"
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.85, ease: EASE_EDITORIAL, delay: 0.15 }}
-              style={{ color: "var(--color-gold-hover)" }}
-            >
-              {lineTwo}
-            </motion.span>
-          </motion.h1>
+          {/* Vitra-pattern word stagger — each word emerges from below the
+              baseline with ease [0.16,1,0.3,1] · 70ms apart · clipped per line */}
+          <WordStaggerHeadline
+            lines={[lineOne, lineTwo]}
+            accentLine={1}
+          />
 
           <motion.p
             className="mt-10 max-w-2xl italic"
