@@ -9,6 +9,8 @@ import PremiumCTA from "../components/PremiumCTA.astro";
 import AdSlot from "../components/AdSlot.astro";
 import MagazineMasthead from "../components/ui/MagazineMasthead.astro";
 import EditorialSectionHead from "../components/ui/EditorialSectionHead.astro";
+import HomepageHero from "../components/ui/HomepageHero.tsx";
+import ThreePillars from "../components/ui/ThreePillars.tsx";
 
 // ─── Direction A masthead — Volume / Issue / Date label ──────────────────
 // Issue number increments with each new issue release; tagline reflects TNC's
@@ -58,6 +60,46 @@ const news = postsByCategory("latest-news");
     issue={masthead.issue}
     date={masthead.date}
     tagline={masthead.tagline}
+  />
+
+  {/* Direction A — Visia-scale headline hero (the brand declaration) */}
+  <HomepageHero
+    lineOne="Read the leaf."
+    lineTwo="Find the price."
+    subtitle="The Next Cigar is a European magazine, price-comparison engine, and community for Cuban-cigar smokers. One masthead. Three rooms. No noise."
+    ctaPrimary={{ label: "Open the Finder", href: "/finder/" }}
+    ctaSecondary={{ label: "Read the magazine", href: "/blog/" }}
+    client:load
+  />
+
+  {/* Direction A — the structural identity (Visia-pattern three pillars) */}
+  <ThreePillars
+    eyebrow="The Architecture"
+    intro="Three rooms under one roof — a price engine for the buyer, a private club for the traveler, and an editorial desk for the curious."
+    pillars={[
+      {
+        number: "01",
+        label: "The Finder",
+        title: "Cuban cigar prices, all of Europe, one page.",
+        body: "162 live prices across 116 licensed retailers in 18 countries. Free, no signup, click through to the cheapest verified box in your country.",
+        cta: { label: "Browse the catalogue", href: "/finder/" },
+      },
+      {
+        number: "02",
+        label: "The Lounge",
+        title: "A private network of European Cuban-cigar smokers.",
+        body: "Map of every Casa del Habano in Europe, check-ins by city, member messaging, travel mode. Free tier opens the doors; OG Members lock in at $9/mo before 1 June.",
+        cta: { label: "Visit the Lounge", href: "/lounge/" },
+      },
+      {
+        number: "03",
+        label: "The Magazine",
+        title: "Long reads on the leaf, the markets, and the buyers.",
+        body: "Vitola explainers, retailer histories, the cross-border duty math, and the people who shape the European Habanos market. New issues every month.",
+        cta: { label: "Read the issues", href: "/blog/" },
+      },
+    ]}
+    client:visible
   />
 
   {/* HIGHLIGHT NEWS — featured + 2 side stories */}
