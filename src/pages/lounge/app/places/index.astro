@@ -232,6 +232,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
 <script>
   import { getSupabase, getCurrentUser, getCurrentProfile } from "../../../../lib/supabase";
+  import { places as staticPlaces } from "../../../../data/cigar-places";
 
   type Lounge = {
     id: string;
@@ -246,6 +247,22 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   };
 
   let all: Lounge[] = [];
+
+  // Static curated places (cigar-places.ts) are merged with Supabase
+  // partner_lounges rows so the Lounge surfaces the worldwide map even
+  // before partners are onboarded into the DB. Static entries use their
+  // slug as id and are deduped against Supabase rows by (name+city) match.
+  const staticAsLounges: Lounge[] = staticPlaces.map((p) => ({
+    id: `static:${p.slug}`,
+    name: p.name,
+    city: p.city,
+    country: p.country,
+    address: p.address ?? null,
+    lat: p.lat,
+    lng: p.lng,
+    type: p.type,
+    website: p.website ?? null,
+  }));
 
   function escapeHtml(s: string): string {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -320,7 +337,17 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       .not("verified_at", "is", null)
       .order("city", { ascending: true })
       .order("name", { ascending: true });
-    all = (lounges as Lounge[]) || [];
+    const dbRows = (lounges as Lounge[]) || [];
+
+    // Merge static curated places with Supabase partner_lounges. Dedupe on
+    // (lowercased name + city) so a partner that's also in the static list
+    // doesn't show twice. DB rows win on duplication (they're "active").
+    const dbKey = (l: Lounge) => `${l.name.toLowerCase()}|${l.city.toLowerCase()}`;
+    const dbKeys = new Set(dbRows.map(dbKey));
+    const staticOnly = staticAsLounges.filter((p) => !dbKeys.has(dbKey(p)));
+    all = [...dbRows, ...staticOnly].sort((a, b) =>
+      a.city.localeCompare(b.city) || a.name.localeCompare(b.name),
+    );
 
     // Populate city datalist (typeahead source)
     const cityInput = document.getElementById("pl-city") as HTMLInputElement;

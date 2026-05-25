@@ -878,6 +878,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
 
 <script>
   import { getCurrentUser, getCurrentProfile, getSupabase } from "../../../../lib/supabase";
+  import { places as staticPlaces } from "../../../../data/cigar-places";
 
   type Lounge = {
     id: string;
@@ -893,6 +894,24 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     website: string | null;
     photo_url: string | null;
   };
+
+  // Static curated worldwide places, shaped to match the Lounge row schema.
+  // Merged with Supabase partner_lounges below so the map shows the entire
+  // curated dataset even before partner onboarding writes rows.
+  const staticAsLounges: Lounge[] = staticPlaces.map((p) => ({
+    id: `static:${p.slug}`,
+    slug: p.slug,
+    name: p.name,
+    city: p.city,
+    country: p.country,
+    address: p.address ?? null,
+    lat: p.lat,
+    lng: p.lng,
+    type: p.type,
+    perks: null,
+    website: p.website ?? null,
+    photo_url: null,
+  }));
 
   type CheckinRow = {
     id: string;
@@ -1473,6 +1492,13 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     } else {
       allLounges = (lounges as Lounge[]) || [];
     }
+
+    // Merge with curated static places (cigar-places.ts) — DB rows win on
+    // (name+city) collisions so an onboarded partner doesn't double-render.
+    const dbKey = (l: Lounge) => `${l.name.toLowerCase()}|${l.city.toLowerCase()}`;
+    const dbKeys = new Set(allLounges.map(dbKey));
+    const staticOnly = staticAsLounges.filter((p) => !dbKeys.has(dbKey(p)));
+    allLounges = [...allLounges, ...staticOnly];
 
     await Promise.all([loadActive(), loadEvents()]);
     setChipsFromUrl();
