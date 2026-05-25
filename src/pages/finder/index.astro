@@ -118,13 +118,18 @@ const breadcrumbJsonLd = {
   {/* Structured data — CollectionPage + ItemList */}
   <script type="application/ld+json" is:inline set:html={JSON.stringify(collectionJsonLd)}></script>
   <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
-  {/* ─── HERO — Direction A (Quiet Luxury Editorial) ───────────────────── */}
+  {/* ─── HERO — Direction A (Quiet Luxury Editorial) v2 ─────────────────── */}
   <MagazineHero
-    eyebrow={`Issue 02 · May 2026 · The Finder`}
+    eyebrow={`Volume III · May 2026 · The Finder`}
     title="Cuban cigar prices, all of Europe, one page."
     subtitle={`The first European price comparison built for Habanos. ${snapshotCount} current prices across ${retailerCount} licensed retailers in ${countryCount} countries. Free, no signup, click through to the cheapest retailer in your country.`}
     ctaPrimary={{ label: "Browse the catalogue", href: "#finder-catalogue" }}
     ctaSecondary={{ label: "Pick a country", href: "#browse-by-country" }}
+    image={{
+      src: "https://images.pexels.com/photos/33105616/pexels-photo-33105616.jpeg?auto=compress&cs=tinysrgb&w=2000",
+      alt: "Cuban torcedor rolling Habanos cigars by hand in a traditional Havana workshop",
+      focal: "60% 45%",
+    }}
     client:load
   />
 
