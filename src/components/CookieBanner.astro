@@ -3,17 +3,26 @@
 // Required for EU/UK visitors and best practice once we add ad networks.
 ---
 
-<div id="cookie-banner" class="fixed bottom-0 left-0 right-0 z-50 section-dark border-t border-[color:var(--color-dark-border)]" hidden>
-  <div class="container-wide py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-    <p class="text-xs sm:text-sm text-[color:var(--color-text-on-dark-soft)] flex-1">
-      We use cookies for analytics and (eventually) ads to keep this editorial free. By continuing you agree to our
-      <a href="/privacy" class="underline hover:text-[color:var(--color-accent)] transition-colors">Privacy Policy</a>.
+<div id="cookie-banner"
+  class="fixed bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:bottom-6 sm:max-w-md z-50 shadow-[0_8px_32px_rgba(26,26,26,0.18)] border border-[color:var(--color-rule)] rounded-sm"
+  style="background: var(--color-paper); color: var(--color-ink);"
+  hidden
+>
+  <div class="px-4 py-3 sm:px-5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5">
+    <p class="text-xs leading-snug flex-1" style="color: var(--color-ink-soft);">
+      Cookies for analytics keep this editorial free. <a href="/privacy" class="underline underline-offset-2" style="color: var(--color-gold-hover);">Privacy</a>.
     </p>
-    <div class="flex gap-2 flex-shrink-0">
-      <button id="cookie-decline" class="text-xs uppercase tracking-wider text-[color:var(--color-text-on-dark-mute)] hover:text-white transition-colors px-4 py-2">
+    <div class="flex items-center gap-1 flex-shrink-0">
+      <button id="cookie-decline"
+        class="text-[0.7rem] uppercase tracking-wider px-3 py-1.5 transition-colors"
+        style="color: var(--color-ink-muted);"
+      >
         Decline
       </button>
-      <button id="cookie-accept" class="btn btn-accent !py-2 !px-5 text-xs">
+      <button id="cookie-accept"
+        class="text-[0.7rem] uppercase tracking-wider font-semibold px-3 py-1.5 transition-colors"
+        style="background: var(--color-ink); color: var(--color-paper);"
+      >
         Accept
       </button>
     </div>
