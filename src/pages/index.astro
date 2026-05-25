@@ -7,6 +7,19 @@ import HomeVideos from "../components/HomeVideos.astro";
 import CategoryBand from "../components/CategoryBand.astro";
 import PremiumCTA from "../components/PremiumCTA.astro";
 import AdSlot from "../components/AdSlot.astro";
+import MagazineMasthead from "../components/ui/MagazineMasthead.astro";
+import EditorialSectionHead from "../components/ui/EditorialSectionHead.astro";
+
+// ─── Direction A masthead — Volume / Issue / Date label ──────────────────
+// Issue number increments with each new issue release; tagline reflects TNC's
+// editorial voice. Date is computed live so it stays current without manual
+// edits on every push.
+const masthead = {
+  volume: "Volume III",
+  issue: `Issue 0${Math.max(1, Math.min(9, new Date().getMonth() - 1))}`,
+  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+  tagline: "Cuban cigars, written for people who actually smoke them. The Finder, the Lounge, and the long read.",
+};
 
 const allPosts = (await getCollection("blog")).sort(
   (a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
@@ -39,19 +52,27 @@ const news = postsByCategory("latest-news");
   title="TNext Cigar — Modern editorial for the cigar aficionado"
   description="Highlight news, deep dives, and the cigar stories that shape the leaf — written for people who actually smoke them."
 >
+  {/* Direction A — magazine masthead bookplate */}
+  <MagazineMasthead
+    volume={masthead.volume}
+    issue={masthead.issue}
+    date={masthead.date}
+    tagline={masthead.tagline}
+  />
+
   {/* HIGHLIGHT NEWS — featured + 2 side stories */}
   {featured && (
     <HighlightHero featured={featured} side={side} categoryByslug={categoryByslug} />
   )}
 
-  {/* LATEST NEWS — 6-up grid */}
-  <section class="container-wide py-12 border-t border-[color:var(--color-border)]">
-    <div class="flex items-end justify-between mb-10 reveal flex-wrap gap-4">
-      <p class="section-eyebrow">Latest news</p>
-      <a href="/blog" class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
-        See all {allPosts.length} stories →
-      </a>
-    </div>
+  {/* LATEST NEWS — editorial archival-index grid */}
+  <section class="editorial container-wide py-16 md:py-20 border-t border-[color:var(--color-rule)]">
+    <EditorialSectionHead
+      eyebrow="This week"
+      title="From the archive"
+      dek={`The most recent ${latest.length} stories — every Habano shipment shift, every retailer change, every long read we've published.`}
+      cta={{ label: `See all ${allPosts.length} stories`, href: "/blog" }}
+    />
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
       {latest.map((post, i) => {
         const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
