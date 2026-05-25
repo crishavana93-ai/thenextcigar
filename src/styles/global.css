@@ -106,6 +106,72 @@
   --motion-fast:    180ms;
   --motion-medium:  420ms;
   --motion-slow:    720ms;
+  /* Temper "do less" hover law — single canonical duration for every card
+     hover effect. Reference: temper.studio. Rule: max two properties,
+     max 250ms, ease-out, never spring. The site-wide consistency is what
+     makes the brand feel premium; mixed durations read SaaS. */
+  --motion-card:    250ms;
+}
+
+/* ----------------------------------------------------------------------------
+ * Direction A — Temper hover law
+ * Targets every card-shaped link on the editorial surfaces (Finder + Lounge
+ * marketing + blog grids). The .editorial scope means it doesn't touch the
+ * Lounge member app where bespoke micro-interactions are intentional.
+ *
+ * Rule (from temper.studio):
+ *   - max 2 properties animated on hover
+ *   - canonical duration 250ms
+ *   - ease-out only (cubic-bezier(0.22, 1, 0.36, 1))
+ *   - NO box-shadow (paint thrash) · NO scale (reads as ad) · NO spring
+ *
+ * Transition goes on the BASE selector so the out-state animates too.
+ * -------------------------------------------------------------------------- */
+.editorial .editorial-card,
+.editorial .finder-retailer,
+.editorial .finder-country,
+.editorial .finder-watch,
+.editorial .finder-drop,
+.editorial .finder-place,
+.editorial .lcat-card,
+.editorial .lounge-country {
+  transition:
+    transform var(--motion-card, 250ms) var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)),
+    border-color var(--motion-card, 250ms) var(--ease-editorial, cubic-bezier(0.22, 1, 0.36, 1)) !important;
+}
+.editorial .editorial-card:hover,
+.editorial .finder-retailer:hover,
+.editorial .finder-country:hover,
+.editorial .finder-watch:hover,
+.editorial .finder-drop:hover,
+.editorial .finder-place:hover,
+.editorial .lcat-card:hover,
+.editorial .lounge-country:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-gold-hover, #c9a961) !important;
+}
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .editorial .editorial-card,
+  .editorial .finder-retailer,
+  .editorial .finder-country,
+  .editorial .finder-watch,
+  .editorial .finder-drop,
+  .editorial .finder-place,
+  .editorial .lcat-card,
+  .editorial .lounge-country {
+    transition: none !important;
+  }
+  .editorial .editorial-card:hover,
+  .editorial .finder-retailer:hover,
+  .editorial .finder-country:hover,
+  .editorial .finder-watch:hover,
+  .editorial .finder-drop:hover,
+  .editorial .finder-place:hover,
+  .editorial .lcat-card:hover,
+  .editorial .lounge-country:hover {
+    transform: none !important;
+  }
 }
 
 /* ----------------------------------------------------------------------------
