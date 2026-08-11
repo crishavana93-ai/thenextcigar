@@ -1,10 +1,9 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import Newsletter from "../../components/Newsletter.astro";
-import MagazineHero from "../../components/ui/MagazineHero.tsx";
-import EditorialStats from "../../components/ui/EditorialStats.tsx";
-import EditorialSectionHead from "../../components/ui/EditorialSectionHead.astro";
-import EditorialDivider from "../../components/ui/EditorialDivider.astro";
+import "../../styles/newspaper.css";
+import CigarCursor from "../../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../../components/newspaper/SectionFlag.astro";
 import {
   COUNTRIES,
   SKUS,
@@ -13,1608 +12,462 @@ import {
   bestPriceForSku,
   formatPrice,
   toEUR,
-  snapshotsForSku,
 } from "../../data/finder-data.ts";
 
-// Hero stats
-const skuCount       = SKUS.length;
-const retailerCount  = RETAILERS.length;
-const countryCount   = COUNTRIES.length;
-const snapshotCount  = PRICE_SNAPSHOTS.length;
-const lastUpdated    = "15 May 2026";
+/**
+ * /finder/ — The Finder section in newspaper "Business & Markets" style.
+ *
+ * Layout: masthead + section flag + top-of-fold live price ticker + featured
+ * "mover" story + country delta grid + full SKU listing + explainer sidebar.
+ * All data live from finder-data.ts — no mockup content.
+ */
 
-// Featured rail — every SKU with a current best price, sorted by box price (ascending)
-const featured = SKUS
+// Top 5 SKUs by best EUR price (ascending)
+const priced = SKUS
   .map((sku) => ({ sku, best: bestPriceForSku(sku.id) }))
-  .filter((row): row is { sku: typeof SKUS[number]; best: NonNullable<ReturnType<typeof bestPriceForSku>> } => !!row.best)
-  .sort((a, b) => a.best.eur - b.best.eur);
+  .filter((row): row is { sku: typeof SKUS[number]; best: NonNullable<ReturnType<typeof bestPriceForSku>> } => !!row.best);
 
-// Biggest current "drops" — snapshots with an originalPrice (was/now)
-const dropRows = PRICE_SNAPSHOTS
-  .filter((s) => s.originalPrice && s.inStock)
+const topMovers = priced
+  .slice()
+  .sort((a, b) => a.best.eur - b.best.eur)
+  .slice(0, 5);
+
+// Featured mover — biggest current price drop in the snapshots
+const bestDrop = PRICE_SNAPSHOTS
+  .filter((s) => s.originalPrice && s.inStock && s.originalPrice > s.price)
   .map((s) => {
-    const sku = SKUS.find((k) => k.id === s.skuId)!;
-    const retailer = RETAILERS.find((r) => r.id === s.retailerId)!;
+    const sku = SKUS.find((k) => k.id === s.skuId);
+    const retailer = RETAILERS.find((r) => r.id === s.retailerId);
+    if (!sku || !retailer) return null;
     const pct = Math.round(((s.originalPrice! - s.price) / s.originalPrice!) * 100);
     return { snap: s, sku, retailer, pct };
   })
-  .sort((a, b) => b.pct - a.pct)
-  .slice(0, 4);
+  .filter(Boolean)
+  .sort((a, b) => (b!.pct) - (a!.pct))[0];
 
-// Country picker: split into "open" vs "restricted" vs "closed"
-const openCountries       = COUNTRIES.filter((c) => c.status === "open");
+// All SKUs listed alphabetically by brand for the archive-style table
+const allSkus = priced.slice().sort((a, b) => a.sku.brand.localeCompare(b.sku.brand));
+
+// Country grid — every country grouped by retail status
+const openCountries = COUNTRIES.filter((c) => c.status === "open");
 const restrictedCountries = COUNTRIES.filter((c) => c.status === "restricted");
-const closedCountries     = COUNTRIES.filter((c) => c.status === "closed");
 
-// Brand chips for the search bar. Derived from the SKU set — every brand that
-// appears in our catalogue at least once, in the order we want them displayed.
-const allBrands = Array.from(new Set(SKUS.map((s) => s.brand))).sort();
-
-// Country dropdown — every country we have at least one retailer in.
-const countriesWithRetailers = Array.from(new Set(RETAILERS.map((r) => r.country)));
-const searchCountries = COUNTRIES.filter((c) => countriesWithRetailers.includes(c.code));
-
-// Pre-compute the set of countries each SKU has at least one snapshot in, so
-// the JS filter has the data it needs without making API calls.
-const skuCountryMap: Record<string, string[]> = {};
-const skuInStockCountries: Record<string, string[]> = {};
-for (const sku of SKUS) {
-  const snaps = PRICE_SNAPSHOTS.filter((s) => s.skuId === sku.id);
-  const countries = Array.from(new Set(snaps.map((s) => {
-    const r = RETAILERS.find((x) => x.id === s.retailerId);
-    return r ? r.country : null;
-  }).filter((c): c is string => !!c)));
-  skuCountryMap[sku.id] = countries;
-  const inStockCountries = Array.from(new Set(snaps.filter((s) => s.inStock).map((s) => {
-    const r = RETAILERS.find((x) => x.id === s.retailerId);
-    return r ? r.country : null;
-  }).filter((c): c is string => !!c)));
-  skuInStockCountries[sku.id] = inStockCountries;
+// Per-country cheapest listing count — a quick "what's live in each country" signal
+const skusPerCountry: Record<string, number> = {};
+for (const country of COUNTRIES) {
+  skusPerCountry[country.code] = new Set(
+    PRICE_SNAPSHOTS
+      .filter((s) => {
+        const r = RETAILERS.find((r) => r.id === s.retailerId);
+        return r?.country === country.code && s.inStock;
+      })
+      .map((s) => s.skuId)
+  ).size;
 }
 
-// ----------------------------------------------------------------------------
-// Structured data — CollectionPage describing The Finder + ItemList of SKUs
-// ----------------------------------------------------------------------------
-const collectionJsonLd = {
-  "@context": "https://schema.org/",
-  "@type": "CollectionPage",
-  name: "The Finder — Cuban cigar prices across Europe",
-  description: `Free European price comparison for Cuban (Habanos) cigars. ${snapshotCount} current prices across ${retailerCount} licensed retailers in ${countryCount} countries.`,
-  url: "https://thenextcigar.com/finder/",
-  isPartOf: {
-    "@type": "WebSite",
-    name: "The Next Cigar",
-    url: "https://thenextcigar.com/",
-  },
-  hasPart: featured.slice(0, 12).map(({ sku, best }) => ({
-    "@type": "Product",
-    name: `${sku.brand} ${sku.vitola}`,
-    brand: { "@type": "Brand", name: sku.brand },
-    url: `https://thenextcigar.com/finder/sku/${sku.slug}/`,
-    offers: {
-      "@type": "Offer",
-      priceCurrency: best.snap.currency,
-      price: best.snap.price.toFixed(2),
-      availability: "https://schema.org/InStock",
-    },
-  })),
+const lastUpdated = "6 min ago";
+
+const masthead = {
+  volume: "Vol. III",
+  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
+  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
 };
 
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org/",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "The Next Cigar", item: "https://thenextcigar.com/" },
-    { "@type": "ListItem", position: 2, name: "The Finder", item: "https://thenextcigar.com/finder/" },
-  ],
-};
+// Fmt helpers
+function fmtBest(row: { sku: typeof SKUS[number]; best: NonNullable<ReturnType<typeof bestPriceForSku>> }) {
+  return formatPrice(row.best.price, row.best.currency);
+}
+function fmtCountry(code: string) {
+  const c = COUNTRIES.find((c) => c.code === code);
+  return c?.name || code;
+}
+function fmtFlag(code: string) {
+  const flags: Record<string, string> = {
+    DE: "🇩🇪", FR: "🇫🇷", ES: "🇪🇸", IT: "🇮🇹", CH: "🇨🇭", GB: "🇬🇧",
+    NL: "🇳🇱", BE: "🇧🇪", SE: "🇸🇪", DK: "🇩🇰", NO: "🇳🇴", FI: "🇫🇮",
+    AT: "🇦🇹", PT: "🇵🇹", IE: "🇮🇪", LU: "🇱🇺", PL: "🇵🇱", CZ: "🇨🇿",
+  };
+  return flags[code] || "";
+}
 ---
 
 <BaseLayout
-  title="The Finder — Cuban cigar prices across Europe"
-  description={`A free European price comparison for Cuban (Habanos) cigars. ${snapshotCount} current prices across ${retailerCount} retailers in ${countryCount} countries. Refreshed weekly.`}
-  image="/og-finder.svg"
+  title="The Finder — Live Cuban cigar prices across Europe · The Next Cigar"
+  description={`${SKUS.length} Cuban cigar SKUs × ${RETAILERS.length} licensed retailers × ${COUNTRIES.length} countries. Prices live, updated every six hours. Free, no signup.`}
+  bareChrome={true}
 >
-  {/* Structured data — CollectionPage + ItemList */}
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(collectionJsonLd)}></script>
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
-  {/* ─── HERO — Direction A (Quiet Luxury Editorial) v2 ─────────────────── */}
-  <MagazineHero
-    eyebrow={`Volume III · May 2026 · The Finder`}
-    title="Cuban cigar prices, all of Europe, one page."
-    subtitle={`The first European price comparison built for Habanos. ${snapshotCount} current prices across ${retailerCount} licensed retailers in ${countryCount} countries. Free, no signup, click through to the cheapest retailer in your country.`}
-    ctaPrimary={{ label: "Browse the catalogue", href: "#finder-catalogue" }}
-    ctaSecondary={{ label: "Pick a country", href: "#browse-by-country" }}
-    image={{
-      src: "https://images.pexels.com/photos/33105616/pexels-photo-33105616.jpeg?auto=compress&cs=tinysrgb&w=2000",
-      alt: "Cuban torcedor rolling Habanos cigars by hand in a traditional Havana workshop",
-      focal: "60% 45%",
-    }}
-    client:load
+  <link
+    is:inline
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
   />
 
-  {/* Editorial stats strip — paper background, animated counters */}
-  <EditorialStats
-    items={[
-      { value: snapshotCount, label: "Live prices" },
-      { value: retailerCount, label: "Tracked retailers" },
-      { value: countryCount, label: "European markets" },
-      { value: lastUpdated, label: "Last refreshed" },
-    ]}
-    client:visible
-  />
+  <div class="tnc-cinema">
+    <CigarCursor />
 
-  {/* ─── COUNTRY PICKER ─────────────────────────────────────────────────── */}
-  <section id="browse-by-country" class="editorial container-wide pt-16 md:pt-20 pb-16" data-finder-country-section>
-    <EditorialSectionHead
-      eyebrow="The Geography"
-      title="Browse by country"
-      dek="Tobacco excise is country-specific in the EU, so most retailers ship within their own borders. Pick a market to see retailers and current prices that will actually ship to you."
-      cta={{ label: "Or jump to the catalogue search", href: "#finder-catalogue" }}
-    />
-
-    <h3 class="finder-section-h">Open markets — domestic & EU shipping</h3>
-    <div class="finder-country-grid mb-8">
-      {openCountries.map((c) => (
-        <a href={`/finder/${c.code}/`} class="finder-country">
-          <span class="finder-country__flag">{c.flag}</span>
-          <span class="finder-country__name">{c.name}</span>
-          <span class="finder-country__currency">{c.currency}</span>
-        </a>
-      ))}
-    </div>
-
-    <h3 class="finder-section-h">Restricted markets — domestic only</h3>
-    <div class="finder-country-grid mb-8">
-      {restrictedCountries.map((c) => (
-        <a href={`/finder/${c.code}/`} class="finder-country finder-country--restricted">
-          <span class="finder-country__flag">{c.flag}</span>
-          <span class="finder-country__name">{c.name}</span>
-          <span class="finder-country__currency">{c.currency}</span>
-        </a>
-      ))}
-    </div>
-
-    <h3 class="finder-section-h">In-store only — no online sale</h3>
-    <div class="finder-country-grid">
-      {closedCountries.map((c) => (
-        <a href={`/finder/${c.code}/`} class="finder-country finder-country--closed">
-          <span class="finder-country__flag">{c.flag}</span>
-          <span class="finder-country__name">{c.name}</span>
-          <span class="finder-country__currency">In-store</span>
-        </a>
-      ))}
-    </div>
-  </section>
-
-  <EditorialDivider ornament />
-
-  {/* ─── BIGGEST DROPS RAIL ─────────────────────────────────────────────── */}
-  {dropRows.length > 0 && (
-    <section class="editorial finder-strip">
-      <div class="container-wide py-12 md:py-16">
-        <EditorialSectionHead
-          eyebrow="Today's drops"
-          title="Biggest price cuts this week"
-          dek="Snapshots flagged with a discount versus their last refresh. Cohiba and Partagás move most often; the bigger boxes carry the bigger absolute savings."
-          cta={{ label: "View Germany dashboard", href: "/finder/de/" }}
-        />
-        <div class="finder-drop-grid">
-          {dropRows.map(({ snap, sku, retailer, pct }) => (
-            <a href={`/finder/sku/${sku.slug}/`} class="finder-drop">
-              <div class="finder-drop__pct">−{pct}%</div>
-              <div class="finder-drop__body">
-                <p class="finder-drop__brand">{sku.brand}</p>
-                <p class="finder-drop__vitola">{sku.vitola}</p>
-                <p class="finder-drop__price">
-                  <span class="finder-drop__was">{formatPrice(snap.originalPrice!, snap.currency)}</span>
-                  <strong>{formatPrice(snap.price, snap.currency)}</strong>
-                </p>
-                <p class="finder-drop__retailer">at {retailer.name} · {retailer.country.toUpperCase()}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
-
-  {/* ─── FEATURED SKUS — search bar + filterable catalogue.
-      The search bar is paired directly with the SKU table it filters; the
-      country picker above is the "browse by geography" path, this is the
-      "find a specific cigar" path. Brand chips + country dropdown + in-stock
-      toggle + free-text input, all client-side. ─────────────────────────── */}
-  <section class="editorial container-wide py-16 md:py-20" id="finder-catalogue">
-    <EditorialSectionHead
-      eyebrow="The Catalogue"
-      title="Or search by cigar"
-      dek="The flagship Habanos catalogue, sorted by the cheapest verified box price in Europe. Search by name, filter by brand or country, click any cigar to compare every retailer."
-    />
-    {/* Search + filter controls — applied to the table below */}
-    <div class="finder-search mb-8" id="finder-search-section">
-      <label class="finder-search__label" for="finder-search-input">
-        Search the catalogue
-      </label>
-      <div class="finder-search__row">
-        <div class="finder-search__input-wrap">
-          <svg class="finder-search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input
-            type="search"
-            id="finder-search-input"
-            class="finder-search__input"
-            placeholder="Try 'Cohiba Robustos', 'Petit Edmundo', 'Trinidad'…"
-            autocomplete="off"
-            aria-label="Search Cuban cigars by name"
-            aria-autocomplete="list"
-            aria-controls="finder-search-ac"
-          />
-          <button type="button" class="finder-search__clear" data-finder-clear aria-label="Clear search">×</button>
-          {/* Autocomplete dropdown — populated by JS when input.value.length >= 1 */}
-          <div
-            class="finder-search__autocomplete"
-            id="finder-search-ac"
-            data-finder-ac
-            role="listbox"
-            aria-label="Search suggestions"
-            hidden
-          ></div>
-        </div>
-        <select class="finder-search__country" id="finder-search-country" aria-label="Filter by country">
-          <option value="">All countries</option>
-          {searchCountries.map((c) => (
-            <option value={c.code}>{c.flag} {c.name}</option>
-          ))}
-        </select>
-        <label class="finder-search__instock">
-          <input type="checkbox" id="finder-search-instock" />
-          <span>In stock only</span>
-        </label>
-      </div>
-      <div class="finder-search__chips" role="group" aria-label="Filter by brand">
-        <button type="button" class="finder-search__chip is-active" data-brand-chip="">All brands</button>
-        {allBrands.map((brand) => (
-          <button type="button" class="finder-search__chip" data-brand-chip={brand}>{brand}</button>
-        ))}
-      </div>
-      <p class="finder-search__count" data-finder-count aria-live="polite">
-        Showing all {skuCount} cigars
-      </p>
-    </div>
-
-    <div class="finder-table-wrap">
-      <table class="finder-table">
-        <thead>
-          <tr>
-            <th class="finder-table__brand">Cigar</th>
-            <th>Vitola</th>
-            <th class="finder-table__num">Ring × Length</th>
-            <th class="finder-table__num">Box</th>
-            <th class="finder-table__num">Best price</th>
-            <th class="finder-table__num">€ / cigar</th>
-            <th>At</th>
-            <th class="finder-table__cta"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {featured.map(({ sku, best }) => {
-            const retailer = RETAILERS.find((r) => r.id === best.snap.retailerId)!;
-            const perCigar = best.eur / sku.boxSize;
-            const offerCount = snapshotsForSku(sku.id).length;
-            const skuCountries = skuCountryMap[sku.id] || [];
-            const skuStockCountries = skuInStockCountries[sku.id] || [];
-            // data-* attributes drive the client-side filter. Lower-case the
-            // searchable name so the JS doesn't need to normalise on every key.
-            // Include shape (Robusto/Churchill/Minuto/Pirámides) + line
-            // (Línea Edmundo / Behike / Serie D) + slug so users searching by
-            // vitola form-factor or sub-line also hit the right SKUs.
-            const searchName = `${sku.brand} ${sku.vitola} ${sku.shape} ${sku.line} ${sku.id} ${sku.blurb}`.toLowerCase();
-            return (
-              <tr
-                data-finder-sku-row
-                data-sku-id={sku.id}
-                data-sku-brand={sku.brand}
-                data-sku-name={searchName}
-                data-sku-countries={skuCountries.join(",")}
-                data-sku-instock-countries={skuStockCountries.join(",")}
-                data-sku-any-instock={skuStockCountries.length > 0 ? "1" : "0"}
-              >
-                <td class="finder-table__brand" data-label="Cigar">
-                  <span class="finder-table__brand-name">{sku.brand}</span>
-                  <span class="finder-table__offers">{offerCount} {offerCount === 1 ? "offer" : "offers"}</span>
-                </td>
-                <td data-label="Vitola">{sku.vitola}</td>
-                <td class="finder-table__num" data-label="Ring × Length">{sku.ring} × {sku.lengthMm}mm</td>
-                <td class="finder-table__num" data-label="Box">{sku.boxSize}</td>
-                <td class="finder-table__num finder-table__price" data-label="Best price">
-                  {formatPrice(best.snap.price, best.snap.currency)}
-                  {best.snap.currency !== "EUR" && (
-                    <span class="finder-table__eur">≈ €{best.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
-                  )}
-                </td>
-                <td class="finder-table__num" data-label="€ / cigar">€{perCigar.toFixed(2)}</td>
-                <td data-label="At">
-                  <span class="finder-table__retailer">{retailer.name}</span>
-                  <span class="finder-table__country">{retailer.country.toUpperCase()}</span>
-                </td>
-                <td class="finder-table__cta">
-                  <a href={`/finder/sku/${sku.slug}/`} class="finder-table__compare">Compare →</a>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <div class="finder-search__empty" data-finder-empty hidden>
-        {/* Default empty state — shown when query doesn't match a known brand. */}
-        <div data-empty-default>
-          <p><strong>No cigars match those filters.</strong></p>
-          <p>Try clearing the country or brand filter — or <button type="button" class="finder-search__empty-reset" data-finder-reset>reset everything</button>.</p>
-        </div>
-        {/* Brand-aware empty state — JS shows this when the search query
-            matches a brand we recognise but don't yet track. */}
-        <div data-empty-brand hidden>
-          <p class="finder-search__empty-brand-eyebrow" data-empty-brand-eyebrow>Cuban Habano · Not yet tracked</p>
-          <p><strong data-empty-brand-name>Juan López</strong></p>
-          <p data-empty-brand-note>We focus on the 12 most-traded Cuban premium SKUs at launch. This brand is on our shortlist — expanding the catalogue monthly.</p>
-          <p>
-            <button type="button" class="finder-search__empty-reset" data-finder-reset>← Back to all cigars</button>
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  {/* ─── TIERS — Free (watch as guest) vs Lounge (registered) ───────────
-       Two-column value-prop block. Replaces the older "How it works" trio.
-       The point of this section is to make explicit what's free for anyone
-       (1 email alert, browsing) and what's behind registration (multi-SKU
-       comparison, unlimited alerts, history, travel mode). Reduces "wait,
-       is this paid?" friction and routes intent: casual visitor → watch
-       one SKU as guest; serious buyer → register. */}
-  <section class="section-dark" id="finder-tiers">
-    <div class="container-wide py-16 md:py-24 reveal">
-      <EditorialSectionHead
-        eyebrow="How the Finder works"
-        title="Free for everyone. More for members."
-        dek="The public Finder stays free, forever. One email-only watchlist included with no signup. Multi-cigar comparison, unlimited alerts, price history, and travel mode are reserved for registered Lounge members — and free for life if you sign up before 1 June 2026."
+    <main class="site-body">
+      <NewspaperMasthead
+        volume={masthead.volume}
+        issue={masthead.issue}
+        date={masthead.date}
       />
 
-      <div class="finder-tiers__grid">
-        {/* FREE / GUEST */}
-        <div class="finder-tier finder-tier--free">
-          <p class="finder-tier__eyebrow">Free · no signup needed</p>
-          <h3 class="finder-tier__title">Watch as guest</h3>
-          <p class="finder-tier__lead">
-            See every price across all tracked European retailers. Save one cigar
-            with just an email — we'll alert you the moment any retailer drops below
-            the current best price. No password, no profile, no spam.
-          </p>
-          <ul class="finder-tier__list">
-            <li><strong>Full public catalogue</strong> — every Habano we track, refreshed every 6 hours</li>
-            <li><strong>1 price-drop alert</strong> by email, no account required</li>
-            <li><strong>Country filter</strong> — see only retailers that ship to you, with duty-paid pricing</li>
-            <li>Side-by-side retailer comparison for any single SKU you visit</li>
-          </ul>
-          <a href="/finder/" class="finder-tier__cta finder-tier__cta--ghost">Browse the public catalogue →</a>
-          <p class="finder-tier__note">Tap "Save price alert" on any cigar page — that's the guest watchlist.</p>
+      <SectionFlag
+        number="/01"
+        section="The Finder"
+        title={`Business &amp; Markets<em> — Cuban cigars, live.</em>`}
+        status={`${SKUS.length} SKUs · ${RETAILERS.length} retailers · ${COUNTRIES.length} countries · updated ${lastUpdated}`}
+        live={true}
+      />
+
+      <section class="body-grid">
+
+        <!-- MAIN COLUMN -->
+        <div class="main-col">
+
+          <div class="ticker-head">
+            <h2>Today's <em>five cheapest.</em></h2>
+            <span class="updated">Data · {PRICE_SNAPSHOTS.length.toLocaleString()} snapshots</span>
+          </div>
+
+          <table class="ticker">
+            <thead>
+              <tr>
+                <th>Vitola</th>
+                <th>Cheapest at</th>
+                <th class="num">Price</th>
+                <th class="num">Retailer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topMovers.map(({ sku, best }) => (
+                <tr>
+                  <td>
+                    <a href={`/finder/sku/${sku.slug}/`} data-hover>
+                      <span class="brand">{sku.brand}</span>
+                      <span class="name">{sku.vitola}</span>
+                    </a>
+                  </td>
+                  <td class="country">{fmtFlag(best.retailer.country)} {fmtCountry(best.retailer.country)}</td>
+                  <td class="num">{fmtBest({ sku, best })}</td>
+                  <td class="num">{best.retailer.name}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {bestDrop && (
+            <div class="mover">
+              <div class="mover-photo" style={`background-image: url("${(bestDrop.sku as any).heroImage || '/og-finder.svg'}")`}></div>
+              <div class="mover-copy">
+                <div class="mover-flag">This week's mover</div>
+                <h3>
+                  {bestDrop.sku.brand} <em>{bestDrop.sku.vitola}.</em> {bestDrop.retailer.city || fmtCountry(bestDrop.retailer.country)} undercut the field by {bestDrop.pct}%.
+                </h3>
+                <p class="mover-stats">
+                  Now <strong>{formatPrice(bestDrop.snap.price, bestDrop.snap.currency)}</strong>
+                  — was {formatPrice(bestDrop.snap.originalPrice!, bestDrop.snap.currency)}
+                  — at <strong>{bestDrop.retailer.name}</strong>.
+                </p>
+                <p>{bestDrop.sku.blurb}</p>
+                <a href={`/finder/sku/${bestDrop.sku.slug}/`} class="mover-cta" data-hover>
+                  Open this SKU <span class="arrow">→</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          <div class="all-head">
+            <h2>The full <em>catalogue.</em></h2>
+            <span class="updated">{allSkus.length} vitolas · sorted by brand</span>
+          </div>
+
+          <table class="ticker">
+            <thead>
+              <tr>
+                <th>Brand · Vitola</th>
+                <th>Cheapest at</th>
+                <th class="num">Best price</th>
+                <th class="num">EUR eq.</th>
+                <th class="num"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {allSkus.map(({ sku, best }) => (
+                <tr>
+                  <td>
+                    <a href={`/finder/sku/${sku.slug}/`} data-hover>
+                      <span class="brand">{sku.brand}</span>
+                      <span class="name">{sku.vitola}</span>
+                    </a>
+                  </td>
+                  <td class="country">{fmtFlag(best.retailer.country)} {fmtCountry(best.retailer.country)}</td>
+                  <td class="num">{formatPrice(best.price, best.currency)}</td>
+                  <td class="num eur">€{Math.round(best.eur).toLocaleString()}</td>
+                  <td class="num"><a href={`/finder/sku/${sku.slug}/`} data-hover class="row-cta">Compare →</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
         </div>
 
-        {/* LOUNGE / REGISTERED */}
-        <div class="finder-tier finder-tier--lounge">
-          <span class="finder-tier__flag">Registered members only</span>
-          <p class="finder-tier__eyebrow finder-tier__eyebrow--gold">The Lounge · $9/mo or $79/yr</p>
-          <h3 class="finder-tier__title">Multi-cigar comparison + alerts</h3>
-          <p class="finder-tier__lead">
-            For buyers actually shopping — not just browsing. Compare multiple cigars
-            side-by-side, track unlimited SKUs, see 90-day price history charts, and
-            switch the Finder lens to wherever you're flying.
-          </p>
-          <ul class="finder-tier__list">
-            <li><strong>Side-by-side comparison tool</strong> — pick any 2 to 6 cigars; see price, per-cigar cost, retailer availability, and history charts on one screen</li>
-            <li><strong>Unlimited watchlists</strong> + push notifications when prices drop</li>
-            <li><strong>90-day price history charts</strong> on every tracked SKU</li>
-            <li><strong>Travel mode</strong> — switch the catalogue lens to your destination country</li>
-            <li>Taste-matched recommendations from your flavour profile</li>
-            <li>Member directory, check-ins, event RSVPs across Europe</li>
-          </ul>
-          <a href="/lounge/signup/" class="finder-tier__cta finder-tier__cta--gold">Become a Lounge member →</a>
-          <p class="finder-tier__note">Sign up before 1 June 2026 and the paid tier is <strong>free for you, for life</strong> — OG Member grant.</p>
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <div class="side-head">By country · retail status</div>
+          <div class="country-grid">
+            {openCountries.map((c) => (
+              <a href={`/finder/${c.code.toLowerCase()}/`} class="country" data-hover>
+                <div class="flag">{fmtFlag(c.code)} {c.code}</div>
+                <div class="c-name">{c.name}</div>
+                <div class="skus">{skusPerCountry[c.code] || 0} SKUs</div>
+              </a>
+            ))}
+          </div>
+
+          {restrictedCountries.length > 0 && (
+            <>
+              <div class="side-head restricted">Restricted markets</div>
+              <div class="country-grid">
+                {restrictedCountries.map((c) => (
+                  <div class="country restricted-c">
+                    <div class="flag">{fmtFlag(c.code)} {c.code}</div>
+                    <div class="c-name">{c.name}</div>
+                    <div class="skus">In-country only</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div class="side-explain">
+            <h4>How <em>the Finder</em> works.</h4>
+            <p><span class="drop">S</span>ix times a day, we scrape {RETAILERS.length} licensed Habanos retailers across {COUNTRIES.length} European countries. Real prices, real stock. Free to read, no signup — members get watchlist alerts on any vitola and a weekly market letter.</p>
+            <a href="/subscribe/" class="side-cta" data-hover>Get price alerts →</a>
+          </div>
+        </aside>
+
+      </section>
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  {/* ─── FROM THE EDITORIAL ────────────────────────────────────────────── */}
-  <section class="editorial container-wide py-12 md:py-16">
-    <EditorialSectionHead
-      eyebrow="From the editorial"
-      title="Read before you buy"
-      dek="Long-form pieces that go deeper than the price tables — retailer history, regulatory context, and the economics of Cuban-cigar buying in 2026."
-    />
-    <a href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/" class="finder-editorial">
-      <div class="finder-editorial__body">
-        <p class="lounge-label lounge-label--gold">Long read · 12 min</p>
-        <h3 class="finder-editorial__title">Where to buy Cuban cigars in Europe — the 2026 retailer map</h3>
-        <p class="finder-editorial__excerpt">
-          The complete directory of 90+ Cuban specialist retailers across 18 European countries —
-          from Sweden's Cigarrspecialisten to Switzerland's Cigarmust and the UK's James J. Fox.
-          Plus the five regulatory tiers that decide where you can actually buy online.
-        </p>
-        <span class="finder-editorial__cta">Read the full piece →</span>
-      </div>
-    </a>
-  </section>
-
-  <Newsletter
-    heading="Be first when alerts go live"
-    blurb="One email when the price-drop watchlist opens. No promotions, no daily nags."
-  />
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar · Cristian Ortiz Suárez</div>
+      </section>
+    </main>
+  </div>
 </BaseLayout>
 
 <style>
-  .finder-hero {
-    background:
-      radial-gradient(circle at 15% 25%, rgba(201, 169, 97, 0.10), transparent 55%),
-      radial-gradient(circle at 85% 75%, rgba(110, 38, 32, 0.06), transparent 55%),
-      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
-    border-bottom: 1px solid var(--color-border);
-  }
-  .finder-hero__eyebrow {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: var(--color-gold);
-    margin-bottom: 1.25rem;
-  }
-  .finder-hero__title {
-    font-family: var(--font-display);
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 0.98;
-    letter-spacing: -0.025em;
-    color: var(--color-text);
-    margin-bottom: 1.25rem;
-  }
-  @media (min-width: 768px) { .finder-hero__title { font-size: 4.5rem; } }
-  @media (min-width: 1024px) { .finder-hero__title { font-size: 5.75rem; } }
-  .finder-hero__title-sub {
-    font-size: 0.5em;
-    font-weight: 600;
-    color: var(--color-burgundy);
-    letter-spacing: -0.005em;
-    display: block;
-    margin-top: 0.6rem;
-    line-height: 1.15;
-  }
-  .finder-hero__lead {
-    font-size: 1.075rem;
-    line-height: 1.7;
-    color: var(--color-text-soft);
-    max-width: 56ch;
-    margin-bottom: 2.5rem;
-  }
-  .finder-hero__stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem 2rem;
-    max-width: 720px;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
-  }
-  @media (min-width: 640px) { .finder-hero__stats { grid-template-columns: repeat(4, 1fr); } }
-  .finder-hero__stat { display: flex; flex-direction: column; gap: 0.25rem; }
-  .finder-hero__stat-n {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--color-text);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-  .finder-hero__stat-l {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
+  .site-body { padding-bottom: 40px; }
+
+  /* Main + sidebar broadsheet split */
+  .body-grid {
+    max-width: 1520px; margin: 0 auto; padding: 40px 40px 64px;
+    display: grid; grid-template-columns: 8fr 4fr; gap: 48px;
   }
 
-  /* Section subhead */
-  .finder-section-h {
-    font-family: var(--font-display);
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin: 0 0 1rem;
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid var(--color-border);
+  /* ── TICKER TABLE HEAD ── */
+  .ticker-head, .all-head {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 16px;
+  }
+  .all-head { margin-top: 56px; padding-top: 32px; border-top: 4px double var(--news-ink); }
+  .ticker-head h2, .all-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+    line-height: 1.1; letter-spacing: -0.015em; margin: 0;
+  }
+  .ticker-head h2 :global(em), .all-head h2 :global(em) {
+    font-style: italic; color: var(--news-oxblood); font-weight: 400;
+  }
+  .ticker-head .updated, .all-head .updated {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--news-ink-mute);
   }
 
-  /* Country chips */
-  .finder-country-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+  /* ── TICKER TABLE ── */
+  .ticker {
+    width: 100%; border-collapse: collapse;
+    border-top: 2px solid var(--news-ink);
+    border-bottom: 2px solid var(--news-ink);
+    font-family: var(--news-serif); font-size: 14px;
   }
-  @media (min-width: 640px) { .finder-country-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 1024px) { .finder-country-grid { grid-template-columns: repeat(4, 1fr); } }
+  .ticker thead th {
+    font-family: var(--news-mono); font-weight: 500; font-size: 9px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--news-ink);
+    text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--news-ink);
+    background: var(--news-paper-dark);
+  }
+  .ticker thead th.num { text-align: right; }
+  .ticker tbody tr { border-bottom: 1px solid var(--news-rule); transition: background 0.2s; }
+  .ticker tbody tr:hover { background: rgba(138, 43, 30, 0.06); }
+  .ticker td { padding: 12px 8px; vertical-align: middle; }
+  .ticker td.num { text-align: right; font-family: var(--news-mono); font-size: 13px; font-weight: 500; }
+  .ticker td.num.eur { color: var(--news-oxblood); }
+  .ticker td .brand {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-bottom: 2px;
+  }
+  .ticker td .name {
+    font-family: var(--news-serif); font-weight: 500; font-size: 15px; color: var(--news-ink);
+  }
+  .ticker .country { font-family: var(--news-mono); font-size: 12px; letter-spacing: 0.06em; }
+  .row-cta {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--news-oxblood); text-transform: uppercase;
+  }
+  .row-cta:hover { color: var(--news-ember); }
 
-  .finder-country {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.95rem 1.1rem;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    text-decoration: none;
-    color: var(--color-text);
-    transition: border-color 200ms ease, transform 200ms ease, background 200ms ease;
+  /* ── FEATURED MOVER ── */
+  .mover {
+    margin-top: 48px;
+    display: grid; grid-template-columns: 5fr 7fr; gap: 32px; align-items: start;
+    padding: 24px 0;
+    border-top: 4px double var(--news-ink); border-bottom: 4px double var(--news-ink);
   }
-  .finder-country:hover {
-    border-color: var(--color-gold);
-    background: var(--color-gold-soft);
-    transform: translateY(-1px);
+  .mover-photo {
+    aspect-ratio: 4 / 5;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.85) sepia(0.35) contrast(1.06);
   }
-  .finder-country__flag { font-size: 1.4rem; line-height: 1; }
-  .finder-country__name {
-    flex-grow: 1;
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: -0.005em;
-  }
-  .finder-country__currency {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-  }
-  .finder-country--restricted { background: var(--color-bg-soft); }
-  .finder-country--restricted .finder-country__currency { color: var(--color-burgundy); }
-  .finder-country--closed { opacity: 0.75; }
-  .finder-country--closed .finder-country__currency { color: var(--color-text-mute-2); }
-
-  /* Headings */
-  .finder-h2 {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3.4vw, 2.5rem);
-    font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -0.022em;
-    color: var(--color-text);
-  }
-  .section-dark .finder-h2 { color: var(--color-text-on-dark); }
-  .finder-h3 {
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.015em;
-    color: var(--color-text-on-dark);
-  }
-  .finder-pill-soon {
+  .mover-flag {
     display: inline-block;
-    margin-left: 0.5rem;
-    padding: 0.15rem 0.5rem;
-    background: rgba(201, 169, 97, 0.2);
-    color: var(--color-gold);
-    font-size: 0.62rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 700;
-    border-radius: 999px;
-    vertical-align: middle;
+    font-family: var(--news-sans); font-weight: 700; font-size: 9px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper); padding: 4px 10px;
+    margin-bottom: 14px;
   }
+  .mover-copy h3 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem); line-height: 1.1;
+    letter-spacing: -0.018em; color: var(--news-ink); margin: 0 0 16px;
+  }
+  .mover-copy h3 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .mover-copy .mover-stats {
+    font-family: var(--news-serif); font-size: 15px; line-height: 1.55;
+    color: var(--news-ink); margin: 0 0 12px;
+    padding: 12px 0; border-top: 1px solid var(--news-rule); border-bottom: 1px solid var(--news-rule);
+  }
+  .mover-copy .mover-stats strong { font-weight: 600; color: var(--news-oxblood); }
+  .mover-copy p {
+    font-family: var(--news-serif); font-size: 15px; line-height: 1.6;
+    color: var(--news-ink-soft); margin: 0 0 16px;
+  }
+  .mover-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--news-oxblood);
+    border-bottom: 1px solid var(--news-oxblood); padding-bottom: 3px;
+  }
+  .mover-cta:hover { color: var(--news-ember); border-bottom-color: var(--news-ember); }
 
-  /* ── Tier grid (Watch as guest / Lounge comparison tool) ─────────────── */
-  .finder-tiers__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.4rem;
-    margin-top: 1.6rem;
+  /* ── SIDEBAR ── */
+  .sidebar { position: sticky; top: 32px; align-self: start; }
+  .side-head {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood);
+    padding-bottom: 8px; border-bottom: 1px solid var(--news-ink); margin-bottom: 16px;
   }
-  @media (min-width: 768px) {
-    .finder-tiers__grid { grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+  .side-head.restricted { margin-top: 32px; color: var(--news-ink-mute); }
+  .country-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    background: var(--news-rule); padding: 1px;
   }
-  .finder-tier {
-    position: relative;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 1.6rem 1.5rem 1.4rem;
-    color: var(--color-text-on-dark);
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
+  .country {
+    padding: 12px 10px; background: var(--news-paper-warm);
+    transition: background 0.2s; display: block;
   }
-  .finder-tier--lounge {
-    background: linear-gradient(140deg, rgba(201, 169, 97, 0.14), rgba(201, 169, 97, 0.04));
-    border-color: rgba(201, 169, 97, 0.45);
+  .country:hover { background: var(--news-paper-cream); }
+  .country .flag {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
+    color: var(--news-ink-mute); margin-bottom: 4px;
   }
-  .finder-tier__flag {
-    position: absolute;
-    top: -0.65rem;
-    right: 1.2rem;
-    background: var(--color-gold, #c9a961);
-    color: #1a1612;
-    padding: 0.2rem 0.7rem;
-    border-radius: 4px;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .country .c-name {
+    font-family: var(--news-serif); font-weight: 500; font-size: 14px;
+    color: var(--news-ink); letter-spacing: -0.01em; margin-bottom: 2px;
   }
-  .finder-tier__eyebrow {
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--color-text-on-dark-mute);
-    margin: 0;
-  }
-  .finder-tier__eyebrow--gold { color: var(--color-gold, #c9a961); }
-  .finder-tier__title {
-    font-family: var(--font-display);
-    font-size: 1.55rem;
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    margin: 0;
-    color: var(--color-text-on-dark);
-  }
-  .finder-tier__lead {
-    font-size: 0.94rem;
-    line-height: 1.55;
-    color: var(--color-text-on-dark-soft);
-    margin: 0;
-  }
-  .finder-tier__list {
-    margin: 0.4rem 0 0.6rem;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-  }
-  .finder-tier__list li {
-    padding-left: 1.4rem;
-    position: relative;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: var(--color-text-on-dark-soft);
-  }
-  .finder-tier__list li::before {
-    content: "✓";
-    position: absolute;
-    left: 0;
-    top: 0;
-    color: var(--color-gold, #c9a961);
-    font-weight: 700;
-  }
-  .finder-tier__list strong { color: var(--color-text-on-dark); }
-  .finder-tier__cta {
-    display: inline-block;
-    margin-top: 0.4rem;
-    padding: 0.8rem 1.2rem;
-    border-radius: 6px;
-    font-size: 0.86rem;
-    font-weight: 700;
-    text-transform: uppercase;
+  .country .skus {
+    font-family: var(--news-mono); font-size: 10px; color: var(--news-oxblood);
     letter-spacing: 0.06em;
-    text-decoration: none;
-    text-align: center;
-    transition: all 0.15s ease;
   }
-  .finder-tier__cta--gold {
-    background: var(--color-gold, #c9a961);
-    color: #1a1612;
-  }
-  .finder-tier__cta--gold:hover { background: #b08e4a; }
-  .finder-tier__cta--ghost {
-    background: transparent;
-    color: var(--color-text-on-dark);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-  }
-  .finder-tier__cta--ghost:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: var(--color-gold, #c9a961);
-    color: var(--color-gold, #c9a961);
-  }
-  .finder-tier__note {
-    font-size: 0.78rem;
-    color: var(--color-text-on-dark-mute);
-    margin: 0.2rem 0 0;
-    line-height: 1.5;
-  }
-  .finder-tier__note strong { color: var(--color-gold, #c9a961); }
+  .country.restricted-c { opacity: 0.7; cursor: default; }
+  .country.restricted-c .skus { color: var(--news-ink-mute); }
 
-  /* Drops grid */
-  .finder-strip { border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
-  .finder-drop-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  .side-explain {
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--news-ink);
   }
-  @media (min-width: 640px) { .finder-drop-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 1024px) { .finder-drop-grid { grid-template-columns: repeat(4, 1fr); } }
-
-  .finder-drop {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    padding: 0;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    text-decoration: none;
-    color: var(--color-text);
-    overflow: hidden;
-    transition: transform 200ms ease, border-color 200ms ease;
+  .side-explain h4 {
+    font-family: var(--news-serif); font-weight: 500; font-size: 20px;
+    line-height: 1.15; margin: 0 0 12px;
+    color: var(--news-ink); letter-spacing: -0.012em;
   }
-  .finder-drop:hover { transform: translateY(-2px); border-color: var(--color-accent); }
-  .finder-drop__pct {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-accent);
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    padding: 0.85rem 1.05rem;
-    min-width: 76px;
+  .side-explain h4 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .side-explain p {
+    font-family: var(--news-serif); font-size: 14px; line-height: 1.55;
+    color: var(--news-ink-soft); margin-bottom: 16px;
   }
-  .finder-drop__body { padding: 0.85rem 1.05rem; flex: 1; }
-  .finder-drop__brand {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin: 0 0 0.15rem;
+  .side-explain .drop {
+    font-family: var(--news-serif); font-weight: 600; font-size: 3em;
+    line-height: 0.85; float: left; margin: 0.08em 5px 0 0; color: var(--news-oxblood);
   }
-  .finder-drop__vitola {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0 0 0.4rem;
-    line-height: 1.15;
-  }
-  .finder-drop__price { display: flex; gap: 0.6rem; align-items: baseline; margin: 0 0 0.25rem; }
-  .finder-drop__was { text-decoration: line-through; color: var(--color-text-muted); font-size: 0.85rem; }
-  .finder-drop__price strong {
-    font-family: var(--font-display);
-    font-weight: 800;
-    color: var(--color-burgundy);
-    font-size: 1.1rem;
-  }
-  .finder-drop__retailer { font-size: 0.78rem; color: var(--color-text-muted); margin: 0; }
-
-  /* Catalog table */
-  .finder-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); }
-  .finder-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-  .finder-table th {
-    text-align: left;
-    font-family: var(--font-display);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    padding: 1rem 1.1rem;
-    background: var(--color-bg-soft);
-    border-bottom: 1px solid var(--color-border);
-  }
-  .finder-table td {
-    padding: 1rem 1.1rem;
-    border-bottom: 1px solid var(--color-border-soft);
-    vertical-align: middle;
-  }
-  .finder-table tr:last-child td { border-bottom: none; }
-  .finder-table tr:hover td { background: var(--color-bg-soft); }
-  .finder-table__num { text-align: right; font-variant-numeric: tabular-nums; }
-  .finder-table__brand { min-width: 180px; }
-  .finder-table__brand-name {
-    display: block;
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--color-text);
-    font-size: 0.98rem;
-    letter-spacing: -0.005em;
-  }
-  .finder-table__offers {
-    display: block;
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    margin-top: 0.15rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .finder-table__price {
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--color-text);
-    font-size: 1rem;
-  }
-  .finder-table__eur {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    margin-top: 0.1rem;
-  }
-  .finder-table__retailer {
-    display: block;
-    font-weight: 600;
-    color: var(--color-text);
-    font-size: 0.88rem;
-  }
-  .finder-table__country {
-    display: block;
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    letter-spacing: 0.1em;
-    margin-top: 0.1rem;
-  }
-  .finder-table__cta { text-align: right; }
-  .finder-table__compare {
-    display: inline-block;
-    padding: 0.45rem 0.95rem;
-    background: var(--color-text);
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-decoration: none;
-    transition: background 180ms ease;
-  }
-  .finder-table__compare:hover { background: var(--color-accent); color: #fff; }
-
-  /* ─── MOBILE: convert the catalogue table to a card stack ───────────────
-     The desktop layout is a wide 8-column table that overflows on iPhone
-     even with overflow-x:auto. At ≤ 720px we re-flow each <tr> as a card:
-     the <table>/<thead>/<tbody>/<tr>/<td> elements become block-level, and
-     each cell gets a ::before label showing its column name.
-     This works because the cell data attributes were structured for it. */
-  @media (max-width: 720px) {
-    .finder-table-wrap {
-      border: none;
-      background: transparent;
-      overflow-x: visible;
-    }
-    .finder-table,
-    .finder-table thead,
-    .finder-table tbody,
-    .finder-table tr,
-    .finder-table th,
-    .finder-table td {
-      display: block;
-      width: 100%;
-    }
-    /* Hide the header row — labels appear inside each card via ::before. */
-    .finder-table thead { display: none; }
-    .finder-table tr {
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      background: var(--color-bg);
-      padding: 1rem 1.1rem 0.5rem;
-      margin-bottom: 0.85rem;
-    }
-    .finder-table tr:hover td { background: transparent; }
-    .finder-table td {
-      padding: 0.4rem 0;
-      border-bottom: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.6rem;
-      text-align: right;
-      font-size: 0.9rem;
-    }
-    /* Column label rendered as a left-aligned chip-style prefix. */
-    .finder-table td::before {
-      content: attr(data-label);
-      font-size: 0.66rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--color-text-muted);
-      flex: 0 0 auto;
-      text-align: left;
-    }
-    /* Brand cell becomes the card heading — full-width, no flex split. */
-    .finder-table__brand {
-      display: block !important;
-      padding: 0 0 0.55rem !important;
-      border-bottom: 1px solid var(--color-border-soft) !important;
-      margin-bottom: 0.55rem;
-      text-align: left !important;
-      min-width: 0;
-    }
-    .finder-table__brand::before { content: none; }
-    .finder-table__brand-name { font-size: 1.05rem; }
-    /* Numeric cells right-aligned (already are via the flex split). */
-    .finder-table__num { text-align: right; }
-    /* Price cell — make the figure visually prominent on the right. */
-    .finder-table__price { font-size: 1.1rem; }
-    .finder-table__eur { display: inline; margin-left: 0.4rem; }
-    /* Retailer cell stacks name + country code on the right side. */
-    .finder-table__retailer { display: inline; }
-    .finder-table__country  { display: inline; margin-left: 0.4rem; }
-    /* CTA button — full-width at bottom of card. */
-    .finder-table__cta {
-      padding-top: 0.65rem !important;
-      border-top: 1px solid var(--color-border-soft);
-      margin-top: 0.2rem;
-    }
-    .finder-table__cta::before { content: none; }
-    .finder-table__compare {
-      display: block;
-      text-align: center;
-      padding: 0.65rem 1rem;
-      width: 100%;
-    }
+  .side-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--news-oxblood);
+    border-bottom: 1px solid var(--news-oxblood); padding-bottom: 2px;
   }
 
-  /* Editorial cross-post rail */
-  .finder-editorial {
-    display: block;
-    padding: 1.6rem 1.8rem;
-    background: linear-gradient(135deg, var(--color-charcoal) 0%, #2a2e44 100%);
-    border: 1px solid rgba(201, 169, 97, 0.3);
-    border-radius: 8px;
-    color: #f4f4f4;
-    text-decoration: none;
-    transition: transform 200ms ease, border-color 200ms ease;
+  /* ── Footer strip ── */
+  .footer-strip {
+    max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px;
   }
-  .finder-editorial:hover { transform: translateY(-2px); border-color: var(--color-gold); }
-  .finder-editorial__title {
-    font-family: var(--font-display);
-    font-size: clamp(1.4rem, 3vw, 2rem);
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: #f4f4f4;
-    margin: 0.6rem 0 0.8rem;
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
   }
-  .finder-editorial__excerpt {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: rgba(244,244,244,0.78);
-    margin: 0 0 1rem;
-    max-width: 64ch;
+  .footer-strip-mark {
+    font-family: var(--news-serif); font-weight: 600; font-size: 22px;
+    letter-spacing: -0.008em; color: var(--news-ink); display: block;
   }
-  .finder-editorial__cta {
-    display: inline-block;
-    font-family: var(--font-display);
-    font-size: 0.86rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: var(--color-gold);
+  .footer-strip-tag {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    color: var(--news-ink-mute); margin-top: 2px;
+  }
+  .footer-strip-links {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy {
+    margin-top: 16px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--news-ink-mute);
   }
 
-  /* ─── SEARCH BAR ──────────────────────────────────────────────────── */
-  .finder-search {
-    background: #fff;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1.25rem 1.5rem 1.1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  @media (max-width: 900px) {
+    .body-grid { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
+    .sidebar { position: relative; top: 0; }
+    .country-grid { grid-template-columns: 1fr 1fr; }
+    .mover { grid-template-columns: 1fr; gap: 20px; }
+    .ticker { font-size: 13px; }
+    .ticker td { padding: 10px 6px; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+    .footer-strip { padding: 32px 20px 20px; }
   }
-  .finder-search__label {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin-bottom: 0.6rem;
-  }
-  .finder-search__row {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 0.6rem;
-    align-items: stretch;
-  }
-  @media (max-width: 720px) {
-    .finder-search__row { grid-template-columns: 1fr; }
-    .finder-search { padding: 1rem 1.1rem 0.9rem; }
-    /* Brand chips wrap onto multiple lines and stay touch-friendly. */
-    .finder-search__chip {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.78rem;
-    }
-    /* Inputs sized for thumb taps. */
-    .finder-search__input  { padding: 0.85rem 2.4rem 0.85rem 2.6rem; font-size: 16px; }
-    .finder-search__country,
-    .finder-search__instock { padding: 0.85rem 1rem; font-size: 0.92rem; }
-  }
-  .finder-search__input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  .finder-search__icon {
-    position: absolute;
-    left: 0.85rem;
-    color: var(--color-text-muted);
-    pointer-events: none;
-  }
-  .finder-search__input {
-    width: 100%;
-    padding: 0.7rem 2.4rem 0.7rem 2.6rem;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background: #fafafa;
-    color: var(--color-text);
-    transition: border-color 0.15s ease, background 0.15s ease;
-  }
-  .finder-search__input:focus {
-    outline: none;
-    border-color: var(--color-gold);
-    background: #fff;
-  }
-  .finder-search__clear {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: 0;
-    width: 1.5rem;
-    height: 1.5rem;
-    line-height: 1;
-    font-size: 1.4rem;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    display: none;
-    border-radius: 4px;
-  }
-  .finder-search__clear:hover { background: var(--color-bg-soft); }
-  .finder-search.has-text .finder-search__clear { display: block; }
-  .finder-search__country {
-    padding: 0.7rem 0.9rem;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: #fafafa;
-    font-size: 0.9rem;
-    color: var(--color-text);
-    min-width: 9.5rem;
-  }
-  .finder-search__instock {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.7rem 0.9rem;
-    background: #fafafa;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    font-size: 0.88rem;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-  }
-  .finder-search__instock input { accent-color: var(--color-gold); }
-  .finder-search__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.9rem;
-  }
-  .finder-search__chip {
-    padding: 0.32rem 0.85rem;
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    background: #fafafa;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--color-text-soft);
-    cursor: pointer;
-    transition: all 0.12s ease;
-    white-space: nowrap;
-  }
-  .finder-search__chip:hover {
-    border-color: var(--color-gold);
-    color: var(--color-text);
-  }
-  .finder-search__chip.is-active {
-    background: var(--color-gold);
-    border-color: var(--color-gold);
-    color: #1a1612;
-    font-weight: 700;
-  }
-  .finder-search__count {
-    margin: 0.85rem 0 0;
-    font-size: 0.82rem;
-    color: var(--color-text-muted);
-  }
-  .finder-search__empty {
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    color: var(--color-text-soft);
-    font-size: 0.95rem;
-  }
-  .finder-search__empty p { margin: 0 0 0.5rem; }
-  .finder-search__empty-reset {
-    background: transparent;
-    border: 0;
-    color: var(--color-gold-hover);
-    cursor: pointer;
-    text-decoration: underline;
-    font: inherit;
-    padding: 0;
-  }
-  .finder-search__empty-reset:hover { color: var(--color-text); }
-  /* Brand-aware empty state */
-  .finder-search__empty-brand-eyebrow {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--color-gold-hover);
-    margin: 0 0 0.4rem 0;
-  }
-  [data-empty-brand] strong[data-empty-brand-name] {
-    display: inline-block;
-    font-family: var(--font-display);
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0;
-    line-height: 1.2;
-  }
-  [data-empty-brand] p { margin: 0.45rem 0; }
-
-  /* ─── Autocomplete dropdown — Google-style typeahead ──────────────────── */
-  .finder-search__autocomplete {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-    z-index: 30;
-    overflow: hidden;
-    max-height: 380px;
-    overflow-y: auto;
-  }
-  .finder-search__ac-section-label {
-    padding: 0.5rem 0.9rem 0.35rem;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    background: var(--color-bg-soft);
-    border-top: 1px solid var(--color-border-soft);
-  }
-  .finder-search__ac-section-label:first-child { border-top: 0; }
-  .finder-search__ac-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 0.6rem 0.9rem;
-    background: #fff;
-    border: 0;
-    text-align: left;
-    cursor: pointer;
-    font: inherit;
-    color: inherit;
-    transition: background 0.08s ease;
-    text-decoration: none;
-  }
-  .finder-search__ac-item:hover,
-  .finder-search__ac-item.is-active {
-    background: var(--color-bg-soft);
-  }
-  .finder-search__ac-item-label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-    flex: 1;
-  }
-  .finder-search__ac-item-title {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--color-text);
-    line-height: 1.25;
-  }
-  .finder-search__ac-item-title mark {
-    background: rgba(201, 169, 97, 0.25);
-    color: inherit;
-    padding: 0 1px;
-    border-radius: 2px;
-  }
-  .finder-search__ac-item-meta {
-    font-size: 0.72rem;
-    color: var(--color-text-muted);
-    line-height: 1.3;
-  }
-  .finder-search__ac-item-tag {
-    flex: 0 0 auto;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.18rem 0.5rem;
-    border-radius: 999px;
-    background: var(--color-bg-soft);
-    color: var(--color-text-muted);
-  }
-  .finder-search__ac-item-tag--tracked {
-    background: rgba(42, 138, 42, 0.12);
-    color: #2a8a2a;
-  }
-  .finder-search__ac-item-tag--untracked {
-    background: rgba(201, 169, 97, 0.18);
-    color: var(--color-gold-hover);
-  }
-  /* The input wrap needs to allow the dropdown to overflow downward. */
-  .finder-search__input-wrap { position: relative; }
-  /* Hide native dropdown arrow when our autocomplete is open. */
-
-  /* Rows hidden by filter — kept in DOM for SEO + state, just visually removed. */
-  tr[data-finder-sku-row][hidden] { display: none !important; }
 </style>
-
-<script>
-  import { matchKnownBrand, TRACKED_BRAND_NAMES, KNOWN_BRANDS, SKUS } from "../../data/finder-data";
-
-  // Finder search — client-side filter for the SKU catalog table.
-  // No API calls, no spinner: every needed datum is already on the row as a
-  // data-* attribute (brand, name, countries, in-stock countries). We just
-  // walk the rows and flip `hidden` based on the current filter state.
-  (function initFinderSearch() {
-    const input    = document.getElementById("finder-search-input") as HTMLInputElement | null;
-    const country  = document.getElementById("finder-search-country") as HTMLSelectElement | null;
-    const instock  = document.getElementById("finder-search-instock") as HTMLInputElement | null;
-    const wrap     = document.querySelector<HTMLElement>(".finder-search");
-    const clearBtn = document.querySelector<HTMLButtonElement>("[data-finder-clear]");
-    const resetBtn = document.querySelector<HTMLButtonElement>("[data-finder-reset]");
-    const empty    = document.querySelector<HTMLElement>("[data-finder-empty]");
-    const count    = document.querySelector<HTMLElement>("[data-finder-count]");
-    const rows     = Array.from(
-      document.querySelectorAll<HTMLTableRowElement>("tr[data-finder-sku-row]")
-    );
-    const chips    = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("[data-brand-chip]")
-    );
-    if (!input || !country || !instock || rows.length === 0) return;
-
-    let activeBrand = ""; // empty = "all brands"
-
-    function applyFilter() {
-      const q          = input.value.trim().toLowerCase();
-      const wantCty    = country.value;       // "" or country code
-      const wantStock  = instock.checked;
-      let visible      = 0;
-
-      for (const row of rows) {
-        const name       = row.dataset.skuName || "";
-        const brand      = row.dataset.skuBrand || "";
-        const cties      = (row.dataset.skuCountries || "").split(",");
-        const stockCties = (row.dataset.skuInstockCountries || "").split(",");
-        const anyInStock = row.dataset.skuAnyInstock === "1";
-
-        // Free-text match — token-level so "petit edmundo" still matches even
-        // if the user typed it out of order. Empty query passes.
-        const tokens = q.split(/\s+/).filter(Boolean);
-        const textOk = tokens.every((t) => name.includes(t));
-
-        // Brand chip — empty matches everything.
-        const brandOk = !activeBrand || brand === activeBrand;
-
-        // Country — if a country is chosen, the SKU must have at least one
-        // snapshot from that country (or, if in-stock toggled, an in-stock one).
-        let countryOk = true;
-        if (wantCty) {
-          countryOk = wantStock
-            ? stockCties.includes(wantCty)
-            : cties.includes(wantCty);
-        }
-
-        // In-stock toggle without a country picks any in-stock SKU globally.
-        const stockOk = !wantStock || (wantCty ? stockCties.includes(wantCty) : anyInStock);
-
-        const show = textOk && brandOk && countryOk && stockOk;
-        if (show) visible++;
-        row.toggleAttribute("hidden", !show);
-      }
-
-      // Visible state UI
-      if (wrap) wrap.classList.toggle("has-text", q.length > 0);
-      if (empty) empty.toggleAttribute("hidden", visible !== 0);
-
-      // ─── Brand-aware empty state ─────────────────────────────────────────
-      // When the user's query matches a brand we recognise but don't track
-      // (e.g. "Juan Lopez", "Davidoff"), swap the generic 'no matches'
-      // message for a brand-specific one. Distinguishes "we know that brand
-      // but haven't onboarded it" from "we don't know what you typed".
-      if (empty && visible === 0 && q.length >= 2) {
-        const matched = matchKnownBrand(q);
-        const defaultEl = empty.querySelector<HTMLElement>("[data-empty-default]");
-        const brandEl   = empty.querySelector<HTMLElement>("[data-empty-brand]");
-        const eyebrowEl = empty.querySelector<HTMLElement>("[data-empty-brand-eyebrow]");
-        const nameEl    = empty.querySelector<HTMLElement>("[data-empty-brand-name]");
-        const noteEl    = empty.querySelector<HTMLElement>("[data-empty-brand-note]");
-        // Don't surface the brand UI if the brand IS one we track —
-        // that means the filter is on but the country/stock toggle is the
-        // reason for zero hits, not the brand itself.
-        const isTracked = matched && TRACKED_BRAND_NAMES.has(matched.name);
-        if (matched && !isTracked && defaultEl && brandEl && eyebrowEl && nameEl && noteEl) {
-          // Origin → human label
-          const originLabel: Record<string, string> = {
-            cuba: "Cuban Habano",
-            dominican: "Dominican premium",
-            nicaragua: "Nicaraguan premium",
-            honduras: "Honduran premium",
-            spain: "Spanish premium",
-            other: "International premium",
-          };
-          eyebrowEl.textContent = `${originLabel[matched.origin] || "Premium cigar"} · Not yet tracked`;
-          nameEl.textContent = matched.name;
-          // Default note copy varies by origin (Cuban: 'on the shortlist',
-          // non-Cuban: 'we focus on Cuban' — manages expectations honestly).
-          const defaultNote = matched.origin === "cuba"
-            ? "We launched with the 12 most-traded Cuban premium SKUs. This brand is on the shortlist — we're expanding the catalogue monthly."
-            : "The Finder focuses on Cuban (Habanos) cigars at launch. We may expand to other origins later — for now, this brand isn't in scope.";
-          noteEl.textContent = matched.shortNote
-            ? `${matched.shortNote} ${defaultNote}`
-            : defaultNote;
-          defaultEl.hidden = true;
-          brandEl.hidden = false;
-        } else if (defaultEl && brandEl) {
-          defaultEl.hidden = false;
-          brandEl.hidden = true;
-        }
-      }
-
-      if (count) {
-        if (visible === 0) {
-          count.textContent = "No cigars match those filters.";
-        } else if (visible === rows.length && !q && !wantCty && !wantStock && !activeBrand) {
-          count.textContent = `Showing all ${rows.length} cigars`;
-        } else {
-          count.textContent =
-            `Showing ${visible} of ${rows.length} cigar${rows.length === 1 ? "" : "s"}` +
-            (q ? ` matching "${input.value.trim()}"` : "");
-        }
-      }
-    }
-
-    // ─ Input handlers ─────────────────────────────────────────────────────
-    input.addEventListener("input", applyFilter);
-    country.addEventListener("change", applyFilter);
-    instock.addEventListener("change", applyFilter);
-
-    clearBtn?.addEventListener("click", () => {
-      input.value = "";
-      input.focus();
-      applyFilter();
-    });
-
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        activeBrand = chip.dataset.brandChip || "";
-        chips.forEach((c) => c.classList.remove("is-active"));
-        chip.classList.add("is-active");
-        applyFilter();
-      });
-    });
-
-    resetBtn?.addEventListener("click", () => {
-      input.value     = "";
-      country.value   = "";
-      instock.checked = false;
-      activeBrand     = "";
-      chips.forEach((c, i) => c.classList.toggle("is-active", i === 0));
-      applyFilter();
-    });
-
-    // ─ Persist filter state across page navigations via URL hash ──────────
-    // /finder/#q=cohiba&brand=Cohiba&cty=de — share a filtered view, restore
-    // on back/forward, deep-link from a blog post.
-    function readFromHash() {
-      const hash = window.location.hash.replace(/^#/, "");
-      if (!hash) return false;
-      const p = new URLSearchParams(hash);
-      let used = false;
-      if (p.has("q"))     { input.value     = p.get("q")    || ""; used = true; }
-      if (p.has("cty"))   { country.value   = p.get("cty")  || ""; used = true; }
-      if (p.has("stock")) { instock.checked = p.get("stock") === "1"; used = true; }
-      if (p.has("brand")) {
-        const b = p.get("brand") || "";
-        activeBrand = b;
-        chips.forEach((c) => c.classList.toggle("is-active", (c.dataset.brandChip || "") === b));
-        used = true;
-      }
-      return used;
-    }
-    function writeToHash() {
-      const p = new URLSearchParams();
-      if (input.value.trim()) p.set("q", input.value.trim());
-      if (country.value)      p.set("cty", country.value);
-      if (instock.checked)    p.set("stock", "1");
-      if (activeBrand)        p.set("brand", activeBrand);
-      const s = p.toString();
-      const newHash = s ? "#" + s : "";
-      if (window.location.hash !== newHash) {
-        // Replace, don't push — typing is too granular for back-button history.
-        history.replaceState(null, "", window.location.pathname + window.location.search + newHash);
-      }
-    }
-    let writeTimer: ReturnType<typeof setTimeout> | null = null;
-    function debouncedWrite() {
-      if (writeTimer) clearTimeout(writeTimer);
-      writeTimer = setTimeout(writeToHash, 250);
-    }
-    input.addEventListener("input", debouncedWrite);
-    country.addEventListener("change", debouncedWrite);
-    instock.addEventListener("change", debouncedWrite);
-    chips.forEach((chip) => chip.addEventListener("click", debouncedWrite));
-
-    // ─── Autocomplete dropdown ────────────────────────────────────────────
-    // Two suggestion sources:
-    //   1. Tracked SKUs whose brand/vitola/shape matches the query — these
-    //      get a green "TRACKED" tag and click → /finder/sku/{slug}/
-    //   2. Known brands we recognise but don't track yet — gold "REQUEST"
-    //      tag; click fills the input so the smart empty state fires.
-    const ac = document.querySelector<HTMLElement>("[data-finder-ac]");
-    let acActive = -1;
-    let acItems: HTMLElement[] = [];
-
-    function escapeHtmlAc(s: string): string {
-      return s.replace(/[&<>"']/g, (c) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
-    }
-    function highlight(text: string, q: string): string {
-      if (!q) return escapeHtmlAc(text);
-      const i = text.toLowerCase().indexOf(q.toLowerCase());
-      if (i < 0) return escapeHtmlAc(text);
-      return escapeHtmlAc(text.slice(0, i)) +
-        "<mark>" + escapeHtmlAc(text.slice(i, i + q.length)) + "</mark>" +
-        escapeHtmlAc(text.slice(i + q.length));
-    }
-
-    function buildSuggestions(q: string): string {
-      const ql = q.trim().toLowerCase();
-      if (ql.length < 1) return "";
-
-      // Tracked SKUs — match against brand + vitola + shape + line.
-      type AcSku = { sku: typeof SKUS[number]; haystack: string };
-      const trackedHits: AcSku[] = SKUS.map((sku) => ({
-        sku,
-        haystack: `${sku.brand} ${sku.vitola} ${sku.shape} ${sku.line}`.toLowerCase(),
-      })).filter((x) => x.haystack.includes(ql)).slice(0, 6);
-
-      // Known untracked brands — exclude ones we already track.
-      const brandHits = KNOWN_BRANDS.filter((b) => {
-        if (TRACKED_BRAND_NAMES.has(b.name)) return false;
-        const aliasMatch = b.aliases.some((a) => a.includes(ql) || ql.includes(a));
-        return aliasMatch || b.name.toLowerCase().includes(ql);
-      }).slice(0, 4);
-
-      if (trackedHits.length === 0 && brandHits.length === 0) return "";
-
-      const originLabel: Record<string, string> = {
-        cuba: "Cuban", dominican: "Dominican", nicaragua: "Nicaraguan",
-        honduras: "Honduran", spain: "Spanish", other: "International",
-      };
-
-      const parts: string[] = [];
-      if (trackedHits.length > 0) {
-        parts.push(`<div class="finder-search__ac-section-label">In our catalogue</div>`);
-        for (let i = 0; i < trackedHits.length; i++) {
-          const { sku } = trackedHits[i];
-          parts.push(
-            `<a class="finder-search__ac-item" role="option" href="/finder/sku/${sku.slug}/" data-ac-index="${i}">
-               <span class="finder-search__ac-item-label">
-                 <span class="finder-search__ac-item-title">${highlight(`${sku.brand} ${sku.vitola}`, q)}</span>
-                 <span class="finder-search__ac-item-meta">${escapeHtmlAc(sku.shape)} · ring ${sku.ring} · box ${sku.boxSize}</span>
-               </span>
-               <span class="finder-search__ac-item-tag finder-search__ac-item-tag--tracked">Tracked</span>
-             </a>`
-          );
-        }
-      }
-      if (brandHits.length > 0) {
-        parts.push(`<div class="finder-search__ac-section-label">Other premium brands</div>`);
-        const baseIdx = trackedHits.length;
-        for (let i = 0; i < brandHits.length; i++) {
-          const b = brandHits[i];
-          parts.push(
-            `<button type="button" class="finder-search__ac-item" role="option" data-ac-brand="${escapeHtmlAc(b.name)}" data-ac-index="${baseIdx + i}">
-               <span class="finder-search__ac-item-label">
-                 <span class="finder-search__ac-item-title">${highlight(b.name, q)}</span>
-                 <span class="finder-search__ac-item-meta">${originLabel[b.origin] || "Premium"} · not yet in catalogue</span>
-               </span>
-               <span class="finder-search__ac-item-tag finder-search__ac-item-tag--untracked">Request</span>
-             </button>`
-          );
-        }
-      }
-      return parts.join("");
-    }
-
-    function updateAutocomplete() {
-      if (!ac) return;
-      const html = buildSuggestions(input.value);
-      if (!html) {
-        ac.hidden = true;
-        ac.innerHTML = "";
-        acItems = [];
-        acActive = -1;
-        return;
-      }
-      ac.innerHTML = html;
-      ac.hidden = false;
-      acItems = Array.from(ac.querySelectorAll<HTMLElement>("[data-ac-index]"));
-      acActive = -1;
-      // Click a brand suggestion → fill input with brand name so the smart
-      // empty state fires + filter narrows. SKU suggestions are <a href>
-      // and navigate naturally without preventDefault.
-      acItems.forEach((item) => {
-        const brandName = item.getAttribute("data-ac-brand");
-        if (brandName) {
-          item.addEventListener("click", () => {
-            input.value = brandName;
-            ac.hidden = true;
-            applyFilter();
-            input.focus();
-          });
-        }
-      });
-    }
-
-    function moveAcActive(delta: number) {
-      if (acItems.length === 0) return;
-      acActive = (acActive + delta + acItems.length) % acItems.length;
-      acItems.forEach((it, i) => it.classList.toggle("is-active", i === acActive));
-      acItems[acActive]?.scrollIntoView({ block: "nearest" });
-    }
-
-    input.addEventListener("input", updateAutocomplete);
-    input.addEventListener("focus", updateAutocomplete);
-    input.addEventListener("keydown", (e) => {
-      if (!ac || ac.hidden) return;
-      if (e.key === "ArrowDown") { e.preventDefault(); moveAcActive(1); }
-      else if (e.key === "ArrowUp") { e.preventDefault(); moveAcActive(-1); }
-      else if (e.key === "Enter" && acActive >= 0) {
-        e.preventDefault();
-        acItems[acActive]?.click();
-      } else if (e.key === "Escape") {
-        ac.hidden = true;
-      }
-    });
-    // Hide on outside click.
-    document.addEventListener("click", (e) => {
-      if (!ac) return;
-      const wrapEl = input.closest(".finder-search__input-wrap");
-      if (wrapEl && !wrapEl.contains(e.target as Node)) ac.hidden = true;
-    });
-    // Hide when filter is reset.
-    resetBtn?.addEventListener("click", () => { if (ac) ac.hidden = true; });
-    clearBtn?.addEventListener("click", () => { if (ac) ac.hidden = true; });
-
-    // ─ Init ──────────────────────────────────────────────────────────────
-    if (readFromHash()) applyFilter();
-  })();
-</script>

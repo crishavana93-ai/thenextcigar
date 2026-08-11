@@ -100,33 +100,22 @@ const {
   const hero  = document.getElementById('tncHero');
   const video = document.getElementById('tncHeroVideo') as HTMLVideoElement | null;
   const skip  = document.getElementById('tncSkipBtn');
-  const SEEN_KEY = 'tnc_intro_seen';
 
   function land() {
     hero?.classList.add('done');
-    // On done, allow document to scroll normally
     document.body.style.overflow = '';
   }
 
-  // Returning visitors skip the intro
-  try {
-    if (localStorage.getItem(SEEN_KEY) === '1') {
-      land();
-    }
-  } catch (e) { /* ignore private-mode errors */ }
+  // Note: previously we used localStorage to skip the intro for returning
+  // visitors, but that made it invisible during rollout/testing. Removed
+  // for now — every page load plays the intro. Add back once design ships.
 
-  video?.addEventListener('ended', () => {
-    try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
-    land();
-  });
+  video?.addEventListener('ended', land);
   video?.addEventListener('error', land);
   video?.addEventListener('stalled', () => setTimeout(() => {
     if (video.readyState < 2) land();
   }, 1500));
   setTimeout(() => { if (video && video.readyState < 2) land(); }, 3500);
 
-  skip?.addEventListener('click', () => {
-    try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
-    land();
-  });
+  skip?.addEventListener('click', land);
 </script>
