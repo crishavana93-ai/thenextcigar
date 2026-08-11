@@ -1,0 +1,96 @@
+---
+/**
+ * NewspaperMasthead — persistent brand-and-nav element that sits at
+ * the top of every page in the cinematic redesign. The masthead
+ * itself never changes; the SectionFlag component underneath
+ * distinguishes /finder from /magazine from /lounge etc.
+ */
+
+interface Props {
+  volume?: string;
+  issue?: string;
+  date?: string;
+}
+
+const {
+  volume = "Vol. III",
+  issue = "Issue Four",
+  date = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+} = Astro.props;
+---
+
+<header class="tnc-mast">
+  <nav class="tnc-mast-nav">
+    <div class="tnc-mast-nav-links">
+      <a href="/finder/" data-hover>Finder</a>
+      <a href="/lounge/" data-hover>Lounge</a>
+      <a href="/blog/" data-hover>Magazine</a>
+      <a href="/shop/" data-hover>Shop</a>
+    </div>
+    <div class="tnc-mast-nav-right">
+      <a href="/lounge/app/" data-hover>Sign in</a>
+      <a href="/subscribe/" class="tnc-subscribe" data-hover>Enter · $9/mo</a>
+    </div>
+  </nav>
+  <a href="/" class="tnc-mast-title" data-hover>The Next Cigar</a>
+  <div class="tnc-mast-tagline">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+  <div class="tnc-mast-meta">
+    <span>{volume}</span>
+    <span class="dot">◆</span>
+    <span>{issue}</span>
+    <span class="dot">◆</span>
+    <span>{date}</span>
+    <span class="dot">◆</span>
+    <span>Free to read</span>
+  </div>
+</header>
+
+<style>
+  .tnc-mast {
+    max-width: 1520px; margin: 0 auto;
+    padding: 40px 40px 20px;
+    border-bottom: 4px double var(--news-ink);
+    text-align: center;
+  }
+  .tnc-mast-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .tnc-mast-nav a { transition: color 0.2s; padding: 4px 0; border-bottom: 1px solid transparent; }
+  .tnc-mast-nav a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .tnc-mast-nav-links { display: flex; gap: 24px; }
+  .tnc-mast-nav-right { display: flex; gap: 20px; align-items: center; }
+  .tnc-subscribe {
+    padding: 6px 12px; border: 1px solid var(--news-ink); color: var(--news-ink);
+    letter-spacing: 0.14em;
+  }
+  .tnc-subscribe:hover { background: var(--news-ink); color: var(--news-paper); }
+
+  .tnc-mast-title {
+    display: block;
+    font-family: var(--news-serif); font-weight: 700;
+    font-size: clamp(3rem, 8vw, 7.2rem);
+    line-height: 0.86; letter-spacing: 0.005em; color: var(--news-ink);
+    text-transform: uppercase;
+  }
+  .tnc-mast-tagline {
+    font-family: var(--news-serif); font-style: italic; font-weight: 400;
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+    color: var(--news-ink-mute); margin-top: 6px;
+  }
+  .tnc-mast-meta {
+    margin-top: 16px; padding-top: 12px;
+    border-top: 1px solid var(--news-rule);
+    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .tnc-mast-meta .dot { color: var(--news-oxblood); }
+
+  @media (max-width: 900px) {
+    .tnc-mast-nav-links { display: none; }
+    .tnc-mast { padding: 32px 20px 16px; }
+  }
+</style>

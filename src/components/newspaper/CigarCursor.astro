@@ -1,0 +1,96 @@
+---
+/**
+ * CigarCursor — photorealistic cigar cursor with rising smoke wisps.
+ *
+ * Uses the cropped PNG at /cinematic/cursor-cigar.png. Add [data-hover]
+ * to any interactive element to trigger the tilt/scale on hover.
+ * Mobile: cursor hidden, native cursor returns via .tnc-cinema CSS.
+ */
+---
+
+<div class="tnc-cursor-cigar" id="tncCigar" aria-hidden="true">
+  <img src="/cinematic/cursor-cigar.png" alt="" />
+</div>
+<div class="tnc-cursor-smoke" id="tncSmoke" aria-hidden="true">
+  <span class="tnc-wisp w1"></span>
+  <span class="tnc-wisp w2"></span>
+  <span class="tnc-wisp w3"></span>
+  <span class="tnc-wisp w4"></span>
+</div>
+
+<style>
+  .tnc-cursor-cigar {
+    position: fixed; top: 0; left: 0; z-index: 9999;
+    width: 100px; height: 18px; pointer-events: none;
+    transform: translate(-50%, -50%) rotate(-6deg);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.5));
+  }
+  .tnc-cursor-cigar img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  :global(body.tnc-hover) .tnc-cursor-cigar {
+    transform: translate(-50%, -50%) rotate(-12deg) scale(1.15);
+  }
+  :global(body.tnc-hover) .tnc-cursor-cigar img { filter: brightness(1.05); }
+
+  .tnc-cursor-smoke {
+    position: fixed; top: 0; left: 0; z-index: 9998; pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  .tnc-wisp {
+    position: absolute; left: 42px; top: -3px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(230, 224, 208, 0.8) 0%,
+      rgba(220, 214, 198, 0.5) 30%,
+      rgba(210, 204, 188, 0.2) 60%,
+      rgba(200, 195, 180, 0) 85%);
+    filter: blur(6px);
+    opacity: 0;
+    animation: tncPuff 3.2s ease-out infinite;
+    will-change: transform, opacity;
+  }
+  .tnc-wisp.w2 { animation-delay: 0.8s; }
+  .tnc-wisp.w3 { animation-delay: 1.6s; }
+  .tnc-wisp.w4 { animation-delay: 2.4s; }
+  :global(body.tnc-hover) .tnc-wisp { animation-duration: 2.2s; }
+
+  @keyframes tncPuff {
+    0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
+    8%   { opacity: 0.9; }
+    30%  { transform: translate(4px, -24px) scale(1.4); opacity: 0.75; }
+    55%  { transform: translate(14px, -55px) scale(2.4); opacity: 0.5; }
+    80%  { transform: translate(28px, -90px) scale(3.6); opacity: 0.25; }
+    100% { transform: translate(42px, -125px) scale(5); opacity: 0; }
+  }
+
+  @media (hover: none), (max-width: 900px) {
+    .tnc-cursor-cigar, .tnc-cursor-smoke { display: none; }
+  }
+</style>
+
+<script>
+  const cigar = document.getElementById('tncCigar');
+  const smoke = document.getElementById('tncSmoke');
+  if (cigar && smoke && window.matchMedia('(hover: hover)').matches) {
+    let mx = -100, my = -100, cx = -100, cy = -100;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function tick() {
+      cx += (mx - cx) * 0.28;
+      cy += (my - cy) * 0.28;
+      cigar.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%) rotate(-6deg)`;
+      smoke.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
+      requestAnimationFrame(tick);
+    }
+    tick();
+    document.addEventListener('mouseleave', () => {
+      cigar.style.opacity = '0'; smoke.style.opacity = '0';
+    });
+    document.addEventListener('mouseenter', () => {
+      cigar.style.opacity = '1'; smoke.style.opacity = '1';
+    });
+    document.querySelectorAll('[data-hover]').forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('tnc-hover'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('tnc-hover'));
+    });
+  }
+</script>

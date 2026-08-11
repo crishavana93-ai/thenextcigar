@@ -1,0 +1,262 @@
+---
+import "../styles/newspaper.css";
+import CigarCursor from "../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import VideoIntroHero from "../components/newspaper/VideoIntroHero.astro";
+---
+
+<!doctype html>
+<html lang="en" class="tnc-cinema">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>The Next Cigar — cinematic preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+
+    /* Preview banner */
+    .preview-mock {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9997;
+      background: var(--news-ink, #1a120a); color: var(--news-paper, #f2ede1);
+      font-family: var(--news-mono), monospace; font-size: 11px; letter-spacing: 0.18em;
+      text-transform: uppercase; padding: 9px 24px; text-align: center;
+    }
+    .preview-mock strong { color: var(--news-gold, #d3b06a); }
+    body.tnc-cinema { padding-top: 36px; --nav-offset: 36px; }
+
+    /* Feature grid */
+    .site-body { padding-bottom: 80px; }
+    .lead-wrap {
+      max-width: 1520px; margin: 0 auto; padding: 48px 40px 64px;
+      border-bottom: 1px solid var(--news-rule);
+    }
+    .lead-eyebrow {
+      font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .lead-eyebrow::before {
+      content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
+    }
+    .lead-grid {
+      display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end;
+    }
+    .lead-photo {
+      aspect-ratio: 4 / 5;
+      background-image: url("https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1600");
+      background-size: cover; background-position: center;
+      filter: grayscale(0.85) sepia(0.35) contrast(1.06);
+      position: relative;
+    }
+    .lead-photo .cutline {
+      position: absolute; left: 0; right: 0; bottom: -32px;
+      font-family: var(--news-serif); font-style: italic; font-size: 12px;
+      color: var(--news-ink-mute); line-height: 1.4;
+    }
+    .lead-photo .cutline strong { font-style: normal; font-weight: 600; color: var(--news-ink-soft); }
+    .lead-copy .byline {
+      font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--news-ink-mute); margin-bottom: 20px;
+    }
+    .lead-copy .byline em { font-style: italic; text-transform: none; letter-spacing: 0; color: var(--news-ink-soft); }
+    .lead-copy h1 {
+      font-family: var(--news-serif); font-weight: 500;
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 1.0; letter-spacing: -0.028em;
+      color: var(--news-ink); margin: 0 0 24px;
+    }
+    .lead-copy h1 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+    .lead-copy .standfirst {
+      font-family: var(--news-serif); font-style: italic;
+      font-size: clamp(1.05rem, 1.5vw, 1.35rem); line-height: 1.55;
+      color: var(--news-ink-soft); margin: 0 0 32px;
+      padding-bottom: 32px; border-bottom: 1px solid var(--news-rule);
+      max-width: 560px;
+    }
+    .lead-cta {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 16px 28px; background: var(--news-ink); color: var(--news-paper);
+      font-family: var(--news-sans); font-weight: 600; font-size: 13px; letter-spacing: 0.02em;
+      transition: background 0.25s cubic-bezier(0.22,1,0.36,1);
+    }
+    .lead-cta:hover { background: var(--news-oxblood); }
+    .lead-cta .arrow { font-family: var(--news-mono); }
+
+    /* Feature grid */
+    .features {
+      max-width: 1520px; margin: 0 auto; padding: 64px 40px;
+      border-bottom: 1px solid var(--news-rule);
+    }
+    .features-head {
+      display: flex; justify-content: space-between; align-items: end;
+      margin-bottom: 48px; flex-wrap: wrap; gap: 24px;
+    }
+    .features-head .eyebrow {
+      font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--news-oxblood);
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .features-head .eyebrow::before {
+      content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
+    }
+    .features-head h2 {
+      font-family: var(--news-serif); font-weight: 500;
+      font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.0; letter-spacing: -0.024em;
+      margin: 0;
+    }
+    .features-head h2 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
+    }
+    .feature { display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1); }
+    .feature:hover { transform: translateY(-2px); }
+    .feature-photo {
+      aspect-ratio: 4 / 3; margin-bottom: 20px;
+      background-size: cover; background-position: center;
+      filter: grayscale(0.75) sepia(0.28) contrast(1.06);
+      transition: filter 0.4s cubic-bezier(0.22,1,0.36,1);
+    }
+    .feature:hover .feature-photo { filter: grayscale(0.5) sepia(0.15) contrast(1.08); }
+    .feature-photo.p1 { background-image: url("https://images.pexels.com/photos/9160268/pexels-photo-9160268.jpeg?auto=compress&cs=tinysrgb&w=1400"); }
+    .feature-photo.p2 { background-image: url("https://images.pexels.com/photos/8129903/pexels-photo-8129903.jpeg?auto=compress&cs=tinysrgb&w=1400"); }
+    .feature-photo.p3 { background-image: url("https://images.pexels.com/photos/1005325/pexels-photo-1005325.jpeg?auto=compress&cs=tinysrgb&w=1400"); }
+    .feature-photo.p4 { background-image: url("https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1400"); }
+    .feature-photo.p5 { background-image: url("https://images.pexels.com/photos/8129903/pexels-photo-8129903.jpeg?auto=compress&cs=tinysrgb&w=1400"); }
+    .feature-photo.p6 { background-image: url("https://images.pexels.com/photos/9160268/pexels-photo-9160268.jpeg?auto=compress&cs=tinysrgb&w=1400"); }
+    .feature-flag {
+      display: inline-block; align-self: flex-start;
+      font-family: var(--news-sans); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      background: var(--news-ink); color: var(--news-paper);
+      padding: 4px 9px; margin-bottom: 12px;
+    }
+    .feature-flag.finder { background: var(--news-oxblood); }
+    .feature-flag.leaf   { background: var(--news-pine); }
+    .feature-flag.people { background: #3a2a1c; }
+    .feature-flag.shop   { background: var(--news-mahogany); }
+    .feature-flag.market { background: #4a3826; }
+    .feature h3 {
+      font-family: var(--news-serif); font-weight: 500;
+      font-size: clamp(1.25rem, 1.8vw, 1.6rem); line-height: 1.12; letter-spacing: -0.014em;
+      color: var(--news-ink); margin: 0 0 10px;
+      transition: color 0.2s;
+    }
+    .feature:hover h3 { color: var(--news-oxblood); }
+    .feature h3 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+    .feature p {
+      font-family: var(--news-serif); font-style: italic;
+      font-size: 15px; line-height: 1.55; color: var(--news-ink-soft);
+      margin: 0 0 14px;
+    }
+    .feature .meta {
+      font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--news-ink-mute); margin-top: auto;
+      display: flex; gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .lead-grid { grid-template-columns: 1fr; gap: 32px; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="tnc-cinema">
+
+<div class="preview-mock"><strong>CINEMATIC PREVIEW</strong> &nbsp;·&nbsp; This is /cinematic-preview/ · production pages are unchanged &nbsp;·&nbsp; Reload for intro</div>
+
+<CigarCursor />
+
+<VideoIntroHero videoSrc="/cinematic/hero.mp4" />
+
+<div class="site-body">
+  <NewspaperMasthead />
+  <SectionFlag
+    number="/00"
+    section="The Cover"
+    title="This issue is <em>open.</em>"
+    status="Volume III · Issue Four"
+  />
+
+  <!-- Cover story -->
+  <section class="lead-wrap">
+    <div class="lead-eyebrow">This issue's lead</div>
+    <div class="lead-grid">
+      <a href="/blog/" class="lead-photo" data-hover>
+        <span class="cutline"><strong>Above &middot;</strong> The four buyers who set the pricing for the Nordic region, Copenhagen, May 2026. Photograph by Jonas Bendiksen.</span>
+      </a>
+      <div class="lead-copy">
+        <div class="byline">Report · <em>by Cristian Ortiz Suárez · 12 min read</em></div>
+        <h1>The price of a Cohiba, <em>1998 to 2026.</em></h1>
+        <p class="standfirst">How three decades of Habanos-Nordic distribution flattened Scandinavia into Europe's cheapest Cuban market — and what the next tariff cycle will do to it. A conversation with the four buyers who set the numbers.</p>
+        <a href="/blog/" class="lead-cta" data-hover>Read the full report <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="features-head">
+      <div>
+        <div class="eyebrow">Also in this issue</div>
+        <h2>Six more <em>for the pocket.</em></h2>
+      </div>
+      <a href="/blog/" data-hover style="font-family: var(--news-sans); font-size: 13px; font-weight: 500; color: var(--news-ink-soft); border-bottom: 1px solid var(--news-rule); padding-bottom: 4px;">Every article →</a>
+    </div>
+    <div class="features-grid">
+      <a href="/finder/" class="feature" data-hover>
+        <div class="feature-photo p1"></div>
+        <span class="feature-flag finder">The Finder</span>
+        <h3>Where <em>Behike 52</em> is cheapest this week.</h3>
+        <p>Marseille undercut Copenhagen by €18 on a box of five. Live prices across 116 retailers, updated every six hours.</p>
+        <div class="meta"><span>4 min</span><span>June 8</span></div>
+      </a>
+      <a href="/blog/" class="feature" data-hover>
+        <div class="feature-photo p2"></div>
+        <span class="feature-flag leaf">Leaf</span>
+        <h3>Medio Tiempo — <em>the 0.4% leaf.</em></h3>
+        <p>Only the top two leaves of the plant. Only one in three plants produces them. Why every Behike traces back to this one.</p>
+        <div class="meta"><span>8 min</span><span>June 5</span></div>
+      </a>
+      <a href="/blog/" class="feature" data-hover>
+        <div class="feature-photo p3"></div>
+        <span class="feature-flag people">People</span>
+        <h3>Inside <em>Casa del Habano,</em> Copenhagen.</h3>
+        <p>An afternoon on Strøget with the 84-year-old torcedor who rolls Behikes on a bench older than most of the guests.</p>
+        <div class="meta"><span>14 min</span><span>June 1</span></div>
+      </a>
+      <a href="/blog/" class="feature" data-hover>
+        <div class="feature-photo p4"></div>
+        <span class="feature-flag market">Market</span>
+        <h3>Small-batch <em>brands to watch.</em></h3>
+        <p>Five boutique blenders shipping into Europe this quarter that you haven't heard of yet — and where to buy them.</p>
+        <div class="meta"><span>6 min</span><span>May 28</span></div>
+      </a>
+      <a href="/shop/" class="feature" data-hover>
+        <div class="feature-photo p5"></div>
+        <span class="feature-flag shop">The Shop · New</span>
+        <h3><em>Guatabey.</em> Fifty shirts, once a year.</h3>
+        <p>Irish linen, Cuban cut, hand-numbered. First drop July 2026 — members first, everyone else 24 hours later.</p>
+        <div class="meta"><span>Preview</span><span>May 25</span></div>
+      </a>
+      <a href="/blog/" class="feature" data-hover>
+        <div class="feature-photo p6"></div>
+        <span class="feature-flag people">People</span>
+        <h3>The <em>Malmö humidor</em> at fifteen years.</h3>
+        <p>Gott Eftermaten's owner on why the world's smallest Habanos-licensed shop still stocks the range you can't find in London.</p>
+        <div class="meta"><span>10 min</span><span>May 20</span></div>
+      </a>
+    </div>
+  </section>
+</div>
+
+</body>
+</html>

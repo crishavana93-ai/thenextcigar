@@ -1,0 +1,69 @@
+---
+/**
+ * SectionFlag — identifies which "section" of the paper the current
+ * page is: /01 The Finder, /02 The Lounge, /03 The Magazine, /04 The Shop.
+ * Sits directly under the persistent NewspaperMasthead.
+ */
+
+interface Props {
+  number: string;   // e.g. "/01"
+  section: string;  // e.g. "The Finder"
+  title: string;    // e.g. "Business & Markets — Cuban cigars, live."
+  status?: string;  // e.g. "Prices updated 6 min ago"
+  live?: boolean;   // shows pulsing red dot next to status
+}
+
+const { number, section, title, status, live = false } = Astro.props;
+---
+
+<div class="tnc-section-flag">
+  <span class="tnc-kicker">{number} · {section}</span>
+  <h1 set:html={title}></h1>
+  {status && (
+    <span class:list={["tnc-live-status", live && "live"]}>{status}</span>
+  )}
+</div>
+
+<style>
+  .tnc-section-flag {
+    max-width: 1520px; margin: 0 auto;
+    padding: 32px 40px 20px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 32px;
+    align-items: baseline;
+    border-bottom: 1px solid var(--news-ink);
+  }
+  .tnc-section-flag h1 {
+    font-family: var(--news-serif); font-weight: 600;
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+    line-height: 1; letter-spacing: -0.018em;
+    color: var(--news-ink); margin: 0;
+  }
+  .tnc-section-flag h1 :global(em) {
+    font-style: italic; color: var(--news-oxblood); font-weight: 400;
+  }
+  .tnc-kicker {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--news-oxblood);
+    padding-right: 20px; border-right: 1px solid var(--news-rule);
+    white-space: nowrap;
+  }
+  .tnc-live-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+    white-space: nowrap;
+  }
+  .tnc-live-status.live::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--news-ember); animation: tncPulse 2s ease-in-out infinite;
+  }
+  @keyframes tncPulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+  @media (max-width: 900px) {
+    .tnc-section-flag {
+      grid-template-columns: 1fr; gap: 12px;
+      padding: 24px 20px 16px;
+    }
+    .tnc-kicker { padding-right: 0; border-right: none; }
+  }
+</style>

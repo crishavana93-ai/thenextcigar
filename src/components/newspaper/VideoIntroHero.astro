@@ -1,0 +1,132 @@
+---
+/**
+ * VideoIntroHero — cinematic video that plays on page load and fades
+ * out into the newspaper page underneath. Uses localStorage so returning
+ * visitors skip the intro after seeing it once.
+ */
+
+interface Props {
+  videoSrc?: string;
+  posterSrc?: string;
+}
+
+const {
+  videoSrc = "/cinematic/hero.mp4",
+  posterSrc,
+} = Astro.props;
+---
+
+<section class="tnc-hero" id="tncHero">
+  <div class="tnc-hero-video">
+    <video id="tncHeroVideo" autoplay muted playsinline preload="auto" poster={posterSrc}>
+      <source src={videoSrc} type="video/mp4" />
+    </video>
+  </div>
+  <div class="tnc-hero-grain"></div>
+  <div class="tnc-hero-vignette"></div>
+  <div class="tnc-hero-title">
+    <div class="tnc-hero-lab">Vol. III · Issue Four · <slot name="date">June 2026</slot></div>
+  </div>
+  <button class="tnc-skip" id="tncSkipBtn" data-hover>Skip intro <span class="tnc-skip-arrow">→</span></button>
+</section>
+
+<style>
+  .tnc-hero {
+    position: relative;
+    height: calc(100vh - var(--nav-offset, 0px));
+    min-height: 640px;
+    overflow: hidden;
+    background: #0a0806;
+    transition: opacity 0.9s cubic-bezier(0.22,1,0.36,1),
+                height 0.6s cubic-bezier(0.22,1,0.36,1) 0.6s,
+                min-height 0.6s cubic-bezier(0.22,1,0.36,1) 0.6s,
+                transform 0.9s cubic-bezier(0.22,1,0.36,1);
+  }
+  .tnc-hero.done {
+    opacity: 0; transform: translateY(-2%);
+    height: 0; min-height: 0; pointer-events: none;
+  }
+  .tnc-hero-video { position: absolute; inset: 0; z-index: 0; }
+  .tnc-hero-video video {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: contrast(1.04) saturate(0.92);
+  }
+  .tnc-hero-grain {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    opacity: 0.08; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+  .tnc-hero-vignette {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 78%, rgba(0,0,0,0.5) 100%);
+  }
+  .tnc-hero-title {
+    position: absolute; z-index: 10;
+    bottom: 60px; left: 40px;
+    color: #f5f1e8;
+    max-width: 620px;
+    opacity: 0; animation: tncRise 1s cubic-bezier(0.22,1,0.36,1) 1.5s forwards;
+  }
+  .tnc-hero-lab {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: #d3b06a;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .tnc-hero-lab::before { content: ""; width: 40px; height: 1px; background: #d3b06a; }
+  @keyframes tncRise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .tnc-skip {
+    position: absolute; z-index: 20; bottom: 40px; right: 40px;
+    padding: 8px 14px; border: 1px solid rgba(245,241,232,0.4);
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: rgba(245,241,232,0.85);
+    background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
+    transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .tnc-skip:hover { color: #d3b06a; border-color: #d3b06a; }
+  .tnc-skip-arrow { font-family: var(--news-sans); font-size: 14px; }
+
+  @media (max-width: 900px) {
+    .tnc-hero { min-height: 520px; }
+    .tnc-hero-title { left: 24px; bottom: 32px; }
+    .tnc-skip { right: 20px; bottom: 24px; }
+  }
+</style>
+
+<script>
+  const hero  = document.getElementById('tncHero');
+  const video = document.getElementById('tncHeroVideo') as HTMLVideoElement | null;
+  const skip  = document.getElementById('tncSkipBtn');
+  const SEEN_KEY = 'tnc_intro_seen';
+
+  function land() {
+    hero?.classList.add('done');
+    // On done, allow document to scroll normally
+    document.body.style.overflow = '';
+  }
+
+  // Returning visitors skip the intro
+  try {
+    if (localStorage.getItem(SEEN_KEY) === '1') {
+      land();
+    }
+  } catch (e) { /* ignore private-mode errors */ }
+
+  video?.addEventListener('ended', () => {
+    try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
+    land();
+  });
+  video?.addEventListener('error', land);
+  video?.addEventListener('stalled', () => setTimeout(() => {
+    if (video.readyState < 2) land();
+  }, 1500));
+  setTimeout(() => { if (video && video.readyState < 2) land(); }, 3500);
+
+  skip?.addEventListener('click', () => {
+    try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
+    land();
+  });
+</script>
