@@ -127,6 +127,14 @@ const sectionFlag = categoryFlag(data.category);
       <div id="reading-progress-bar" class="reading-progress-bar"></div>
     </div>
 
+    <!-- Sticky chapter nav — auto-populated from H2s in article body -->
+    <nav class="chapter-nav" id="chapterNav" aria-hidden="true">
+      <div class="chapter-nav-inner">
+        <div class="chapter-nav-label">In this issue</div>
+        <ul id="chapterList" class="chapter-list"></ul>
+      </div>
+    </nav>
+
     <main class="site-body">
       <NewspaperMasthead
         volume={masthead.volume}
@@ -237,7 +245,7 @@ const sectionFlag = categoryFlag(data.category);
   </div>
 
   <script>
-    // Reading progress bar
+    // ── Reading progress bar ──
     const bar = document.getElementById('reading-progress-bar');
     if (bar) {
       const update = () => {
@@ -250,10 +258,131 @@ const sectionFlag = categoryFlag(data.category);
       window.addEventListener('resize', update);
       update();
     }
+
+    // ── Chapter nav — auto-generated from H2s in .article-body ──
+    // Runs after DOM ready. Assigns each H2 an id, builds the left-rail
+    // nav, and uses IntersectionObserver to highlight the current chapter.
+    // Falls back gracefully if there are no H2s (short posts) — nav hidden.
+    const nav = document.getElementById('chapterNav');
+    const list = document.getElementById('chapterList');
+    const headings = Array.from(document.querySelectorAll('.article-body h2'));
+
+    if (nav && list && headings.length >= 2) {
+      headings.forEach((h, i) => {
+        // Slugify heading text for anchor id (fallback to numeric)
+        const raw = (h.textContent || '').trim().toLowerCase();
+        const slug = raw
+          .replace(/<[^>]*>/g, '')
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .slice(0, 60) || `chapter-${i + 1}`;
+        h.id = slug;
+
+        const li = document.createElement('li');
+        li.className = 'chapter-item';
+        li.dataset.target = slug;
+        li.innerHTML = `
+          <span class="chapter-num">${String(i + 1).padStart(2, '0')}</span>
+          <span class="chapter-title">${h.textContent || ''}</span>
+        `;
+        li.addEventListener('click', () => {
+          const el = document.getElementById(slug);
+          if (!el) return;
+          // Prefer Lenis smooth scroll if available; fall back to native
+          const lenis = (window).lenis;
+          if (lenis) {
+            lenis.scrollTo(el, { offset: -80 });
+          } else {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+        list.appendChild(li);
+      });
+
+      // Reveal the nav once user scrolls past the hero
+      const revealAt = window.innerHeight * 0.4;
+      const toggleNav = () => {
+        if (window.scrollY > revealAt) nav.classList.add('is-visible');
+        else nav.classList.remove('is-visible');
+      };
+      window.addEventListener('scroll', toggleNav, { passive: true });
+      toggleNav();
+
+      // Highlight current chapter as user scrolls through
+      const items = Array.from(list.querySelectorAll('.chapter-item'));
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              items.forEach((it) => it.classList.remove('is-active'));
+              const active = list.querySelector(`[data-target="${entry.target.id}"]`);
+              if (active) active.classList.add('is-active');
+            }
+          });
+        },
+        { rootMargin: '-30% 0px -60% 0px' }
+      );
+      headings.forEach((h) => observer.observe(h));
+    }
   </script>
 </BaseLayout>
 
 <style is:global>
+  /* ── Chapter nav — sticky left rail, auto-populated from H2s ──
+     Desktop only (>1240px). Fades in when user scrolls past hero.
+     Current chapter highlighted via IntersectionObserver. */
+  .chapter-nav {
+    position: fixed; top: 50%; left: 24px;
+    transform: translateY(-50%);
+    z-index: 55;
+    max-width: 200px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .chapter-nav.is-visible { opacity: 1; pointer-events: auto; }
+  .chapter-nav-inner {
+    padding: 16px 18px;
+    background: rgba(242, 237, 225, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--news-rule);
+    max-height: 70vh; overflow-y: auto;
+  }
+  .chapter-nav-label {
+    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood);
+    padding-bottom: 8px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--news-rule);
+  }
+  .chapter-list {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .chapter-item {
+    display: grid; grid-template-columns: 24px 1fr; gap: 8px;
+    padding: 8px 4px; cursor: none;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 2px;
+  }
+  .chapter-item:hover { background: rgba(138, 43, 30, 0.06); }
+  .chapter-item.is-active { background: rgba(138, 43, 30, 0.1); }
+  .chapter-num {
+    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.12em;
+    color: var(--news-oxblood); padding-top: 2px;
+  }
+  .chapter-title {
+    font-family: var(--news-serif); font-size: 12px; line-height: 1.35;
+    letter-spacing: -0.008em; color: var(--news-ink-soft);
+    transition: color 0.25s;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .chapter-item.is-active .chapter-title,
+  .chapter-item:hover .chapter-title { color: var(--news-ink); }
+
+  @media (max-width: 1240px) {
+    .chapter-nav { display: none; }
+  }
+
   /* Reading progress bar — thin gold rule pinned to viewport top */
   .reading-progress {
     position: fixed; top: 0; left: 0; right: 0; height: 2px;
@@ -360,13 +489,36 @@ const sectionFlag = categoryFlag(data.category);
   .article-body a:hover { color: var(--news-ember); border-bottom-color: var(--news-ember); }
   .article-body em, .article-body i { font-style: italic; }
   .article-body strong { font-weight: 600; color: var(--news-ink); }
+  /* Enhanced pull quotes — cinematic, larger, breathes at viewport center */
   .article-body blockquote {
-    margin: 2em 0; padding: 20px 32px;
-    border-left: 3px solid var(--news-oxblood);
-    background: var(--news-paper-cream);
-    font-family: var(--news-serif); font-style: italic;
-    font-size: clamp(1.1rem, 1.6vw, 1.35rem); line-height: 1.5;
-    color: var(--news-ink-soft);
+    margin: 3em -60px; padding: 40px 60px 44px;
+    border-left: 4px solid var(--news-oxblood);
+    background: linear-gradient(180deg, var(--news-paper-cream) 0%, transparent 100%);
+    font-family: var(--news-serif); font-style: italic; font-weight: 500;
+    font-size: clamp(1.5rem, 3vw, 2.4rem); line-height: 1.35; letter-spacing: -0.014em;
+    color: var(--news-ink);
+    position: relative;
+  }
+  .article-body blockquote::before {
+    content: "\201C";
+    position: absolute; top: -18px; left: 40px;
+    font-family: var(--news-serif); font-weight: 700; font-size: 6rem;
+    line-height: 1; color: var(--news-oxblood); opacity: 0.4;
+  }
+  @supports (animation-timeline: view()) {
+    .tnc-cinema .article-body blockquote {
+      animation: quote-arrival linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 40%;
+    }
+    @keyframes quote-arrival {
+      from { opacity: 0.35; transform: scale(0.96); }
+      to   { opacity: 1;    transform: scale(1);    }
+    }
+  }
+  @media (max-width: 900px) {
+    .article-body blockquote { margin: 2em 0; padding: 24px 24px 28px; }
+    .article-body blockquote::before { font-size: 4rem; left: 20px; top: -8px; }
   }
   .article-body blockquote p { margin: 0 0 0.6em; }
   .article-body blockquote p:last-child { margin: 0; }
