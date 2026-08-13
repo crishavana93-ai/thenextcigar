@@ -1,10 +1,10 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
-import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PostCard from "../../components/PostCard.astro";
-import AdSlot from "../../components/AdSlot.astro";
-import EditorialImage from "../../components/ui/EditorialImage.astro";
+import "../../styles/newspaper.css";
+import CigarCursor from "../../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../../components/newspaper/SectionFlag.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -22,28 +22,22 @@ const category = data.category ? await getEntry("categories", data.category) : n
 const author = data.author ? await getEntry("authors", data.author) : null;
 
 const allPosts = await getCollection("blog");
+const categoryByslug = new Map((await getCollection("categories")).map((c) => [c.data.slug, c.data]));
 
-// Related = same category first (most recent), backfilled with other
-// categories if there are fewer than 3 in the same category. Guarantees
-// every post gets 3 internal links from this section — single biggest
-// sitewide SEO lift since it satisfies Yoast's "internal links: 2+"
-// check on every post automatically.
+// Related — same category first, backfilled with recent
 const sameCategory = allPosts
   .filter((p) => p.id !== post.id && p.data.category === data.category)
   .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
 const otherCategories = allPosts
   .filter((p) => p.id !== post.id && p.data.category !== data.category)
   .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
-
 const related = [...sameCategory, ...otherCategories].slice(0, 3);
-const moreFromArchive = otherCategories
-  .filter((p) => !related.includes(p))
-  .slice(0, 3);
 
-const categoryByslug = new Map((await getCollection("categories")).map((c) => [c.data.slug, c.data]));
-
-const longDate = new Date(data.publishedAt).toLocaleDateString("en-US", {
+const longDate = new Date(data.publishedAt).toLocaleDateString("en-GB", {
   weekday: "long", year: "numeric", month: "long", day: "numeric",
+});
+const shortDate = new Date(data.publishedAt).toLocaleDateString("en-GB", {
+  day: "numeric", month: "short", year: "numeric",
 });
 
 const words = post.body?.split(/\s+/).length ?? 0;
@@ -54,8 +48,8 @@ const coverUrl = typeof data.cover === "string"
   ? data.cover
   : (data.cover?.src ?? "/og-default.svg");
 
-// Article + BreadcrumbList JSON-LD for Google rich results
-const categoryName = data.category ?? "News";
+// JSON-LD — preserve full SEO stack
+const categoryName = category?.data?.name ?? "News";
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
@@ -79,370 +73,459 @@ const breadcrumbSchema = {
   "@type": "BreadcrumbList",
   itemListElement: [
     { "@type": "ListItem", position: 1, name: "Home", item: "https://thenextcigar.com/" },
-    { "@type": "ListItem", position: 2, name: "News", item: "https://thenextcigar.com/blog/" },
+    { "@type": "ListItem", position: 2, name: "Magazine", item: "https://thenextcigar.com/blog/" },
     { "@type": "ListItem", position: 3, name: data.title, item: shareUrl + "/" },
   ],
 };
 
-// Gear-roundup Product schema. Emitted only when frontmatter provides a
-// products[] array — Google rich results eligible (ItemList + Product).
-const products = (data as any).products as Array<{
-  name: string;
-  image: string;
-  price?: number | string;
-  priceLow?: number;
-  priceHigh?: number;
-  currency?: string;
-  url: string;
-  brand?: string;
-  sku?: string;
-  description?: string;
-  rating?: number;
-  reviewCount?: number;
-  availability?: "InStock" | "OutOfStock" | "PreOrder";
-}> | undefined | null;
+const masthead = {
+  volume: "Vol. III",
+  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
+  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+};
 
-function buildProductNode(p: NonNullable<typeof products>[number], position: number) {
-  const node: Record<string, unknown> = {
-    "@type": "Product",
-    name: p.name,
-    image: [p.image],
-    url: p.url,
-  };
-  if (p.brand) node.brand = { "@type": "Brand", name: p.brand };
-  if (p.sku) node.sku = p.sku;
-  if (p.description) node.description = p.description;
-  // Pricing — prefer a numeric range if provided, otherwise scalar price
-  const currency = p.currency || "USD";
-  if (typeof p.priceLow === "number" && typeof p.priceHigh === "number") {
-    node.offers = {
-      "@type": "AggregateOffer",
-      priceCurrency: currency,
-      lowPrice: p.priceLow,
-      highPrice: p.priceHigh,
-      availability: `https://schema.org/${p.availability || "InStock"}`,
-      url: p.url,
-    };
-  } else if (typeof p.price === "number") {
-    node.offers = {
-      "@type": "Offer",
-      priceCurrency: currency,
-      price: p.price,
-      availability: `https://schema.org/${p.availability || "InStock"}`,
-      url: p.url,
-    };
-  }
-  if (typeof p.rating === "number" && typeof p.reviewCount === "number") {
-    node.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: p.rating,
-      reviewCount: p.reviewCount,
-    };
-  }
-  return node;
+function coverOf(p: typeof allPosts[number]): string {
+  const c = p.data.cover;
+  if (!c) return "/og-default.svg";
+  if (typeof c === "string") return c;
+  return (c as { src: string }).src;
+}
+function categoryLabelOf(p: typeof allPosts[number]): string {
+  const cat = p.data.category ? categoryByslug.get(p.data.category) : null;
+  return cat?.data?.name ?? "Editorial";
+}
+function categoryFlag(slug: string | null): string {
+  if (!slug) return "";
+  const s = slug.toLowerCase();
+  if (s.includes("finder") || s.includes("price")) return "finder";
+  if (s.includes("leaf") || s.includes("cigar-101") || s.includes("vitola")) return "leaf";
+  if (s.includes("people") || s.includes("culture") || s.includes("havana")) return "people";
+  if (s.includes("shop") || s.includes("gear") || s.includes("accessor")) return "shop";
+  if (s.includes("news") || s.includes("market")) return "market";
+  return "";
 }
 
-const itemListSchema = Array.isArray(products) && products.length > 0
-  ? {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      itemListOrder: "https://schema.org/ItemListOrderAscending",
-      numberOfItems: products.length,
-      name: data.title,
-      description: data.excerpt || data.title,
-      itemListElement: products.map((p, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        item: buildProductNode(p, i + 1),
-      })),
-    }
-  : null;
+const sectionFlag = categoryFlag(data.category);
 ---
 
 <BaseLayout
-  title={`${data.title} — TNext Cigar`}
+  title={`${data.title} — The Next Cigar`}
   description={data.excerpt || data.title}
   image={coverUrl}
+  bareChrome={true}
 >
-  {/* Reading progress bar — Direction A standard for long-form */}
-  <div
-    id="reading-progress"
-    class="fixed top-0 left-0 right-0 h-[2px] z-[60] pointer-events-none"
-    aria-hidden="true"
-  >
-    <div
-      id="reading-progress-bar"
-      class="h-full origin-left"
-      style="background: var(--color-gold-hover, #c9a961); transform: scaleX(0); transition: transform 60ms linear;"
-    ></div>
-  </div>
-
-  <article class="editorial">
-    {/* ─── HEADLINE BLOCK — Direction A magazine masthead ─── */}
-    <header class="container-narrow pt-16 md:pt-24 pb-10" data-reveal>
-      <nav class="mb-10 text-[0.7rem] tracking-[0.16em] uppercase font-semibold" style="color: var(--color-ink-muted);" aria-label="Breadcrumb">
-        <a href="/" class="hover:opacity-70 transition-opacity">Home</a>
-        <span class="mx-2 opacity-50">/</span>
-        <a href="/blog" class="hover:opacity-70 transition-opacity">Magazine</a>
-        {category && (<>
-          <span class="mx-2 opacity-50">/</span>
-          <a href={`/category/${category.data.slug}`} class="hover:opacity-70 transition-opacity">{category.data.name}</a>
-        </>)}
-      </nav>
-
-      {/* Editorial eyebrow — category + read time */}
-      <p class="editorial-eyebrow mb-6 md:mb-8">
-        {data.isPremium && <span>Members only · </span>}
-        {category ? category.data.name : "Editorial"} · {readMinutes} min read
-      </p>
-
-      <h1
-        class="editorial-h leading-[1.05] tracking-[-0.014em]"
-        style="font-size: clamp(2.4rem, 5.4vw, 4.4rem);"
-      >
-        {data.title}
-      </h1>
-
-      {data.excerpt && (
-        <p
-          class="mt-8 max-w-3xl text-[1.15rem] md:text-[1.28rem] leading-[1.5] font-normal italic"
-          style="color: var(--color-ink-soft); font-family: var(--font-serif);"
-        >
-          {data.excerpt}
-        </p>
-      )}
-
-      <div class="mt-12 flex flex-wrap items-center gap-x-8 gap-y-2 text-[0.78rem] tracking-[0.08em] uppercase" style="color: var(--color-ink-muted);">
-        {author && (
-          <span class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-gold-hover);"></span>
-            <span>By <span style="color: var(--color-ink);">{author.data.name}</span></span>
-          </span>
-        )}
-        <time datetime={new Date(data.publishedAt).toISOString()}>{longDate}</time>
-      </div>
-    </header>
-
-    {/* ─── HERO IMAGE — Direction A Floema clip-path reveal ───────────────
-        Replaces the old parallax-cover with EditorialImage which:
-         · slides the cover up from behind a clip-path mask on scroll-in
-         · pairs with a small-caps caption underneath (magazine print convention)
-         · ken-burns scale settles from 1.04 → 1.0 over 1.8s
-         · respects prefers-reduced-motion (instant reveal for those users)
-    */}
-    {data.cover && (
-      <div class="container-wide mb-16">
-        <EditorialImage
-          src={typeof data.cover === "string" ? data.cover : data.cover.src}
-          alt={data.title}
-          aspect="16/9"
-          eager
-          caption={`Cover · ${data.title}`}
-        />
-      </div>
-    )}
-
-    {/* ─── BODY + SHARE RAIL + SIDEBAR ─── */}
-    <div class="container-wide grid grid-cols-1 lg:grid-cols-12 gap-12 pb-24">
-      {/* Sticky share rail (desktop) */}
-      <aside class="hidden lg:flex lg:col-span-1 flex-col gap-3 sticky top-32 self-start text-[color:var(--color-text-muted)]" aria-label="Share">
-        <span class="text-[0.62rem] uppercase tracking-widest font-bold">Share</span>
-        <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(data.title)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on Twitter / X">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        </a>
-        <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on LinkedIn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
-        </a>
-        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on Facebook">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        </a>
-        <button id="copy-link-btn" data-url={shareUrl} class="hover:text-[color:var(--color-accent)] transition-colors text-left" aria-label="Copy link">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        </button>
-      </aside>
-
-      {/* Article body */}
-      <div class="lg:col-span-7 lg:col-start-3">
-        <div class="prose prose-dropcap mx-auto">
-          <Content />
-
-          {/* In-article ad */}
-          <AdSlot variant="in-article" />
-        </div>
-
-        {/* Footer of article */}
-        <div class="hairline my-12"></div>
-
-        <div class="flex flex-wrap items-center justify-between gap-6">
-          <div>
-            <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Filed under</p>
-            {category ? (
-              <a href={`/category/${category.data.slug}`} class="font-display text-2xl md:text-3xl font-bold hover:text-[color:var(--color-accent)] transition-colors">
-                {category.data.name}
-              </a>
-            ) : (
-              <p class="font-display text-2xl text-[color:var(--color-text-muted)]">Uncategorized</p>
-            )}
-          </div>
-          <span class="magnetic-area inline-block" data-magnetic-area>
-            <a href="/subscribe" class="btn btn-accent magnetic-target" data-magnetic>Subscribe to the newsletter</a>
-          </span>
-        </div>
-
-        {/* Mobile share row */}
-        <div class="lg:hidden mt-10 pt-6 border-t border-[color:var(--color-border)] flex items-center gap-4">
-          <span class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)]">Share</span>
-          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(data.title)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on Twitter / X">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </a>
-          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener" class="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors" aria-label="Share on LinkedIn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
-          </a>
-        </div>
-
-        {/* End-of-article ad */}
-        <div class="mt-16">
-          <AdSlot variant="billboard" />
-        </div>
-      </div>
-
-      {/* Sticky sidebar (desktop) — half-page ad + newsletter card */}
-      <aside class="hidden lg:block lg:col-span-3" aria-label="Sidebar">
-        <div class="sticky top-32 space-y-8">
-          {/* Half-page ad */}
-          <AdSlot variant="halfpage" />
-
-          {/* Newsletter promo card */}
-          <div class="section-dark rounded p-6">
-            <p class="text-[0.7rem] uppercase tracking-widest text-[color:var(--color-text-on-dark-mute)] font-bold mb-3">
-              Never miss a thing
-            </p>
-            <h3 class="font-display text-2xl leading-tight mb-3 text-white">
-              Subscribe and get freshly baked stories.
-            </h3>
-            <p class="text-sm text-[color:var(--color-text-on-dark-soft)] mb-4">
-              One Sunday email. Free, forever.
-            </p>
-            <a href="/subscribe/" class="btn btn-accent w-full justify-center">Join the newsletter</a>
-          </div>
-
-          {/* Member only callout */}
-          {data.isPremium && (
-            <div class="border border-[color:var(--color-border)] rounded p-6 bg-[color:var(--color-bg-soft)]">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[0.6rem] font-bold tracking-widest uppercase bg-[color:var(--color-dark)] text-white rounded-sm mb-3">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Member only
-              </span>
-              <h4 class="font-display text-lg leading-tight mb-2">Unlock the full editorial.</h4>
-              <p class="text-xs text-[color:var(--color-text-muted)] mb-3">$5/month · cancel anytime.</p>
-              <a href="/subscribe/" class="text-sm font-semibold text-[color:var(--color-accent)] hover:underline">
-                Become a member →
-              </a>
-            </div>
-          )}
-        </div>
-      </aside>
-    </div>
-  </article>
-
-  {/* ─── KEEP READING (related posts in same category) ─── */}
-  {related.length > 0 && (
-    <section class="py-20 bg-[color:var(--color-bg-soft)] border-t border-[color:var(--color-border)]">
-      <div class="container-wide">
-        <div class="flex items-end justify-between mb-12 reveal flex-wrap gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">Keep reading</p>
-            <h2 class="section-eyebrow">More from {category?.data.name ?? "the archive"}</h2>
-          </div>
-          {category && (
-            <a href={`/category/${category.data.slug}`} class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
-              See all in {category.data.name} →
-            </a>
-          )}
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {related.map((p, i) => {
-            const c = p.data.category ? categoryByslug.get(p.data.category) : null;
-            return <PostCard post={p} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
-          })}
-        </div>
-      </div>
-    </section>
-  )}
-
-  {/* ─── BROWSE THE REST ─── */}
-  {moreFromArchive.length > 0 && (
-    <section class="py-20">
-      <div class="container-wide">
-        <div class="flex items-end justify-between mb-12 reveal flex-wrap gap-4">
-          <p class="section-eyebrow">From the archive</p>
-          <a href="/blog" class="text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
-            All stories →
-          </a>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {moreFromArchive.map((p, i) => {
-            const c = p.data.category ? categoryByslug.get(p.data.category) : null;
-            return <PostCard post={p} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
-          })}
-        </div>
-      </div>
-    </section>
-  )}
-
-  {/* Structured data for Google rich results */}
+  <link
+    is:inline
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
   <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
   <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
-  {itemListSchema && (
-    <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
-  )}
+
+  <div class="tnc-cinema">
+    <CigarCursor />
+
+    <!-- Reading progress bar — thin gold rule at top -->
+    <div id="reading-progress" class="reading-progress" aria-hidden="true">
+      <div id="reading-progress-bar" class="reading-progress-bar"></div>
+    </div>
+
+    <main class="site-body">
+      <NewspaperMasthead
+        volume={masthead.volume}
+        issue={masthead.issue}
+        date={masthead.date}
+      />
+
+      <SectionFlag
+        number="/03"
+        section={categoryName}
+        title={`${data.title.length > 60 ? data.title.slice(0, 58) + "…" : data.title}<em></em>`}
+        status={`${readMinutes} min read`}
+      />
+
+      <!-- ARTICLE MASTHEAD BLOCK — byline, headline, standfirst, cover -->
+      <article class="article">
+
+        <div class="article-inner">
+
+          <div class="article-byline">
+            <a href="/blog/" data-hover>Back to the Magazine</a>
+            <span class="dot">·</span>
+            <span>{longDate}</span>
+            {data.author && (
+              <>
+                <span class="dot">·</span>
+                <span>by <em>{data.author}</em></span>
+              </>
+            )}
+            <span class="dot">·</span>
+            <span>{readMinutes} min read</span>
+          </div>
+
+          <h1 class="article-title">{data.title}</h1>
+
+          {data.excerpt && (
+            <p class="article-standfirst">{data.excerpt}</p>
+          )}
+        </div>
+
+        {data.cover && (
+          <figure class="article-hero">
+            <img src={coverUrl} alt={data.title} loading="eager" />
+            <figcaption>
+              <strong>Above &middot;</strong> {data.title}. Photography via TNC editorial archive.
+            </figcaption>
+          </figure>
+        )}
+
+        <!-- BODY — two-column with drop cap treatment via CSS -->
+        <div class="article-body prose">
+          <Content />
+        </div>
+
+        <!-- Share + meta ornament -->
+        <div class="article-ornament">
+          <span class="article-ornament-mark">◆ ◆ ◆</span>
+          <div class="article-share">
+            <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl + '/')}&text=${encodeURIComponent(data.title)}`} data-hover target="_blank" rel="noopener">Share on X</a>
+            <span class="dot">·</span>
+            <a href={`mailto:?subject=${encodeURIComponent(data.title)}&body=${encodeURIComponent(shareUrl + '/')}`} data-hover>Email</a>
+            <span class="dot">·</span>
+            <a href="/blog/" data-hover>All issues</a>
+          </div>
+        </div>
+
+      </article>
+
+      <!-- RELATED — "Continued reading" -->
+      {related.length > 0 && (
+        <section class="related">
+          <div class="related-head">
+            <div class="related-eyebrow">Continued reading</div>
+            <h2>Three more <em>from the archive.</em></h2>
+          </div>
+          <div class="related-grid">
+            {related.map((post) => (
+              <a href={`/blog/${post.data.slug}/`} class="related-card" data-hover>
+                <div class="related-photo" style={`background-image: url("${coverOf(post)}")`}></div>
+                <span class={`related-flag ${categoryFlag(post.data.category)}`}>{categoryLabelOf(post)}</span>
+                <h3>{post.data.title}</h3>
+                {post.data.excerpt && <p>{post.data.excerpt}</p>}
+                <div class="meta"><span>{new Date(post.data.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span></div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar · Cristian Ortiz Suárez</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Reading progress bar
+    const bar = document.getElementById('reading-progress-bar');
+    if (bar) {
+      const update = () => {
+        const scrollTop = window.scrollY;
+        const height = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = height > 0 ? Math.min(1, Math.max(0, scrollTop / height)) : 0;
+        bar.style.transform = `scaleX(${pct})`;
+      };
+      window.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', update);
+      update();
+    }
+  </script>
 </BaseLayout>
 
-<script>
-  // Direction A — reading progress bar. Fills left-to-right as the user
-  // scrolls the article. Sticky at top:0 above the sticky header (z 60 > 40).
-  function setupReadingProgress() {
-    const bar = document.getElementById("reading-progress-bar");
-    const article = document.querySelector("article");
-    if (!bar || !article) return;
-    let ticking = false;
-    function update() {
-      const rect = article!.getBoundingClientRect();
-      const total = rect.height - window.innerHeight;
-      const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(total, 1));
-      const pct = total > 0 ? scrolled / total : 0;
-      bar!.style.transform = `scaleX(${pct})`;
-      ticking = false;
-    }
-    function onScroll() {
-      if (!ticking) {
-        requestAnimationFrame(update);
-        ticking = true;
-      }
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    update();
+<style is:global>
+  /* Reading progress bar — thin gold rule pinned to viewport top */
+  .reading-progress {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px;
+    z-index: 60; pointer-events: none;
+    background: transparent;
   }
-  document.addEventListener("astro:page-load", setupReadingProgress);
-  setupReadingProgress();
+  .reading-progress-bar {
+    height: 100%; transform-origin: left; transform: scaleX(0);
+    background: linear-gradient(90deg, var(--news-oxblood), var(--news-gold), var(--news-ember));
+    transition: transform 0.15s linear;
+  }
 
-  // Copy-link button (desktop share rail)
-  function setupCopyLink() {
-    const btn = document.getElementById("copy-link-btn") as HTMLButtonElement | null;
-    if (!btn || (btn as any).dataset.bound === "1") return;
-    (btn as any).dataset.bound = "1";
-    btn.addEventListener("click", async () => {
-      const url = btn.dataset.url;
-      if (!url) return;
-      try {
-        await navigator.clipboard.writeText(url);
-        const original = btn.innerHTML;
-        btn.innerHTML = `<span class="text-xs">Copied!</span>`;
-        setTimeout(() => { btn.innerHTML = original; }, 1500);
-      } catch {}
-    });
+  /* ── Article layout ── */
+  .site-body { padding-bottom: 40px; }
+
+  .article {
+    max-width: 1520px; margin: 0 auto; padding: 48px 40px 64px;
   }
-  document.addEventListener("astro:page-load", setupCopyLink);
-  setupCopyLink();
-</script>
+
+  .article-inner {
+    max-width: 780px; margin: 0 auto; text-align: left;
+  }
+
+  .article-byline {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--news-ink-mute); margin-bottom: 28px;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;
+  }
+  .article-byline a {
+    color: var(--news-oxblood); border-bottom: 1px solid transparent;
+    padding-bottom: 2px; transition: all 0.2s;
+  }
+  .article-byline a:hover { border-bottom-color: var(--news-oxblood); }
+  .article-byline .dot { color: var(--news-oxblood); }
+  .article-byline em { font-style: italic; text-transform: none; letter-spacing: 0; color: var(--news-ink-soft); }
+
+  .article-title {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(2.4rem, 5vw, 4.6rem);
+    line-height: 0.98; letter-spacing: -0.03em;
+    color: var(--news-ink); margin: 0 0 28px;
+  }
+
+  .article-standfirst {
+    font-family: var(--news-serif); font-style: italic; font-weight: 400;
+    font-size: clamp(1.15rem, 1.7vw, 1.45rem); line-height: 1.55;
+    color: var(--news-ink-soft); margin: 0 0 40px;
+    padding-bottom: 32px; border-bottom: 1px solid var(--news-rule);
+  }
+
+  .article-hero {
+    max-width: 1200px; margin: 40px auto 48px;
+  }
+  .article-hero img {
+    width: 100%; height: auto; display: block;
+    aspect-ratio: 3 / 2; object-fit: cover;
+    filter: grayscale(0.75) sepia(0.25) contrast(1.05);
+    background: var(--news-paper-dark);
+  }
+  .article-hero figcaption {
+    margin-top: 12px;
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    line-height: 1.45; color: var(--news-ink-mute); max-width: 780px;
+  }
+  .article-hero figcaption strong {
+    font-style: normal; font-weight: 600; color: var(--news-ink-soft);
+  }
+
+  /* ── BODY typography — the reading experience ── */
+  .article-body {
+    max-width: 780px; margin: 0 auto;
+    font-family: var(--news-serif); font-size: 18px; line-height: 1.68;
+    color: var(--news-ink);
+  }
+  .article-body p {
+    margin: 0 0 1.35em;
+  }
+  /* Drop cap on opening paragraph */
+  .article-body > p:first-of-type::first-letter {
+    font-family: var(--news-serif); font-weight: 700;
+    font-size: 5.2em; line-height: 0.85; float: left;
+    margin: 0.05em 10px -0.05em 0;
+    color: var(--news-oxblood);
+  }
+  .article-body h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem); line-height: 1.1;
+    letter-spacing: -0.018em; color: var(--news-ink);
+    margin: 2.4em 0 0.6em;
+    padding-top: 1.2em; border-top: 1px solid var(--news-rule);
+  }
+  .article-body h2 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .article-body h3 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.25rem, 2vw, 1.55rem); line-height: 1.2;
+    letter-spacing: -0.014em; color: var(--news-ink);
+    margin: 2em 0 0.5em;
+  }
+  .article-body h3 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .article-body a {
+    color: var(--news-oxblood); border-bottom: 1px solid var(--news-oxblood);
+    padding-bottom: 1px; transition: color 0.2s;
+  }
+  .article-body a:hover { color: var(--news-ember); border-bottom-color: var(--news-ember); }
+  .article-body em, .article-body i { font-style: italic; }
+  .article-body strong { font-weight: 600; color: var(--news-ink); }
+  .article-body blockquote {
+    margin: 2em 0; padding: 20px 32px;
+    border-left: 3px solid var(--news-oxblood);
+    background: var(--news-paper-cream);
+    font-family: var(--news-serif); font-style: italic;
+    font-size: clamp(1.1rem, 1.6vw, 1.35rem); line-height: 1.5;
+    color: var(--news-ink-soft);
+  }
+  .article-body blockquote p { margin: 0 0 0.6em; }
+  .article-body blockquote p:last-child { margin: 0; }
+  .article-body ul, .article-body ol {
+    margin: 0 0 1.35em; padding-left: 1.5em;
+  }
+  .article-body li { margin-bottom: 0.5em; }
+  .article-body img {
+    width: 100%; height: auto; margin: 2em 0 1em;
+    filter: grayscale(0.6) sepia(0.2) contrast(1.05);
+  }
+  .article-body figure img { margin-bottom: 0.5em; }
+  .article-body figcaption {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    color: var(--news-ink-mute); text-align: center; line-height: 1.45;
+    margin-bottom: 1.5em;
+  }
+  .article-body hr {
+    border: none;
+    max-width: 200px; margin: 3em auto;
+    text-align: center; height: 12px;
+    background: none;
+    color: var(--news-oxblood);
+  }
+  .article-body hr::before {
+    content: "◆ ◆ ◆";
+    font-family: var(--news-serif); font-size: 12px;
+    letter-spacing: 0.5em; color: var(--news-oxblood);
+    display: block;
+  }
+  .article-body code {
+    font-family: var(--news-mono); font-size: 0.9em;
+    background: var(--news-paper-cream); padding: 2px 6px;
+    border: 1px solid var(--news-rule); border-radius: 2px;
+    color: var(--news-oxblood);
+  }
+
+  /* Article ornament + share */
+  .article-ornament {
+    max-width: 780px; margin: 48px auto 0; text-align: center;
+    padding-top: 32px; border-top: 4px double var(--news-ink);
+  }
+  .article-ornament-mark {
+    display: block;
+    font-family: var(--news-serif); font-size: 14px; letter-spacing: 0.6em;
+    color: var(--news-oxblood); margin-bottom: 20px;
+  }
+  .article-share {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .article-share a { color: var(--news-oxblood); border-bottom: 1px solid transparent; padding-bottom: 2px; transition: border-color 0.2s; }
+  .article-share a:hover { border-bottom-color: var(--news-oxblood); }
+  .article-share .dot { color: var(--news-oxblood); }
+
+  /* Related */
+  .related {
+    max-width: 1520px; margin: 0 auto; padding: 64px 40px;
+    border-top: 1px solid var(--news-rule); border-bottom: 1px solid var(--news-rule);
+  }
+  .related-head {
+    display: flex; justify-content: space-between; align-items: end;
+    margin-bottom: 40px; flex-wrap: wrap; gap: 24px;
+  }
+  .related-eyebrow {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood);
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .related-eyebrow::before {
+    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
+  }
+  .related-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.02;
+    letter-spacing: -0.022em; margin: 0;
+  }
+  .related-head h2 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .related-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+  }
+  .related-card { display: flex; flex-direction: column; transition: transform 0.3s var(--news-ease); }
+  .related-card:hover { transform: translateY(-2px); }
+  .related-photo {
+    aspect-ratio: 4 / 3; margin-bottom: 16px;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.75) sepia(0.28) contrast(1.06);
+    transition: filter 0.4s var(--news-ease);
+  }
+  .related-card:hover .related-photo { filter: grayscale(0.5) sepia(0.15) contrast(1.08); }
+  .related-flag {
+    display: inline-block; align-self: flex-start;
+    font-family: var(--news-sans); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-ink); color: var(--news-paper);
+    padding: 3px 8px; margin-bottom: 10px;
+  }
+  .related-flag.finder { background: var(--news-oxblood); }
+  .related-flag.leaf   { background: var(--news-pine); }
+  .related-flag.people { background: #3a2a1c; }
+  .related-flag.shop   { background: var(--news-mahogany); }
+  .related-flag.market { background: #4a3826; }
+  .related-card h3 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.1rem, 1.5vw, 1.35rem); line-height: 1.15;
+    letter-spacing: -0.012em; color: var(--news-ink); margin: 0 0 8px;
+    transition: color 0.2s;
+  }
+  .related-card:hover h3 { color: var(--news-oxblood); }
+  .related-card p {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: 14px; line-height: 1.5; color: var(--news-ink-soft);
+    margin: 0 0 10px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .related-card .meta {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--news-ink-mute); margin-top: auto;
+  }
+
+  /* Footer strip */
+  .footer-strip {
+    max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px;
+  }
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .footer-strip-mark {
+    font-family: var(--news-serif); font-weight: 600; font-size: 22px;
+    letter-spacing: -0.008em; color: var(--news-ink); display: block;
+  }
+  .footer-strip-tag {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    color: var(--news-ink-mute); margin-top: 2px;
+  }
+  .footer-strip-links {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy {
+    margin-top: 16px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--news-ink-mute);
+  }
+
+  @media (max-width: 900px) {
+    .article, .related, .footer-strip { padding: 32px 20px; }
+    .article-body { font-size: 17px; }
+    .article-body > p:first-of-type::first-letter { font-size: 4em; }
+    .related-grid { grid-template-columns: 1fr; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+  }
+</style>
