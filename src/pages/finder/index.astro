@@ -22,15 +22,23 @@ import {
  * All data live from finder-data.ts — no mockup content.
  */
 
-// Top 5 SKUs by best EUR price (ascending)
-const priced = SKUS
-  .map((sku) => ({ sku, best: bestPriceForSku(sku.id) }))
-  .filter((row): row is { sku: typeof SKUS[number]; best: NonNullable<ReturnType<typeof bestPriceForSku>> } => !!row.best);
+// Resolve each SKU's best price → { sku, snap, retailer, eur }.
+// bestPriceForSku returns { snap, eur } only; we join the retailer
+// separately here so downstream code can access .retailer.country
+// and friends without null-checking every hop.
+const RETAILER_BY_ID = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
 
-const topMovers = priced
-  .slice()
-  .sort((a, b) => a.best.eur - b.best.eur)
-  .slice(0, 5);
+const priced = SKUS
+  .map((sku) => {
+    const best = bestPriceForSku(sku.id);
+    if (!best) return null;
+    const retailer = RETAILER_BY_ID[best.snap.retailerId];
+    if (!retailer) return null;
+    return { sku, snap: best.snap, retailer, eur: best.eur };
+  })
+  .filter((row): row is NonNullable<typeof row> => row !== null);
+
+const topMovers = priced.slice().sort((a, b) => a.eur - b.eur).slice(0, 5);
 
 // Featured mover — biggest current price drop in the snapshots
 const bestDrop = PRICE_SNAPSHOTS
@@ -47,6 +55,8 @@ const bestDrop = PRICE_SNAPSHOTS
 
 // All SKUs listed alphabetically by brand for the archive-style table
 const allSkus = priced.slice().sort((a, b) => a.sku.brand.localeCompare(b.sku.brand));
+
+type PricedRow = typeof priced[number];
 
 // Country grid — every country grouped by retail status
 const openCountries = COUNTRIES.filter((c) => c.status === "open");
@@ -74,8 +84,8 @@ const masthead = {
 };
 
 // Fmt helpers
-function fmtBest(row: { sku: typeof SKUS[number]; best: NonNullable<ReturnType<typeof bestPriceForSku>> }) {
-  return formatPrice(row.best.price, row.best.currency);
+function fmtBest(row: PricedRow) {
+  return formatPrice(row.snap.price, row.snap.currency);
 }
 function fmtCountry(code: string) {
   const c = COUNTRIES.find((c) => c.code === code);
@@ -140,17 +150,17 @@ function fmtFlag(code: string) {
               </tr>
             </thead>
             <tbody>
-              {topMovers.map(({ sku, best }) => (
+              {topMovers.map((row) => (
                 <tr>
                   <td>
-                    <a href={`/finder/sku/${sku.slug}/`} data-hover>
-                      <span class="brand">{sku.brand}</span>
-                      <span class="name">{sku.vitola}</span>
+                    <a href={`/finder/sku/${row.sku.slug}/`} data-hover>
+                      <span class="brand">{row.sku.brand}</span>
+                      <span class="name">{row.sku.vitola}</span>
                     </a>
                   </td>
-                  <td class="country">{fmtFlag(best.retailer.country)} {fmtCountry(best.retailer.country)}</td>
-                  <td class="num">{fmtBest({ sku, best })}</td>
-                  <td class="num">{best.retailer.name}</td>
+                  <td class="country">{fmtFlag(row.retailer.country)} {fmtCountry(row.retailer.country)}</td>
+                  <td class="num">{fmtBest(row)}</td>
+                  <td class="num">{row.retailer.name}</td>
                 </tr>
               ))}
             </tbody>
@@ -193,18 +203,18 @@ function fmtFlag(code: string) {
               </tr>
             </thead>
             <tbody>
-              {allSkus.map(({ sku, best }) => (
+              {allSkus.map((row) => (
                 <tr>
                   <td>
-                    <a href={`/finder/sku/${sku.slug}/`} data-hover>
-                      <span class="brand">{sku.brand}</span>
-                      <span class="name">{sku.vitola}</span>
+                    <a href={`/finder/sku/${row.sku.slug}/`} data-hover>
+                      <span class="brand">{row.sku.brand}</span>
+                      <span class="name">{row.sku.vitola}</span>
                     </a>
                   </td>
-                  <td class="country">{fmtFlag(best.retailer.country)} {fmtCountry(best.retailer.country)}</td>
-                  <td class="num">{formatPrice(best.price, best.currency)}</td>
-                  <td class="num eur">€{Math.round(best.eur).toLocaleString()}</td>
-                  <td class="num"><a href={`/finder/sku/${sku.slug}/`} data-hover class="row-cta">Compare →</a></td>
+                  <td class="country">{fmtFlag(row.retailer.country)} {fmtCountry(row.retailer.country)}</td>
+                  <td class="num">{formatPrice(row.snap.price, row.snap.currency)}</td>
+                  <td class="num eur">€{Math.round(row.eur).toLocaleString()}</td>
+                  <td class="num"><a href={`/finder/sku/${row.sku.slug}/`} data-hover class="row-cta">Compare →</a></td>
                 </tr>
               ))}
             </tbody>
