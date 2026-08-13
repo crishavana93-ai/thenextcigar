@@ -87,12 +87,9 @@ function categoryFlag(slug: string | null): string {
         date={masthead.date}
       />
 
-      <SectionFlag
-        number="/00"
-        section="The Cover"
-        title={`${masthead.issue} is <em>open.</em>`}
-        status={masthead.date}
-      />
+      {/* Section flag removed on the homepage — the masthead itself is
+          the cover. Individual sections (/blog/, /finder/, etc) still
+          announce themselves. */}
 
       {lead && (
         <section class="lead-wrap">

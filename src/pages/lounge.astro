@@ -98,7 +98,12 @@ function typeFlag(t: string) {
         <section class="lead-wrap">
           <div class="lead-eyebrow">This week's Casa del Habano</div>
           <div class="lead-grid">
-            <div class="lead-photo" style={`background-image: url("${(featuredCasa as any).image || 'https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1600'}")`}>
+            <div class="lead-photo">
+              <img
+                src={(featuredCasa as any).image || 'https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1600'}
+                alt={`${featuredCasa.name}, ${featuredCasa.city}`}
+                loading="eager"
+              />
               <span class="cutline"><strong>Above &middot;</strong> {featuredCasa.name}, {featuredCasa.city}. {typeLabel(featuredCasa.type)}.</span>
             </div>
             <div class="lead-copy">
@@ -195,17 +200,29 @@ function typeFlag(t: string) {
           <h2>Eight rooms <em>worth the trip.</em></h2>
         </div>
         <div class="places-grid">
-          {highlightPlaces.map((place) => (
-            <a href={`/lounge/app/places/${place.slug}/`} class="place-ad" data-hover>
-              <div class="place-photo" style={`background-image: url("${(place as any).image || 'https://images.pexels.com/photos/8129903/pexels-photo-8129903.jpeg?auto=compress&cs=tinysrgb&w=1400'}")`}></div>
-              <div class="place-body">
-                <span class={`place-flag ${typeFlag(place.type)}`}>{typeLabel(place.type)}</span>
-                <h3>{place.name}</h3>
-                <div class="place-loc">{place.city}, {place.country}</div>
-                {place.note && <p>{place.note}</p>}
-              </div>
-            </a>
-          ))}
+          {highlightPlaces.map((place) => {
+            const placeImage = (place as any).image as string | undefined;
+            return (
+              <a href={`/lounge/app/places/${place.slug}/`} class="place-ad" data-hover>
+                {placeImage ? (
+                  <div class="place-photo has-image">
+                    <img src={placeImage} alt={`${place.name}, ${place.city}`} loading="lazy" />
+                  </div>
+                ) : (
+                  <div class="place-photo no-image">
+                    <div class="place-initial">{place.name.charAt(0)}</div>
+                    <div class="place-type-mark">{typeLabel(place.type)}</div>
+                  </div>
+                )}
+                <div class="place-body">
+                  <span class={`place-flag ${typeFlag(place.type)}`}>{typeLabel(place.type)}</span>
+                  <h3>{place.name}</h3>
+                  <div class="place-loc">{place.city}, {place.country}</div>
+                  {place.note && <p>{place.note}</p>}
+                </div>
+              </a>
+            );
+          })}
         </div>
       </section>
 
@@ -257,8 +274,12 @@ function typeFlag(t: string) {
   }
   .lead-photo {
     aspect-ratio: 4 / 5; position: relative;
-    background-size: cover; background-position: center;
     background-color: var(--news-paper-dark);
+    min-height: 320px; overflow: hidden;
+  }
+  .lead-photo img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
     filter: grayscale(0.85) sepia(0.35) contrast(1.06);
   }
   .lead-photo .cutline {
@@ -466,10 +487,34 @@ function typeFlag(t: string) {
   }
   .place-photo {
     aspect-ratio: 3 / 2;
-    background-size: cover; background-position: center;
-    background-color: var(--news-paper-dark);
-    filter: grayscale(0.75) sepia(0.28) contrast(1.06);
+    background-color: var(--news-paper-cream);
     border-bottom: 1px solid var(--news-ink);
+    position: relative; overflow: hidden;
+  }
+  .place-photo.has-image img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    filter: grayscale(0.75) sepia(0.28) contrast(1.06);
+  }
+  .place-photo.no-image {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; background: var(--news-paper-cream);
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        rgba(138, 43, 30, 0.05) 0px,
+        rgba(138, 43, 30, 0.05) 1px,
+        transparent 1px,
+        transparent 14px);
+  }
+  .place-initial {
+    font-family: var(--news-serif); font-weight: 700;
+    font-size: 4rem; line-height: 1; color: var(--news-oxblood);
+    opacity: 0.85; letter-spacing: -0.04em;
+  }
+  .place-type-mark {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-ink-mute);
   }
   .place-body { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
   .place-flag {

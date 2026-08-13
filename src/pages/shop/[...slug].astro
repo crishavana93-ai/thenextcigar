@@ -141,29 +141,71 @@ const variantAttrs = (data.variants || []).map((v, i) => {
               )}
             </div>
 
-            {/* SNIPCART BUTTON */}
+            {/* Stripe Checkout button — replaces Snipcart. On click, POSTs
+                to /api/shop/checkout which creates a Stripe Session and
+                returns the redirect URL. Drop-ship pipeline: Stripe →
+                webhook → Supabase shop_orders → email Cris + customer. */}
             <div class="mt-8">
               <button
                 type="button"
-                class="snipcart-add-item btn btn-primary !px-8 !py-4 text-base"
-                data-item-id={data.sku}
-                data-item-price={data.price}
-                data-item-url={productUrl}
-                data-item-name={data.name}
-                data-item-image={typeof data.cover === "string" ? data.cover : data.cover.src}
-                data-item-description={data.excerpt || ""}
-                data-item-shippable={String(data.requiresShipping)}
-                data-item-weight={data.weight ?? ""}
-                data-item-categories={data.category || ""}
-                {...variantAttrs.reduce((acc, v) => ({ ...acc, [v.name]: v.value, [v.options]: v.optionsValue }), {})}
+                id="tnc-stripe-buy"
+                class="btn btn-primary !px-8 !py-4 text-base"
+                data-slug={data.slug}
+                data-name={data.name}
+                data-sku={data.sku}
+                data-price={data.price}
+                data-currency={data.currency}
+                data-supplier={(data as any).supplier || ""}
+                data-supplier-url={(data as any).supplierUrl || ""}
+                data-cover={typeof data.cover === "string" ? data.cover : data.cover.src}
                 disabled={!data.inStock}
               >
-                {data.inStock ? "Add to cart" : "Sold out"}
+                {data.inStock ? `Buy now — ${fmtPrice(data.price)}` : "Sold out"}
               </button>
-              <a href="#" class="snipcart-checkout ml-3 text-sm text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors uppercase tracking-wider">
-                View cart →
-              </a>
+              <span id="tnc-buy-status" class="ml-3 text-sm text-[color:var(--color-text-muted)]"></span>
             </div>
+
+            <script is:inline>
+              (function() {
+                const btn = document.getElementById("tnc-stripe-buy");
+                const status = document.getElementById("tnc-buy-status");
+                if (!btn) return;
+                btn.addEventListener("click", async () => {
+                  if (btn.disabled) return;
+                  const original = btn.textContent;
+                  btn.disabled = true;
+                  btn.textContent = "Opening checkout…";
+                  try {
+                    const res = await fetch("/api/shop/checkout", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({
+                        slug: btn.dataset.slug,
+                        name: btn.dataset.name,
+                        sku: btn.dataset.sku,
+                        price: Number(btn.dataset.price),
+                        currency: btn.dataset.currency,
+                        supplier: btn.dataset.supplier,
+                        supplierUrl: btn.dataset.supplierUrl,
+                        cover: btn.dataset.cover,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.ok && data.url) {
+                      window.location.href = data.url;
+                    } else {
+                      status.textContent = data.error || "Checkout failed — try again.";
+                      btn.disabled = false;
+                      btn.textContent = original;
+                    }
+                  } catch (err) {
+                    status.textContent = "Network error — try again.";
+                    btn.disabled = false;
+                    btn.textContent = original;
+                  }
+                });
+              })();
+            </script>
 
             <div class="mt-6 text-xs text-[color:var(--color-text-muted)] space-y-1">
               {data.type === "digital" && (

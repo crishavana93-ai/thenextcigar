@@ -1,0 +1,118 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "../../styles/newspaper.css";
+import CigarCursor from "../../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../../data/masthead";
+---
+
+<BaseLayout
+  title="Order received — The Next Cigar"
+  description="Your order is placed. Confirmation email on the way."
+  bareChrome={true}
+  noIndex={true}
+>
+  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <div class="tnc-cinema">
+    <CigarCursor />
+
+    <main class="site-body">
+      <NewspaperMasthead {...masthead} />
+
+      <SectionFlag
+        number="/04"
+        section="The Shop"
+        title={`Order <em>received.</em>`}
+        status="Confirmation email on the way"
+      />
+
+      <section class="ty-wrap">
+        <div class="ty-mark">◆ ◆ ◆</div>
+        <h1>Thank you. <em>Your order is placed.</em></h1>
+        <p class="ty-lede">
+          A confirmation is on its way to your inbox. Your order is forwarded to our supplier within 24 hours; the shipping tracking number lands in the same email thread once it's live (usually 2–4 days).
+        </p>
+
+        <div class="ty-cols">
+          <div class="ty-col">
+            <div class="ty-flag">What happens next</div>
+            <ol>
+              <li>You get an order confirmation email (right about now).</li>
+              <li>We forward your shipping address to the manufacturer within 24 hours.</li>
+              <li>Supplier ships direct to your door. Tracking arrives by email.</li>
+              <li>Item lands in 6–14 days depending on origin + your customs.</li>
+            </ol>
+          </div>
+          <div class="ty-col">
+            <div class="ty-flag">Need to change something?</div>
+            <p>Reply to your order confirmation within 24 hours and we'll sort it before the supplier ships. After the shipping label prints, changes become the courier's rules.</p>
+            <p>Address updates, cancellations, gift notes — same thread. We answer inside the working day.</p>
+            <a href="mailto:orders@thenextcigar.com" class="ty-cta" data-hover>orders@thenextcigar.com</a>
+          </div>
+        </div>
+
+        <div class="ty-return">
+          <a href="/shop/" class="ty-cta" data-hover>← Back to the Shop</a>
+          <a href="/" class="ty-cta" data-hover>Home →</a>
+        </div>
+      </section>
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">
+          <span>© 2025–2026 The Next Cigar</span>
+          <a href="https://turquinostudios.com" target="_blank" rel="noopener" class="footer-turquino" data-hover>
+            <img src="/cinematic/turquino-mark.jpg" alt="" />
+            <span>Designed by <em>Turquino Studios</em></span>
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  .site-body { padding-bottom: 40px; }
+  .ty-wrap { max-width: 780px; margin: 0 auto; padding: 64px 40px 96px; text-align: center; }
+  .ty-mark { font-family: var(--news-serif); font-size: 20px; letter-spacing: 0.5em; color: var(--news-oxblood); margin-bottom: 24px; }
+  .ty-wrap h1 { font-family: var(--news-serif); font-weight: 500; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1; letter-spacing: -0.028em; margin: 0 0 24px; }
+  .ty-wrap h1 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .ty-lede { font-family: var(--news-serif); font-style: italic; font-size: clamp(1.05rem, 1.5vw, 1.3rem); line-height: 1.55; color: var(--news-ink-soft); max-width: 620px; margin: 0 auto 48px; padding-bottom: 32px; border-bottom: 1px solid var(--news-rule); }
+  .ty-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; text-align: left; margin-bottom: 48px; }
+  .ty-col { padding: 24px 26px; border: 1px solid var(--news-ink); background: var(--news-paper); }
+  .ty-flag { display: inline-block; font-family: var(--news-sans); font-weight: 700; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; background: var(--news-oxblood); color: var(--news-paper); padding: 4px 10px; margin-bottom: 14px; }
+  .ty-col h3 { font-family: var(--news-serif); font-weight: 500; font-size: 20px; margin: 0 0 12px; letter-spacing: -0.014em; }
+  .ty-col p, .ty-col ol { font-family: var(--news-serif); font-size: 15px; line-height: 1.6; color: var(--news-ink-soft); margin: 0 0 14px; }
+  .ty-col ol { padding-left: 1.4em; }
+  .ty-col li { margin-bottom: 8px; }
+  .ty-cta { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid var(--news-oxblood); font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--news-oxblood); transition: all 0.2s; }
+  .ty-cta:hover { background: var(--news-oxblood); color: var(--news-paper); }
+  .ty-return { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; padding-top: 32px; border-top: 4px double var(--news-ink); }
+  .footer-strip { max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px; }
+  .footer-strip-inner { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--news-rule); }
+  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
+  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
+  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  @media (max-width: 900px) {
+    .ty-cols { grid-template-columns: 1fr; }
+    .ty-wrap, .footer-strip { padding: 32px 20px; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+  }
+</style>

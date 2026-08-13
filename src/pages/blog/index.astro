@@ -109,9 +109,9 @@ const fmtShort = (d: Date | string) =>
               href={`/blog/${cover.data.slug}/`}
               class="lead-photo"
               data-hover
-              style={`background-image: url("${coverOf(cover)}")`}
               aria-label={`Read: ${cover.data.title}`}
             >
+              <img src={coverOf(cover)} alt={cover.data.title} loading="eager" />
               <span class="cutline"><strong>Above &middot;</strong> {cover.data.title}</span>
             </a>
             <div class="lead-copy">
@@ -282,10 +282,14 @@ const fmtShort = (d: Date | string) =>
   }
   .lead-photo {
     display: block; aspect-ratio: 4 / 5; position: relative;
-    background-size: cover; background-position: center;
     background-color: var(--news-paper-dark);
-    filter: grayscale(0.85) sepia(0.35) contrast(1.06);
     min-height: 320px;
+    overflow: hidden;
+  }
+  .lead-photo img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    filter: grayscale(0.85) sepia(0.35) contrast(1.06);
   }
   .lead-photo .cutline {
     position: absolute; left: 0; right: 0; bottom: -32px;
