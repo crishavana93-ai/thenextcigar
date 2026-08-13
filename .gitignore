@@ -34,6 +34,13 @@ The Next Cigar photos/
 *.zip
 *.dmg
 
+# Cinematic assets are intentional deployment payloads — must be tracked.
+# Add exceptions here for anything under public/cinematic/ so they escape
+# the blanket *.mp4 / *.mov rules above.
+!public/cinematic/*.mp4
+!public/cinematic/*.mov
+!public/cinematic/*.webm
+
 # CMS uploads stay tracked (they're how the editor saves images)
 !public/uploads/
 outreach/
