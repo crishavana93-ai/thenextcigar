@@ -1,0 +1,161 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import "../styles/newspaper.css";
+import CigarCursor from "../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import BeehiivEmbed from "../components/BeehiivEmbed.astro";
+
+
+---
+
+<BaseLayout
+  title="Subscribe — The Sunday dispatch · The Next Cigar"
+  description="One good email, every Sunday. Cigar news, deep dives, and the rare smokes worth tracking down."
+  bareChrome={true}
+>
+  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <div class="tnc-cinema">
+    <CigarCursor />
+
+    <main class="site-body">
+      <NewspaperMasthead {...masthead} />
+
+      <SectionFlag
+        number="/07"
+        section="Subscribe"
+        title={`The Sunday <em>dispatch.</em>`}
+        status="Weekly · Free · 21+ only"
+      />
+
+      <section class="sub-wrap">
+        <div class="sub-lead">
+          <p class="lead-eyebrow">One good email, every Sunday</p>
+          <h1>The whole week, on your terms.</h1>
+          <p class="standfirst">
+            Cigar news, deep dives, and the rare smokes worth tracking down — written by people who actually light them. Two minutes to read. No spam, ever. Free. If you want the paper mailed to your inbox on Sunday morning, this is the form.
+          </p>
+        </div>
+
+        <div class="sub-form-wrap">
+          <BeehiivEmbed center maxWidth="480px" />
+          <p class="sub-fine">For 21+ adults · We never sell or share your email</p>
+        </div>
+
+        <div class="sub-ornament">◆ ◆ ◆</div>
+
+        <div class="sub-grid">
+          <div class="sub-col">
+            <div class="col-flag">Weekly</div>
+            <h3>Sunday only</h3>
+            <p>One email a week, sent Sunday morning European time. No promo blasts, no re-sends, no "Are you still there?" nagging. If you don't open, we don't push.</p>
+          </div>
+          <div class="sub-col">
+            <div class="col-flag oxblood">Free forever</div>
+            <h3>The paper stays open</h3>
+            <p>The magazine and the Finder are free to read. The newsletter is free. Members pay for the Lounge — messaging, alerts, city check-ins — but the writing is for everyone.</p>
+          </div>
+          <div class="sub-col">
+            <div class="col-flag pine">21+</div>
+            <h3>Adult content, obviously</h3>
+            <p>Cigars, tobacco, and adult-only editorial. You must be of legal smoking age in your jurisdiction. We don't market to minors, ever.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar · Cristian Ortiz Suárez</div>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  .site-body { padding-bottom: 40px; }
+  .sub-wrap { max-width: 900px; margin: 0 auto; padding: 48px 40px 80px; text-align: center; }
+  .sub-lead .lead-eyebrow {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 20px;
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .sub-lead .lead-eyebrow::before {
+    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
+  }
+  .sub-lead h1 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(2.4rem, 5vw, 4.4rem); line-height: 1.0;
+    letter-spacing: -0.028em; color: var(--news-ink); margin: 0 0 24px;
+  }
+  .sub-lead .standfirst {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: clamp(1.05rem, 1.6vw, 1.35rem); line-height: 1.55;
+    color: var(--news-ink-soft); margin: 0 auto 40px; max-width: 640px;
+    padding-bottom: 32px; border-bottom: 1px solid var(--news-rule);
+  }
+  .sub-form-wrap { margin: 32px auto 0; max-width: 520px; }
+  .sub-fine {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--news-ink-mute); margin-top: 16px;
+  }
+  .sub-ornament {
+    margin: 56px 0 40px;
+    font-family: var(--news-serif); font-size: 16px; letter-spacing: 0.5em;
+    color: var(--news-oxblood);
+  }
+  .sub-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    text-align: left; padding-top: 32px; border-top: 1px solid var(--news-rule);
+  }
+  .sub-col { padding: 0; }
+  .col-flag {
+    display: inline-block;
+    font-family: var(--news-sans); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-ink); color: var(--news-paper);
+    padding: 3px 9px; margin-bottom: 12px;
+  }
+  .col-flag.oxblood { background: var(--news-oxblood); }
+  .col-flag.pine { background: var(--news-pine); }
+  .sub-col h3 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: 20px; line-height: 1.15; letter-spacing: -0.014em;
+    color: var(--news-ink); margin: 0 0 10px;
+  }
+  .sub-col p {
+    font-family: var(--news-serif); font-size: 15px; line-height: 1.55;
+    color: var(--news-ink-soft); margin: 0;
+  }
+
+  .footer-strip { max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px; }
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
+  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
+  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy { margin-top: 16px; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--news-ink-mute); }
+
+  @media (max-width: 900px) {
+    .sub-grid { grid-template-columns: 1fr; }
+    .sub-wrap, .footer-strip { padding: 32px 20px; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+  }
+</style>

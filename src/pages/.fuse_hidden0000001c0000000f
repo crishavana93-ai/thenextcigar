@@ -1,0 +1,231 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import "../styles/newspaper.css";
+import CigarCursor from "../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../data/masthead";
+---
+
+<BaseLayout
+  title="Your Band Collection — The Next Cigar"
+  description="A collectible sticker for every article you've read. Read the whole paper, complete the set."
+  bareChrome={true}
+  noIndex={true}
+>
+  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <div class="tnc-cinema">
+    <CigarCursor />
+
+    <main class="site-body">
+      <NewspaperMasthead {...masthead} />
+
+      <SectionFlag
+        number="/10"
+        section="Your Collection"
+        title={`Cigar bands <em>you've earned.</em>`}
+        status="Private · One band per article read"
+      />
+
+      <section class="col-wrap">
+        <div class="col-intro">
+          <p class="col-intro-eyebrow">The reader's collection</p>
+          <h1>Each article <em>earns you a sticker.</em></h1>
+          <p class="col-standfirst">
+            Read an article all the way through (six seconds counts as intent) and a cigar band lands in your collection here. Read the whole paper, complete the set. Nothing goes to a server — this lives in your browser.
+          </p>
+        </div>
+
+        <div class="col-stats">
+          <div><span class="k">Bands collected</span><span class="v" data-band-count>0</span></div>
+        </div>
+
+        <div id="bandGrid" class="band-grid"></div>
+
+        <div id="bandEmpty" class="band-empty">
+          <div class="band-empty-mark">◆</div>
+          <h2>No bands <em>collected yet.</em></h2>
+          <p>Start reading. Every article you spend more than six seconds on drops a cigar band into this room. Small brands, big brands, the rare ones you'll only find in one Copenhagen humidor — they'll all end up on this wall.</p>
+          <a href="/blog/" class="reader-tool" data-hover>Start collecting →</a>
+        </div>
+      </section>
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar</div>
+      </section>
+    </main>
+  </div>
+
+  <script is:inline>
+    (function () {
+      const grid = document.getElementById("bandGrid");
+      const empty = document.getElementById("bandEmpty");
+
+      function render() {
+        const bands = (function () {
+          try { return JSON.parse(localStorage.getItem("tnc_bands") || "[]"); }
+          catch { return []; }
+        })();
+
+        grid.innerHTML = "";
+        if (!bands.length) {
+          empty.style.display = "block";
+          return;
+        }
+        empty.style.display = "none";
+
+        // A hash → color mapper so bands look distinct even at high count
+        function hueFor(str) {
+          let h = 0;
+          for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+          return Math.abs(h) % 360;
+        }
+
+        bands.forEach((b, i) => {
+          const cell = document.createElement("a");
+          cell.className = "band-cell";
+          cell.href = `/blog/${b.slug}/`;
+          cell.setAttribute("data-hover", "");
+          const hue = hueFor(b.brand + b.band);
+          cell.innerHTML = `
+            <div class="band-sticker" style="background: linear-gradient(180deg, hsl(${hue}, 55%, 32%), hsl(${hue}, 62%, 22%));">
+              <div class="band-sticker-num">Nº ${String(i + 1).padStart(3, "0")}</div>
+              <div class="band-sticker-brand">${b.brand}</div>
+              <div class="band-sticker-name">${(b.band || "").slice(0, 44)}</div>
+            </div>
+            <div class="band-cell-date">${new Date(b.collectedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
+          `;
+          grid.appendChild(cell);
+        });
+      }
+
+      setTimeout(render, 50);
+      window.addEventListener("storage", render);
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .site-body { padding-bottom: 40px; }
+  .col-wrap { max-width: 1200px; margin: 0 auto; padding: 48px 40px 80px; }
+  .col-intro { max-width: 780px; margin: 0 auto 32px; text-align: left; }
+  .col-intro-eyebrow {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); margin: 0 0 16px;
+  }
+  .col-intro h1 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(2rem, 3.8vw, 3.4rem); line-height: 1.02;
+    letter-spacing: -0.028em; color: var(--news-ink); margin: 0 0 20px;
+  }
+  .col-intro h1 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .col-standfirst {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: 17px; line-height: 1.55; color: var(--news-ink-soft); margin: 0;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .col-stats {
+    display: flex; justify-content: center; gap: 40px; margin: 32px 0;
+    padding: 20px 0; border-top: 4px double var(--news-ink); border-bottom: 4px double var(--news-ink);
+  }
+  .col-stats > div { text-align: center; }
+  .col-stats .k {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-bottom: 6px;
+  }
+  .col-stats .v {
+    font-family: var(--news-serif); font-weight: 700;
+    font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1; color: var(--news-oxblood);
+  }
+  .band-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+  }
+  .band-cell {
+    display: flex; flex-direction: column; gap: 8px;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .band-cell:hover { transform: translateY(-4px) rotate(-1deg); }
+  .band-sticker {
+    aspect-ratio: 3 / 1; padding: 16px 18px;
+    position: relative; overflow: hidden;
+    color: #f8e6b0;
+    box-shadow: 0 6px 18px rgba(30, 20, 10, 0.35);
+    background: linear-gradient(180deg, #6d2318, #4a1810);
+  }
+  .band-sticker::before {
+    content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border: 1px solid rgba(248, 230, 176, 0.35);
+    pointer-events: none;
+  }
+  .band-sticker-num {
+    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.18em;
+    opacity: 0.75; margin-bottom: 4px;
+  }
+  .band-sticker-brand {
+    font-family: var(--news-serif); font-weight: 700; font-size: 14px;
+    line-height: 1.1; letter-spacing: -0.01em; margin-bottom: 2px;
+  }
+  .band-sticker-name {
+    font-family: var(--news-serif); font-style: italic; font-size: 10.5px;
+    line-height: 1.3; opacity: 0.85;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .band-cell-date {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+    color: var(--news-ink-mute); text-align: center;
+  }
+
+  .band-empty {
+    display: none; text-align: center; padding: 80px 24px;
+    max-width: 560px; margin: 0 auto;
+  }
+  .band-empty-mark {
+    font-family: var(--news-serif); font-size: 32px;
+    color: var(--news-oxblood); margin-bottom: 20px;
+  }
+  .band-empty h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.05;
+    letter-spacing: -0.02em; margin: 0 0 20px;
+  }
+  .band-empty h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .band-empty p {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: 16px; line-height: 1.55; color: var(--news-ink-soft);
+    margin: 0 0 28px;
+  }
+
+  .footer-strip { max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px; }
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
+  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
+  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy { margin-top: 16px; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--news-ink-mute); }
+
+  @media (max-width: 900px) {
+    .col-wrap, .footer-strip { padding: 32px 20px; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+    .band-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  }
+</style>

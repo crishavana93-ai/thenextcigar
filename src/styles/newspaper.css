@@ -304,6 +304,86 @@
   .tnc-cinema .tnc-section-flag { display: none !important; }
 }
 
+/* ─────────────────────────────────────────────────────────
+   FOOTER · Turquino Studios credit
+   Sits next to the copyright in .footer-strip-copy.
+   Tiny logo mark + serif label, subtle but permanent.
+   ───────────────────────────────────────────────────────── */
+
+.tnc-cinema .footer-strip-copy {
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.tnc-cinema .footer-turquino {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--news-ink-mute);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tnc-cinema .footer-turquino:hover {
+  border-color: var(--news-oxblood); color: var(--news-oxblood);
+}
+.tnc-cinema .footer-turquino img {
+  width: 22px; height: 22px; object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid var(--news-rule);
+  background: var(--news-paper);
+}
+.tnc-cinema .footer-turquino em {
+  font-family: var(--news-serif); font-style: italic;
+  font-size: 12px; color: var(--news-oxblood); letter-spacing: -0.005em;
+  margin-left: 3px;
+}
+
+@media (max-width: 640px) {
+  .tnc-cinema .footer-strip-copy { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   INLINE SKU BADGES · client-injected into article body
+   Renders inline (not block) so text flows around them. Two-part
+   pill: SKU name in ink + live price in oxblood. Hover lifts + rings.
+   ───────────────────────────────────────────────────────── */
+
+.tnc-cinema .sku-badge {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 1px 8px 2px 10px;
+  margin: 0 1px;
+  border: 1px solid var(--news-oxblood);
+  background: rgba(138, 43, 30, 0.04);
+  font-family: var(--news-serif) !important;
+  color: var(--news-ink) !important;
+  text-decoration: none !important;
+  border-bottom: 1px solid var(--news-oxblood) !important;
+  line-height: 1.4;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.tnc-cinema .sku-badge:hover {
+  background: var(--news-oxblood);
+  color: var(--news-paper) !important;
+  transform: translateY(-1px);
+}
+.tnc-cinema .sku-badge:hover .sku-badge-price { color: var(--news-gold); }
+.tnc-cinema .sku-badge:hover .sku-badge-arrow { color: var(--news-paper); }
+.tnc-cinema .sku-badge-name { font-style: italic; font-weight: 500; }
+.tnc-cinema .sku-badge-price {
+  font-family: var(--news-mono); font-size: 0.85em; font-weight: 500;
+  color: var(--news-oxblood); letter-spacing: 0.02em;
+  padding-left: 6px; border-left: 1px solid rgba(138, 43, 30, 0.35);
+  transition: color 0.2s;
+}
+.tnc-cinema .sku-badge-arrow {
+  font-family: var(--news-mono); font-size: 0.75em;
+  color: var(--news-oxblood); transition: color 0.2s;
+}
+@media print {
+  .sku-badge { background: transparent !important; }
+  .sku-badge-price { color: black !important; }
+}
+
 /* Cinematic hover treatment on links — subtle underline slide */
 .tnc-cinema a[href][data-hover]:not(.tier-cta):not(.lead-cta):not(.mover-cta):not(.notice-cta):not(.guatabey-cta):not(.tnc-subscribe):not(.btn-enter) {
   background-image: linear-gradient(90deg, var(--news-oxblood), var(--news-oxblood));

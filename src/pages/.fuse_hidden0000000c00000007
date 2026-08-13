@@ -1,0 +1,342 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import "../styles/newspaper.css";
+import CigarCursor from "../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "";
+import { channels } from "../data/youtube-channels";
+
+interface Video {
+  videoId: string;
+  title: string;
+  channelName: string;
+  channelHandle?: string;
+  publishedAt: string;
+  thumbnail: string;
+}
+
+async function fetchChannelVideos(channelId: string, channelName: string, channelHandle?: string, max = 5): Promise<Video[]> {
+  const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "thenextcigar.com/1.0 (+https://thenextcigar.com)" },
+    });
+    if (!res.ok) {
+      console.warn(`/watch: ${channelName} returned ${res.status}`);
+      return [];
+    }
+    const xml = await res.text();
+    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0, max);
+    return entries.map((m) => {
+      const e = m[1];
+      const videoId = (e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1] || "";
+      const title = (e.match(/<title>([\s\S]*?)<\/title>/) || [])[1]?.trim() || "";
+      const published = (e.match(/<published>([^<]+)<\/published>/) || [])[1] || "";
+      const thumbnail = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : "";
+      return {
+        videoId,
+        title: title.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
+        channelName, channelHandle, publishedAt: published, thumbnail,
+      };
+    }).filter((v) => v.videoId);
+  } catch (err) {
+    console.warn(`/watch: ${channelName} fetch error`, err);
+    return [];
+  }
+}
+
+const allVideos: Video[] = (
+  await Promise.all(
+    channels.filter((c) => c.enabled).map((c) => fetchChannelVideos(c.id, c.name, c.handle))
+  )
+).flat();
+
+allVideos.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+const fmtDate = (d: string) =>
+  d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+
+const channelCount = channels.filter((c) => c.enabled).length;
+const videoCount = allVideos.length;
+
+const feature = allVideos[0];
+const grid = allVideos.slice(1, 13);
+const secondary = allVideos.slice(13, 25);
+
+
+---
+
+<BaseLayout
+  title="Watch — YouTube channels we love · The Next Cigar"
+  description={`Video reviews and cigar culture from ${channelCount} independent creators. ${videoCount} latest uploads, refreshed on every deploy.`}
+  bareChrome={true}
+>
+  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <div class="tnc-cinema">
+    <CigarCursor />
+
+    <main class="site-body">
+      <NewspaperMasthead {...masthead} />
+
+      <SectionFlag
+        number="/08"
+        section="Watch"
+        title={`Moving pictures<em> — from the cigar world.</em>`}
+        status={`${videoCount} videos · ${channelCount} channels · refreshed hourly`}
+        live={true}
+      />
+
+      {feature && (
+        <section class="watch-feature">
+          <div class="lead-eyebrow">Top of the queue</div>
+          <a href={`https://www.youtube.com/watch?v=${feature.videoId}`} target="_blank" rel="noopener" class="feature-card" data-hover>
+            <div class="feature-photo" style={`background-image: url("${feature.thumbnail}")`}>
+              <div class="play-glyph">▶ Watch on YouTube</div>
+            </div>
+            <div class="feature-copy">
+              <div class="feature-flag">Latest upload</div>
+              <h1>{feature.title}</h1>
+              <div class="feature-byline">
+                {feature.channelName} · <em>{fmtDate(feature.publishedAt)}</em>
+              </div>
+            </div>
+          </a>
+        </section>
+      )}
+
+      {grid.length > 0 && (
+        <section class="watch-grid-band">
+          <div class="watch-band-head">
+            <div class="watch-band-flag">Recent uploads</div>
+            <h2>Twelve more <em>from the queue.</em></h2>
+          </div>
+          <div class="watch-grid">
+            {grid.map((v) => (
+              <a href={`https://www.youtube.com/watch?v=${v.videoId}`} target="_blank" rel="noopener" class="video-card" data-hover>
+                <div class="video-thumb" style={`background-image: url("${v.thumbnail}")`}>
+                  <span class="video-play">▶</span>
+                </div>
+                <div class="video-body">
+                  <div class="video-channel">{v.channelName}</div>
+                  <h3 class="video-title">{v.title}</h3>
+                  <div class="video-date">{fmtDate(v.publishedAt)}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {secondary.length > 0 && (
+        <section class="watch-list-band">
+          <div class="watch-band-head">
+            <div class="watch-band-flag mahogany">Archive</div>
+            <h2>Deeper <em>in the reel.</em></h2>
+          </div>
+          <div class="watch-list">
+            {secondary.map((v) => (
+              <a href={`https://www.youtube.com/watch?v=${v.videoId}`} target="_blank" rel="noopener" class="list-row" data-hover>
+                <span class="list-date">{fmtDate(v.publishedAt)}</span>
+                <span class="list-channel">{v.channelName}</span>
+                <span class="list-title">{v.title}</span>
+                <span class="list-play">▶ Watch</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar · Cristian Ortiz Suárez</div>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  .site-body { padding-bottom: 40px; }
+
+  /* Feature video */
+  .watch-feature { max-width: 1520px; margin: 0 auto; padding: 48px 40px 64px; border-bottom: 1px solid var(--news-rule); }
+  .watch-feature .lead-eyebrow {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .watch-feature .lead-eyebrow::before {
+    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
+  }
+  .feature-card {
+    display: grid; grid-template-columns: 8fr 4fr; gap: 48px; align-items: center;
+  }
+  .feature-photo {
+    aspect-ratio: 16 / 9;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.6) sepia(0.22) contrast(1.05);
+    position: relative; overflow: hidden;
+    transition: filter 0.35s var(--news-ease);
+  }
+  .feature-card:hover .feature-photo { filter: grayscale(0.3) sepia(0.1) contrast(1.08); }
+  .play-glyph {
+    position: absolute; left: 20px; bottom: 16px;
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper);
+    padding: 8px 14px;
+  }
+  .feature-flag {
+    display: inline-block;
+    font-family: var(--news-sans); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper);
+    padding: 4px 10px; margin-bottom: 16px;
+  }
+  .feature-copy h1 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.6rem, 2.8vw, 2.4rem); line-height: 1.1; letter-spacing: -0.018em;
+    color: var(--news-ink); margin: 0 0 16px;
+  }
+  .feature-byline {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .feature-byline em {
+    font-style: italic; text-transform: none; letter-spacing: 0; color: var(--news-ink-soft);
+  }
+
+  /* Watch band shared */
+  .watch-grid-band, .watch-list-band {
+    max-width: 1520px; margin: 0 auto; padding: 56px 40px;
+    border-bottom: 1px solid var(--news-rule);
+  }
+  .watch-band-head {
+    display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline;
+    margin-bottom: 32px; padding-bottom: 8px; border-bottom: 4px double var(--news-ink);
+  }
+  .watch-band-flag {
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-ink); color: var(--news-paper);
+    padding: 6px 12px; align-self: start;
+  }
+  .watch-band-flag.mahogany { background: var(--news-mahogany); }
+  .watch-band-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem); line-height: 1.1; letter-spacing: -0.018em;
+    color: var(--news-ink); margin: 0;
+  }
+  .watch-band-head h2 :global(em) {
+    font-style: italic; color: var(--news-oxblood); font-weight: 400;
+  }
+
+  /* Grid cards */
+  .watch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .video-card {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--news-ink); background: var(--news-paper);
+    transition: transform 0.25s var(--news-ease), box-shadow 0.25s var(--news-ease);
+  }
+  .video-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(30, 20, 10, 0.15);
+  }
+  .video-thumb {
+    aspect-ratio: 16 / 9;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.5) sepia(0.15) contrast(1.03);
+    position: relative;
+    border-bottom: 1px solid var(--news-ink);
+  }
+  .video-play {
+    position: absolute; top: 8px; right: 8px;
+    font-family: var(--news-mono); font-size: 11px;
+    background: rgba(30, 20, 10, 0.75); color: var(--news-paper);
+    padding: 4px 8px;
+  }
+  .video-body { padding: 14px 16px 16px; }
+  .video-channel {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 8px;
+  }
+  .video-title {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: 14px; line-height: 1.2; letter-spacing: -0.008em;
+    color: var(--news-ink); margin: 0 0 8px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .video-card:hover .video-title { color: var(--news-oxblood); }
+  .video-date {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+
+  /* List archive */
+  .watch-list { display: grid; grid-template-columns: 1fr; }
+  .list-row {
+    display: grid; grid-template-columns: 130px 180px 1fr auto; gap: 24px; align-items: baseline;
+    padding: 14px 0; border-bottom: 1px solid var(--news-rule);
+    transition: padding-left 0.25s var(--news-ease);
+  }
+  .list-row:hover { padding-left: 8px; }
+  .list-row:hover .list-title { color: var(--news-oxblood); }
+  .list-date {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute); white-space: nowrap;
+  }
+  .list-channel {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--news-oxblood); white-space: nowrap;
+  }
+  .list-title {
+    font-family: var(--news-serif); font-weight: 500; font-size: 16px;
+    line-height: 1.3; color: var(--news-ink); letter-spacing: -0.008em;
+    transition: color 0.2s;
+  }
+  .list-play {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+    color: var(--news-oxblood); text-transform: uppercase; white-space: nowrap;
+  }
+
+  .footer-strip { max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px; }
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
+  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
+  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy { margin-top: 16px; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--news-ink-mute); }
+
+  @media (max-width: 900px) {
+    .feature-card { grid-template-columns: 1fr; gap: 24px; }
+    .watch-grid { grid-template-columns: 1fr 1fr; }
+    .list-row { grid-template-columns: auto 1fr; gap: 8px 16px; }
+    .list-channel, .list-play { grid-column: 1 / -1; font-size: 9px; }
+    .watch-band-head { grid-template-columns: 1fr; gap: 12px; }
+    .watch-feature, .watch-grid-band, .watch-list-band, .footer-strip { padding: 32px 20px; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+  }
+  @media (max-width: 620px) {
+    .watch-grid { grid-template-columns: 1fr; }
+  }
+</style>

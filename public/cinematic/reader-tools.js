@@ -172,6 +172,77 @@
   };
   updateBandCount();
 
+  // ── INLINE SKU BADGES ──────────────────────────────────────
+  // Reads the SKU catalogue from a JSON <script> mounted on article pages,
+  // then scans .article-body text nodes for "Brand Vitola" mentions and
+  // wraps them with a live-price badge that links to /finder/sku/[slug].
+  // Idempotent — only wraps first mention per SKU, skips inside <a> and
+  // <code> to avoid double-processing.
+  const cat = document.getElementById("tncSkuCatalogue");
+  const body = document.querySelector(".article-body");
+  if (cat && body) {
+    let skus = [];
+    try { skus = JSON.parse(cat.textContent || "[]"); } catch {}
+    if (skus.length) {
+      // Longer names first so "Cohiba Behike 52" wins over "Cohiba"
+      skus.sort((a, b) => (b.brand + b.vitola).length - (a.brand + a.vitola).length);
+      const alreadyWrapped = new Set();
+
+      const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || node.nodeValue.length < 6) return NodeFilter.FILTER_REJECT;
+          // Skip inside links, code, blockquotes, and existing badges
+          const p = node.parentElement;
+          if (!p) return NodeFilter.FILTER_REJECT;
+          if (p.closest("a, code, .sku-badge, script, style")) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+
+      const jobs = [];
+      let n;
+      while ((n = walker.nextNode())) jobs.push(n);
+
+      jobs.forEach((textNode) => {
+        let text = textNode.nodeValue;
+        if (!text) return;
+        for (const sku of skus) {
+          if (alreadyWrapped.has(sku.id)) continue;
+          const needle = `${sku.brand} ${sku.vitola}`;
+          // Word-boundary case-insensitive match
+          const re = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`, "i");
+          const m = text.match(re);
+          if (!m) continue;
+
+          alreadyWrapped.add(sku.id);
+          const idx = m.index || 0;
+          const before = document.createTextNode(text.slice(0, idx));
+          const match  = document.createElement("a");
+          match.className = "sku-badge";
+          match.href = `/finder/sku/${sku.slug}/`;
+          match.setAttribute("data-hover", "");
+          match.innerHTML = `
+            <span class="sku-badge-name">${m[0]}</span>
+            <span class="sku-badge-price">${sku.priceLabel}</span>
+            <span class="sku-badge-arrow">→</span>
+          `;
+          const after = document.createTextNode(text.slice(idx + m[0].length));
+
+          const parent = textNode.parentNode;
+          if (!parent) continue;
+          parent.insertBefore(before, textNode);
+          parent.insertBefore(match, textNode);
+          parent.insertBefore(after, textNode);
+          parent.removeChild(textNode);
+
+          // Continue scanning the rest of this text (after the match) with
+          // remaining SKUs — but for now, single wrap per text node is fine
+          break;
+        }
+      });
+    }
+  }
+
   // ── Expose for other scripts (SPA future, etc.) ──
   window.tnc = { shelf, ambient, bands };
 })();

@@ -36,6 +36,13 @@ const blog = defineCollection({
       featured: z.boolean().default(false),
       sidebarFeatured: z.boolean().default(false),
       isPremium: z.boolean().default(false),
+      // Cinematic full-viewport hero — when true, the article renders with a
+      // 100vh photo at the top with the title overlaid, then reveals the
+      // article on scroll. Best for cover-story features. Default off.
+      heroBleed: z.boolean().default(false),
+      // Comma-separated SKU slugs to seed the "Cigars like this" recs at
+      // the bottom of the article. If empty, we auto-detect from the title.
+      relatedSkus: z.array(z.string()).optional().default([]),
       sourceId: z.string().optional(),
       // Gear-roundup products — populated on roundup posts so we can emit
       // ItemList + Product JSON-LD for Google rich results / Shopping panel.
