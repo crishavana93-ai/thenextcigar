@@ -1,165 +1,453 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import ProductCard from "../components/ProductCard.astro";
-import Newsletter from "../components/Newsletter.astro";
+import "../styles/newspaper.css";
+import CigarCursor from "../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../components/newspaper/SectionFlag.astro";
 
-const allProducts = (await getCollection("products"))
-  .filter((p) => !p.data.isArchived);
+/**
+ * /shop/ — The Shop section in newspaper "Classifieds & Guatabey" style.
+ *
+ * Layout: masthead + section flag + featured Guatabey banner (the merch
+ * launch) + classifieds-style product grid (bordered ads) + footer strip.
+ * Every current product wears the "Coming soon" ribbon.
+ */
 
-// EVERY product is Coming Soon while the catalog is being stocked.
-// Sort by featured first, then by expected arrival month (June → July → Aug).
-const comingSoon = allProducts.sort((a, b) => {
-  const fa = Number((b.data as any).featured) - Number((a.data as any).featured);
-  if (fa !== 0) return fa;
+const allProducts = (await getCollection("products")).filter((p) => !p.data.isArchived);
+
+const featured = allProducts.filter((p) => (p.data as any).featured);
+const notFeatured = allProducts.filter((p) => !(p.data as any).featured);
+
+// Sort by expected arrival for "In the pipeline" order
+const pipeline = [...featured, ...notFeatured].sort((a, b) => {
   return ((a.data as any).expectedArrival ?? "").localeCompare((b.data as any).expectedArrival ?? "");
 });
 
-const productCount = comingSoon.length;
+// Category groupings for the classifieds bands
+const categoryLabels: Record<string, string> = {
+  humidor: "Humidors & storage",
+  cutter: "Cutters & tools",
+  lighter: "Lighters",
+  ashtray: "Ashtrays",
+  case: "Travel cases",
+  merch: "The Guatabey line",
+  print: "Prints & paper",
+  guide: "Digital guides",
+  cedar: "Cedar & fresheners",
+};
+const categoryOrder = ["merch", "humidor", "cutter", "lighter", "ashtray", "case", "cedar", "print", "guide"];
+const grouped: Record<string, typeof pipeline> = {};
+for (const p of pipeline) {
+  const cat = (p.data as any).category || "other";
+  grouped[cat] = grouped[cat] || [];
+  grouped[cat].push(p);
+}
+
+const masthead = {
+  volume: "Vol. III",
+  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
+  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+};
+
+function priceOf(p: typeof pipeline[number]) {
+  const d = p.data as any;
+  if (typeof d.price === "number") {
+    const cur = d.currency || "USD";
+    const symbol = cur === "USD" ? "$" : cur === "EUR" ? "€" : cur === "GBP" ? "£" : cur + " ";
+    return `${symbol}${d.price}`;
+  }
+  return "TBD";
+}
+function coverOf(p: typeof pipeline[number]): string {
+  const c = (p.data as any).cover;
+  if (!c) return "/og-default.svg";
+  if (typeof c === "string") return c;
+  return (c as { src: string }).src;
+}
+function arrivalOf(p: typeof pipeline[number]): string {
+  return (p.data as any).expectedArrival || "TBA";
+}
 ---
 
 <BaseLayout
-  title="Shop — TNext Cigar"
-  description="The TNC shop is being built in public. Curated cigar accessories, branded merch, and digital guides arriving summer 2026. Subscribe to be notified when each piece lands."
+  title="The Shop — Classifieds & Guatabey · The Next Cigar"
+  description={`${pipeline.length} pieces in the pipeline. Cedar tubes, ashtrays, cutters, and the Guatabey guayabera — arriving summer 2026. Reserve founding-customer pricing.`}
+  bareChrome={true}
 >
-  {/* ─── HERO BANNER: BIG COMING SOON ─── */}
-  <section class="shop-hero">
-    <div class="container-wide pt-20 md:pt-28 pb-16 md:pb-20 reveal">
-      <p class="shop-hero__eyebrow">The Next Cigar · Shop</p>
-      <h1 class="shop-hero__title">
-        Coming Soon.<br/>
-        <span class="shop-hero__title-sub">The whole shop, opening summer 2026.</span>
-      </h1>
-      <p class="shop-hero__lead">
-        We're building the TNC shop in public. Every piece below is being sampled,
-        quality-tested, and stocked at our Sweden fulfillment hub right now.
-        <strong>Nothing is for sale yet</strong> — but you can reserve your spot for
-        launch-day access on any piece you want.
-      </p>
-      <div class="shop-hero__actions">
-        <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="btn btn-accent">
-          Read the Sourcing Diary →
-        </a>
-        <a href="/subscribe/" class="shop-hero__secondary">
-          Subscribe for launch alerts
-        </a>
-      </div>
-      <p class="shop-hero__count">{productCount} pieces in the pipeline · First drops in June</p>
-    </div>
-  </section>
+  <link
+    is:inline
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
 
-  {/* ─── PRODUCT GRID — ALL COMING SOON ─── */}
-  {comingSoon.length > 0 && (
-    <section class="container-wide pb-24">
-      <div class="flex items-end justify-between mb-10 reveal flex-wrap gap-4">
-        <div>
-          <p class="section-eyebrow">The launch lineup</p>
-          <h2 class="font-display text-3xl md:text-4xl leading-tight mt-2">
-            Pieces landing this summer
-          </h2>
-          <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl text-base">
-            Click any piece for the full background story and the per-product
-            launch-alert signup. The buyers on each list get the first email
-            when that specific SKU goes live — and founding-customer pricing
-            locked in.
-          </p>
+  <div class="tnc-cinema">
+    <CigarCursor />
+
+    <main class="site-body">
+      <NewspaperMasthead volume={masthead.volume} issue={masthead.issue} date={masthead.date} />
+
+      <SectionFlag
+        number="/04"
+        section="The Shop"
+        title={`Classifieds<em> &amp; Guatabey</em>`}
+        status={`${pipeline.length} pieces in the pipeline · Launch Aug 2026`}
+      />
+
+      <!-- GUATABEY BANNER — the biggest ad in the section -->
+      <section class="guatabey-ad">
+        <div class="guatabey-ad-inner">
+          <div class="guatabey-ad-copy">
+            <div class="guatabey-kicker">Announcing · Debut edition</div>
+            <h1>Guatabey. <em>Fifty shirts, once a year.</em></h1>
+            <p class="guatabey-standfirst">
+              A numbered guayabera in Irish linen, cut in the Cuban tradition, made in Portugal.
+              The first drop opens to members July 2026 — everyone else, 24 hours later.
+            </p>
+            <div class="guatabey-facts">
+              <div><span class="k">Fabric</span><span class="v">Irish linen, ~140 gsm</span></div>
+              <div><span class="k">Cut</span><span class="v">Traditional 4-pocket Cuban</span></div>
+              <div><span class="k">Colours</span><span class="v">Yohaba · Copey · Ana</span></div>
+              <div><span class="k">Numbering</span><span class="v">N° 01 / 50 – 50 / 50</span></div>
+              <div><span class="k">Packaging</span><span class="v">Cedar-strip wrap, hangtag with the Taíno story</span></div>
+              <div><span class="k">Members preview</span><span class="v">1 July 2026 · 20:00 CET</span></div>
+            </div>
+            <div class="guatabey-actions">
+              <a href="/subscribe/" class="guatabey-cta primary" data-hover>Reserve founding pricing <span class="arrow">→</span></a>
+              <a href="/lounge/" class="guatabey-cta link" data-hover>Members buy first</a>
+            </div>
+          </div>
+          <div class="guatabey-ad-glyph">
+            <div class="glyph-frame">
+              <div class="glyph-mark">GB</div>
+              <div class="glyph-story">Guatabey <em>(n.)</em> Taíno for chief. The first people to smoke tobacco.</div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-        {comingSoon.map((p, i) => (
-          <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
-        ))}
-      </div>
-    </section>
-  )}
+      </section>
 
-  {productCount === 0 && (
-    <section class="container-narrow pb-24 text-center reveal">
-      <p class="font-display text-3xl mb-4">Coming soon.</p>
-      <p class="text-[color:var(--color-text-muted)]">The shop is being stocked. Check back next week.</p>
-    </section>
-  )}
+      <!-- CATEGORY BANDS — each product category as its own classifieds page -->
+      {categoryOrder.map((catKey) => {
+        const items = grouped[catKey];
+        if (!items || items.length === 0) return null;
+        return (
+          <section class="classifieds-band" data-cat={catKey}>
+            <div class="classifieds-head">
+              <div class="classifieds-flag">{categoryLabels[catKey] || catKey}</div>
+              <div class="classifieds-count">{items.length} pieces</div>
+            </div>
+            <div class="classifieds-grid">
+              {items.map((product) => {
+                const d = product.data as any;
+                const slug = d.slug || product.id;
+                return (
+                  <a href={`/shop/${slug}/`} class="ad" data-hover>
+                    <div class="ad-photo" style={`background-image: url("${coverOf(product)}")`}>
+                      {d.comingSoon && <span class="ad-ribbon">Coming {arrivalOf(product)}</span>}
+                    </div>
+                    <div class="ad-body">
+                      <div class="ad-sku">{d.sku || "TBA"}</div>
+                      <h3 class="ad-name">{d.name}</h3>
+                      {d.excerpt && <p class="ad-excerpt">{d.excerpt}</p>}
+                      <div class="ad-row">
+                        <span class="ad-price">{priceOf(product)}</span>
+                        <span class="ad-reserve">Reserve →</span>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
 
-  <Newsletter heading="Be first to new drops" blurb="One email when each piece lands. No drops, no FOMO." />
+      <!-- Notice board -->
+      <section class="notice-board">
+        <div class="notice-inner">
+          <div class="notice-kicker">Trade notice</div>
+          <h2>Nothing is for sale <em>yet.</em></h2>
+          <p>
+            Every piece above is being sampled, quality-tested, and stocked at our Sweden fulfillment hub right now. Reserve on any piece to lock founding-customer pricing for launch day — first email when it lands.
+          </p>
+          <div class="notice-actions">
+            <a href="/subscribe/" class="notice-cta" data-hover>Subscribe for launch alerts →</a>
+            <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="notice-link" data-hover>Read the sourcing diary</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar · Cristian Ortiz Suárez</div>
+      </section>
+    </main>
+  </div>
 </BaseLayout>
 
 <style>
-  .shop-hero {
-    background:
-      radial-gradient(circle at 15% 25%, rgba(110, 38, 32, 0.10), transparent 55%),
-      radial-gradient(circle at 85% 75%, rgba(255, 46, 46, 0.06), transparent 55%),
-      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
-    border-bottom: 1px solid var(--color-border);
+  .site-body { padding-bottom: 40px; }
+
+  /* ── GUATABEY AD — front-page display ad ── */
+  .guatabey-ad {
+    max-width: 1520px; margin: 0 auto; padding: 48px 40px;
+    border-bottom: 1px solid var(--news-rule);
   }
-  .shop-hero__eyebrow {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin-bottom: 1.5rem;
+  .guatabey-ad-inner {
+    display: grid; grid-template-columns: 8fr 4fr; gap: 48px; align-items: stretch;
+    border: 4px double var(--news-ink); padding: 32px;
+    background: var(--news-paper-cream);
   }
-  .shop-hero__title {
-    font-family: var(--font-display);
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 0.98;
-    letter-spacing: -0.025em;
-    color: var(--color-text);
-    margin-bottom: 1.5rem;
+  .guatabey-kicker {
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--news-paper); background: var(--news-oxblood);
+    padding: 5px 12px; display: inline-block; margin-bottom: 20px;
   }
-  @media (min-width: 768px) { .shop-hero__title { font-size: 5rem; } }
-  @media (min-width: 1024px) { .shop-hero__title { font-size: 6.5rem; } }
-  .shop-hero__title-sub {
-    font-size: 0.42em;
-    font-weight: 600;
-    color: var(--color-burgundy);
-    letter-spacing: -0.005em;
-    display: block;
-    margin-top: 0.85rem;
-    line-height: 1.15;
+  .guatabey-ad-copy h1 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.0; letter-spacing: -0.024em;
+    color: var(--news-ink); margin: 0 0 16px;
   }
-  .shop-hero__lead {
-    margin-top: 1.5rem;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    color: var(--color-text-soft);
-    max-width: 42rem;
+  .guatabey-ad-copy h1 :global(em) {
+    font-style: italic; color: var(--news-oxblood); font-weight: 400;
   }
-  .shop-hero__lead strong {
-    color: var(--color-text);
-    font-weight: 700;
+  .guatabey-standfirst {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55;
+    color: var(--news-ink-soft); margin: 0 0 24px; max-width: 520px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
   }
-  .shop-hero__actions {
-    margin-top: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem 2rem;
-    align-items: center;
+  .guatabey-facts {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px;
+    margin-bottom: 24px;
   }
-  .shop-hero__secondary {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-text-soft);
-    text-decoration: underline;
-    text-decoration-color: var(--color-text-muted);
-    text-underline-offset: 4px;
-    transition: color 0.2s ease;
+  .guatabey-facts > div { display: flex; gap: 10px; align-items: baseline; }
+  .guatabey-facts .k {
+    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); min-width: 90px;
   }
-  .shop-hero__secondary:hover {
-    color: var(--color-accent);
-    text-decoration-color: var(--color-accent);
+  .guatabey-facts .v {
+    font-family: var(--news-serif); font-size: 14px; color: var(--news-ink); line-height: 1.3;
   }
-  .shop-hero__count {
-    margin-top: 2rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--color-burgundy);
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--color-border);
-    display: inline-block;
-    padding-right: 2rem;
+  .guatabey-actions {
+    display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+    padding-top: 20px; border-top: 1px solid var(--news-rule);
+  }
+  .guatabey-cta.primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 22px; background: var(--news-ink); color: var(--news-paper);
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    transition: background 0.25s var(--news-ease);
+  }
+  .guatabey-cta.primary:hover { background: var(--news-oxblood); }
+  .guatabey-cta.primary .arrow { font-family: var(--news-mono); }
+  .guatabey-cta.link {
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--news-oxblood);
+    border-bottom: 1px solid var(--news-oxblood); padding-bottom: 3px;
+  }
+
+  .guatabey-ad-glyph {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .glyph-frame {
+    border: 1px solid var(--news-ink);
+    padding: 32px 24px;
+    text-align: center; width: 100%; max-width: 300px;
+    background: var(--news-paper);
+  }
+  .glyph-mark {
+    font-family: var(--news-serif); font-weight: 700;
+    font-size: 96px; line-height: 1; letter-spacing: -0.03em;
+    color: var(--news-oxblood); margin-bottom: 16px;
+  }
+  .glyph-story {
+    font-family: var(--news-serif); font-style: italic; font-size: 14px;
+    line-height: 1.5; color: var(--news-ink-soft);
+    padding-top: 16px; border-top: 1px solid var(--news-rule);
+  }
+  .glyph-story em { font-weight: 400; color: var(--news-oxblood); }
+
+  /* ── CLASSIFIEDS BANDS ── */
+  .classifieds-band {
+    max-width: 1520px; margin: 0 auto; padding: 40px 40px;
+    border-bottom: 1px solid var(--news-rule);
+  }
+  .classifieds-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 28px; padding-bottom: 8px;
+    border-bottom: 4px double var(--news-ink);
+  }
+  .classifieds-flag {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem); line-height: 1;
+    letter-spacing: -0.016em; color: var(--news-ink);
+  }
+  .classifieds-count {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .classifieds-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  }
+  .ad {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--news-ink);
+    background: var(--news-paper);
+    transition: transform 0.25s var(--news-ease), box-shadow 0.25s var(--news-ease);
+  }
+  .ad:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(30, 20, 10, 0.15);
+  }
+  .ad-photo {
+    aspect-ratio: 4 / 3;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.2) sepia(0.08) contrast(1.02);
+    position: relative;
+    border-bottom: 1px solid var(--news-ink);
+  }
+  .ad-ribbon {
+    position: absolute; top: 10px; left: 10px;
+    font-family: var(--news-mono); font-size: 9px; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper);
+    padding: 4px 8px;
+  }
+  .ad-body {
+    padding: 16px 18px 20px;
+    display: flex; flex-direction: column; flex: 1;
+  }
+  .ad-sku {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--news-ink-mute); margin-bottom: 8px;
+  }
+  .ad-name {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem); line-height: 1.18;
+    letter-spacing: -0.012em; color: var(--news-ink); margin: 0 0 8px;
+    transition: color 0.2s;
+  }
+  .ad:hover .ad-name { color: var(--news-oxblood); }
+  .ad-excerpt {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: 13px; line-height: 1.5; color: var(--news-ink-soft);
+    margin: 0 0 16px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .ad-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-top: 12px; border-top: 1px solid var(--news-rule); margin-top: auto;
+  }
+  .ad-price {
+    font-family: var(--news-serif); font-weight: 500; font-size: 20px;
+    color: var(--news-ink); letter-spacing: -0.012em;
+  }
+  .ad-reserve {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--news-oxblood);
+  }
+
+  /* ── Notice board ── */
+  .notice-board {
+    max-width: 1200px; margin: 0 auto; padding: 48px 40px;
+  }
+  .notice-inner {
+    border: 2px solid var(--news-ink);
+    padding: 40px 48px;
+    background: var(--news-paper-cream);
+    text-align: center;
+  }
+  .notice-kicker {
+    font-family: var(--news-mono); font-weight: 500; font-size: 10px;
+    letter-spacing: 0.28em; text-transform: uppercase; color: var(--news-oxblood);
+    margin-bottom: 14px;
+  }
+  .notice-inner h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem); line-height: 1.05;
+    letter-spacing: -0.02em; color: var(--news-ink); margin: 0 0 16px;
+  }
+  .notice-inner h2 :global(em) {
+    font-style: italic; color: var(--news-oxblood); font-weight: 400;
+  }
+  .notice-inner p {
+    font-family: var(--news-serif); font-size: 16px; line-height: 1.6;
+    color: var(--news-ink-soft); margin: 0 auto 24px; max-width: 640px;
+  }
+  .notice-actions {
+    display: flex; gap: 24px; justify-content: center; align-items: center; flex-wrap: wrap;
+  }
+  .notice-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 24px; background: var(--news-ink); color: var(--news-paper);
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    transition: background 0.25s var(--news-ease);
+  }
+  .notice-cta:hover { background: var(--news-oxblood); }
+  .notice-link {
+    font-family: var(--news-sans); font-weight: 500; font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--news-ink-soft);
+    border-bottom: 1px solid var(--news-rule); padding-bottom: 3px;
+    transition: all 0.2s;
+  }
+  .notice-link:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+
+  /* Footer strip */
+  .footer-strip {
+    max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px;
+  }
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .footer-strip-mark {
+    font-family: var(--news-serif); font-weight: 600; font-size: 22px;
+    letter-spacing: -0.008em; color: var(--news-ink); display: block;
+  }
+  .footer-strip-tag {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    color: var(--news-ink-mute); margin-top: 2px;
+  }
+  .footer-strip-links {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy {
+    margin-top: 16px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--news-ink-mute);
+  }
+
+  @media (max-width: 900px) {
+    .guatabey-ad-inner { grid-template-columns: 1fr; gap: 32px; padding: 24px; }
+    .glyph-mark { font-size: 64px; }
+    .classifieds-grid { grid-template-columns: 1fr 1fr; }
+    .guatabey-facts { grid-template-columns: 1fr; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+    .guatabey-ad, .classifieds-band, .notice-board, .footer-strip { padding: 32px 20px; }
+  }
+  @media (max-width: 620px) {
+    .classifieds-grid { grid-template-columns: 1fr; }
   }
 </style>
