@@ -102,9 +102,9 @@ function categoryFlag(slug: string | null): string {
               href={`/blog/${lead.data.slug}/`}
               class="lead-photo"
               data-hover
-              style={`background-image: url("${coverOf(lead)}")`}
               aria-label={`Read: ${lead.data.title}`}
             >
+              <img src={coverOf(lead)} alt={lead.data.title} loading="eager" />
               <span class="cutline">
                 <strong>Above &middot;</strong> {lead.data.title}
               </span>
@@ -255,13 +255,18 @@ function categoryFlag(slug: string | null): string {
   .lead-grid {
     display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end;
   }
+  /* Lead photo — <img>-first instead of background-image so it always
+     renders. Wrapper aspect ratio + object-fit cover keeps composition. */
   .lead-photo {
-    display: block;   /* <a> tag needs this or aspect-ratio is ignored */
-    aspect-ratio: 4 / 5;
-    background-size: cover; background-position: center;
-    background-color: var(--news-paper-dark);
+    display: block; position: relative;
+    aspect-ratio: 4 / 5; min-height: 320px;
+    background: var(--news-paper-dark);
+    overflow: hidden;
+  }
+  .lead-photo img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
     filter: grayscale(0.85) sepia(0.35) contrast(1.06);
-    position: relative; min-height: 320px;
   }
   .lead-photo .cutline {
     position: absolute; left: 0; right: 0; bottom: -32px;

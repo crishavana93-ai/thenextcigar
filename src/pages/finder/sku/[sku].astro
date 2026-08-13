@@ -1,9 +1,13 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import Newsletter from "../../../components/Newsletter.astro";
+import "../../../styles/newspaper.css";
+import CigarCursor from "../../../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../../../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../../../components/newspaper/SectionFlag.astro";
 import PriceAlertModal from "../../../components/finder/PriceAlertModal.astro";
 import SaveAlertButton from "../../../components/finder/SaveAlertButton.astro";
 import FaqSchema from "../../../components/finder/FaqSchema.astro";
+import { MASTHEAD as masthead } from "../../../data/masthead";
 import {
   SKUS,
   RETAILERS,
@@ -27,95 +31,37 @@ if (!sku) return Astro.redirect("/finder/");
 
 const snapshots = snapshotsForSku(sku.id);
 
-// Decorate snapshots with retailer + country + per-cigar EUR conversion, sort by EUR.
-//
-// Note: we keep this .map callback as boring as possible — only plain string +
-// number expressions, no TS type predicates and no for-loops with type
-// annotations. A previous attempt to use a (c): c is NonNullable<...> predicate
-// inside the callback broke Astro's esbuild frontmatter parser with an
-// unrelated "Unexpected export" error. Anything fancier than what's below
-// goes in a helper function in src/data/finder-data.ts where the full
-// TypeScript pipeline runs.
+// Decorate every snapshot with resolved retailer, country, per-cigar EUR, and
+// the exact shop link (effectiveShopUrl → product page if we have it,
+// otherwise a same-site search).
 const offers = snapshots
   .map(function decorateOffer(snap) {
     const retailer = RETAILER_BY_ID[snap.retailerId];
     const country  = COUNTRY_BY_CODE[retailer.country];
     const eur      = toEUR(snap.price, snap.currency);
     const link     = effectiveShopUrl(snap.sourceUrl, sku, retailer);
-    const shopLabel = link.isExact ? "Shop →" : "Search on site →";
-    const shopClass = link.isExact ? "finder-table__compare" : "finder-table__compare finder-table__compare--search";
-    const shopTitle = link.isExact
-      ? "Opens the retailer product page in a new tab"
-      : "We do not have a direct link to this cigar on " + retailer.name + " yet. This opens their site search for " + sku.brand + " " + sku.vitola + ".";
-    const verifiedDate = new Date(snap.scrapedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-    // Duty-paid resolution lives in a separate helper (countryListForRetailer)
-    // declared below the offers loop — keeps this callback clean.
-    const dutyCodes = dutyPaidCountries(retailer);
+    const shopLabel = link.isExact ? "Shop this SKU →" : "Search on site →";
     return {
-      snap: snap,
-      retailer: retailer,
-      country: country,
-      eur: eur,
+      snap, retailer, country, eur,
       perCigarEur: eur / sku.boxSize,
-      link: link,
-      shopLabel: shopLabel,
-      shopClass: shopClass,
-      shopTitle: shopTitle,
-      verifiedDate: verifiedDate,
-      dutyCodes: dutyCodes,
+      link, shopLabel,
+      verifiedDate: new Date(snap.scrapedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
     };
   })
   .sort(function rankOffers(a, b) {
-    // In-stock first, then by EUR price ascending
     if (a.snap.inStock !== b.snap.inStock) return a.snap.inStock ? -1 : 1;
     return a.eur - b.eur;
   });
 
-// Second-pass enrichment — adds the human-readable duty / ships strings
-// without putting any of that logic inside the .map() callback above.
-const offersEnriched = offers.map(function enrichDuty(o) {
-  const codes = o.dutyCodes;
-  const flagParts = [];
-  const nameParts = [];
-  for (let i = 0; i < codes.length; i++) {
-    const c = COUNTRY_BY_CODE[codes[i]];
-    if (c) {
-      flagParts.push(c.flag);
-      nameParts.push(c.name);
-    }
-  }
-  const dutyFlags = flagParts.join(" ");
-  const dutyNames = nameParts.join(", ");
-  let shipsLabel;
-  if (o.retailer.shipsTo === "domestic")      shipsLabel = "Ships in-country";
-  else if (o.retailer.shipsTo === "eu")       shipsLabel = "Ships EU · duty extra";
-  else                                         shipsLabel = "Ships worldwide · duty extra";
-  const dutyTitle = o.retailer.shipsTo === "domestic"
-    ? "Listed price is all-in for " + dutyNames + ". Retailer doesn't ship cross-border."
-    : "Listed price is all-in for " + dutyNames + ". Buyers outside these countries pay destination-country tobacco excise duty + VAT on top of the listed price.";
-  return Object.assign({}, o, {
-    dutyFlags: dutyFlags,
-    dutyNames: dutyNames,
-    shipsLabel: shipsLabel,
-    dutyTitle: dutyTitle,
-  });
-});
-
 const inStockOffers = offers.filter((o) => o.snap.inStock);
 const best          = inStockOffers[0];
-const allCountries  = Array.from(new Set(offers.map((o) => o.country.code)));
-
-// Editorial: range
 const eurPrices = inStockOffers.map((o) => o.eur);
-const minEur    = eurPrices[0];
-const maxEur    = eurPrices[eurPrices.length - 1];
+const minEur    = eurPrices[0] || 0;
+const maxEur    = eurPrices[eurPrices.length - 1] || 0;
 const spread    = maxEur && minEur ? Math.round(((maxEur - minEur) / minEur) * 100) : 0;
+const allCountries = Array.from(new Set(offers.map((o) => o.country.code)));
 
-// ----------------------------------------------------------------------------
-// Structured data — Product + AggregateOffer + per-retailer Offers
-// Tells Google "this is a comparison-shopping page" and unlocks the rich-result
-// price-range snippet that cigarfinder.com gets in US results.
-// ----------------------------------------------------------------------------
+// JSON-LD — Product + AggregateOffer + Breadcrumb (SEO preserved)
 const productJsonLd = {
   "@context": "https://schema.org/",
   "@type": "Product",
@@ -131,7 +77,6 @@ const productJsonLd = {
     { "@type": "PropertyValue", name: "Origin", value: "Cuba (Habanos S.A.)" },
   ],
   ...(inStockOffers.length > 0 && {
-    aggregateRating: undefined, // populated when /lounge/ ratings exist
     offers: {
       "@type": "AggregateOffer",
       priceCurrency: "EUR",
@@ -151,8 +96,6 @@ const productJsonLd = {
     },
   }),
 };
-
-// Breadcrumb structured data
 const breadcrumbJsonLd = {
   "@context": "https://schema.org/",
   "@type": "BreadcrumbList",
@@ -162,10 +105,6 @@ const breadcrumbJsonLd = {
   ],
 };
 
-// FAQ items — built in a separate helper module to keep this frontmatter
-// minimal. Astro's esbuild frontmatter parser was choking on the nested
-// template literals + HTML strings + apostrophes when this block lived
-// inline. Helper takes the live data it needs and returns a Q/A array.
 const faqItems = buildSkuFaq({
   sku,
   best,
@@ -173,1150 +112,426 @@ const faqItems = buildSkuFaq({
   sameBrandSkus: SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 4),
 });
 
-// Open Graph / social copy
 const ogTitle = `${sku.brand} ${sku.vitola} — ${best ? `from ${best.snap.currency} ${best.snap.price.toFixed(0)}` : "European price comparison"}`;
 const ogDescription = best
-  ? `${offers.length} European retailers compared. Cheapest box of ${sku.boxSize}: ${best.retailer.name} (${best.country.name}) at €${best.eur.toFixed(0)}. ${sku.blurb}`
-  : `Compare ${sku.brand} ${sku.vitola} prices across ${offers.length} European retailers. ${sku.blurb}`;
+  ? `${offers.length} live offers · cheapest ${formatPrice(best.snap.price, best.snap.currency)} at ${best.retailer.name} · ${allCountries.length} countries tracked.`
+  : `Live European price comparison for the ${sku.brand} ${sku.vitola}. Track drops, get alerts.`;
+
+// Same-brand siblings for the "Cigars like this" band
+const siblings = SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 4);
 ---
 
-<BaseLayout
-  title={ogTitle}
-  description={ogDescription}
-  image="/og-finder.svg"
->
-  {/* Structured data — Product + AggregateOffer rich-result schema.
-      Placed inline (Google accepts JSON-LD anywhere in the document). */}
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(productJsonLd)}></script>
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbJsonLd)}></script>
-  {/* ─── SKU HEADER ─────────────────────────────────────────────────────── */}
-  <section class="sku-hero" data-finder-sku={sku.id} data-finder-box-size={sku.boxSize}>
-    <div class="container-wide pt-12 md:pt-16 pb-10 reveal">
-      <a href="/finder/" class="sku-hero__back">← The Finder</a>
+<BaseLayout title={ogTitle} description={ogDescription} bareChrome={true}>
+  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script type="application/ld+json" set:html={JSON.stringify(productJsonLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  <FaqSchema items={faqItems} />
 
-      <div class="sku-hero__head">
-        <div class="sku-hero__head-text">
-          <p class="lounge-label lounge-label--gold">{sku.brand} · {sku.line}</p>
-          <h1 class="sku-hero__title">{sku.vitola}</h1>
-          <p class="sku-hero__blurb">{sku.blurb}</p>
+  <div class="tnc-cinema">
+    <CigarCursor />
 
-          <div class="sku-hero__spec">
-            <span><strong>{sku.shape}</strong></span>
-            <span>Ring {sku.ring}</span>
-            <span>{sku.lengthMm} mm</span>
-            <span>Box of {sku.boxSize}</span>
-            <span class="sku-hero__prestige sku-hero__prestige--{sku.prestige}">{sku.prestige}</span>
-          </div>
-        </div>
+    <main class="site-body">
+      <NewspaperMasthead {...masthead} />
 
-        {best && (
-          <aside class="sku-hero__best">
-            <p class="lounge-label lounge-label--gold">Best value · in stock</p>
-            <p class="sku-hero__best-price">
-              {formatPrice(best.snap.price, best.snap.currency)}
-              <span class="sku-hero__best-eur">≈ €{best.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
-            </p>
-            <p class="sku-hero__best-percigar">€{best.perCigarEur.toFixed(2)} per cigar · box of {sku.boxSize}</p>
-            <p class="sku-hero__best-at">
-              at <strong>{best.retailer.name}</strong> · {best.country.flag} {best.country.name}
-            </p>
-            <a href={best.retailer.url} class="btn btn-primary sku-hero__best-cta" target="_blank" rel="noopener noreferrer sponsored">
-              Shop at {best.retailer.name} →
-            </a>
-            <div class="sku-hero__best-alert">
-              <SaveAlertButton
-                sku={sku.slug}
-                productName={`${sku.brand} ${sku.vitola}`}
-                baselineEur={Math.round(best.eur)}
-                baselineLabel={`€${Math.round(best.eur).toLocaleString("en-US")}`}
-                variant="ghost"
-              />
+      <SectionFlag
+        number="/01"
+        section="The Finder · SKU"
+        title={`${sku.brand} <em>${sku.vitola}</em>`}
+        status={best ? `Cheapest ${formatPrice(best.snap.price, best.snap.currency)} · ${best.retailer.name}, ${best.country.name}` : `${offers.length} tracked offers`}
+        live={inStockOffers.length > 0}
+      />
+
+      <section class="sku-hero">
+        <div class="sku-hero-inner">
+          <a href="/finder/" class="sku-back" data-hover>← Back to the Finder</a>
+
+          <div class="sku-hero-grid">
+            <div class="sku-hero-lead">
+              <div class="sku-hero-brand">{sku.brand} · {sku.line}</div>
+              <h1 class="sku-hero-title">{sku.vitola}</h1>
+              <p class="sku-hero-blurb">{sku.blurb}</p>
+
+              <div class="sku-hero-specs">
+                <div><span class="k">Shape</span><span class="v">{sku.shape}</span></div>
+                <div><span class="k">Ring</span><span class="v">{sku.ring}</span></div>
+                <div><span class="k">Length</span><span class="v">{sku.lengthMm} mm</span></div>
+                <div><span class="k">Box</span><span class="v">{sku.boxSize} cigars</span></div>
+                {sku.prestige && <div><span class="k">Tier</span><span class="v">{sku.prestige}</span></div>}
+                {sku.strength && <div><span class="k">Strength</span><span class="v">{sku.strength}</span></div>}
+              </div>
             </div>
-            <p class="sku-hero__best-note">
-              Affiliate disclosure: clicking through earns The Next Cigar a referral commission.
-              The price you pay is unchanged.
-            </p>
-          </aside>
-        )}
-      </div>
 
-      {inStockOffers.length > 1 && (
-        <p class="sku-hero__summary">
-          Tracking <strong>{offers.length} offers</strong> across <strong>{allCountries.length} countries</strong> ·
-          range {formatPrice(minEur, "EUR")}–{formatPrice(maxEur, "EUR")} · spread {spread}%
-        </p>
-      )}
-    </div>
-  </section>
-
-  {/* ─── OFFERS TABLE ───────────────────────────────────────────────────── */}
-  <section class="container-wide pb-16 reveal">
-    <div class="finder-table-wrap">
-      <table class="finder-table">
-        <thead>
-          <tr>
-            <th>Retailer</th>
-            <th>Country</th>
-            <th title="Where the listed price is genuinely all-in (excise duty + VAT included) vs where the retailer will ship the parcel">Duty / Ships</th>
-            <th class="finder-table__num">Box price</th>
-            <th class="finder-table__num">≈ EUR</th>
-            <th class="finder-table__num">€ / cigar</th>
-            <th>Stock</th>
-            <th class="finder-table__cta"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Each row starts with class='is-unverified' (no 'is-oos' lie).
-              The hydration script adds 'is-oos' only when a LIVE scrape
-              actually reports the retailer as out of stock. */}
-          {offersEnriched.map((o, i) => (
-            <tr class="is-unverified" data-retailer-id={o.retailer.id} data-duty-paid={o.dutyCodes.join(",")}>
-              <td data-cell="retailer" data-label="Retailer">
-                <span class="finder-table__retailer">{o.retailer.name}</span>
-                {o.retailer.status === "lcdh" && <span class="finder-badge finder-badge--gold">LCDH</span>}
-                {/* 'Best value' badge intentionally NOT rendered here — it
-                    used to be shown for the first row based on the static
-                    inStock claim. We now only let the hydration script
-                    surface that badge once it knows which LIVE row is
-                    actually cheapest AND in stock. */}
-              </td>
-              <td data-label="Country">{o.country.flag} {o.country.name}</td>
-              <td data-label="Duty / Ships">
-                {/* Two stacked lines so the buyer can answer two distinct
-                    questions in one glance:
-                      1. Is the listed price all-in for me? (top line)
-                      2. Will they even ship to my address? (bottom line)
-                    The 'data-duty-row' / 'data-ships-row' hooks let the
-                    country-aware highlight script set 'finder-duty--match'
-                    on rows whose duty list includes the buyer's country. */}
-                <div class="finder-duty" title={o.dutyTitle}>
-                  <span class="finder-duty__paid" data-duty-row>
-                    <span class="finder-duty__paid-label">Duty-paid</span>
-                    <span class="finder-duty__paid-flags">{o.dutyFlags}</span>
-                  </span>
-                  <span class="finder-duty__ships" data-ships-row>
-                    {o.shipsLabel}
-                  </span>
+            {best && (
+              <aside class="sku-hero-price">
+                <div class="sku-hero-price-label">Best value · in stock</div>
+                <div class="sku-hero-price-big">{formatPrice(best.snap.price, best.snap.currency)}</div>
+                <div class="sku-hero-price-eur">≈ €{Math.round(best.eur).toLocaleString()}</div>
+                <div class="sku-hero-price-per">€{best.perCigarEur.toFixed(2)} per cigar · box of {sku.boxSize}</div>
+                <div class="sku-hero-price-at">
+                  at <strong>{best.retailer.name}</strong> · {best.country.flag} {best.country.name}
                 </div>
-              </td>
-              <td class="finder-table__num finder-table__price" data-cell="price" data-label="Box price">
-                {formatPrice(o.snap.price, o.snap.currency)}
-                {o.snap.originalPrice && (
-                  <span class="finder-table__was">was {formatPrice(o.snap.originalPrice, o.snap.currency)}</span>
-                )}
-              </td>
-              <td class="finder-table__num" data-cell="eur" data-label="≈ EUR">€{o.eur.toLocaleString("en-US", { maximumFractionDigits: 0 })}</td>
-              <td class="finder-table__num" data-cell="per-cigar" data-label="€ / cigar">€{o.perCigarEur.toFixed(2)}</td>
-              <td data-cell="stock" data-label="Stock">
-                {/* Default rendering: NEVER claim stock from static research.
-                    We only show 'In stock' / 'Out of stock' badges on rows
-                    backed by a live scrape — the hydration script overwrites
-                    this cell with the real badge when fresh data arrives.
-                    For unverified rows we honestly say 'Last verified' so
-                    users know the data is historical, not real-time. */}
-                <span class="finder-stock finder-stock--unverified" title="No live scrape for this retailer yet — please verify availability on their site before purchasing">
-                  Last verified · {o.verifiedDate}
-                </span>
-              </td>
-              <td class="finder-table__cta">
                 <a
-                  href={o.link.url}
-                  class={o.shopClass}
+                  href={best.link.url}
+                  class="sku-hero-cta"
                   target="_blank"
                   rel="noopener noreferrer sponsored"
-                  data-cell="shop"
-                  title={o.shopTitle}
+                  data-hover
+                  title={best.link.isExact
+                    ? "Opens the retailer product page in a new tab"
+                    : `We don't have a direct link yet — this opens ${best.retailer.name}'s site search for ${sku.brand} ${sku.vitola}.`}
                 >
-                  {o.shopLabel}
+                  {best.link.isExact ? `Shop at ${best.retailer.name} →` : `Search ${best.retailer.name} for this →`}
                 </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <SaveAlertButton
+                  sku={sku.slug}
+                  productName={`${sku.brand} ${sku.vitola}`}
+                  baselineEur={Math.round(best.eur)}
+                  baselineLabel={`€${Math.round(best.eur).toLocaleString("en-US")}`}
+                  variant="ghost"
+                />
+                <p class="sku-hero-note">
+                  Affiliate disclosure — clicking through earns The Next Cigar a referral commission. Your price is unchanged.
+                </p>
+              </aside>
+            )}
+          </div>
 
-    <p class="sku-hero__verification" data-verification>
-      <strong>Two data sources:</strong>
-      Rows with a <span class="finder-badge finder-badge--live">● LIVE</span> badge are scraped every 6 hours
-      and reflect the retailer's current price + stock state.
-      Rows showing <span class="finder-stock finder-stock--unverified">Last verified · 15 May</span>
-      are historical manual research — the retailer <em>may not currently carry this SKU or may be sold out</em>.
-      <strong>Always tap "Shop →" and verify availability on the retailer's site before purchasing.</strong>
-      We're expanding live-scraping coverage to every SKU monthly.
-    </p>
+          {inStockOffers.length > 1 && (
+            <p class="sku-hero-tracker">
+              Tracking <strong>{offers.length}</strong> offers across <strong>{allCountries.length}</strong> countries · range €{Math.round(minEur).toLocaleString()}–€{Math.round(maxEur).toLocaleString()} · spread <strong>{spread}%</strong>
+            </p>
+          )}
+        </div>
+      </section>
 
-    {/* ─── Duty-paid explainer ─────────────────────────────────────────────
-        The per-row "Duty-paid 🇩🇪" / "Ships EU · duty extra" labels carry the
-        operative information. This block is the once-per-page explainer of
-        the model, with the worst-case destinations broken out so buyers in
-        SE/DK/FI/IE/UK/CH know what cross-border actually costs them. */}
-    <div class="finder-duty-notice">
-      <p>
-        <strong>Reading the "Duty / Ships" column.</strong>
-        <span class="finder-duty__paid-label" style="display:inline-block;background:rgba(30,140,96,0.14);color:#1e8c60;padding:0.05rem 0.45rem;border-radius:3px;font-size:0.62rem;letter-spacing:0.06em;">Duty-paid</span>
-        is where the listed price is genuinely all-in — excise duty + VAT already baked in.
-        Buy from a duty-paid country and what you see is what you pay.
-        Buy <em>across borders</em> and the destination country charges its own
-        tobacco excise + VAT on top:
-      </p>
-      <ul>
-        <li><strong>🇸🇪 SE, 🇩🇰 DK, 🇫🇮 FI, 🇮🇪 IE:</strong> Customs intercepts inbound tobacco mail orders. A box of 25 Cuban premiums typically gets a <strong>€100–€300 surcharge at the door</strong>.</li>
-        <li><strong>🇬🇧 UK (post-Brexit):</strong> UK Tobacco Products Duty (~£5.31/kg + 16.5% ad valorem on cigars) + 20% VAT. A €765 box typically becomes <strong>£1,250–1,400 delivered</strong>.</li>
-        <li><strong>🇨🇭 CH ↔ EU:</strong> Outside the EU customs union — destination duty + VAT applies in both directions.</li>
-      </ul>
-      <p>
-        Tip: tap <a href="#" data-duty-show-mine style="color:var(--color-gold-hover);text-decoration:underline;">show all-in rows for my country</a>
-        to dim every retailer whose listed price isn't fully duty-paid where you live.
-        Always verify the total delivered cost on the retailer's checkout before buying.
-      </p>
-    </div>
-  </section>
+      {offers.length > 0 && (
+        <section class="sku-table-band">
+          <div class="sku-table-head">
+            <div class="sku-table-flag">Every offer we're tracking</div>
+            <h2>{offers.length} offers <em>· sorted by EUR</em></h2>
+          </div>
+          <table class="ticker">
+            <thead>
+              <tr>
+                <th>Retailer</th>
+                <th>Country</th>
+                <th class="num">Price</th>
+                <th class="num">EUR eq.</th>
+                <th class="num">Per cigar</th>
+                <th>Stock</th>
+                <th class="num">Verified</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {offers.map((o) => (
+                <tr class:list={[!o.snap.inStock && "out-of-stock"]}>
+                  <td>
+                    <a href={o.retailer.url} target="_blank" rel="noopener" data-hover>
+                      <span class="name">{o.retailer.name}</span>
+                      {o.retailer.city && <span class="brand">{o.retailer.city}</span>}
+                    </a>
+                  </td>
+                  <td class="country">{o.country.flag} {o.country.name}</td>
+                  <td class="num">{formatPrice(o.snap.price, o.snap.currency)}</td>
+                  <td class="num eur">€{Math.round(o.eur).toLocaleString()}</td>
+                  <td class="num">€{o.perCigarEur.toFixed(2)}</td>
+                  <td>
+                    <span class:list={["stock-dot", o.snap.inStock ? "in" : "out"]}>
+                      {o.snap.inStock ? "In stock" : "Sold out"}
+                    </span>
+                  </td>
+                  <td class="num">{o.verifiedDate}</td>
+                  <td class="num">
+                    <a
+                      href={o.link.url}
+                      target="_blank"
+                      rel="noopener sponsored"
+                      class="row-cta"
+                      data-hover
+                      title={o.link.isExact ? "Opens the retailer product page" : `Opens ${o.retailer.name}'s search for this cigar`}
+                    >
+                      {o.link.isExact ? "Shop →" : "Search →"}
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
-  {/* ─── EDITORIAL — tasting notes, history, why compare ───────────────── */}
-  <section class="container-narrow pb-16 reveal">
-    <article class="sku-editorial">
-      <p class="lounge-label">About this cigar</p>
-      <h2 class="sku-editorial__title">{sku.brand} {sku.vitola} — tasting notes and pricing context</h2>
-      {sku.editorial.split("\n\n").map((para) => (
-        <p>{para}</p>
-      ))}
+      {sku.editorial && (
+        <section class="sku-editorial">
+          <div class="sku-editorial-eyebrow">From the tasting notes</div>
+          <div class="sku-editorial-body" set:html={
+            sku.editorial.split("\n\n").map(p => `<p>${p.replace(/\n/g, "<br/>")}</p>`).join("")
+          }></div>
+        </section>
+      )}
 
-      <hr />
+      {siblings.length > 0 && (
+        <section class="siblings-band">
+          <div class="siblings-head">
+            <div class="siblings-flag">Other {sku.brand} vitolas</div>
+            <h2>Same brand <em>— different smoke.</em></h2>
+          </div>
+          <div class="siblings-grid">
+            {siblings.map((s) => (
+              <a href={`/finder/sku/${s.slug}/`} class="sibling" data-hover>
+                <div class="sibling-brand">{s.brand}</div>
+                <div class="sibling-vitola">{s.vitola}</div>
+                <div class="sibling-blurb">{s.blurb}</div>
+                <div class="sibling-cta">Open on the Finder →</div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <div class="sku-editorial__crosslinks">
-        <h3>Compare other {sku.brand} vitolas</h3>
-        <ul>
-          {SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).map((s) => (
-            <li><a href={`/finder/sku/${s.slug}/`}>{s.brand} {s.vitola}</a> — {s.shape}, ring {s.ring}</li>
-          ))}
-        </ul>
-        <h3>Or explore by country</h3>
-        <ul>
-          {Array.from(new Set(offers.map((o) => o.country.code))).map((cc) => {
-            const c = COUNTRY_BY_CODE[cc];
-            return <li><a href={`/finder/${c.code}/`}>{c.flag} {c.name}</a> — cheapest Cuban cigars</li>;
-          })}
-        </ul>
-      </div>
-    </article>
-  </section>
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
+          <div>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
+          </div>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">
+          <span>© 2025–2026 The Next Cigar</span>
+          <a href="https://turquinostudios.com" target="_blank" rel="noopener" class="footer-turquino" data-hover>
+            <img src="/cinematic/turquino-mark.jpg" alt="" />
+            <span>Designed by <em>Turquino Studios</em></span>
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
 
-  {/* ─── FAQ ─── Win the PAA box for the cigar's name + common buyer queries. */}
-  <FaqSchema
-    items={faqItems}
-    heading={`${sku.brand} ${sku.vitola} — frequently asked questions`}
-    containerClass="container-narrow"
-  />
-
-  {/* ─── WATCHLIST CTA — wedge feature ─────────────────────────────────── */}
-  <section class="section-dark">
-    <div class="container-narrow py-16 reveal" style="text-align: center;">
-      <p class="lounge-label lounge-label--gold">Save this cigar</p>
-      <h2 class="sku-cta__title">
-        Want an alert when {sku.brand} {sku.vitola} drops below your number?
-      </h2>
-      <p class="sku-cta__lead">
-        Save this SKU to your watchlist and we'll email you the moment any retailer in your country drops below your threshold.
-        Free TNC members get one alert. <a href="/lounge/" style="color:var(--color-gold);text-decoration:underline;">Lounge members</a> get unlimited alerts, push notifications, and a daily deal digest.
-      </p>
-      <div class="sku-cta__actions">
-        <a href="/subscribe/" class="lbtn lbtn-primary lbtn-lg">Save with a free account →</a>
-        <a href="/lounge/" class="lbtn lbtn-secondary lbtn-lg">Join The Lounge · $9/mo or $79/yr</a>
-      </div>
-    </div>
-  </section>
-
-  <Newsletter
-    heading="Be first when price-drop alerts go live"
-    blurb="One email when the watchlist opens. No promotions."
-  />
   <PriceAlertModal />
-
-  {/* ──────────────────────────────────────────────────────────────────────
-       LIVE PRICE HYDRATION
-       ----------------------------------------------------------------------
-       Astro renders this page statically at build time using the manual
-       PRICE_SNAPSHOTS in src/data/finder-data.ts. After hydration we query
-       finder_latest_snapshots_v on Supabase and overlay live scraper data
-       on top of any retailer-row whose retailer_id matches a live row.
-
-       For each matched row we:
-         - replace box price, EUR conversion, per-cigar, in-stock cells
-         - update the retailer's Shop link to the live source_url
-         - add a "● LIVE" badge so the user can tell live from static
-         - move the "Best value" badge if a cheaper retailer emerges
-         - replace the verification footer timestamp
-
-       Rows for retailers we don't yet scrape are left untouched (they
-       continue to render the manual May-2026 research).
-  ──────────────────────────────────────────────────────────────────────── */}
-  <script>
-    import { getSupabase } from "../../../lib/supabase";
-    import { SKUS, RETAILER_BY_ID, COUNTRY_BY_CODE, formatPrice, toEUR } from "../../../data/finder-data";
-
-    type SnapshotRow = {
-      id: string;
-      sku: string;
-      retailer_id: string;
-      pack_size: number;
-      price: number;
-      currency: string;
-      price_eur: number;
-      price_per_cigar_eur: number;
-      in_stock: boolean;
-      source_url: string;
-      country_code: string;
-      scraped_at: string;
-    };
-
-    function relativeTime(iso: string): string {
-      const t = new Date(iso).getTime();
-      const diff = Date.now() - t;
-      const min = Math.floor(diff / 60000);
-      if (min < 1)   return "just now";
-      if (min < 60)  return `${min} min ago`;
-      const hr = Math.floor(min / 60);
-      if (hr  < 24)  return `${hr} hr${hr === 1 ? "" : "s"} ago`;
-      const d  = Math.floor(hr / 24);
-      return `${d} day${d === 1 ? "" : "s"} ago`;
-    }
-
-    async function hydrateLivePrices() {
-      const hero = document.querySelector<HTMLElement>(".sku-hero[data-finder-sku]");
-      if (!hero) return;
-      const skuId    = hero.dataset.finderSku!;
-      const boxSize  = parseInt(hero.dataset.finderBoxSize || "25", 10);
-      const sku      = SKUS.find((s) => s.id === skuId);
-      if (!sku) return;
-
-      let data: SnapshotRow[] | null = null;
-      try {
-        const supabase = getSupabase();
-        const { data: rows, error } = await supabase
-          .from("finder_latest_snapshots_v")
-          .select("*")
-          .eq("sku", skuId);
-        if (error) throw error;
-        data = rows as SnapshotRow[] | null;
-      } catch (e) {
-        console.warn("[finder] live hydration failed:", e);
-        return;
-      }
-      if (!data || data.length === 0) return;
-
-      // For each retailer, pick the best pack to display. Priority:
-      //   1. canonical box-size AND in stock     ← perfect match
-      //   2. any pack that is in stock            ← can actually buy today
-      //   3. canonical box-size (OOS)             ← can't buy, but right pack to compare
-      //   4. anything                             ← last resort
-      // In-stock outranks canonical-but-OOS so the "buy now" link is real.
-      // The per-cigar column already normalizes for cross-pack comparison.
-      const scoreRow = (r: SnapshotRow): number => {
-        const isCanonical = r.pack_size === boxSize;
-        const inStock = r.in_stock;
-        if (isCanonical && inStock) return 4;
-        if (inStock) return 3;
-        if (isCanonical) return 2;
-        return 1;
-      };
-      const byRetailer = new Map<string, SnapshotRow>();
-      for (const row of data) {
-        const existing = byRetailer.get(row.retailer_id);
-        if (!existing || scoreRow(row) > scoreRow(existing)) {
-          byRetailer.set(row.retailer_id, row);
-        }
-      }
-
-      let newestScrapeAt = "";
-      const updatedRetailers: string[] = [];
-
-      // Helper — build a new <tr> from scratch when a live retailer isn't
-      // already pre-rendered in the static table. Mirrors the Astro template
-      // exactly so subsequent style + querySelector hooks all match.
-      function buildRetailerRow(retailerId: string, row: SnapshotRow): HTMLTableRowElement | null {
-        const retailer = RETAILER_BY_ID[retailerId];
-        if (!retailer) return null;
-        const country = COUNTRY_BY_CODE[retailer.country] || { name: retailer.country.toUpperCase(), flag: "" };
-        const tr = document.createElement("tr");
-        tr.dataset.retailerId = retailerId;
-        // Mirror the Astro template's duty-paid attribute + cell so live-injected
-        // rows benefit from the same per-row highlighting + tooltip behaviour.
-        const dutyCodes = (retailer.dutyPaidTo && retailer.dutyPaidTo.length > 0)
-          ? retailer.dutyPaidTo
-          : [retailer.country];
-        const dutyCountries = dutyCodes.map((cc) => COUNTRY_BY_CODE[cc]).filter(Boolean);
-        const dutyFlags = dutyCountries.map((c: any) => c.flag).join(" ");
-        const dutyNames = dutyCountries.map((c: any) => c.name).join(", ");
-        tr.dataset.dutyPaid = dutyCodes.join(",");
-        const shipsLabel = retailer.shipsTo === "domestic"
-          ? "Ships in-country"
-          : retailer.shipsTo === "eu" ? "Ships EU · duty extra"
-          :                              "Ships worldwide · duty extra";
-        const dutyTitle = retailer.shipsTo === "domestic"
-          ? `Listed price is all-in for ${dutyNames}. Retailer doesn't ship cross-border.`
-          : `Listed price is all-in for ${dutyNames}. Buyers outside these countries pay destination-country tobacco excise duty + VAT on top.`;
-        const statusBadge = retailer.status === "lcdh" ? '<span class="finder-badge finder-badge--gold">LCDH</span>' : "";
-        tr.innerHTML = `
-          <td data-cell="retailer">
-            <span class="finder-table__retailer">${retailer.name}</span>
-            ${statusBadge}
-          </td>
-          <td>${country.flag} ${country.name}</td>
-          <td>
-            <div class="finder-duty" title="${dutyTitle.replace(/"/g, "&quot;")}">
-              <span class="finder-duty__paid" data-duty-row>
-                <span class="finder-duty__paid-label">Duty-paid</span>
-                <span class="finder-duty__paid-flags">${dutyFlags}</span>
-              </span>
-              <span class="finder-duty__ships" data-ships-row>${shipsLabel}</span>
-            </div>
-          </td>
-          <td class="finder-table__num finder-table__price" data-cell="price"></td>
-          <td class="finder-table__num" data-cell="eur"></td>
-          <td class="finder-table__num" data-cell="per-cigar"></td>
-          <td data-cell="stock"></td>
-          <td class="finder-table__cta">
-            <a href="#" class="finder-table__compare" target="_blank" rel="noopener noreferrer sponsored" data-cell="shop">Shop →</a>
-          </td>
-        `;
-        return tr;
-      }
-
-      const tbody = document.querySelector<HTMLTableSectionElement>(".finder-table tbody");
-
-      for (const [retailerId, row] of byRetailer.entries()) {
-        let tr = document.querySelector<HTMLTableRowElement>(
-          `tr[data-retailer-id="${retailerId}"]`
-        );
-        // If this live retailer has no static row, inject one. Lets us add
-        // a new scraper (e.g. de-cigarmaxx) without touching the SKU template.
-        if (!tr && tbody) {
-          const newRow = buildRetailerRow(retailerId, row);
-          if (newRow) {
-            tbody.appendChild(newRow);
-            tr = newRow;
-          }
-        }
-        if (!tr) continue;
-
-        // Update visual stock state. Drop the 'is-unverified' class as soon
-        // as we have a live data point — the row is no longer historical.
-        tr.classList.remove("is-unverified");
-        tr.classList.toggle("is-oos", !row.in_stock);
-
-        const r = RETAILER_BY_ID[retailerId];
-        const currency = (r ? row.currency : row.currency) as any;
-
-        // Box price (native currency). If the retailer only carries a
-        // non-canonical pack size, append "(N-pack)" so users aren't misled
-        // into thinking €238 = a full box of 25.
-        const priceCell = tr.querySelector<HTMLElement>('[data-cell="price"]');
-        if (priceCell) {
-          let priceText = formatPrice(row.price, currency);
-          if (row.pack_size !== boxSize) {
-            priceText += ` <span class="finder-pack-note">(${row.pack_size}-pack)</span>`;
-          }
-          priceCell.innerHTML = priceText;
-        }
-        // EUR-normalized. Same annotation rule applies for clarity.
-        const eurCell = tr.querySelector<HTMLElement>('[data-cell="eur"]');
-        if (eurCell) {
-          let eurText = `€${Math.round(row.price_eur).toLocaleString("en-US")}`;
-          if (row.pack_size !== boxSize) {
-            eurText += ` <span class="finder-pack-note">(${row.pack_size}-pack)</span>`;
-          }
-          eurCell.innerHTML = eurText;
-        }
-        // Per-cigar (from generated column — always consistent)
-        const perCigarCell = tr.querySelector<HTMLElement>('[data-cell="per-cigar"]');
-        if (perCigarCell) {
-          perCigarCell.textContent = `€${row.price_per_cigar_eur.toFixed(2)}`;
-        }
-        // In-stock pill
-        const stockCell = tr.querySelector<HTMLElement>('[data-cell="stock"]');
-        if (stockCell) {
-          stockCell.innerHTML = row.in_stock
-            ? '<span class="finder-stock finder-stock--yes">In stock</span>'
-            : '<span class="finder-stock finder-stock--no">Out of stock</span>';
-        }
-        // Shop link → live source_url (scraper always sends exact PDP URLs,
-        // so we restore the "Shop →" label + drop the search-fallback class).
-        const shopLink = tr.querySelector<HTMLAnchorElement>('[data-cell="shop"]');
-        if (shopLink) {
-          shopLink.href = row.source_url;
-          shopLink.textContent = "Shop →";
-          shopLink.classList.remove("finder-table__compare--search");
-          shopLink.title = "Opens the retailer's product page in a new tab";
-        }
-
-        // Live badge on retailer cell (only add once)
-        const retailerCell = tr.querySelector<HTMLElement>('[data-cell="retailer"]');
-        if (retailerCell && !retailerCell.querySelector(".finder-badge--live")) {
-          const badge = document.createElement("span");
-          badge.className = "finder-badge finder-badge--live";
-          badge.title = `Live scrape — refreshed ${relativeTime(row.scraped_at)}`;
-          badge.textContent = "● LIVE";
-          retailerCell.appendChild(badge);
-        }
-
-        updatedRetailers.push(retailerId);
-        if (!newestScrapeAt || row.scraped_at > newestScrapeAt) {
-          newestScrapeAt = row.scraped_at;
-        }
-      }
-
-      // Re-evaluate "Best value" — only consider rows that are BOTH live-scraped
-      // AND confirmed in-stock. Static (unverified) rows are excluded entirely
-      // because we don't know if the retailer actually carries the SKU.
-      const inStockRows = Array.from(
-        document.querySelectorAll<HTMLTableRowElement>("tr[data-retailer-id]")
-      ).filter((tr) =>
-        !tr.classList.contains("is-oos") &&
-        !tr.classList.contains("is-unverified")
-      );
-      if (inStockRows.length > 0) {
-        const ranked = inStockRows
-          .map((tr) => {
-            const perCigarTxt = tr.querySelector('[data-cell="per-cigar"]')?.textContent || "";
-            const v = parseFloat(perCigarTxt.replace(/[^0-9.]/g, ""));
-            return { tr, perCigar: Number.isFinite(v) ? v : Infinity };
-          })
-          .sort((a, b) => a.perCigar - b.perCigar);
-
-        // Remove existing best-value badges
-        document.querySelectorAll("[data-best-value-badge]").forEach((b) => b.remove());
-
-        // Add to cheapest row
-        const winner = ranked[0]?.tr.querySelector<HTMLElement>('[data-cell="retailer"]');
-        if (winner) {
-          const badge = document.createElement("span");
-          badge.className = "finder-badge finder-badge--accent";
-          badge.setAttribute("data-best-value-badge", "");
-          badge.textContent = "Best value";
-          winner.appendChild(badge);
-        }
-      }
-
-      // Replace verification footer with live timestamp
-      if (newestScrapeAt) {
-        const footer = document.querySelector<HTMLElement>("[data-verification]");
-        if (footer) {
-          const when = relativeTime(newestScrapeAt);
-          footer.innerHTML =
-            `Live prices refreshed <strong>${when}</strong> via direct retailer scraping ` +
-            `(${updatedRetailers.length} retailer${updatedRetailers.length === 1 ? "" : "s"} live). ` +
-            `Other rows are manual research from <strong>15 May 2026</strong>. ` +
-            `Tap any retailer name to verify the price on their site before purchasing.`;
-        }
-      }
-    }
-
-    // ─── Country-aware duty highlight ────────────────────────────────────
-    // Resolves the buyer's destination country from (in order):
-    //   1. ?country=XX query param        (sticky after the user picks it)
-    //   2. localStorage 'finder.country'  (persisted across sessions)
-    //   3. Lounge profile.city → its country (signed-in members)
-    // For every retailer row, if `dutyPaidTo` includes the destination →
-    // row gets .finder-duty--match (green tint). Otherwise — .finder-duty--mismatch
-    // (dimmed). Lets a 🇩🇪 buyer scan a Cohiba Robustos page and instantly see
-    // which prices are honestly all-in for them.
-    async function highlightDutyForDestination() {
-      // Resolve destination — query param first, then localStorage, then profile.
-      const params = new URLSearchParams(window.location.search);
-      let dest = (params.get("country") || "").toLowerCase().trim();
-      if (!dest) {
-        try { dest = (localStorage.getItem("finder.country") || "").toLowerCase().trim(); } catch {}
-      }
-      if (!dest) {
-        try {
-          const { getCurrentProfile } = await import("../../../lib/supabase");
-          const profile = await getCurrentProfile();
-          // profiles.country_code is the canonical signal; fall back to nothing
-          // rather than guess from `city` (Berlin → DE is easy, Lugano → CH is
-          // not, and we don't want to mislead a Swiss buyer with a DE highlight).
-          dest = String((profile as any)?.country_code || "").toLowerCase().trim();
-        } catch {}
-      }
-      if (!dest) return; // no destination known — leave rows neutral
-
-      // Cache the resolution so subsequent SKU pages render highlighted
-      // immediately, without waiting on the profile query.
-      try { localStorage.setItem("finder.country", dest); } catch {}
-
-      document.querySelectorAll<HTMLTableRowElement>("tr[data-retailer-id]").forEach((tr) => {
-        const codes = (tr.dataset.dutyPaid || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-        if (codes.length === 0) return;
-        if (codes.includes(dest)) {
-          tr.classList.add("finder-duty--match");
-          tr.classList.remove("finder-duty--mismatch");
-        } else {
-          tr.classList.add("finder-duty--mismatch");
-          tr.classList.remove("finder-duty--match");
-        }
-      });
-    }
-
-    // "Show all-in rows for my country" link in the explainer block — when
-    // the user has no destination set, this prompts for one and stores it.
-    function bindDutyShowMine() {
-      const link = document.querySelector<HTMLAnchorElement>("[data-duty-show-mine]");
-      if (!link) return;
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const code = window.prompt(
-          "Country code (de, ch, uk, fr, …) for the destination where you'll receive the parcel:",
-          (localStorage.getItem("finder.country") || "").trim()
-        );
-        if (!code) return;
-        try { localStorage.setItem("finder.country", code.toLowerCase().trim()); } catch {}
-        highlightDutyForDestination();
-      });
-    }
-
-    // Run after hydration so live-injected rows also pick up the highlight.
-    function initDutyHighlight() {
-      bindDutyShowMine();
-      // Small defer: lets hydrateLivePrices append any new live rows first
-      // (those rows include the data-duty-paid attribute via buildRetailerRow).
-      setTimeout(() => { highlightDutyForDestination(); }, 50);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initDutyHighlight);
-    } else {
-      initDutyHighlight();
-    }
-
-    // Hydrate after DOM is ready
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", hydrateLivePrices);
-    } else {
-      hydrateLivePrices();
-    }
-  </script>
 </BaseLayout>
 
 <style>
-  .sku-hero {
-    background:
-      radial-gradient(circle at 85% 25%, rgba(201, 169, 97, 0.12), transparent 55%),
-      linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
-    border-bottom: 1px solid var(--color-border);
-  }
-  .sku-hero__back {
+  .site-body { padding-bottom: 40px; }
+
+  /* Hero — brand + vitola + best price side by side */
+  .sku-hero { max-width: 1400px; margin: 0 auto; padding: 32px 40px 48px; border-bottom: 1px solid var(--news-rule); }
+  .sku-hero-inner { max-width: 100%; }
+  .sku-back {
     display: inline-block;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    margin-bottom: 2rem;
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--news-oxblood);
+    padding-bottom: 3px; border-bottom: 1px solid transparent; transition: all 0.2s;
+    margin-bottom: 28px;
   }
-  .sku-hero__back:hover { color: var(--color-accent); }
-
-  .sku-hero__head {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    margin-bottom: 1.5rem;
+  .sku-back:hover { border-bottom-color: var(--news-oxblood); }
+  .sku-hero-grid {
+    display: grid; grid-template-columns: 7fr 5fr; gap: 56px; align-items: start;
   }
-  @media (min-width: 1024px) {
-    .sku-hero__head {
-      grid-template-columns: 1.4fr 1fr;
-      gap: 3rem;
-      align-items: start;
-    }
+  .sku-hero-brand {
+    font-family: var(--news-mono); font-size: 12px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 12px;
   }
-
-  .sku-hero__title {
-    font-family: var(--font-display);
-    font-size: clamp(2.2rem, 5vw, 4rem);
-    font-weight: 900;
-    letter-spacing: -0.025em;
-    line-height: 0.98;
-    color: var(--color-text);
-    margin: 0.6rem 0 1.25rem;
+  .sku-hero-title {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(2.6rem, 5.6vw, 5.4rem); line-height: 0.96;
+    letter-spacing: -0.03em; color: var(--news-ink); margin: 0 0 24px;
   }
-  .sku-hero__blurb {
-    font-size: 1.075rem;
-    line-height: 1.65;
-    color: var(--color-text-soft);
-    max-width: 56ch;
-    margin-bottom: 1.5rem;
+  .sku-hero-blurb {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: clamp(1.05rem, 1.5vw, 1.35rem); line-height: 1.55;
+    color: var(--news-ink-soft); margin: 0 0 32px;
   }
-  .sku-hero__spec {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    font-size: 0.85rem;
-    color: var(--color-text-soft);
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--color-border);
+  .sku-hero-specs {
+    display: grid; grid-template-columns: repeat(3, auto); gap: 20px 32px;
+    padding: 20px 0; border-top: 1px solid var(--news-rule); border-bottom: 1px solid var(--news-rule);
   }
-  .sku-hero__spec strong { color: var(--color-text); }
-  .sku-hero__prestige {
-    display: inline-block;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .sku-hero-specs > div { display: flex; flex-direction: column; gap: 4px; }
+  .sku-hero-specs .k {
+    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood);
   }
-  .sku-hero__prestige--flagship { background: rgba(201, 169, 97, 0.18); color: var(--color-gold-hover); }
-  .sku-hero__prestige--premium  { background: rgba(110, 38, 32, 0.12); color: var(--color-burgundy); }
-  .sku-hero__prestige--standard { background: var(--color-surface); color: var(--color-text-soft); }
-
-  .sku-hero__best {
-    background: var(--color-bg);
-    border: 1px solid var(--color-gold);
-    border-radius: 6px;
-    padding: 1.5rem 1.6rem;
-    box-shadow: 0 8px 22px -16px rgba(0,0,0,0.18);
-  }
-  .sku-hero__best-price {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: var(--color-text);
-    letter-spacing: -0.025em;
-    line-height: 1;
-    margin: 0.6rem 0 0.4rem;
-  }
-  .sku-hero__best-eur {
-    display: inline-block;
-    margin-left: 0.4rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    vertical-align: middle;
-  }
-  .sku-hero__best-percigar {
-    font-size: 0.9rem;
-    color: var(--color-text-soft);
-    margin: 0 0 0.6rem;
-  }
-  .sku-hero__best-at {
-    font-size: 0.95rem;
-    color: var(--color-text);
-    margin: 0 0 1.25rem;
-  }
-  .sku-hero__best-cta { width: 100%; justify-content: center; }
-  .sku-hero__best-note {
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    margin-top: 0.95rem;
-    line-height: 1.45;
+  .sku-hero-specs .v {
+    font-family: var(--news-serif); font-size: 15px; color: var(--news-ink); text-transform: capitalize;
   }
 
-  .sku-hero__summary {
-    font-size: 0.92rem;
-    color: var(--color-text-soft);
-    padding: 0.85rem 1rem;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg-soft);
-    margin: 0;
+  /* Best-value price card */
+  .sku-hero-price {
+    padding: 28px 28px 32px;
+    border: 3px double var(--news-oxblood);
+    background: var(--news-paper-cream);
+    display: flex; flex-direction: column;
+  }
+  .sku-hero-price-label {
+    font-family: var(--news-mono); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--news-oxblood);
+    margin-bottom: 12px;
+  }
+  .sku-hero-price-big {
+    font-family: var(--news-serif); font-weight: 600;
+    font-size: clamp(2.4rem, 4vw, 3.4rem); line-height: 1;
+    letter-spacing: -0.028em; color: var(--news-ink); margin-bottom: 4px;
+  }
+  .sku-hero-price-eur {
+    font-family: var(--news-mono); font-size: 12px; color: var(--news-ink-mute);
+    margin-bottom: 12px;
+  }
+  .sku-hero-price-per {
+    font-family: var(--news-serif); font-size: 13px; color: var(--news-ink-soft);
+    padding-bottom: 12px; border-bottom: 1px solid var(--news-rule); margin-bottom: 14px;
+  }
+  .sku-hero-price-at {
+    font-family: var(--news-serif); font-size: 14px; line-height: 1.4; color: var(--news-ink);
+    margin-bottom: 20px;
+  }
+  .sku-hero-price-at strong { font-weight: 600; }
+  .sku-hero-cta {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 14px 20px; margin-bottom: 12px;
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--news-ink); color: var(--news-paper);
+    transition: background 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sku-hero-cta:hover { background: var(--news-oxblood); }
+  .sku-hero-note {
+    font-family: var(--news-serif); font-style: italic; font-size: 11.5px;
+    color: var(--news-ink-mute); margin: 12px 0 0; line-height: 1.4;
+  }
+  .sku-hero-tracker {
+    margin-top: 28px; padding-top: 20px; border-top: 4px double var(--news-ink);
+    font-family: var(--news-serif); font-size: 15px; color: var(--news-ink-soft);
+  }
+  .sku-hero-tracker strong { font-weight: 600; color: var(--news-oxblood); }
+
+  /* Offers table — reuses ticker styling from /finder/ */
+  .sku-table-band { max-width: 1400px; margin: 0 auto; padding: 40px 40px; border-bottom: 1px solid var(--news-rule); }
+  .sku-table-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 24px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink);
+    flex-wrap: wrap; gap: 12px;
+  }
+  .sku-table-flag {
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper); padding: 6px 12px;
+  }
+  .sku-table-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem); letter-spacing: -0.016em; margin: 0;
+  }
+  .sku-table-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+
+  .ticker { width: 100%; border-collapse: collapse; border-top: 2px solid var(--news-ink); border-bottom: 2px solid var(--news-ink); font-family: var(--news-serif); font-size: 14px; }
+  .ticker thead th {
+    font-family: var(--news-mono); font-weight: 500; font-size: 9px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--news-ink);
+    text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--news-ink); background: var(--news-paper-dark);
+  }
+  .ticker thead th.num { text-align: right; }
+  .ticker tbody tr { border-bottom: 1px solid var(--news-rule); transition: background 0.2s; }
+  .ticker tbody tr:hover { background: rgba(138, 43, 30, 0.06); }
+  .ticker tbody tr.out-of-stock { opacity: 0.55; }
+  .ticker td { padding: 12px 8px; vertical-align: middle; }
+  .ticker td.num { text-align: right; font-family: var(--news-mono); font-size: 13px; font-weight: 500; }
+  .ticker td.num.eur { color: var(--news-oxblood); }
+  .ticker .brand {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-top: 2px;
+  }
+  .ticker .name { font-family: var(--news-serif); font-weight: 500; font-size: 15px; color: var(--news-ink); }
+  .ticker .country { font-family: var(--news-mono); font-size: 12px; }
+  .stock-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .stock-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+  .stock-dot.in::before  { background: var(--news-pine); }
+  .stock-dot.in         { color: var(--news-pine); }
+  .stock-dot.out::before { background: var(--news-ink-mute); }
+  .stock-dot.out        { color: var(--news-ink-mute); }
+  .row-cta {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--news-oxblood); text-transform: uppercase;
+  }
+  .row-cta:hover { color: var(--news-ember); }
+
+  /* Editorial writeup */
+  .sku-editorial { max-width: 780px; margin: 0 auto; padding: 56px 40px; border-bottom: 1px solid var(--news-rule); }
+  .sku-editorial-eyebrow {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sku-editorial-eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--news-oxblood); }
+  .sku-editorial-body { font-family: var(--news-serif); font-size: 18px; line-height: 1.68; color: var(--news-ink); }
+  .sku-editorial-body :global(p) { margin: 0 0 1.35em; }
+  .sku-editorial-body :global(p:first-child::first-letter) {
+    font-family: var(--news-serif); font-weight: 700; font-size: 5em; line-height: 0.85;
+    float: left; margin: 0.05em 10px -0.05em 0; color: var(--news-oxblood);
   }
 
-  /* Offers table reuses landing styles */
-  .finder-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); margin-top: 1.5rem; }
+  /* Siblings */
+  .siblings-band { max-width: 1400px; margin: 0 auto; padding: 48px 40px; border-bottom: 1px solid var(--news-rule); }
+  .siblings-head {
+    display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline;
+    margin-bottom: 28px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink);
+  }
+  .siblings-flag {
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-mahogany); color: var(--news-paper); padding: 6px 12px; align-self: start;
+  }
+  .siblings-head h2 { font-family: var(--news-serif); font-weight: 500; font-size: clamp(1.4rem, 2.2vw, 1.85rem); margin: 0; letter-spacing: -0.016em; }
+  .siblings-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .siblings-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .sibling {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 18px 20px 20px; border: 1px solid var(--news-ink); background: var(--news-paper);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sibling:hover { transform: translateY(-2px); }
+  .sibling-brand { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--news-oxblood); }
+  .sibling-vitola { font-family: var(--news-serif); font-weight: 500; font-size: 18px; letter-spacing: -0.012em; color: var(--news-ink); }
+  .sibling-blurb {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px; line-height: 1.5;
+    color: var(--news-ink-soft); flex: 1; margin: 4px 0 12px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .sibling-cta { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--news-oxblood); }
 
-  /* ─── MOBILE: convert offer table to card stack ───────────────────────
-     Same pattern as the catalogue table on /finder/. Each <tr> becomes a
-     stand-alone card with column labels via data-label attributes. */
-  @media (max-width: 720px) {
-    .finder-table-wrap { border: none; background: transparent; overflow-x: visible; }
-    .finder-table,
-    .finder-table thead,
-    .finder-table tbody,
-    .finder-table tr,
-    .finder-table th,
-    .finder-table td {
-      display: block;
-      width: 100%;
-    }
-    .finder-table thead { display: none; }
-    .finder-table tr {
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      background: var(--color-bg);
-      padding: 0.95rem 1.05rem 0.5rem;
-      margin-bottom: 0.85rem;
-    }
-    .finder-table tr.is-oos { opacity: 0.6; }
-    .finder-table tr:hover td { background: transparent; }
-    .finder-table td {
-      padding: 0.45rem 0;
-      border-bottom: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.6rem;
-      text-align: right;
-      font-size: 0.9rem;
-    }
-    .finder-table td::before {
-      content: attr(data-label);
-      font-size: 0.66rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--color-text-muted);
-      flex: 0 0 auto;
-      text-align: left;
-    }
-    /* Retailer cell becomes the card heading — full-width, no flex split. */
-    td[data-cell="retailer"] {
-      display: block !important;
-      padding: 0 0 0.55rem !important;
-      border-bottom: 1px solid var(--color-border-soft) !important;
-      margin-bottom: 0.55rem;
-      text-align: left !important;
-    }
-    td[data-cell="retailer"]::before { content: none; }
-    /* CTA — full-width button at bottom of card. */
-    .finder-table__cta {
-      padding-top: 0.65rem !important;
-      border-top: 1px solid var(--color-border-soft);
-      margin-top: 0.2rem;
-    }
-    .finder-table__cta::before { content: none; }
-    .finder-table__compare {
-      display: block;
-      text-align: center;
-      padding: 0.7rem 1rem;
-      width: 100%;
-    }
-    .finder-table__was {
-      display: inline;
-      margin-left: 0.4rem;
-      font-size: 0.78rem;
-      text-decoration: line-through;
-      color: var(--color-text-muted);
-    }
-    /* Pack-note annotation stays inline on mobile. */
-    .finder-pack-note { display: inline; margin-left: 0.3rem; }
-  }
-  .finder-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-  .finder-table th {
-    text-align: left;
-    font-family: var(--font-display);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    padding: 1rem 1.1rem;
-    background: var(--color-bg-soft);
-    border-bottom: 1px solid var(--color-border);
-  }
-  .finder-table td {
-    padding: 1rem 1.1rem;
-    border-bottom: 1px solid var(--color-border-soft);
-    vertical-align: middle;
-  }
-  .finder-table tr:last-child td { border-bottom: none; }
-  .finder-table tr:hover td { background: var(--color-bg-soft); }
-  .finder-table tr.is-oos td { opacity: 0.5; }
-  .finder-table__num { text-align: right; font-variant-numeric: tabular-nums; }
-  .finder-table__retailer { font-weight: 600; color: var(--color-text); }
-  .finder-table__price {
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--color-text);
-    font-size: 1rem;
-  }
-  .finder-table__was {
-    display: block;
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    text-decoration: line-through;
-    margin-top: 0.15rem;
-  }
-  .finder-table__cta { text-align: right; }
-  .finder-table__compare {
-    display: inline-block;
-    padding: 0.45rem 0.95rem;
-    background: var(--color-text);
-    color: #fff;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 180ms ease;
-  }
-  .finder-table__compare:hover { background: var(--color-accent); }
-  /* "Search on site" variant — used when we don't have an exact PDP URL.
-     Outlined rather than filled so it visually reads as a secondary CTA.
-     The hydration script removes this modifier when LIVE data arrives. */
-  .finder-table__compare--search {
-    background: transparent !important;
-    color: var(--color-text-soft) !important;
-    border: 1px solid var(--color-border);
-  }
-  .finder-table__compare--search:hover {
-    background: var(--color-bg-soft) !important;
-    color: var(--color-text) !important;
-    border-color: var(--color-text-soft);
-  }
+  /* Footer strip */
+  .footer-strip { max-width: 1400px; margin: 0 auto; padding: 40px 40px 24px; }
+  .footer-strip-inner { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--news-rule); }
+  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
+  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
+  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
 
-  .finder-badge {
-    display: inline-block;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    background: var(--color-surface);
-    color: var(--color-text-soft);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-left: 0.5rem;
+  @media (max-width: 900px) {
+    .sku-hero-grid { grid-template-columns: 1fr; gap: 24px; }
+    .sku-hero-specs { grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+    .siblings-grid { grid-template-columns: 1fr 1fr; }
+    .siblings-head { grid-template-columns: 1fr; gap: 12px; }
+    .sku-hero, .sku-table-band, .sku-editorial, .siblings-band, .footer-strip { padding: 24px 20px; }
+    .ticker { font-size: 12px; }
+    .ticker td { padding: 8px 4px; }
+    .ticker thead th { font-size: 8px; padding: 8px 4px; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
   }
-  .finder-badge--gold { background: rgba(201, 169, 97, 0.18); color: var(--color-gold-hover); }
-  .finder-badge--accent { background: var(--color-accent); color: #fff; }
-  .finder-badge--live {
-    background: rgba(42, 138, 42, 0.14);
-    color: #2a8a2a;
-    animation: finder-live-pulse 2.4s ease-in-out infinite;
+  @media (max-width: 620px) {
+    .siblings-grid { grid-template-columns: 1fr; }
+    /* Hide less-critical table columns on very narrow */
+    .ticker thead th:nth-child(4), .ticker tbody td:nth-child(4),
+    .ticker thead th:nth-child(5), .ticker tbody td:nth-child(5),
+    .ticker thead th:nth-child(7), .ticker tbody td:nth-child(7) { display: none; }
   }
-  @keyframes finder-live-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.55; }
-  }
-
-  /* Pack-size note shown next to price/EUR when a retailer carries a
-     non-canonical pack (e.g. 3-pack instead of the canonical box of 25). */
-  .finder-pack-note {
-    display: inline-block;
-    margin-left: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    letter-spacing: 0.02em;
-  }
-
-  .finder-stock { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
-  .finder-stock--unverified {
-    color: var(--color-text-muted);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    text-transform: none;
-    font-style: italic;
-    cursor: help;
-    border-bottom: 1px dotted var(--color-text-muted);
-  }
-  /* Unverified rows = static research data, no live confirmation that the
-     retailer actually carries this SKU or has it in stock. Slightly muted
-     so users visually distinguish them from live rows without us hiding
-     the information entirely. */
-  tr.is-unverified td {
-    background: rgba(248, 246, 240, 0.4);
-  }
-  tr.is-unverified .finder-table__price,
-  tr.is-unverified [data-cell="eur"],
-  tr.is-unverified [data-cell="per-cigar"] {
-    color: var(--color-text-soft);
-  }
-  .finder-stock--yes { color: #2a8a2a; }
-  .finder-stock--no  { color: var(--color-text-muted); }
-  .finder-ships { font-size: 0.78rem; color: var(--color-text-soft); cursor: help; }
-  .finder-ships-warn {
-    display: inline-block;
-    margin-left: 0.25rem;
-    width: 14px;
-    height: 14px;
-    line-height: 14px;
-    text-align: center;
-    border-radius: 50%;
-    background: rgba(201, 169, 97, 0.2);
-    color: var(--color-gold-hover);
-    font-size: 0.62rem;
-    font-weight: 800;
-    vertical-align: middle;
-  }
-
-  /* Duty / Ships column — two stacked lines per row.
-     Top line: "Duty-paid 🇩🇪" (the operative answer to "is the price all-in?").
-     Bottom line: "Ships EU · duty extra" (the secondary question).
-     Country-aware highlight: when ?country=de or the member profile sets
-     a destination, rows whose duty-paid list matches get .finder-duty--match
-     (green tint) and rows that don't are dimmed. */
-  .finder-duty {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 0.78rem;
-    line-height: 1.25;
-    color: var(--color-text-soft);
-    cursor: help;
-  }
-  .finder-duty__paid {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-weight: 600;
-    color: var(--color-text);
-  }
-  .finder-duty__paid-label {
-    display: inline-block;
-    background: rgba(30, 140, 96, 0.14);
-    color: #1e8c60;
-    padding: 0.05rem 0.45rem;
-    border-radius: 3px;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .finder-duty__paid-flags {
-    font-size: 0.92rem;
-    line-height: 1;
-    letter-spacing: 0.05em;
-  }
-  .finder-duty__ships {
-    font-size: 0.72rem;
-    color: var(--color-text-muted);
-  }
-  /* Country-aware highlight states. JS toggles these classes on matching
-     rows based on a query param or the signed-in member's home country. */
-  tr[data-retailer-id].finder-duty--match {
-    background: rgba(30, 140, 96, 0.04);
-  }
-  tr[data-retailer-id].finder-duty--match .finder-duty__paid-label {
-    background: rgba(30, 140, 96, 0.22);
-  }
-  tr[data-retailer-id].finder-duty--mismatch {
-    opacity: 0.62;
-  }
-  tr[data-retailer-id].finder-duty--mismatch .finder-duty__paid-label {
-    background: rgba(165, 42, 42, 0.14);
-    color: #a52a2a;
-  }
-
-  /* Duty-paid shipping clarification — sits below the offer table on each
-     SKU page. Honest disclosure that cross-border tobacco shipments face
-     destination-country duty + VAT. */
-  .finder-duty-notice {
-    margin-top: 1.25rem;
-    padding: 1rem 1.25rem 1.1rem;
-    background: rgba(110, 38, 32, 0.04);
-    border-left: 3px solid var(--color-accent);
-    border-radius: 4px;
-    font-size: 0.85rem;
-    line-height: 1.55;
-    color: var(--color-text);
-  }
-  .finder-duty-notice p {
-    margin: 0 0 0.55rem 0;
-    color: var(--color-text-soft);
-  }
-  .finder-duty-notice p:last-child { margin-bottom: 0; }
-  .finder-duty-notice strong { color: var(--color-text); }
-  .finder-duty-notice ul {
-    margin: 0.55rem 0 0.7rem 0;
-    padding-left: 1.15rem;
-  }
-  .finder-duty-notice li {
-    margin-bottom: 0.4rem;
-    color: var(--color-text-soft);
-  }
-  .finder-duty-notice li:last-child { margin-bottom: 0; }
-
-  .sku-hero__verification {
-    margin-top: 1.5rem;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    line-height: 1.55;
-  }
-
-  /* CTA section */
-  .sku-cta__title {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3.5vw, 2.5rem);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.022em;
-    color: var(--color-text-on-dark);
-    margin: 0.8rem 0 1.2rem;
-  }
-  .sku-cta__lead {
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: var(--color-text-on-dark-soft);
-    max-width: 56ch;
-    margin: 0 auto 2rem;
-  }
-  .sku-cta__actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  /* Editorial passage */
-  .sku-editorial {
-    padding-top: 1rem;
-  }
-  .sku-editorial__title {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 3vw, 2.1rem);
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--color-text);
-    margin: 0.6rem 0 1.5rem;
-  }
-  .sku-editorial p {
-    font-size: 1.075rem;
-    line-height: 1.78;
-    color: var(--color-text-soft);
-    margin: 0 0 1.4em;
-  }
-  .sku-editorial p:first-of-type::first-letter {
-    font-family: var(--font-display);
-    float: left;
-    font-size: 3.6em;
-    line-height: 0.85;
-    font-weight: 800;
-    margin-right: 0.08em;
-    margin-top: 0.08em;
-    color: var(--color-burgundy);
-  }
-  .sku-editorial hr {
-    border: none;
-    border-top: 1px solid var(--color-border);
-    margin: 2.5em auto;
-    width: 40%;
-  }
-  .sku-editorial__crosslinks h3 {
-    font-family: var(--font-display);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin: 1.6em 0 0.6em;
-  }
-  .sku-editorial__crosslinks ul {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1em;
-  }
-  .sku-editorial__crosslinks li {
-    padding: 0.4rem 0;
-    border-bottom: 1px dashed var(--color-border-soft);
-    font-size: 0.95rem;
-    color: var(--color-text-soft);
-  }
-  .sku-editorial__crosslinks li a {
-    color: var(--color-text);
-    text-decoration: none;
-    font-weight: 600;
-    border-bottom: 2px solid var(--color-accent);
-    padding-bottom: 1px;
-  }
-  .sku-editorial__crosslinks li a:hover { color: var(--color-accent); }
 </style>
