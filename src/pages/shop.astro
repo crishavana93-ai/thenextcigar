@@ -5,6 +5,7 @@ import "../styles/newspaper.css";
 import CigarCursor from "../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../data/masthead";
 
 /**
  * /shop/ — The Shop section in newspaper "Classifieds & Guatabey" style.
@@ -44,11 +45,7 @@ for (const p of pipeline) {
   grouped[cat].push(p);
 }
 
-const masthead = {
-  volume: "Vol. III",
-  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
-  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-};
+
 
 function priceOf(p: typeof pipeline[number]) {
   const d = p.data as any;

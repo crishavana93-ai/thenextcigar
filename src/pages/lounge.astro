@@ -4,6 +4,7 @@ import "../styles/newspaper.css";
 import CigarCursor from "../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../data/masthead";
 import { places } from "../data/cigar-places";
 import {
   SKUS as FINDER_SKUS,
@@ -43,11 +44,7 @@ const retailerCount  = FINDER_RETAILERS.length;
 const snapshotCount  = FINDER_SNAPSHOTS.length;
 const countryCount   = FINDER_COUNTRIES.length;
 
-const masthead = {
-  volume: "Vol. III",
-  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
-  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-};
+
 
 function typeLabel(t: string) {
   return ({

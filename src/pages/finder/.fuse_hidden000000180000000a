@@ -4,7 +4,6 @@ import "../../styles/newspaper.css";
 import CigarCursor from "../../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../../components/newspaper/SectionFlag.astro";
-import { MASTHEAD as masthead } from "../../data/masthead";
 import {
   COUNTRIES,
   SKUS,
@@ -78,7 +77,11 @@ for (const country of COUNTRIES) {
 
 const lastUpdated = "6 min ago";
 
-
+const masthead = {
+  volume: "Vol. III",
+  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
+  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+};
 
 // Fmt helpers
 function fmtBest(row: PricedRow) {

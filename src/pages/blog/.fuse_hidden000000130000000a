@@ -5,7 +5,7 @@ import "../../styles/newspaper.css";
 import CigarCursor from "../../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../../components/newspaper/SectionFlag.astro";
-import { MASTHEAD as masthead } from "../../data/masthead";
+import { MASTHEAD as masthead } from "";
 
 /**
  * /blog/ — The Magazine section in the cinematic newspaper design.

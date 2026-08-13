@@ -4,13 +4,10 @@ import "../styles/newspaper.css";
 import CigarCursor from "../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../data/masthead";
 import BeehiivEmbed from "../components/BeehiivEmbed.astro";
 
-const masthead = {
-  volume: "Vol. III",
-  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
-  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-};
+
 ---
 
 <BaseLayout

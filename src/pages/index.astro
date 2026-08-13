@@ -5,6 +5,7 @@ import "../styles/newspaper.css";
 import CigarCursor from "../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../data/masthead";
 import VideoIntroHero from "../components/newspaper/VideoIntroHero.astro";
 
 /**
@@ -60,11 +61,7 @@ function categoryFlag(slug: string | null): string {
   return "";
 }
 
-const masthead = {
-  volume: "Vol. III",
-  issue: `Issue ${new Date().getMonth() + 1 < 10 ? '0' + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
-  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-};
+
 ---
 
 <BaseLayout
@@ -253,11 +250,12 @@ const masthead = {
     display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end;
   }
   .lead-photo {
+    display: block;   /* <a> tag needs this or aspect-ratio is ignored */
     aspect-ratio: 4 / 5;
     background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
     filter: grayscale(0.85) sepia(0.35) contrast(1.06);
-    position: relative;
-    display: block;
+    position: relative; min-height: 320px;
   }
   .lead-photo .cutline {
     position: absolute; left: 0; right: 0; bottom: -32px;

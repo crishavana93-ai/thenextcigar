@@ -4,6 +4,7 @@ import "../styles/newspaper.css";
 import CigarCursor from "../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../components/newspaper/SectionFlag.astro";
+import { MASTHEAD as masthead } from "../data/masthead";
 import { channels } from "../data/youtube-channels";
 
 interface Video {
@@ -63,11 +64,7 @@ const feature = allVideos[0];
 const grid = allVideos.slice(1, 13);
 const secondary = allVideos.slice(13, 25);
 
-const masthead = {
-  volume: "Vol. III",
-  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
-  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-};
+
 ---
 
 <BaseLayout
