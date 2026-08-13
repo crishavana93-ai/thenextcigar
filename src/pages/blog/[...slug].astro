@@ -189,17 +189,54 @@ const sectionFlag = categoryFlag(data.category);
           <Content />
         </div>
 
-        <!-- Share + meta ornament -->
+        <!-- Reader tools row — Save to shelf, Print magazine, Share -->
+        <div class="article-tools">
+          <button
+            type="button"
+            class="reader-tool"
+            data-shelf-save
+            data-slug={data.slug}
+            data-title={data.title}
+            data-hover
+          >
+            <svg viewBox="0 0 24 24"><path d="M5 3v18l7-5 7 5V3H5z"/></svg>
+            <span data-label>Save to shelf</span>
+          </button>
+          <button type="button" class="reader-tool" data-print-trigger data-hover>
+            <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+            <span>Print magazine</span>
+          </button>
+          <a
+            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl + '/')}&text=${encodeURIComponent(data.title)}`}
+            class="reader-tool"
+            data-hover
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+            <span>Share on X</span>
+          </a>
+        </div>
+
         <div class="article-ornament">
           <span class="article-ornament-mark">◆ ◆ ◆</span>
           <div class="article-share">
-            <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl + '/')}&text=${encodeURIComponent(data.title)}`} data-hover target="_blank" rel="noopener">Share on X</a>
-            <span class="dot">·</span>
             <a href={`mailto:?subject=${encodeURIComponent(data.title)}&body=${encodeURIComponent(shareUrl + '/')}`} data-hover>Email</a>
+            <span class="dot">·</span>
+            <a href="/shelves/" data-hover>My shelf</a>
             <span class="dot">·</span>
             <a href="/blog/" data-hover>All issues</a>
           </div>
         </div>
+
+        {/* Auto-collect a cigar-band sticker after 6 seconds of reading */}
+        <div
+          data-collect-band
+          data-band-slug={data.slug}
+          data-band-brand={data.category || "Editorial"}
+          data-band-name={data.title}
+          style="display:none"
+        ></div>
 
       </article>
 
@@ -554,6 +591,14 @@ const sectionFlag = categoryFlag(data.category);
     background: var(--news-paper-cream); padding: 2px 6px;
     border: 1px solid var(--news-rule); border-radius: 2px;
     color: var(--news-oxblood);
+  }
+
+  /* Reader tools row — Save + Print + Share buttons */
+  .article-tools {
+    max-width: 780px; margin: 40px auto 24px;
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    padding: 20px 0; border-top: 1px solid var(--news-rule);
+    border-bottom: 1px solid var(--news-rule);
   }
 
   /* Article ornament + share */

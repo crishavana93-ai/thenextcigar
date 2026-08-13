@@ -178,6 +178,132 @@
    and matching on the destination page. Enabled once we re-add
    <ClientRouter />. */
 
+/* ─────────────────────────────────────────────────────────
+   READER TOOLS · Shelf save button, Print, Ambient toggle,
+   Cigar-band sidebar collector. All buttons share visual
+   language: cream paper background, thin oxblood border,
+   monospace label, subtle hover.
+   ───────────────────────────────────────────────────────── */
+
+/* Save-to-shelf / Print buttons inside article ornament */
+.tnc-cinema .reader-tool {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--news-oxblood);
+  border: 1px solid var(--news-oxblood); background: transparent;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: none;
+}
+.tnc-cinema .reader-tool:hover { background: var(--news-oxblood); color: var(--news-paper); }
+.tnc-cinema .reader-tool.is-saved {
+  background: var(--news-oxblood); color: var(--news-paper);
+}
+.tnc-cinema .reader-tool svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+/* Ambient pill — floating bottom-right, sits above cursor + video */
+.tnc-cinema .ambient-pill {
+  position: fixed; z-index: 950;
+  bottom: 24px; right: 24px;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--news-ink);
+  background: rgba(242, 237, 225, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--news-rule);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: none;
+}
+.tnc-cinema .ambient-pill:hover { border-color: var(--news-oxblood); color: var(--news-oxblood); }
+.tnc-cinema .ambient-pill.is-on {
+  background: var(--news-ink); color: var(--news-gold); border-color: var(--news-ink);
+}
+.tnc-cinema .ambient-pill .amp-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--news-ink-mute);
+  transition: background 0.2s;
+}
+.tnc-cinema .ambient-pill.is-on .amp-dot {
+  background: var(--news-ember);
+  animation: amp-pulse 2s ease-in-out infinite;
+}
+@keyframes amp-pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.6;transform:scale(0.85);} }
+
+@media (max-width: 900px) {
+  .tnc-cinema .ambient-pill { bottom: 16px; right: 16px; padding: 8px 12px; font-size: 9px; }
+}
+
+/* Shelf indicator in top nav — small counter */
+.tnc-cinema .shelf-indicator {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--news-ink-mute);
+}
+.tnc-cinema .shelf-indicator[data-count="0"] { display: none; }
+.tnc-cinema .shelf-indicator .shelf-num {
+  padding: 2px 7px; background: var(--news-oxblood); color: var(--news-paper);
+}
+
+/* ─────────────────────────────────────────────────────────
+   PRINT MAGAZINE MODE
+   Triggered by [data-print-trigger] button — reflows the
+   current article into a broadsheet-style A4 printout with
+   two columns, drop cap, real newspaper feel.
+   ───────────────────────────────────────────────────────── */
+
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+
+  /* Only render the article + a lean masthead — hide everything else */
+  html, body {
+    background: white !important; color: black !important;
+    font-family: "Fraunces", "Times New Roman", serif !important;
+    cursor: auto !important;
+  }
+  body * { visibility: hidden; }
+  body .article, body .article * { visibility: visible; }
+  body .tnc-mast, body .tnc-mast * { visibility: visible; }
+  body .tnc-mast { position: static !important; padding: 0 0 8mm !important; }
+
+  .tnc-cinema .article { padding: 0 !important; max-width: 100% !important; }
+  .tnc-cinema .article-inner { max-width: 100% !important; }
+  .tnc-cinema .article-hero { max-width: 100% !important; break-inside: avoid; }
+  .tnc-cinema .article-hero img { max-height: 90mm; object-fit: cover; filter: grayscale(1) !important; }
+  .tnc-cinema .article-body {
+    max-width: 100% !important;
+    columns: 2; column-gap: 8mm; column-rule: 0.5pt solid black;
+    font-size: 10pt !important; line-height: 1.4 !important;
+    color: black !important;
+  }
+  .tnc-cinema .article-body > p:first-of-type::first-letter {
+    color: black !important;
+  }
+  .tnc-cinema .article-body h2 {
+    column-span: none; break-after: avoid;
+    font-size: 14pt !important; color: black !important;
+    border-top-color: black !important;
+  }
+  .tnc-cinema .article-body blockquote {
+    column-span: all; margin: 6mm 0 !important; padding: 4mm 6mm !important;
+    background: #f4efe2 !important; color: black !important;
+    font-size: 11pt !important; border-left-color: black !important;
+  }
+  .tnc-cinema .article-title { font-size: 26pt !important; color: black !important; }
+  .tnc-cinema .article-standfirst { color: #333 !important; font-size: 12pt !important; }
+
+  /* Hide chrome */
+  .tnc-cinema .chapter-nav,
+  .tnc-cinema .reading-progress,
+  .tnc-cinema .tnc-cursor-cigar,
+  .tnc-cinema .tnc-cursor-smoke,
+  .tnc-cinema .ambient-pill,
+  .tnc-cinema .related,
+  .tnc-cinema .footer-strip,
+  .tnc-cinema .article-ornament,
+  .tnc-cinema .tnc-section-flag { display: none !important; }
+}
+
 /* Cinematic hover treatment on links — subtle underline slide */
 .tnc-cinema a[href][data-hover]:not(.tier-cta):not(.lead-cta):not(.mover-cta):not(.notice-cta):not(.guatabey-cta):not(.tnc-subscribe):not(.btn-enter) {
   background-image: linear-gradient(90deg, var(--news-oxblood), var(--news-oxblood));

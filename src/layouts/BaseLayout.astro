@@ -147,6 +147,11 @@ const skipPublicChrome = bareChrome || isLoungeApp;
         respects prefers-reduced-motion + touch devices. Defer so it
         doesn't block first paint. */}
     <script type="module" src="/cinematic/smooth-scroll.js" is:inline defer></script>
+
+    {/* Reader tools — shelf save/share, print magazine mode, ambient
+        audio toggle, cigar-band sticker collector. All state in
+        localStorage; script is idempotent + tiny + defers to first paint. */}
+    <script src="/cinematic/reader-tools.js" is:inline defer></script>
     <link rel="alternate" type="application/rss+xml" title={siteName} href="/rss.xml" />
 
     <!-- Google AdSense — verification + ad serving once approved -->
