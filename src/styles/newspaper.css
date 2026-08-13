@@ -384,6 +384,98 @@
   .sku-badge-price { color: black !important; }
 }
 
+/* ─────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE PASS · covers every recent component
+   Consolidated so we don't miss anything. Everything below
+   900px is checked here; below 640px is the phone tier.
+   ───────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  /* Article tools row — buttons stack cleanly on narrow screens */
+  .tnc-cinema .article-tools {
+    padding: 16px 20px; gap: 8px;
+    flex-direction: column; align-items: stretch;
+  }
+  .tnc-cinema .article-tools .reader-tool {
+    justify-content: center; width: 100%;
+  }
+
+  /* AI recs — full-width single column, tighter padding */
+  .tnc-cinema .ai-recs { padding: 24px 20px; margin-top: 20px; }
+  .tnc-cinema .ai-recs-grid { grid-template-columns: 1fr; gap: 14px; }
+  .tnc-cinema .ai-rec { padding: 16px 18px; }
+  .tnc-cinema .ai-rec-vitola { font-size: 18px; }
+  .tnc-cinema .ai-rec-price .v { font-size: 18px; }
+
+  /* Hero bleed — reduce padding, smaller headline */
+  .tnc-cinema .hero-bleed-scene { min-height: 520px; height: 90vh; }
+  .tnc-cinema .hero-bleed-copy { padding: 24px 20px 40px; }
+  .tnc-cinema .hero-bleed-title { font-size: clamp(2.4rem, 10vw, 4.4rem); letter-spacing: -0.028em; }
+  .tnc-cinema .hero-bleed-standfirst { font-size: clamp(1rem, 4vw, 1.15rem); margin-bottom: 24px; }
+  .tnc-cinema .hero-bleed-byline { gap: 8px; font-size: 9px; margin-bottom: 20px; }
+  .tnc-cinema .hero-bleed-scroll { font-size: 10px; }
+
+  /* Footer Turquino — stack vertically, tighten */
+  .tnc-cinema .footer-strip-copy { gap: 12px; flex-direction: column; align-items: flex-start; }
+  .tnc-cinema .footer-turquino { padding: 3px 6px; }
+  .tnc-cinema .footer-turquino img { width: 18px; height: 18px; }
+  .tnc-cinema .footer-turquino em { font-size: 11px; }
+
+  /* Inline SKU badges — smaller, allow wrap inside sentence */
+  .tnc-cinema .sku-badge {
+    padding: 0 6px 1px 8px; font-size: 0.95em;
+    white-space: normal;
+  }
+  .tnc-cinema .sku-badge-price { font-size: 0.75em; padding-left: 5px; }
+
+  /* Ambient pill — tighter + higher off the edge (avoids iOS home indicator) */
+  .tnc-cinema .ambient-pill {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    right: 12px; padding: 7px 10px; font-size: 9px; gap: 8px;
+  }
+  .tnc-cinema .ambient-pill .amp-dot { width: 6px; height: 6px; }
+
+  /* Shelf page — dense at phone tier */
+  .tnc-cinema .shelf-wrap { padding: 32px 20px; }
+  .tnc-cinema .shelf-toolbar { gap: 12px; }
+  .tnc-cinema .shelf-count span[data-shelf-count] { font-size: 2.4rem; }
+  .tnc-cinema .shelf-row { grid-template-columns: 28px 1fr auto; gap: 12px; padding: 14px 4px; }
+  .tnc-cinema .shelf-arrow { display: none; }
+  .tnc-cinema .shelf-title { font-size: 15px; }
+
+  /* Collection page — 2-up sticker grid on phone */
+  .tnc-cinema .col-wrap { padding: 32px 20px; }
+  .tnc-cinema .band-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tnc-cinema .band-sticker { padding: 12px 14px; }
+  .tnc-cinema .band-sticker-brand { font-size: 12px; }
+  .tnc-cinema .band-sticker-name { font-size: 9.5px; }
+
+  /* Article body typography — tighter reading column */
+  .tnc-cinema .article-body { font-size: 17px; line-height: 1.6; }
+  .tnc-cinema .article-body > p:first-of-type::first-letter { font-size: 4em; }
+  .tnc-cinema .article-body blockquote {
+    margin: 2em -20px !important; padding: 24px 28px 28px !important;
+    font-size: clamp(1.2rem, 5vw, 1.6rem) !important;
+  }
+  .tnc-cinema .article-body blockquote::before { font-size: 3.5rem; left: 16px; top: -6px; }
+}
+
+@media (max-width: 640px) {
+  /* Phone tier extras */
+  .tnc-cinema .article-title { font-size: clamp(1.9rem, 8vw, 2.4rem) !important; }
+  .tnc-cinema .article-standfirst { font-size: 1rem !important; margin-bottom: 24px !important; }
+  .tnc-cinema .article-hero { margin: 24px 0 32px; }
+  .tnc-cinema .article-hero figcaption { font-size: 12px; }
+  .tnc-cinema .article-byline { font-size: 9px; gap: 8px; }
+
+  /* Related bottom — single column */
+  .tnc-cinema .related { padding: 40px 20px; }
+  .tnc-cinema .related-grid { grid-template-columns: 1fr; gap: 24px; }
+
+  /* Nav shelf indicator — hide on phones */
+  .tnc-cinema .shelf-indicator { display: none !important; }
+}
+
 /* Cinematic hover treatment on links — subtle underline slide */
 .tnc-cinema a[href][data-hover]:not(.tier-cta):not(.lead-cta):not(.mover-cta):not(.notice-cta):not(.guatabey-cta):not(.tnc-subscribe):not(.btn-enter) {
   background-image: linear-gradient(90deg, var(--news-oxblood), var(--news-oxblood));

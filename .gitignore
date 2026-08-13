@@ -41,6 +41,10 @@ The Next Cigar photos/
 !public/cinematic/*.mov
 !public/cinematic/*.webm
 
+# Astro FUSE / linter transient temp files
+.fuse_hidden*
+src/**/.fuse_hidden*
+
 # CMS uploads stay tracked (they're how the editor saves images)
 !public/uploads/
 outreach/

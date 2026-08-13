@@ -165,7 +165,10 @@ function fmtFlag(code: string) {
 
           {bestDrop && (
             <div class="mover">
-              <div class="mover-photo" style={`background-image: url("${(bestDrop.sku as any).heroImage || '/og-finder.svg'}")`}></div>
+              <div
+                class="mover-photo"
+                style={`background-image: url("${(bestDrop.sku as any).heroImage || 'https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1400'}")`}
+              ></div>
               <div class="mover-copy">
                 <div class="mover-flag">This week's mover</div>
                 <h3>
