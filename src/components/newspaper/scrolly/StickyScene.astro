@@ -1,0 +1,206 @@
+---
+/**
+ * StickyScene — Pudding/NYT-style scrollytelling scene.
+ *
+ * The image (or video) pins to the viewport while the accompanying text
+ * flows past it on the right. Multiple scenes per article are supported —
+ * each pins independently, releases when the reader scrolls past the end
+ * of its text column.
+ *
+ * ── Usage (MDX only — .md files fall back to standard article typography) ──
+ *
+ *   <StickyScene
+ *     image="/uploads/torcedor-workbench.jpg"
+ *     alt="Ricardo Padrón at the cedar bench, Copenhagen"
+ *     cutline="Photo by Jonas Bendiksen · May 2026"
+ *     side="left"
+ *   >
+ *
+ *   The paragraphs go here, one per line. They scroll while the
+ *   image pins to the viewport at 20vh from the top.
+ *
+ *   You can drop pull quotes, headings, lists, links — anything that
+ *   Markdown renders — inside the scene.
+ *
+ *   </StickyScene>
+ *
+ * ── Props ──
+ *   image      · URL or path to the pinned image
+ *   alt        · required for a11y
+ *   cutline    · italic caption underneath the image (optional)
+ *   side       · "left" (default) or "right" — which side the image pins
+ *   video      · URL to an mp4 to play instead of an image (optional)
+ *   variant    · "wide" (default) or "tall" — image aspect
+ *
+ * The scene is wrapped in a full-width breakout that ignores the article's
+ * 780px reading column so the image can go big.
+ */
+
+interface Props {
+  image?: string;
+  video?: string;
+  alt?: string;
+  cutline?: string;
+  side?: "left" | "right";
+  variant?: "wide" | "tall";
+}
+
+const {
+  image,
+  video,
+  alt = "",
+  cutline,
+  side = "left",
+  variant = "wide",
+} = Astro.props;
+---
+
+<section class:list={["sticky-scene", `side-${side}`, `variant-${variant}`]}>
+  <div class="sticky-scene-inner">
+    <figure class="sticky-scene-media">
+      <div class="sticky-scene-media-inner">
+        {video ? (
+          <video src={video} autoplay muted loop playsinline aria-hidden={!alt}></video>
+        ) : image ? (
+          <img src={image} alt={alt} loading="lazy" />
+        ) : null}
+        {cutline && (
+          <figcaption class="sticky-scene-cutline">
+            <strong>Above &middot;</strong> {cutline}
+          </figcaption>
+        )}
+      </div>
+    </figure>
+    <div class="sticky-scene-body">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  /* ── Sticky-scene layout ──
+     Break out of the 780px reading column to full 1280px. Two columns:
+     media pins, body scrolls. Falls back to stacked on mobile. */
+  .sticky-scene {
+    max-width: 1280px;
+    margin: 4em auto;
+    padding: 0 40px;
+    position: relative;
+  }
+  .sticky-scene-inner {
+    display: grid;
+    grid-template-columns: 6fr 6fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .sticky-scene.side-right .sticky-scene-inner {
+    grid-template-columns: 6fr 6fr;
+  }
+  .sticky-scene.side-right .sticky-scene-media { order: 2; }
+  .sticky-scene.side-right .sticky-scene-body  { order: 1; }
+
+  /* Pinned media column */
+  .sticky-scene-media {
+    position: sticky;
+    top: 12vh;
+    margin: 0;
+    /* Height clamped so tall images don't push off-screen */
+    max-height: 76vh;
+    align-self: start;
+  }
+  .sticky-scene-media-inner {
+    position: relative;
+    height: 100%;
+  }
+  .sticky-scene.variant-wide .sticky-scene-media-inner { aspect-ratio: 4 / 5; }
+  .sticky-scene.variant-tall .sticky-scene-media-inner { aspect-ratio: 3 / 4; }
+  .sticky-scene-media img,
+  .sticky-scene-media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background: var(--news-paper-dark);
+    filter: grayscale(0.6) sepia(0.2) contrast(1.05);
+    transition: filter 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sticky-scene:hover .sticky-scene-media img,
+  .sticky-scene:hover .sticky-scene-media video {
+    filter: grayscale(0.35) sepia(0.1) contrast(1.08);
+  }
+  .sticky-scene-cutline {
+    position: absolute; left: 0; right: 0; bottom: -30px;
+    font-family: var(--news-serif); font-style: italic; font-size: 12px;
+    line-height: 1.45; color: var(--news-ink-mute);
+  }
+  .sticky-scene-cutline strong { font-style: normal; font-weight: 600; color: var(--news-ink-soft); }
+
+  /* Body column — same typography as .article-body but tighter width */
+  .sticky-scene-body {
+    font-family: var(--news-serif);
+    font-size: 17px; line-height: 1.68;
+    color: var(--news-ink);
+    padding-bottom: 4em;
+  }
+  .sticky-scene-body p { margin: 0 0 1.35em; }
+  .sticky-scene-body h2, .sticky-scene-body h3 {
+    font-family: var(--news-serif); font-weight: 500;
+    line-height: 1.1; letter-spacing: -0.018em;
+    color: var(--news-ink); margin: 1.6em 0 0.5em;
+  }
+  .sticky-scene-body h2 { font-size: 1.6rem; }
+  .sticky-scene-body h3 { font-size: 1.3rem; }
+  .sticky-scene-body h2 em, .sticky-scene-body h3 em {
+    font-style: italic; color: var(--news-oxblood); font-weight: 400;
+  }
+  .sticky-scene-body a {
+    color: var(--news-oxblood);
+    border-bottom: 1px solid var(--news-oxblood);
+    padding-bottom: 1px;
+  }
+  .sticky-scene-body a:hover { color: var(--news-ember); border-bottom-color: var(--news-ember); }
+  .sticky-scene-body em { font-style: italic; }
+  .sticky-scene-body strong { font-weight: 600; }
+  .sticky-scene-body blockquote {
+    margin: 2em 0; padding: 20px 28px;
+    border-left: 3px solid var(--news-oxblood);
+    background: var(--news-paper-cream);
+    font-family: var(--news-serif); font-style: italic; font-weight: 500;
+    font-size: 1.35rem; line-height: 1.4; color: var(--news-ink);
+    position: relative;
+  }
+  .sticky-scene-body blockquote::before {
+    content: "\201C"; position: absolute; top: -6px; left: 14px;
+    font-family: var(--news-serif); font-weight: 700; font-size: 4rem;
+    line-height: 1; color: var(--news-oxblood); opacity: 0.4;
+  }
+
+  /* Subtle entrance animation on scroll */
+  @supports (animation-timeline: view()) {
+    .tnc-cinema .sticky-scene-body > * {
+      animation: scene-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 18%;
+    }
+    @keyframes scene-rise {
+      from { opacity: 0.4; transform: translateY(12px); }
+      to   { opacity: 1;   transform: translateY(0);   }
+    }
+  }
+
+  /* Mobile — stack, media un-pins, capped height */
+  @media (max-width: 900px) {
+    .sticky-scene { margin: 2.5em auto; padding: 0 20px; }
+    .sticky-scene-inner { grid-template-columns: 1fr; gap: 24px; }
+    .sticky-scene.side-right .sticky-scene-media { order: 1; }
+    .sticky-scene.side-right .sticky-scene-body  { order: 2; }
+    .sticky-scene-media {
+      position: relative; top: auto; max-height: none;
+    }
+    .sticky-scene.variant-wide .sticky-scene-media-inner,
+    .sticky-scene.variant-tall .sticky-scene-media-inner { aspect-ratio: 4 / 3; }
+    .sticky-scene-cutline { position: relative; margin-top: 8px; bottom: 0; }
+    .sticky-scene-body { padding-bottom: 0; font-size: 16px; }
+  }
+</style>

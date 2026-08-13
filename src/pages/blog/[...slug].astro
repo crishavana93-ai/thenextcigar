@@ -5,6 +5,7 @@ import "../../styles/newspaper.css";
 import CigarCursor from "../../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../../components/newspaper/SectionFlag.astro";
+import StickyScene from "../../components/newspaper/scrolly/StickyScene.astro";
 import { MASTHEAD as masthead } from "../../data/masthead";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice } from "../../data/finder-data";
 
@@ -257,9 +258,11 @@ const inlineSkuData = SKUS
           </figure>
         )}
 
-        <!-- BODY — two-column with drop cap treatment via CSS -->
+        <!-- BODY — two-column with drop cap treatment via CSS.
+             MDX files can use <StickyScene>, <Scene> as scrollytelling
+             breakouts without importing (see StickyScene.astro for docs). -->
         <div class="article-body prose">
-          <Content />
+          <Content components={{ StickyScene, Scene: StickyScene }} />
         </div>
 
         <!-- Reader tools row — Save to shelf, Print magazine, Share -->
