@@ -1,19 +1,9 @@
 ---
-/**
- * /lounge — public landing page for The Lounge.
- *
- * As of May 2026 the product is LIVE — public Finder, member app, watchlist
- * alerts, OG Member tier. This page is the conversion funnel: explains what
- * The Lounge actually is today (price-tracking + IRL community), the three
- * tiers (Free / Lounge / OG Member), and lands the OG-Member cutoff
- * (1 June 2026) without making it feel like a fake-urgency hustle.
- *
- * Older draft (pre-Finder, "launching Q3 2026", WhatsApp-beta language) has
- * been rewritten — keep the styles below, the cities band, and the FAQ
- * shell, but every word that promises a future product has been replaced
- * with what's actually shipping.
- */
 import BaseLayout from "../layouts/BaseLayout.astro";
+import "../styles/newspaper.css";
+import CigarCursor from "../components/newspaper/CigarCursor.astro";
+import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
+import SectionFlag from "../components/newspaper/SectionFlag.astro";
 import { places } from "../data/cigar-places";
 import {
   SKUS as FINDER_SKUS,
@@ -21,667 +11,529 @@ import {
   PRICE_SNAPSHOTS as FINDER_SNAPSHOTS,
   COUNTRIES as FINDER_COUNTRIES,
 } from "../data/finder-data";
-import MagazineMasthead from "../components/ui/MagazineMasthead.astro";
-import EditorialSectionHead from "../components/ui/EditorialSectionHead.astro";
-import WordStaggerHeadline from "../components/ui/WordStaggerHeadline.tsx";
 
-const heroPlaces = places.slice(0, 6);
-const cityCount = new Set(places.map((p) => p.city)).size;
+/**
+ * /lounge/ — The Lounge public landing, styled as newspaper "Society & Travel".
+ *
+ * Layout: masthead + section flag + featured Casa del Habano + city index
+ * grid + three-tier membership ad + notable places classifieds + footer.
+ * The member app at /lounge/app/ keeps its own chrome.
+ */
 
-// Pull live counts so the Finder pitch isn't built on stale promises.
+// Featured Casa — first casadelhabano place
+const featuredCasa = places.find((p) => p.type === "casadelhabano") ?? places[0];
+
+// Group places by city
+const cityGroups: Record<string, typeof places> = {};
+for (const p of places) {
+  cityGroups[p.city] = cityGroups[p.city] || [];
+  cityGroups[p.city].push(p);
+}
+const citiesList = Object.keys(cityGroups).sort();
+const totalPlaces = places.length;
+const cityCount = citiesList.length;
+
+// Highlight 8 places for the classifieds grid
+const highlightPlaces = places
+  .filter((p) => p.slug !== featuredCasa.slug)
+  .slice(0, 8);
+
 const skuCount       = FINDER_SKUS.length;
 const retailerCount  = FINDER_RETAILERS.length;
 const snapshotCount  = FINDER_SNAPSHOTS.length;
 const countryCount   = FINDER_COUNTRIES.length;
+
+const masthead = {
+  volume: "Vol. III",
+  issue: `Issue ${new Date().getMonth() + 1 < 10 ? "0" + (new Date().getMonth() + 1) : new Date().getMonth() + 1}`,
+  date: new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+};
+
+function typeLabel(t: string) {
+  return ({
+    lounge: "Lounge",
+    retailer: "Retailer",
+    house: "Brand house",
+    casadelhabano: "Casa del Habano",
+    pub: "Pub · cigar-friendly",
+    club: "Private club",
+  } as Record<string, string>)[t] || t;
+}
+function typeFlag(t: string) {
+  return ({
+    lounge: "people",
+    retailer: "shop",
+    house: "leaf",
+    casadelhabano: "finder",
+    pub: "market",
+    club: "people",
+  } as Record<string, string>)[t] || "";
+}
 ---
 
 <BaseLayout
-  title="The Lounge — Cuban cigar price tracking + members' network"
-  description={`The Next Cigar's members' room. Track ${snapshotCount} Cuban cigar prices across ${retailerCount} European retailers, get drop alerts, and find verified members at the lounge tonight. From $9/month or free for everything public.`}
+  title="The Lounge — Society & Travel · The Next Cigar"
+  description={`The private network of European Cuban-cigar smokers. ${totalPlaces} verified lounges across ${cityCount} cities, live-price watchlist alerts, city-by-city check-ins. From $9/month or free for everything public.`}
+  bareChrome={true}
 >
-  {/* Direction A — magazine masthead (different label than / to mark room) */}
-  <MagazineMasthead
-    volume="Volume III"
-    issue="Issue 04 · The Lounge"
-    date="May 2026"
-    tagline="A private network of European Cuban-cigar smokers. Members' room behind the magazine."
+  <link
+    is:inline
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
   />
 
-  {/* ─── HERO — Direction A (Vitra word-stagger + cream paper) ─── */}
-  <section class="editorial relative py-16 md:py-24 lg:py-28">
-    <div class="container-wide">
-      <div class="max-w-5xl">
-        <p class="editorial-eyebrow mb-6 md:mb-8">
-          Live · OG Member tier closes 1 June 2026
-        </p>
+  <div class="tnc-cinema">
+    <CigarCursor />
 
-        <WordStaggerHeadline
-          lines={["The room behind", "the price tag."]}
-          accentLine={1}
-          client:load
-        />
+    <main class="site-body">
+      <NewspaperMasthead volume={masthead.volume} issue={masthead.issue} date={masthead.date} />
 
-        <p
-          class="mt-10 max-w-3xl italic"
-          style="font-family: var(--font-serif); font-size: clamp(1.1rem, 1.55vw, 1.32rem); line-height: 1.55; color: var(--color-ink-soft);"
-        >
-          The Lounge is two things in one place. <strong>The Finder</strong> tracks
-          {snapshotCount.toLocaleString("en-US")} live Cuban cigar prices across
-          {retailerCount} European retailers, refreshed every six hours — so you
-          never overpay by €100 for a box that's cheaper at the shop next door.
-          <strong>The members' app</strong> shows you which verified smokers are
-          in your city tonight, where they're sitting, and which lounges abroad
-          will welcome you when you land.
-        </p>
+      <SectionFlag
+        number="/02"
+        section="The Lounge"
+        title={`Society &amp; Travel<em> — the room behind the price tag.</em>`}
+        status={`${totalPlaces} verified lounges · ${cityCount} cities · OG Member tier closes 1 June`}
+        live={true}
+      />
 
-        <p
-          class="mt-6 max-w-3xl"
-          style="font-size: 1rem; line-height: 1.65; color: var(--color-ink-muted);"
-        >
-          Free public Finder for everyone. Lounge membership unlocks unlimited
-          watchlists, price-drop alerts, travel mode, direct messaging, and
-          every feature we ship next. Sign up before 1 June and you're an
-          <strong style="color: var(--color-ink);">OG Member</strong> — every paid feature, free for you, forever.
-        </p>
+      <!-- FEATURED CASA — cover story equivalent -->
+      {featuredCasa && (
+        <section class="lead-wrap">
+          <div class="lead-eyebrow">This week's Casa del Habano</div>
+          <div class="lead-grid">
+            <div class="lead-photo" style={`background-image: url("${(featuredCasa as any).image || 'https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1600'}")`}>
+              <span class="cutline"><strong>Above &middot;</strong> {featuredCasa.name}, {featuredCasa.city}. {typeLabel(featuredCasa.type)}.</span>
+            </div>
+            <div class="lead-copy">
+              <div class="byline">Featured place · <em>{featuredCasa.city}, {featuredCasa.country}</em></div>
+              <h1>{featuredCasa.name}</h1>
+              <p class="standfirst">
+                {featuredCasa.note || `A verified ${typeLabel(featuredCasa.type).toLowerCase()} in ${featuredCasa.city}. One of ${totalPlaces} places in the Lounge index — cross-referenced with member check-ins so you know who's likely to be there tonight.`}
+              </p>
+              <div class="lead-facts">
+                <div><span class="k">City</span><span class="v">{featuredCasa.city}</span></div>
+                <div><span class="k">Type</span><span class="v">{typeLabel(featuredCasa.type)}</span></div>
+                {featuredCasa.address && <div><span class="k">Address</span><span class="v">{featuredCasa.address}</span></div>}
+                {featuredCasa.website && <div><span class="k">Web</span><span class="v"><a href={featuredCasa.website} target="_blank" rel="noopener" data-hover>{featuredCasa.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</a></span></div>}
+              </div>
+              <div class="lead-actions">
+                <a href="/lounge/app/map/" class="lead-cta" data-hover>Open the map <span class="arrow">→</span></a>
+                <a href="/lounge/app/" class="lead-link" data-hover>All {totalPlaces} places</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
-        <div class="mt-12 flex flex-wrap items-center gap-6">
-          <a
-            href="/lounge/signup/"
-            class="inline-flex items-center justify-center px-8 py-4 text-sm font-medium tracking-wide rounded-none transition-[transform,background,border-color] duration-200"
-            style="background: var(--color-ink); color: var(--color-paper); border: 1px solid var(--color-ink);"
-            onmouseover="this.style.background='var(--color-gold-hover)'; this.style.borderColor='var(--color-gold-hover)';"
-            onmouseout="this.style.background='var(--color-ink)'; this.style.borderColor='var(--color-ink)';"
-          >
-            Become an OG Member →
-          </a>
-          <a
-            href="/finder/"
-            class="text-sm font-medium tracking-wide underline underline-offset-[6px] transition-colors duration-200"
-            style="color: var(--color-ink-soft); text-decoration-color: var(--color-rule);"
-          >
-            Try the free Finder
-          </a>
+      <!-- MEMBERSHIP TIERS — three-column display ad -->
+      <section class="tiers-band">
+        <div class="tiers-head">
+          <div class="tiers-flag">Membership</div>
+          <h2>Three ways <em>to sit at the table.</em></h2>
         </div>
-
-        <p
-          class="mt-10 max-w-2xl"
-          style="font-size: 0.82rem; line-height: 1.55; color: var(--color-ink-muted);"
-        >
-          OG Member is a one-time, date-based grant — not a tier you can upgrade
-          into. After 1 June 2026 the door closes and the path to a free
-          membership is earned through referrals + event hosting. 21+ only.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  {/* ─── HOW IT WORKS ─── */}
-  <section class="editorial container-wide py-20 border-t border-[color:var(--color-rule)]">
-    <EditorialSectionHead
-      eyebrow="What you get"
-      title="Two products, one membership."
-    />
-
-    <div class="lounge-features">
-      <div class="lounge-feature reveal">
-        <span class="lounge-feature__num">01</span>
-        <h3>The Finder — free for everyone</h3>
-        <p>
-          {snapshotCount.toLocaleString("en-US")} Cuban cigar prices across
-          {retailerCount} licensed European retailers in {countryCount} countries.
-          Refreshed every six hours, sorted cheapest first, click through to the
-          shop. No signup. No ads. No commission padded into the price you see.
-        </p>
-      </div>
-      <div class="lounge-feature reveal" data-reveal-delay="2">
-        <span class="lounge-feature__num">02</span>
-        <h3>Watchlist + drop alerts</h3>
-        <p>
-          Save any cigar, set a target price. The moment a retailer in your country
-          drops below it, you get an email — and, for Lounge members, a push notification.
-          Dedupe baked in: one alert per drop, not five copies of the same news.
-        </p>
-      </div>
-      <div class="lounge-feature reveal" data-reveal-delay="3">
-        <span class="lounge-feature__num">03</span>
-        <h3>Travel mode</h3>
-        <p>
-          Flag your next trip. See verified members who'll be in the same city the
-          same week, locals who've offered to welcome visitors, and the editorial
-          map of lounges worth your time. Switch your Finder lens to that country
-          so prices match what you'll actually pay on the ground.
-        </p>
-      </div>
-      <div class="lounge-feature reveal">
-        <span class="lounge-feature__num">04</span>
-        <h3>Check in, see who's here</h3>
-        <p>
-          Walk into a partner lounge, tap "I'm here." Other verified members
-          inside see you've arrived — they can wave across the room or send a
-          quiet "join me?" tap. No public broadcast. No location sharing unless
-          you actively check in.
-        </p>
-      </div>
-      <div class="lounge-feature reveal" data-reveal-delay="2">
-        <span class="lounge-feature__num">05</span>
-        <h3>Slow messaging</h3>
-        <p>
-          DMs unlock only after you've been at the same lounge, been host-introduced,
-          or sent a single template intro. No mass-messaging, no swipes, no hustle.
-          Real-time when both members are typing, polite when only one is.
-        </p>
-      </div>
-      <div class="lounge-feature reveal" data-reveal-delay="3">
-        <span class="lounge-feature__num">06</span>
-        <h3>Events + partner lounges</h3>
-        <p>
-          A growing roster of verified houses across Europe where Lounge members
-          are recognized at the door — complimentary first coffee at most,
-          members-only nights at some. RSVP to launch events, tastings, and
-          travel-week pop-ups from inside the app.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  {/* ─── CITIES STRIP ─── */}
-  <section class="lounge-cities-band">
-    <div class="container-wide py-16 reveal">
-      <p class="section-eyebrow text-[color:var(--color-text-on-dark-mute)]">Founding network</p>
-      <h2 class="font-display text-3xl md:text-4xl leading-tight mt-2 text-[color:var(--color-text-on-dark)]">
-        Hand-picked across {cityCount} cities. Growing every month.
-      </h2>
-      <div class="lounge-cities-grid">
-        {heroPlaces.map((p) => (
-          <div class="lounge-city-card">
-            <p class="lounge-city-card__city">{p.city}</p>
-            <p class="lounge-city-card__name">{p.name}</p>
-            <p class="lounge-city-card__country">{p.country}</p>
+        <div class="tiers-grid">
+          <div class="tier">
+            <div class="tier-name">Free</div>
+            <div class="tier-price">€0<span>/mo</span></div>
+            <p class="tier-desc">Everything public. The Finder ({snapshotCount.toLocaleString()} live prices across {retailerCount} retailers), the Magazine, and full read access to every long-read.</p>
+            <ul class="tier-list">
+              <li>Live price ticker · {retailerCount} retailers · {countryCount} countries</li>
+              <li>Every article, every issue</li>
+              <li>Read-only Casa del Habano map</li>
+            </ul>
+            <a href="/subscribe/" class="tier-cta" data-hover>Start free</a>
           </div>
-        ))}
-      </div>
-      <p class="mt-8 text-sm text-[color:var(--color-text-on-dark-mute)]">
-        Full map of partner-eligible houses on the <a href="/category/cigar-events/" class="underline hover:text-[color:var(--color-accent)]">Events &amp; Map page →</a>
-      </p>
-    </div>
-  </section>
 
-  {/* ─── PRICING ─── */}
-  <section class="editorial container-wide py-20 border-t border-[color:var(--color-rule)]">
-    <EditorialSectionHead
-      eyebrow="Membership"
-      title="Free to start. Pay when the Finder pays you back."
-      dek="The public Finder is free forever — most Cuban cigar buyers save more than the Lounge price on their first box. The paid tier unlocks unlimited alerts, travel mode, and the members' app. Sign up before 1 June 2026 and the paid tier is free for you for life."
-    />
+          <div class="tier featured">
+            <div class="tier-flag">Most popular</div>
+            <div class="tier-name">The Lounge</div>
+            <div class="tier-price">$9<span>/mo</span></div>
+            <p class="tier-desc">Watchlist alerts on any vitola, check into any Casa, message any member, weekly market letter, and travel-mode so you can find the room in a city you've never been to.</p>
+            <ul class="tier-list">
+              <li>Price-drop alerts by email + push</li>
+              <li>City check-ins + member messaging</li>
+              <li>Travel mode — Casa map for any city</li>
+              <li>Weekly market letter</li>
+            </ul>
+            <a href="/lounge/app/" class="tier-cta primary" data-hover>Enter the Lounge →</a>
+          </div>
 
-    <div class="lounge-pricing lounge-pricing--three">
-      {/* Free tier */}
-      <div class="lounge-tier reveal">
-        <p class="lounge-tier__name">Free</p>
-        <p class="lounge-tier__price">$0<span>/forever</span></p>
-        <p class="lounge-tier__pitch">For the curious. The public Finder, plus one watchlist alert — enough to feel the value before you commit.</p>
-        <ul>
-          <li>Full access to the public Finder — {snapshotCount.toLocaleString("en-US")} prices, {retailerCount} retailers</li>
-          <li><strong>1 saved cigar</strong> with one price-drop alert by email</li>
-          <li>Verified profile + flavor preferences</li>
-          <li>Browse the editorial map of {cityCount}+ vetted lounges</li>
-          <li>Read every event</li>
-          <li>Submit shops to the map</li>
-        </ul>
-        <a href="/lounge/signup/" class="lounge-tier__cta">Start free →</a>
-      </div>
+          <div class="tier">
+            <div class="tier-flag oxblood">Closes 1 June</div>
+            <div class="tier-name">OG Member</div>
+            <div class="tier-price">$79<span>/year</span></div>
+            <p class="tier-desc">Lifetime OG-Member tier. Locked pricing for as long as your card keeps working, first access to every new drop (including Guatabey), and your name in the founding-members ledger.</p>
+            <ul class="tier-list">
+              <li>Everything in Lounge tier · locked pricing</li>
+              <li>First access · every Guatabey drop</li>
+              <li>Founding-members ledger listing</li>
+              <li>Direct line to the editor</li>
+            </ul>
+            <a href="/subscribe/" class="tier-cta primary" data-hover>Lock founding price →</a>
+          </div>
+        </div>
+      </section>
 
-      {/* Lounge tier — featured */}
-      <div class="lounge-tier lounge-tier--featured reveal" data-reveal-delay="2">
-        <span class="lounge-tier__flag">Recommended</span>
-        <p class="lounge-tier__name">Lounge</p>
-        <p class="lounge-tier__price">$9<span>/month</span></p>
-        <p class="lounge-tier__sub">or $79/year — save $29</p>
-        <p class="lounge-tier__pitch">For the traveler and the price-watcher. Everything unlocked, no caps anywhere.</p>
-        <ul>
-          <li>Everything in Free</li>
-          <li><strong>Unlimited Finder watchlists</strong> + push notifications when a price drops</li>
-          <li>Taste-matched cigar recommendations from your flavor profile</li>
-          <li>90-day price history charts on every tracked SKU</li>
-          <li><strong>Travel mode</strong> — switch the Finder lens to wherever you're flying</li>
-          <li>Unlimited direct messages with verified members</li>
-          <li>Check-ins, member matches, event RSVPs</li>
-          <li>Lounge badge on profile + map</li>
-        </ul>
-        <a href="/lounge/signup/?intent=lounge" class="lounge-tier__cta lounge-tier__cta--primary">Start free, upgrade later →</a>
-      </div>
+      <!-- CITY INDEX — dense list -->
+      <section class="city-index-band">
+        <div class="city-index-head">
+          <div class="city-index-flag">City index</div>
+          <h2>Every city <em>we've mapped.</em></h2>
+          <p>{cityCount} cities · {totalPlaces} verified places. Click any city to open the members' map.</p>
+        </div>
+        <div class="city-index">
+          {citiesList.map((city) => (
+            <a href={`/lounge/app/map/?city=${encodeURIComponent(city)}`} class="city-cell" data-hover>
+              <span class="city-name">{city}</span>
+              <span class="city-count">{cityGroups[city].length}</span>
+            </a>
+          ))}
+        </div>
+      </section>
 
-      {/* OG Member — date-gated lifetime grant */}
-      <div class="lounge-tier reveal" data-reveal-delay="3">
-        <p class="lounge-tier__name">OG Member</p>
-        <p class="lounge-tier__price lounge-tier__price--small">Lifetime · door closes 1 June 2026</p>
-        <p class="lounge-tier__sub">Any account opened before the cutoff. Not an upgrade — a date.</p>
-        <p class="lounge-tier__pitch">For the early ones. The members who showed up before the network was the network.</p>
-        <ul>
-          <li>Every Lounge feature, free for life</li>
-          <li>Every paid feature we ship next, free for life</li>
-          <li>Permanent OG Member badge — distinct from Lounge</li>
-          <li>First access to every new feature before public release</li>
-          <li>Direct line to Cris on WhatsApp</li>
-          <li>Annual gift from a partner house</li>
-        </ul>
-        <a href="/lounge/signup/" class="lounge-tier__cta">Become an OG Member →</a>
-      </div>
-    </div>
+      <!-- FEATURED PLACES — classifieds ads -->
+      <section class="places-band">
+        <div class="places-head">
+          <div class="places-flag">Notable places</div>
+          <h2>Eight rooms <em>worth the trip.</em></h2>
+        </div>
+        <div class="places-grid">
+          {highlightPlaces.map((place) => (
+            <a href={`/lounge/app/places/${place.slug}/`} class="place-ad" data-hover>
+              <div class="place-photo" style={`background-image: url("${(place as any).image || 'https://images.pexels.com/photos/8129903/pexels-photo-8129903.jpeg?auto=compress&cs=tinysrgb&w=1400'}")`}></div>
+              <div class="place-body">
+                <span class={`place-flag ${typeFlag(place.type)}`}>{typeLabel(place.type)}</span>
+                <h3>{place.name}</h3>
+                <div class="place-loc">{place.city}, {place.country}</div>
+                {place.note && <p>{place.note}</p>}
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
 
-    <p class="mt-8 text-sm text-[color:var(--color-text-muted)] max-w-2xl">
-      Cancel any time, no contract. Lounge pricing locks for the first 24 months once you upgrade.
-      After 1 June 2026 the OG Member door closes — late joiners can still earn a free Lounge
-      membership through the referrer + event-host program.
-    </p>
-  </section>
-
-  {/* ─── INSTALL THE APP ─── */}
-  <section class="container-wide pb-20 reveal">
-    <div class="lounge-install">
-      <div>
-        <p class="section-eyebrow">Install</p>
-        <h2 class="font-display text-2xl md:text-3xl leading-tight mt-2">Add The Next Cigar to your home screen</h2>
-        <p class="mt-3 text-[color:var(--color-text-soft)] max-w-2xl">
-          The Lounge is web-first. Install thenextcigar.com as an app on iOS or
-          Android in two taps — full-screen, no browser chrome, and check-in
-          notifications when you arrive at a partner lounge.
-        </p>
-      </div>
-      <div class="lounge-install__actions">
-        <button id="install-pwa" class="btn btn-accent" hidden>Install the app</button>
-        <details class="lounge-install__help">
-          <summary>How to install manually</summary>
+      <section class="footer-strip">
+        <div class="footer-strip-inner">
           <div>
-            <p><strong>iPhone / iPad (Safari):</strong> tap the Share button → "Add to Home Screen" → Add.</p>
-            <p><strong>Android (Chrome):</strong> tap the three-dot menu → "Install app" / "Add to Home Screen."</p>
-            <p><strong>Desktop (Chrome, Edge, Brave):</strong> address bar shows an install icon — click it.</p>
+            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
+            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
           </div>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  {/* ─── FAQ ─── */}
-  <section class="editorial container-wide pb-24">
-    <EditorialSectionHead
-      eyebrow="Common questions"
-      title="Honest answers."
-    />
-
-    <div class="lounge-faq reveal">
-      <details>
-        <summary>Is the Lounge live?</summary>
-        <p>Yes — the public Finder, watchlist alerts, member directory, map, travel mode, messaging, and events are all in production. The Cuban catalogue covers {skuCount} flagship SKUs and {retailerCount} European retailers right now, with new retailers being added every month.</p>
-      </details>
-      <details>
-        <summary>What does $9/month or $79/year actually unlock?</summary>
-        <p>The free Finder + the public site stay free forever. Lounge membership unlocks: unlimited Finder watchlists, push notifications on price drops, 90-day price history charts, taste-matched recommendations, travel mode, unlimited direct messaging with verified members, check-ins, member matches, and event RSVPs. Most Cuban buyers save more than $79 on their first box thanks to the Finder — the rest of the year, the network is a bonus.</p>
-      </details>
-      <details>
-        <summary>What is an OG Member?</summary>
-        <p>Any account opened before 1 June 2026 becomes an OG Member automatically — no extra signup step, no money, no application. OG Members get every Lounge feature free for life plus every paid feature we ship after that. It's a one-time, date-based grant. After the cutoff the door closes; late joiners can still earn free Lounge membership through the referrer + event-host program.</p>
-      </details>
-      <details>
-        <summary>Is this an app I download or a website?</summary>
-        <p>Both. It's web-first, installable as a PWA (Progressive Web App). Tap the install button above or use your browser's "Add to Home Screen" — you get a full-screen native-feeling app without App Store gatekeeping. Native iOS/Android come later.</p>
-      </details>
-      <details>
-        <summary>I run a lounge. Can I be a partner?</summary>
-        <p>Yes — partner houses are a core part of the model. <a href="/contact/" class="text-[color:var(--color-accent)] underline">Get in touch</a> and we'll send the partner deck. Partner lounges get listed in-app, verified-member walk-ins, and quarterly featured-house slots in TNC editorial.</p>
-      </details>
-      <details>
-        <summary>What about privacy?</summary>
-        <p>Discretion is baked in. Profiles default to first-name + initial. No public broadcasts. No location sharing unless you actively check in. No data sold. The community polices itself — anyone reported by two members is auto-suspended pending review.</p>
-      </details>
-    </div>
-  </section>
+          <div class="footer-strip-links">
+            <a href="/finder/" data-hover>Finder</a>
+            <a href="/lounge/" data-hover>Lounge</a>
+            <a href="/blog/" data-hover>Magazine</a>
+            <a href="/shop/" data-hover>Shop</a>
+            <a href="/about/" data-hover>About</a>
+            <a href="/contact/" data-hover>Contact</a>
+          </div>
+        </div>
+        <div class="footer-strip-copy">© 2025–2026 The Next Cigar · Cristian Ortiz Suárez</div>
+      </section>
+    </main>
+  </div>
 </BaseLayout>
 
 <style>
-  .lounge-hero {
-    background:
-      radial-gradient(circle at 20% 30%, rgba(110, 38, 32, 0.08), transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(255, 46, 46, 0.05), transparent 55%),
-      var(--color-bg);
+  .site-body { padding-bottom: 40px; }
+
+  /* Featured Casa lead */
+  .lead-wrap {
+    max-width: 1520px; margin: 0 auto; padding: 48px 40px 64px;
+    border-bottom: 1px solid var(--news-rule);
   }
-  .lounge-eyebrow {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin-bottom: 1.25rem;
+  .lead-eyebrow {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
   }
-  .lounge-title {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1.02;
-    letter-spacing: -0.02em;
-    max-width: 30ch;
-    color: var(--color-text);
+  .lead-eyebrow::before {
+    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
   }
-  @media (min-width: 768px) { .lounge-title { font-size: 4.5rem; } }
-  @media (min-width: 1024px) { .lounge-title { font-size: 5.5rem; } }
-  .lounge-lead {
-    margin-top: 1.5rem;
-    font-size: 1.1rem;
-    line-height: 1.55;
-    color: var(--color-text-soft);
-    max-width: 36rem;
+  .lead-grid {
+    display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end;
   }
-  .lounge-lead--soft { color: var(--color-text-muted); }
-  .lounge-hero__cta-row {
-    margin-top: 2.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    align-items: center;
+  .lead-photo {
+    aspect-ratio: 4 / 5; position: relative;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.85) sepia(0.35) contrast(1.06);
   }
-  .lounge-hero__cta-row .btn {
-    min-width: 11rem;
+  .lead-photo .cutline {
+    position: absolute; left: 0; right: 0; bottom: -32px;
+    font-family: var(--news-serif); font-style: italic; font-size: 12px;
+    color: var(--news-ink-mute); line-height: 1.4;
   }
-  .lounge-waitlist {
-    margin-top: 2.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    max-width: 40rem;
+  .lead-photo .cutline strong { font-style: normal; font-weight: 600; color: var(--news-ink-soft); }
+  .lead-copy .byline {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute); margin-bottom: 20px;
   }
-  .lounge-waitlist input[type="email"],
-  .lounge-waitlist input[type="text"] {
-    flex: 1 1 12rem;
-    min-width: 12rem;
-    padding: 0.9rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 3px;
-    background: #fff;
-    font-size: 0.95rem;
-    color: var(--color-text);
+  .lead-copy .byline em { font-style: italic; text-transform: none; letter-spacing: 0; color: var(--news-ink-soft); }
+  .lead-copy h1 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(2rem, 3.8vw, 3.6rem); line-height: 1.02;
+    letter-spacing: -0.026em; color: var(--news-ink); margin: 0 0 24px;
   }
-  .lounge-waitlist input:focus {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 1px;
+  .lead-copy .standfirst {
+    font-family: var(--news-serif); font-style: italic;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem); line-height: 1.55;
+    color: var(--news-ink-soft); margin: 0 0 24px;
+    padding-bottom: 24px; border-bottom: 1px solid var(--news-rule);
   }
-  .lounge-waitlist .btn { flex: 0 0 auto; }
-  .lounge-fineprint {
-    margin-top: 0.85rem;
-    font-size: 0.78rem;
-    color: var(--color-text-muted);
+  .lead-facts {
+    display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 28px;
+  }
+  .lead-facts > div { display: flex; gap: 14px; align-items: baseline; }
+  .lead-facts .k {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--news-oxblood); min-width: 80px;
+  }
+  .lead-facts .v {
+    font-family: var(--news-serif); font-size: 14px; color: var(--news-ink); line-height: 1.4;
+  }
+  .lead-facts .v a { color: var(--news-oxblood); border-bottom: 1px solid var(--news-oxblood); padding-bottom: 1px; }
+  .lead-actions { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .lead-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 24px; background: var(--news-ink); color: var(--news-paper);
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    transition: background 0.25s var(--news-ease);
+  }
+  .lead-cta:hover { background: var(--news-oxblood); }
+  .lead-cta .arrow { font-family: var(--news-mono); }
+  .lead-link {
+    font-family: var(--news-sans); font-weight: 500; font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--news-oxblood);
+    border-bottom: 1px solid var(--news-oxblood); padding-bottom: 3px;
   }
 
-  .lounge-features {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    margin-top: 3rem;
+  /* Membership tiers */
+  .tiers-band {
+    max-width: 1520px; margin: 0 auto; padding: 56px 40px;
+    border-bottom: 1px solid var(--news-rule);
   }
-  @media (min-width: 768px) { .lounge-features { grid-template-columns: 1fr 1fr; gap: 2.5rem; } }
-  @media (min-width: 1024px) { .lounge-features { grid-template-columns: 1fr 1fr 1fr; } }
-  .lounge-feature__num {
-    display: block;
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 0.78rem;
-    letter-spacing: 0.18em;
-    color: var(--color-accent);
-    margin-bottom: 0.85rem;
+  .tiers-head {
+    display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline;
+    margin-bottom: 32px; padding-bottom: 8px; border-bottom: 4px double var(--news-ink);
   }
-  .lounge-feature h3 {
-    font-family: var(--font-display);
-    font-size: 1.4rem;
-    font-weight: 800;
-    margin-bottom: 0.65rem;
-    color: var(--color-text);
+  .tiers-flag {
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper);
+    padding: 6px 12px; align-self: start;
   }
-  .lounge-feature p {
-    color: var(--color-text-soft);
-    line-height: 1.6;
+  .tiers-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.02; letter-spacing: -0.02em;
+    color: var(--news-ink); margin: 0;
   }
+  .tiers-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .tiers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .tier {
+    border: 1px solid var(--news-ink); padding: 32px 28px;
+    display: flex; flex-direction: column;
+    background: var(--news-paper);
+    position: relative;
+  }
+  .tier.featured {
+    border: 3px double var(--news-oxblood);
+    background: var(--news-paper-cream);
+  }
+  .tier-flag {
+    position: absolute; top: -12px; left: 20px;
+    font-family: var(--news-mono); font-weight: 500; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-oxblood); color: var(--news-paper);
+    padding: 4px 10px;
+  }
+  .tier-flag.oxblood { background: var(--news-ember); }
+  .tier-name {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.4rem, 2vw, 1.75rem); line-height: 1;
+    letter-spacing: -0.014em; color: var(--news-ink); margin-bottom: 10px;
+  }
+  .tier-price {
+    font-family: var(--news-serif); font-weight: 600;
+    font-size: clamp(2.2rem, 3.4vw, 3rem); line-height: 1;
+    letter-spacing: -0.028em; color: var(--news-oxblood); margin-bottom: 20px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .tier-price span { font-family: var(--news-mono); font-weight: 500; font-size: 12px; letter-spacing: 0.06em; color: var(--news-ink-mute); margin-left: 4px; }
+  .tier-desc {
+    font-family: var(--news-serif); font-style: italic; font-size: 14px;
+    line-height: 1.55; color: var(--news-ink-soft); margin: 0 0 16px;
+  }
+  .tier-list {
+    list-style: none; margin: 0 0 24px; padding: 0; flex: 1;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .tier-list li {
+    font-family: var(--news-serif); font-size: 13.5px; line-height: 1.5;
+    color: var(--news-ink); padding-left: 18px; position: relative;
+  }
+  .tier-list li::before {
+    content: "◆"; position: absolute; left: 0; top: 4px;
+    color: var(--news-oxblood); font-size: 8px;
+  }
+  .tier-cta {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 12px 18px; text-align: center;
+    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border: 1px solid var(--news-ink); color: var(--news-ink);
+    transition: all 0.25s var(--news-ease);
+  }
+  .tier-cta:hover { background: var(--news-ink); color: var(--news-paper); }
+  .tier-cta.primary { background: var(--news-ink); color: var(--news-paper); }
+  .tier-cta.primary:hover { background: var(--news-oxblood); border-color: var(--news-oxblood); }
 
-  .lounge-cities-band {
-    background: var(--color-dark);
-    color: var(--color-text-on-dark);
+  /* City index */
+  .city-index-band {
+    max-width: 1520px; margin: 0 auto; padding: 56px 40px;
+    border-bottom: 1px solid var(--news-rule);
   }
-  .lounge-cities-grid {
-    margin-top: 2.5rem;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  @media (min-width: 640px) { .lounge-cities-grid { grid-template-columns: 1fr 1fr; } }
-  @media (min-width: 1024px) { .lounge-cities-grid { grid-template-columns: repeat(3, 1fr); } }
-  .lounge-city-card {
-    padding: 1.25rem 1.5rem;
-    border: 1px solid var(--color-dark-border);
-    border-radius: 4px;
-    background: var(--color-dark-surface);
-  }
-  .lounge-city-card__city {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin-bottom: 0.4rem;
-  }
-  .lounge-city-card__name {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 1.15rem;
-    line-height: 1.25;
-    color: var(--color-text-on-dark);
-    margin-bottom: 0.3rem;
-  }
-  .lounge-city-card__country {
-    font-size: 0.82rem;
-    color: var(--color-text-on-dark-mute);
-  }
-
-  .lounge-pricing {
-    margin-top: 2.5rem;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  @media (min-width: 768px) { .lounge-pricing { grid-template-columns: 1fr 1fr; gap: 2rem; } }
-  @media (min-width: 1024px) {
-    .lounge-pricing--three { grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
-  }
-  .lounge-tier { display: flex; flex-direction: column; }
-  .lounge-tier__price--small {
-    font-size: 1.4rem;
-    line-height: 1.2;
-  }
-  .lounge-tier__sub {
-    font-size: 0.78rem;
-    color: var(--color-text-muted);
-    margin: -0.25rem 0 0.85rem 0;
-    font-weight: 500;
-  }
-  .lounge-tier ul { flex: 1; }
-  .lounge-tier__cta {
+  .city-index-head { margin-bottom: 24px; padding-bottom: 8px; border-bottom: 4px double var(--news-ink); }
+  .city-index-flag {
     display: inline-block;
-    margin-top: 1.5rem;
-    padding: 0.7rem 1.2rem;
-    background: transparent;
-    color: var(--color-accent);
-    border: 1px solid var(--color-accent);
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-decoration: none;
-    text-align: center;
-    transition: background 0.15s ease, color 0.15s ease;
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-ink); color: var(--news-paper);
+    padding: 6px 12px; margin-bottom: 14px;
   }
-  .lounge-tier__cta:hover {
-    background: var(--color-accent);
-    color: #fff;
+  .city-index-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.02; letter-spacing: -0.02em;
+    color: var(--news-ink); margin: 0 0 8px;
   }
-  .lounge-tier__cta--primary {
-    background: var(--color-accent);
-    color: #fff;
+  .city-index-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .city-index-head p {
+    font-family: var(--news-serif); font-style: italic; font-size: 15px;
+    color: var(--news-ink-soft); margin: 0;
   }
-  .lounge-tier__cta--primary:hover {
-    background: var(--color-accent-hover, #6e2620);
+  .city-index {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1px; background: var(--news-rule); padding: 1px;
   }
-  .lounge-tier {
-    padding: 2rem;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-bg-soft);
-    position: relative;
+  .city-cell {
+    background: var(--news-paper); padding: 14px 14px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    transition: background 0.2s;
   }
-  .lounge-tier--featured {
-    border-color: var(--color-accent);
-    box-shadow: 0 8px 32px rgba(255, 46, 46, 0.08);
+  .city-cell:hover { background: var(--news-paper-cream); }
+  .city-name {
+    font-family: var(--news-serif); font-weight: 500; font-size: 15px;
+    color: var(--news-ink); letter-spacing: -0.01em;
   }
-  .lounge-tier__flag {
-    position: absolute;
-    top: -12px;
-    left: 2rem;
-    background: var(--color-accent);
-    color: #fff;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    padding: 0.35rem 0.7rem;
-    border-radius: 3px;
-  }
-  .lounge-tier__name {
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin-bottom: 0.5rem;
-  }
-  .lounge-tier__price {
-    font-family: var(--font-display);
-    font-size: 2.75rem;
-    font-weight: 800;
-    color: var(--color-text);
-    letter-spacing: -0.02em;
-    margin-bottom: 0.5rem;
-  }
-  .lounge-tier__price span {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    letter-spacing: 0;
-  }
-  .lounge-tier__pitch {
-    color: var(--color-text-soft);
-    margin-bottom: 1.25rem;
-    line-height: 1.5;
-  }
-  .lounge-tier ul { list-style: none; padding: 0; margin: 0; }
-  .lounge-tier li {
-    padding: 0.55rem 0;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-soft);
-    font-size: 0.95rem;
-    padding-left: 1.5rem;
-    position: relative;
-  }
-  .lounge-tier li::before {
-    content: "→";
-    position: absolute;
-    left: 0;
-    color: var(--color-accent);
-    font-weight: 700;
-  }
-  .lounge-tier li:last-child { border-bottom: 0; }
-
-  .lounge-install {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 2rem;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-bg-soft);
-  }
-  @media (min-width: 768px) {
-    .lounge-install {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 3rem;
-    }
-  }
-  .lounge-install__actions { flex: 0 0 auto; min-width: 16rem; }
-  .lounge-install__help {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-  }
-  .lounge-install__help summary {
-    cursor: pointer;
-    color: var(--color-text-soft);
-  }
-  .lounge-install__help div p {
-    margin: 0.5rem 0;
-    color: var(--color-text-muted);
+  .city-count {
+    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.12em;
+    color: var(--news-oxblood);
   }
 
-  .lounge-faq { margin-top: 2.5rem; max-width: 50rem; }
-  .lounge-faq details {
-    border-bottom: 1px solid var(--color-border);
-    padding: 1.25rem 0;
+  /* Featured places */
+  .places-band {
+    max-width: 1520px; margin: 0 auto; padding: 56px 40px;
+    border-bottom: 1px solid var(--news-rule);
   }
-  .lounge-faq summary {
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--color-text);
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .places-head {
+    display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline;
+    margin-bottom: 32px; padding-bottom: 8px; border-bottom: 4px double var(--news-ink);
   }
-  .lounge-faq summary::after {
-    content: "+";
-    font-size: 1.5rem;
-    color: var(--color-accent);
-    font-weight: 300;
-    transition: transform 0.25s ease;
+  .places-flag {
+    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: #3a2a1c; color: var(--news-paper);
+    padding: 6px 12px; align-self: start;
   }
-  .lounge-faq details[open] summary::after { transform: rotate(45deg); }
-  .lounge-faq p {
-    margin-top: 1rem;
-    color: var(--color-text-soft);
-    line-height: 1.6;
+  .places-head h2 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.02; letter-spacing: -0.02em;
+    color: var(--news-ink); margin: 0;
+  }
+  .places-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
+  .places-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .place-ad {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--news-ink); background: var(--news-paper);
+    transition: transform 0.25s var(--news-ease), box-shadow 0.25s var(--news-ease);
+  }
+  .place-ad:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(30, 20, 10, 0.15);
+  }
+  .place-photo {
+    aspect-ratio: 3 / 2;
+    background-size: cover; background-position: center;
+    background-color: var(--news-paper-dark);
+    filter: grayscale(0.75) sepia(0.28) contrast(1.06);
+    border-bottom: 1px solid var(--news-ink);
+  }
+  .place-body { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
+  .place-flag {
+    display: inline-block; align-self: flex-start;
+    font-family: var(--news-sans); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    background: var(--news-ink); color: var(--news-paper);
+    padding: 3px 8px; margin-bottom: 10px;
+  }
+  .place-flag.finder { background: var(--news-oxblood); }
+  .place-flag.leaf   { background: var(--news-pine); }
+  .place-flag.people { background: #3a2a1c; }
+  .place-flag.shop   { background: var(--news-mahogany); }
+  .place-flag.market { background: #4a3826; }
+  .place-ad h3 {
+    font-family: var(--news-serif); font-weight: 500;
+    font-size: clamp(1rem, 1.35vw, 1.15rem); line-height: 1.15;
+    color: var(--news-ink); margin: 0 0 6px;
+    transition: color 0.2s;
+  }
+  .place-ad:hover h3 { color: var(--news-oxblood); }
+  .place-loc {
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--news-ink-mute); margin-bottom: 10px;
+  }
+  .place-body p {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    line-height: 1.5; color: var(--news-ink-soft); margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* Footer strip */
+  .footer-strip { max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px; }
+  .footer-strip-inner {
+    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
+    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
+  }
+  .footer-strip-mark {
+    font-family: var(--news-serif); font-weight: 600; font-size: 22px;
+    letter-spacing: -0.008em; color: var(--news-ink); display: block;
+  }
+  .footer-strip-tag {
+    font-family: var(--news-serif); font-style: italic; font-size: 13px;
+    color: var(--news-ink-mute); margin-top: 2px;
+  }
+  .footer-strip-links {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--news-ink-mute);
+  }
+  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
+  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
+  .footer-strip-copy {
+    margin-top: 16px;
+    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--news-ink-mute);
+  }
+
+  @media (max-width: 900px) {
+    .lead-grid, .tiers-grid { grid-template-columns: 1fr; gap: 32px; }
+    .tiers-head, .places-head { grid-template-columns: 1fr; gap: 12px; }
+    .places-grid { grid-template-columns: 1fr 1fr; }
+    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
+    .lead-wrap, .tiers-band, .city-index-band, .places-band, .footer-strip { padding: 32px 20px; }
+  }
+  @media (max-width: 620px) {
+    .places-grid { grid-template-columns: 1fr; }
+    .city-index { grid-template-columns: 1fr 1fr; }
   }
 </style>
-
-<script is:inline>
-  // PWA install prompt — only shows the in-page button when the browser
-  // raises beforeinstallprompt (Chrome/Edge/Brave). iOS Safari handles
-  // install via Share menu, which the FAQ covers.
-  (function () {
-    let deferredPrompt = null;
-    const btn = document.getElementById("install-pwa");
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if (btn) btn.hidden = false;
-    });
-    btn?.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") btn.hidden = true;
-      deferredPrompt = null;
-    });
-    // Also check if running already as installed PWA
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      if (btn) btn.textContent = "App installed ✓";
-    }
-  })();
-</script>

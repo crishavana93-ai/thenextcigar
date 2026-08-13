@@ -111,11 +111,35 @@ const {
   // for now — every page load plays the intro. Add back once design ships.
 
   video?.addEventListener('ended', land);
-  video?.addEventListener('error', land);
+  video?.addEventListener('error', (e) => {
+    console.warn('[TNC intro] video error', e);
+    land();
+  });
   video?.addEventListener('stalled', () => setTimeout(() => {
     if (video.readyState < 2) land();
   }, 1500));
-  setTimeout(() => { if (video && video.readyState < 2) land(); }, 3500);
+
+  // Autoplay-policy fallback: many browsers refuse to autoplay even when
+  // muted. Explicitly invoke .play() once metadata loads, and again on
+  // first user gesture if that fails.
+  video?.addEventListener('loadeddata', () => {
+    const p = video.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {
+        console.warn('[TNC intro] autoplay blocked — awaiting gesture');
+        const kick = () => {
+          video.play().catch(() => land());
+          document.removeEventListener('pointerdown', kick);
+          document.removeEventListener('keydown', kick);
+        };
+        document.addEventListener('pointerdown', kick, { once: true });
+        document.addEventListener('keydown', kick, { once: true });
+      });
+    }
+  });
+
+  // Absolute-safety timeout — if the video hasn't started within 5s, land.
+  setTimeout(() => { if (video && video.readyState < 3) land(); }, 5000);
 
   skip?.addEventListener('click', land);
 </script>

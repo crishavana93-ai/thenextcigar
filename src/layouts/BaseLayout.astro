@@ -142,6 +142,11 @@ const skipPublicChrome = bareChrome || isLoungeApp;
     />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
+
+    {/* Cinematic layer — Lenis smooth scroll from CDN. Zero build cost,
+        respects prefers-reduced-motion + touch devices. Defer so it
+        doesn't block first paint. */}
+    <script type="module" src="/cinematic/smooth-scroll.js" is:inline defer></script>
     <link rel="alternate" type="application/rss+xml" title={siteName} href="/rss.xml" />
 
     <!-- Google AdSense — verification + ad serving once approved -->

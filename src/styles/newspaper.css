@@ -52,3 +52,140 @@
   .tnc-cinema { cursor: auto; }
   .tnc-cinema a, .tnc-cinema button, .tnc-cinema [data-hover] { cursor: pointer !important; }
 }
+
+/* ─────────────────────────────────────────────────────────
+   CINEMATIC SCROLL LAYER · CSS Scroll-Driven Animations
+   Native browser (Chrome/Edge 115+, Safari 26+). Guarded so
+   older browsers just get static content — no fallback needed.
+   ───────────────────────────────────────────────────────── */
+
+@supports (animation-timeline: view()) {
+
+  /* Cards fade-and-rise as they enter the viewport */
+  .tnc-cinema .feature,
+  .tnc-cinema .cat-card,
+  .tnc-cinema .related-card,
+  .tnc-cinema .ad,
+  .tnc-cinema .place-ad,
+  .tnc-cinema .tier,
+  .tnc-cinema .country {
+    animation: tnc-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 22%;
+  }
+
+  @keyframes tnc-rise {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Sepia hero photos parallax gently as user scrolls past */
+  .tnc-cinema .lead-photo,
+  .tnc-cinema .mover-photo,
+  .tnc-cinema .mag-cover-photo,
+  .tnc-cinema .article-hero img {
+    animation: tnc-parallax linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+
+  @keyframes tnc-parallax {
+    from { transform: translateY(-24px) scale(1.06); }
+    to   { transform: translateY(24px) scale(1.06); }
+  }
+
+  /* Section flags fade at boundaries (top + bottom) */
+  .tnc-cinema .tnc-section-flag,
+  .tnc-cinema .classifieds-head,
+  .tnc-cinema .tiers-head,
+  .tnc-cinema .places-head,
+  .tnc-cinema .cat-band-head {
+    animation: tnc-flag-boundary linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 8%;
+  }
+
+  @keyframes tnc-flag-boundary {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Article body H2s reveal on scroll */
+  .tnc-cinema .article-body h2 {
+    animation: tnc-h2-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 15%;
+  }
+  @keyframes tnc-h2-reveal {
+    from { opacity: 0.35; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Article body paragraphs — subtle brightness ramp as they enter */
+  .tnc-cinema .article-body > p {
+    animation: tnc-p-tone linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 20%;
+  }
+  @keyframes tnc-p-tone {
+    from { opacity: 0.55; }
+    to   { opacity: 1; }
+  }
+
+  /* Respect reduced motion — nuke all the scroll animations */
+  @media (prefers-reduced-motion: reduce) {
+    .tnc-cinema .feature,
+    .tnc-cinema .cat-card,
+    .tnc-cinema .related-card,
+    .tnc-cinema .ad,
+    .tnc-cinema .place-ad,
+    .tnc-cinema .tier,
+    .tnc-cinema .country,
+    .tnc-cinema .lead-photo,
+    .tnc-cinema .mover-photo,
+    .tnc-cinema .mag-cover-photo,
+    .tnc-cinema .article-hero img,
+    .tnc-cinema .tnc-section-flag,
+    .tnc-cinema .classifieds-head,
+    .tnc-cinema .tiers-head,
+    .tnc-cinema .places-head,
+    .tnc-cinema .cat-band-head,
+    .tnc-cinema .article-body h2,
+    .tnc-cinema .article-body > p {
+      animation: none;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   VIEW TRANSITIONS · Card → article match cut
+   view-transition-name mapping is set up in advance so when
+   Astro's ClientRouter is enabled sitewide later, clicking
+   a card auto-morphs its photo into the article hero.
+   ───────────────────────────────────────────────────────── */
+
+/* Named regions on the article side (destination) */
+.tnc-cinema .article-hero img {
+  view-transition-name: tnc-article-hero;
+}
+.tnc-cinema .article-title {
+  view-transition-name: tnc-article-title;
+}
+
+/* Note: card-side view-transition-name is set inline per card using the
+   post slug so each source photo maps to its own target. Example wiring
+   would be `style="view-transition-name: tnc-card-{slug}"` on .feature-photo
+   and matching on the destination page. Enabled once we re-add
+   <ClientRouter />. */
+
+/* Cinematic hover treatment on links — subtle underline slide */
+.tnc-cinema a[href][data-hover]:not(.tier-cta):not(.lead-cta):not(.mover-cta):not(.notice-cta):not(.guatabey-cta):not(.tnc-subscribe):not(.btn-enter) {
+  background-image: linear-gradient(90deg, var(--news-oxblood), var(--news-oxblood));
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tnc-cinema a[href][data-hover]:not(.tier-cta):not(.lead-cta):not(.mover-cta):not(.notice-cta):not(.guatabey-cta):not(.tnc-subscribe):not(.btn-enter):hover {
+  background-size: 100% 1px;
+}
