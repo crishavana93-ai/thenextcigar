@@ -13,7 +13,7 @@
 
 export const MASTHEAD = {
   volume: "Vol. II",
-  issue: "Issue 08",
-  date: "August 2026",
+  issue: "Issue 09",
+  date: "September 2026",
   cover: "The price of a Cohiba, 1998 to 2026",
 } as const;

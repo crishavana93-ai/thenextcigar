@@ -5,6 +5,8 @@
  * visitors skip the intro after seeing it once.
  */
 
+import { MASTHEAD } from "../../data/masthead";
+
 interface Props {
   videoSrc?: string;
   posterSrc?: string;
@@ -25,7 +27,7 @@ const {
   <div class="tnc-hero-grain"></div>
   <div class="tnc-hero-vignette"></div>
   <div class="tnc-hero-title">
-    <div class="tnc-hero-lab">Vol. III · Issue Four · <slot name="date">June 2026</slot></div>
+    <div class="tnc-hero-lab">{MASTHEAD.volume} · {MASTHEAD.issue} · <slot name="date">{MASTHEAD.date}</slot></div>
   </div>
   <button class="tnc-skip" id="tncSkipBtn" data-hover>Skip intro <span class="tnc-skip-arrow">→</span></button>
 </section>

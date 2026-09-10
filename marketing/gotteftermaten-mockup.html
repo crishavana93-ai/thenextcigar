@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gott Eftermaten — Förhandsvisning / Redesign mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f7f3eb;
+    --paper-soft: #efe8da;
+    --ink: #1d1916;
+    --ink-soft: #6f6259;
+    --gold: #b08a4a;
+    --gold-soft: #d3b780;
+    --rule: rgba(29, 25, 22, 0.14);
+    --serif: "Cormorant Garamond", "Georgia", serif;
+    --sans: "Inter Tight", "Inter", system-ui, sans-serif;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  body { font-size: 15px; line-height: 1.55; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+
+  /* Mockup chrome — shows this is a prototype */
+  .mockup-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    background: #1d1916; color: #f7f3eb; font-family: var(--sans);
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 8px 24px; text-align: center;
+  }
+  .mockup-banner strong { color: var(--gold-soft); }
+  body { padding-top: 36px; }
+
+  /* Top utility strip */
+  .utility {
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .utility-inner { max-width: 1440px; margin: 0 auto; padding: 10px 32px; display: flex; justify-content: space-between; align-items: center; }
+  .utility-msgs span + span { margin-left: 28px; }
+  .utility-lang button { font: inherit; color: var(--ink); background: none; border: none; cursor: pointer; letter-spacing: 0.12em; }
+  .utility-lang .active { font-weight: 600; }
+  .utility-lang span { color: var(--rule); margin: 0 8px; }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    position: sticky; top: 36px; z-index: 50;
+  }
+  .header-inner {
+    max-width: 1440px; margin: 0 auto; padding: 22px 32px;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 32px;
+  }
+  .nav { display: flex; gap: 36px; font-size: 13px; letter-spacing: 0.06em; }
+  .nav a { color: var(--ink); transition: color 0.2s; padding-bottom: 2px; border-bottom: 1px solid transparent; }
+  .nav a:hover { color: var(--gold); border-bottom-color: var(--gold); }
+  .logo {
+    text-align: center; font-family: var(--serif);
+    font-size: 22px; letter-spacing: 0.4em; font-weight: 500;
+    text-transform: uppercase; line-height: 1;
+  }
+  .logo small { display: block; font-size: 8px; letter-spacing: 0.5em; color: var(--ink-soft); margin-top: 6px; }
+  .header-actions { display: flex; gap: 22px; justify-content: flex-end; font-size: 13px; letter-spacing: 0.04em; align-items: center; }
+  .header-actions svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  .bag-count { background: var(--gold); color: var(--paper); font-size: 10px; padding: 2px 7px; border-radius: 999px; margin-left: 4px; }
+
+  /* Hero */
+  .hero {
+    position: relative; overflow: hidden;
+    min-height: 78vh; max-height: 920px;
+    display: flex; align-items: center;
+  }
+  .hero-bg { position: absolute; inset: 0; z-index: 0; }
+  .hero-bg img {
+    width: 100%; height: 100%; object-fit: cover; object-position: 55% 50%;
+    filter: saturate(0.7) contrast(1.06) brightness(0.94);
+    animation: kenburns 22s ease-out infinite alternate;
+  }
+  @keyframes kenburns {
+    from { transform: scale(1.0); }
+    to { transform: scale(1.08); }
+  }
+  .hero-wash {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg,
+      rgba(247, 243, 235, 0.96) 0%,
+      rgba(247, 243, 235, 0.88) 28%,
+      rgba(247, 243, 235, 0.5)  62%,
+      rgba(247, 243, 235, 0.15) 100%);
+  }
+  .hero-grain {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    opacity: 0.06; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+  .hero-inner {
+    position: relative; z-index: 10;
+    max-width: 1440px; width: 100%;
+    margin: 0 auto; padding: 0 32px;
+  }
+  .hero-eyebrow {
+    font-family: var(--sans); font-size: 11px; letter-spacing: 0.32em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 28px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--gold); }
+  .hero h1 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(3.5rem, 8vw, 7.5rem); line-height: 0.95; letter-spacing: -0.025em;
+    max-width: 1100px;
+  }
+  .hero h1 em { font-style: italic; color: var(--ink-soft); font-weight: 400; }
+  .hero p.lede {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: clamp(1.05rem, 1.7vw, 1.45rem); line-height: 1.55;
+    color: var(--ink-soft); max-width: 540px; margin-top: 36px;
+  }
+  .hero-ctas { margin-top: 44px; display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--ink); color: var(--paper);
+    padding: 18px 36px; font-family: var(--sans);
+    font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+    transition: all 0.25s var(--ease); display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--ink);
+  }
+  .btn-primary:hover { background: var(--gold); border-color: var(--gold); transform: translateY(-1px); }
+  .link-quiet {
+    font-family: var(--sans); font-size: 13px; letter-spacing: 0.04em;
+    color: var(--ink-soft); border-bottom: 1px solid var(--rule); padding-bottom: 4px;
+    transition: all 0.2s;
+  }
+  .link-quiet:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* Trust strip */
+  .trust {
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 22px 0; background: var(--paper-soft);
+  }
+  .trust-inner {
+    max-width: 1440px; margin: 0 auto; padding: 0 32px;
+    display: flex; justify-content: space-around; align-items: center;
+    font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--ink-soft); gap: 24px; flex-wrap: wrap;
+  }
+  .trust span { display: flex; align-items: center; gap: 8px; }
+
+  /* Section base */
+  section { padding: 96px 32px; }
+  .container { max-width: 1440px; margin: 0 auto; }
+  .eyebrow {
+    font-family: var(--sans); font-size: 11px; letter-spacing: 0.32em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--gold); }
+  h2.section-title {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(2.4rem, 4.5vw, 4.2rem); line-height: 1.02; letter-spacing: -0.02em;
+    max-width: 920px;
+  }
+  h2.section-title em { font-style: italic; color: var(--ink-soft); }
+  p.dek {
+    font-family: var(--serif); font-style: italic;
+    font-size: clamp(1.05rem, 1.5vw, 1.3rem); line-height: 1.55;
+    color: var(--ink-soft); max-width: 620px; margin-top: 28px;
+  }
+
+  /* Three rooms grid (pillars) */
+  .rooms-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 64px; flex-wrap: wrap; gap: 24px; }
+  .rooms-stats { display: flex; gap: 48px; }
+  .rooms-stats .stat { text-align: left; }
+  .rooms-stats .stat-num {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1; color: var(--ink);
+  }
+  .rooms-stats .stat-label {
+    font-family: var(--sans); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--ink-soft); margin-top: 8px;
+  }
+  .rooms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .room {
+    background: var(--paper-soft); padding: 0; overflow: hidden;
+    transition: transform 0.5s var(--ease);
+  }
+  .room:hover { transform: translateY(-4px); }
+  .room-img { aspect-ratio: 4 / 5; overflow: hidden; background: var(--paper-soft); }
+  .room-img img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.85) contrast(1.04); transition: transform 0.7s var(--ease); }
+  .room:hover .room-img img { transform: scale(1.04); }
+  .room-body { padding: 32px; }
+  .room-num {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    color: var(--gold); font-size: 18px; margin-bottom: 12px;
+  }
+  .room h3 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 28px; line-height: 1.15; letter-spacing: -0.012em;
+    margin-bottom: 14px;
+  }
+  .room p {
+    font-family: var(--sans); color: var(--ink-soft);
+    font-size: 14px; line-height: 1.6; margin-bottom: 22px;
+  }
+  .room .room-cta {
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink); border-bottom: 1px solid var(--ink); padding-bottom: 3px;
+  }
+  .room .room-cta:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* Featured release — 8/4 editorial split */
+  .feature { background: var(--paper-soft); }
+  .feature-grid { display: grid; grid-template-columns: 8fr 4fr; gap: 64px; align-items: center; }
+  .feature-img { aspect-ratio: 4 / 5; overflow: hidden; }
+  .feature-img img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.78) contrast(1.05); }
+  .feature-text .eyebrow { margin-bottom: 24px; }
+  .feature-text h2 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(2rem, 3vw, 3rem); line-height: 1.05; letter-spacing: -0.018em;
+    margin-bottom: 28px;
+  }
+  .feature-text h2 em { font-style: italic; color: var(--ink-soft); }
+  .feature-text p {
+    font-family: var(--serif); font-size: 17px; line-height: 1.6; color: var(--ink); margin-bottom: 20px;
+  }
+  .feature-spec {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    margin: 36px 0; padding: 24px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  }
+  .spec-row .spec-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
+  .spec-row .spec-val { font-family: var(--serif); font-size: 17px; color: var(--ink); }
+  .feature-price { font-family: var(--serif); font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+  .feature-price-meta { font-size: 11px; color: var(--ink-soft); margin-bottom: 28px; letter-spacing: 0.06em; }
+
+  /* Bestsellers grid */
+  .bestsellers-head { margin-bottom: 56px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; }
+  .bestsellers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+  .product { cursor: pointer; }
+  .product-img { aspect-ratio: 4 / 5; background: var(--paper-soft); overflow: hidden; position: relative; }
+  .product-img img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.85) contrast(1.04); transition: transform 0.7s var(--ease); }
+  .product:hover .product-img img { transform: scale(1.04); }
+  .product-badge {
+    position: absolute; top: 16px; left: 16px;
+    background: rgba(247, 243, 235, 0.95); padding: 6px 10px;
+    font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink);
+  }
+  .product-info { padding-top: 18px; }
+  .product-cat { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .product-name {
+    font-family: var(--serif); font-size: 19px; line-height: 1.2; letter-spacing: -0.01em;
+    color: var(--ink); margin-bottom: 10px;
+  }
+  .product-price { font-family: var(--sans); font-size: 14px; color: var(--ink); display: flex; gap: 12px; align-items: baseline; }
+  .product-price s { color: var(--ink-soft); font-size: 12px; }
+
+  /* Editorial story (Loro Piana pattern) */
+  .editorial-story { background: var(--ink); color: var(--paper); }
+  .editorial-story .eyebrow { color: var(--gold-soft); }
+  .editorial-story .eyebrow::before { background: var(--gold-soft); }
+  .editorial-story h2 { color: var(--paper); }
+  .editorial-story h2 em { color: var(--gold-soft); }
+  .editorial-story p.body { color: rgba(247, 243, 235, 0.78); }
+  .story-grid { display: grid; grid-template-columns: 8fr 4fr; gap: 64px; align-items: center; }
+  .story-img { aspect-ratio: 16 / 11; overflow: hidden; }
+  .story-img img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.78) contrast(1.08) brightness(0.92); }
+  .story-text h2 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.08; letter-spacing: -0.018em; margin-bottom: 26px;
+  }
+  .story-text p.body { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin-bottom: 24px; }
+  .story-text .story-cta {
+    font-family: var(--sans); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold-soft); border-bottom: 1px solid var(--gold-soft); padding-bottom: 4px;
+    display: inline-block; margin-top: 16px;
+  }
+
+  /* ID delivery callout */
+  .delivery { background: var(--paper-soft); }
+  .delivery-head { text-align: center; max-width: 760px; margin: 0 auto 72px; }
+  .delivery-head .eyebrow { justify-content: center; }
+  .delivery-head .eyebrow::before { display: none; }
+  .delivery-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; max-width: 1100px; margin: 0 auto; }
+  .step { text-align: center; padding: 0 16px; }
+  .step-num {
+    font-family: var(--serif); font-weight: 500;
+    width: 56px; height: 56px; line-height: 56px; margin: 0 auto 28px;
+    border: 1px solid var(--gold); border-radius: 50%; color: var(--gold);
+    font-size: 22px;
+  }
+  .step h4 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 22px; line-height: 1.2; margin-bottom: 16px; color: var(--ink);
+  }
+  .step p { font-family: var(--sans); font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
+
+  /* Journal / blog teasers */
+  .journal-head { margin-bottom: 56px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; }
+  .journal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .article { }
+  .article-img { aspect-ratio: 3 / 2; overflow: hidden; }
+  .article-img img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.85) contrast(1.04); transition: transform 0.7s var(--ease); }
+  .article:hover .article-img img { transform: scale(1.03); }
+  .article-meta { padding-top: 18px; display: flex; gap: 12px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 12px; }
+  .article-meta .cat { color: var(--gold); }
+  .article h3 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 22px; line-height: 1.25; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .article p.deck { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-soft); margin-top: 12px; line-height: 1.5; }
+
+  /* Newsletter */
+  .newsletter { background: var(--paper-soft); padding: 80px 32px; }
+  .newsletter-inner { max-width: 720px; margin: 0 auto; text-align: center; }
+  .newsletter h2 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(2rem, 3.2vw, 2.8rem); line-height: 1.1; letter-spacing: -0.018em; margin-bottom: 18px;
+  }
+  .newsletter p { font-family: var(--serif); font-style: italic; color: var(--ink-soft); margin-bottom: 32px; }
+  .newsletter form { display: flex; gap: 12px; max-width: 480px; margin: 0 auto; }
+  .newsletter input {
+    flex: 1; padding: 16px 20px; font: inherit; font-size: 14px;
+    background: var(--paper); border: 1px solid var(--rule); color: var(--ink);
+  }
+  .newsletter button {
+    padding: 16px 28px; font: inherit; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    background: var(--ink); color: var(--paper); border: none; cursor: pointer;
+    transition: background 0.25s var(--ease);
+  }
+  .newsletter button:hover { background: var(--gold); }
+  .newsletter small { display: block; margin-top: 16px; font-size: 11px; letter-spacing: 0.06em; color: var(--ink-soft); }
+
+  /* Footer */
+  .footer { background: var(--ink); color: rgba(247, 243, 235, 0.7); padding: 64px 32px 32px; }
+  .footer a { color: rgba(247, 243, 235, 0.7); transition: color 0.2s; }
+  .footer a:hover { color: var(--gold-soft); }
+  .footer-inner { max-width: 1440px; margin: 0 auto; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 48px; padding-bottom: 48px; border-bottom: 1px solid rgba(247, 243, 235, 0.15); }
+  .footer-brand .logo { color: var(--paper); text-align: left; margin-bottom: 16px; }
+  .footer-brand p { font-family: var(--serif); font-style: italic; font-size: 14px; color: rgba(247, 243, 235, 0.6); max-width: 320px; }
+  .footer-col h5 { color: var(--paper); font-family: var(--sans); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 18px; }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 10px; font-size: 13px; }
+  .footer-warn {
+    margin-top: 36px; padding: 20px; background: rgba(247, 243, 235, 0.05);
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--gold-soft); text-align: center;
+  }
+  .footer-bottom { padding-top: 36px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; font-size: 12px; }
+  .pay-icons { display: flex; gap: 14px; align-items: center; }
+  .pay-icons span {
+    font-family: var(--sans); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 4px 8px;
+    border: 1px solid rgba(247, 243, 235, 0.2); border-radius: 3px;
+  }
+
+  @media (max-width: 980px) {
+    .header-inner { grid-template-columns: 1fr; gap: 12px; }
+    .nav { justify-content: center; flex-wrap: wrap; gap: 18px; }
+    .header-actions { justify-content: center; }
+    .rooms, .bestsellers, .journal, .delivery-steps { grid-template-columns: 1fr; gap: 32px; }
+    .feature-grid, .story-grid { grid-template-columns: 1fr; gap: 32px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    section { padding: 64px 24px; }
+    .hero { min-height: 60vh; }
+    .utility-msgs span + span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mockup banner -->
+<div class="mockup-banner">
+  <strong>FÖRHANDSVISNING</strong> &nbsp; · &nbsp; Proposed redesign for gotteftermaten.se &nbsp; · &nbsp; Shopify Advanced + Prestige theme + custom Habanos Nordic layer &nbsp; · &nbsp; <strong>Not live</strong>
+</div>
+
+<!-- Top utility -->
+<div class="utility">
+  <div class="utility-inner">
+    <div class="utility-msgs">
+      <span>Fri leverans över 1500 kr</span>
+      <span>BankID-verifierad leverans</span>
+      <span>Officiell LCdH-licensiering</span>
+    </div>
+    <div class="utility-lang">
+      <button class="active">SV</button><span>|</span><button>EN</button>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <nav class="nav">
+      <a href="#">Havannor</a>
+      <a href="#">Pipsrök</a>
+      <a href="#">Tillbehör</a>
+      <a href="#">Journal</a>
+    </nav>
+    <a href="#" class="logo">Gott Eftermaten<small>Malmö · Sedan 1987</small></a>
+    <div class="header-actions">
+      <a href="#" aria-label="Sök"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></a>
+      <a href="#" aria-label="Konto"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+      <a href="#" aria-label="Varukorg"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="bag-count">0</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero" style="padding: 0;">
+  <div class="hero-bg">
+    <img src="https://images.pexels.com/photos/14017013/pexels-photo-14017013.jpeg?auto=compress&cs=tinysrgb&w=2400" alt="Cohiba kubanska cigarrer i cederträhumidor" />
+  </div>
+  <div class="hero-wash"></div>
+  <div class="hero-grain"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Vol. III · Vår 2026 · Nyhet</div>
+    <h1>Riktiga havannor.<br/><em>Online igen.</em></h1>
+    <p class="lede">Officiell Habanos Nordic-distribution, ålderverifierad leverans till dörren med BankID, betalning med Klarna eller Swish. Tobaken är gammal. Webbplatsen är ny.</p>
+    <div class="hero-ctas">
+      <a href="#" class="btn-primary">Bläddra i sortimentet <span>→</span></a>
+      <a href="#" class="link-quiet">Läs vår journal</a>
+    </div>
+  </div>
+</section>
+
+<!-- Trust strip -->
+<div class="trust">
+  <div class="trust-inner">
+    <span>Klarna</span>
+    <span>Swish</span>
+    <span>BankID-verifierad</span>
+    <span>LCdH-licensiering</span>
+    <span>Folkhälsomyndigheten</span>
+    <span>Habanos Nordic</span>
+  </div>
+</div>
+
+<!-- Three rooms -->
+<section>
+  <div class="container">
+    <div class="rooms-head">
+      <div>
+        <div class="eyebrow">Tre rum</div>
+        <h2 class="section-title">En cigarrhandel <em>byggd som ett bibliotek.</em></h2>
+      </div>
+      <div class="rooms-stats">
+        <div class="stat"><div class="stat-num">142</div><div class="stat-label">Havannor</div></div>
+        <div class="stat"><div class="stat-num">38</div><div class="stat-label">Piptobaker</div></div>
+        <div class="stat"><div class="stat-num">87</div><div class="stat-label">Tillbehör</div></div>
+      </div>
+    </div>
+
+    <p class="dek" style="margin-bottom: 64px;">Tre rum under ett tak. Havannorna är hjärtat — Habanos Nordics hela register med leverans dagen efter. Pipsröket och tillbehören är ramen runt.</p>
+
+    <div class="rooms">
+      <article class="room">
+        <div class="room-img"><img src="https://images.pexels.com/photos/16622220/pexels-photo-16622220.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Havannor" /></div>
+        <div class="room-body">
+          <div class="room-num">01</div>
+          <h3>Havannor</h3>
+          <p>142 SKU:er från alla 27 Habanos-varumärken. Cohiba, Partagás, Romeo y Julieta, Hoyo de Monterrey — och de svåra: Trinidad, San Cristóbal, Cuaba. Levereras inom 48 timmar med BankID-verifiering vid dörren.</p>
+          <a href="#" class="room-cta">Bläddra havannor →</a>
+        </div>
+      </article>
+      <article class="room">
+        <div class="room-img"><img src="https://images.pexels.com/photos/2917378/pexels-photo-2917378.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Piptobak" /></div>
+        <div class="room-body">
+          <div class="room-num">02</div>
+          <h3>Pipsrök</h3>
+          <p>Dunhill, Peterson, Mac Baren, klassiska Stanwell-pipor. Engelska, danska, virginiska blandningar. Allt vägs och förpackas i tunna fukthållare så att du får aromen vid första öppnandet — inte vid tredje.</p>
+          <a href="#" class="room-cta">Bläddra piptobaker →</a>
+        </div>
+      </article>
+      <article class="room">
+        <div class="room-img"><img src="https://images.pexels.com/photos/2306280/pexels-photo-2306280.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Tillbehör" /></div>
+        <div class="room-body">
+          <div class="room-num">03</div>
+          <h3>Tillbehör</h3>
+          <p>Humidorer från Adorini, Xikar-skärare, S.T. Dupont-tändare, cederträtändstickor, lufthuvar. Det du behöver för att förvara cigarrerna ordentligt och röka dem rätt — kuraterat, inte överlagrat.</p>
+          <a href="#" class="room-cta">Bläddra tillbehör →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Featured release -->
+<section class="feature">
+  <div class="container">
+    <div class="feature-grid">
+      <div class="feature-img">
+        <img src="https://images.pexels.com/photos/2317675/pexels-photo-2317675.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="H. Upmann Magnum 56" />
+      </div>
+      <div class="feature-text">
+        <div class="eyebrow">Säsongsläpp · Mars 2026</div>
+        <h2>H. Upmann <em>Magnum 56</em></h2>
+        <p>Den första Magnum-vitolan som adderats till H. Upmann sedan 1844-grundaren själv slutade fylla cigarrlådor. 150 mm × 56 ring gauge. Cederöppen draging. Den följer sin egen tid.</p>
+        <div class="feature-spec">
+          <div class="spec-row"><div class="spec-key">Vitola</div><div class="spec-val">Magnum 56</div></div>
+          <div class="spec-row"><div class="spec-key">Längd × Ring</div><div class="spec-val">150 × 56</div></div>
+          <div class="spec-row"><div class="spec-key">Originalmått</div><div class="spec-val">Limited Edition 2015</div></div>
+          <div class="spec-row"><div class="spec-key">Tillgänglighet</div><div class="spec-val">38 lådor i lager</div></div>
+        </div>
+        <div class="feature-price">4 850 kr</div>
+        <div class="feature-price-meta">Låda om 10 · Inkl. moms · BankID-verifierad leverans ingår</div>
+        <a href="#" class="btn-primary">Lägg i varukorg <span>→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bestsellers -->
+<section>
+  <div class="container">
+    <div class="bestsellers-head">
+      <div>
+        <div class="eyebrow">Mest sålda</div>
+        <h2 class="section-title">Det som lämnar <em>humidoren först.</em></h2>
+      </div>
+      <a href="#" class="link-quiet">Se alla havannor →</a>
+    </div>
+    <div class="bestsellers">
+      <article class="product">
+        <div class="product-img">
+          <span class="product-badge">I lager</span>
+          <img src="https://images.pexels.com/photos/14017013/pexels-photo-14017013.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Cohiba Robustos" />
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Cohiba</div>
+          <div class="product-name">Robustos</div>
+          <div class="product-price">3 290 kr <small>/ låda om 25</small></div>
+        </div>
+      </article>
+      <article class="product">
+        <div class="product-img">
+          <span class="product-badge">I lager</span>
+          <img src="https://images.pexels.com/photos/16622220/pexels-photo-16622220.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Partagás Serie D No. 4" />
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Partagás</div>
+          <div class="product-name">Serie D No. 4</div>
+          <div class="product-price">2 480 kr <small>/ låda om 25</small></div>
+        </div>
+      </article>
+      <article class="product">
+        <div class="product-img">
+          <span class="product-badge">Nytt parti</span>
+          <img src="https://images.pexels.com/photos/2317675/pexels-photo-2317675.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Montecristo No. 2" />
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Montecristo</div>
+          <div class="product-name">No. 2 (Pirámides)</div>
+          <div class="product-price">2 950 kr <small>/ låda om 25</small></div>
+        </div>
+      </article>
+      <article class="product">
+        <div class="product-img">
+          <span class="product-badge">Få kvar</span>
+          <img src="https://images.pexels.com/photos/2306280/pexels-photo-2306280.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Romeo y Julieta Wide Churchill" />
+        </div>
+        <div class="product-info">
+          <div class="product-cat">Romeo y Julieta</div>
+          <div class="product-name">Wide Churchill</div>
+          <div class="product-price">3 120 kr <small>/ låda om 10</small></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Editorial story (Loro Piana pattern) -->
+<section class="editorial-story">
+  <div class="container">
+    <div class="story-grid">
+      <div class="story-img">
+        <img src="https://images.pexels.com/photos/2917378/pexels-photo-2917378.jpeg?auto=compress&cs=tinysrgb&w=1800" alt="Casa del Habano Köpenhamn" />
+      </div>
+      <div class="story-text">
+        <div class="eyebrow">Journalen</div>
+        <h2>Inuti Casa del Habano, <em>Köpenhamn.</em></h2>
+        <p class="body">En lördag eftermiddag på Strøget. En 84-årig man från Pinar del Río rullar Behikes på en arbetsbänk som äldre än de flesta gästerna. Vi tillbringade en eftermiddag på Habanos Nordics flaggskeppslounge.</p>
+        <a href="#" class="story-cta">Läs reportaget →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ID delivery callout -->
+<section class="delivery">
+  <div class="container">
+    <div class="delivery-head">
+      <div class="eyebrow">Hur leverans fungerar</div>
+      <h2 class="section-title" style="margin: 0 auto;">Tobak online <em>— men på rätt sätt.</em></h2>
+      <p class="dek" style="margin: 24px auto 0;">Svensk lag kräver att säljaren faktiskt verifierar 18+. Vi gör det på dörren med BankID — inte med en kryssruta du klickar förbi.</p>
+    </div>
+    <div class="delivery-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Beställ med BankID-signering</h4>
+        <p>Vid utcheckning signerar du beställningen med BankID. Klarna, Swish och kort accepteras — Klarna-faktura tillgänglig.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>PostNord eller Budbee</h4>
+        <p>Paketet skickas med åldersmärkning. Levereras inom 48 timmar i Sverige, 3–5 dagar inom Norden.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>BankID på dörren</h4>
+        <p>Vid leverans verifierar du din identitet med BankID. Ingen kvittens utan godkänd 18+ verifiering. Säkert. Lagligt. Färdigt.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Journal teasers -->
+<section>
+  <div class="container">
+    <div class="journal-head">
+      <div>
+        <div class="eyebrow">Från journalen</div>
+        <h2 class="section-title">Långa läsningar <em>om bladet.</em></h2>
+      </div>
+      <a href="#" class="link-quiet">Hela arkivet →</a>
+    </div>
+    <div class="journal">
+      <article class="article">
+        <div class="article-img">
+          <img src="https://images.pexels.com/photos/14017013/pexels-photo-14017013.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Cohiba Behike" />
+        </div>
+        <div class="article-meta">
+          <span class="cat">Vitolaguiden</span>
+          <span>12 min läsning</span>
+          <span>18 mars 2026</span>
+        </div>
+        <h3>Cohiba Behike — varför 0,4% av all Cuban tobak hamnar i den här rullen</h3>
+        <p class="deck">Medio Tiempo-bladet, den minst kända av Cubas fem tobakssidor, växer bara på de översta två bladen av plantan. Och bara en av tre plantor lyckas producera det.</p>
+      </article>
+      <article class="article">
+        <div class="article-img">
+          <img src="https://images.pexels.com/photos/16622220/pexels-photo-16622220.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Habanos prisutveckling" />
+        </div>
+        <div class="article-meta">
+          <span class="cat">Marknad</span>
+          <span>8 min läsning</span>
+          <span>5 mars 2026</span>
+        </div>
+        <h3>Den nordiska Habanos-distributionen — varför svenska priser är så stabila</h3>
+        <p class="deck">Sverige, Norge, Danmark, Finland: ett företag distribuerar Habanos S.A. i alla fyra länderna sedan 1998. Varför det betyder att Cohiba kostar mindre här än i Madrid.</p>
+      </article>
+      <article class="article">
+        <div class="article-img">
+          <img src="https://images.pexels.com/photos/2317675/pexels-photo-2317675.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Casa del Habano Malmö" />
+        </div>
+        <div class="article-meta">
+          <span class="cat">Reportage</span>
+          <span>14 min läsning</span>
+          <span>20 februari 2026</span>
+        </div>
+        <h3>Inne i butiken — Gott Eftermatens cederrum, kuraterat sedan 1987</h3>
+        <p class="deck">Vår humidor är på 14 kvadratmeter och rymmer 280 lådor. Den är temperaturreglerad till 18°C och har en luftfuktighet på 68%. Här är hur den har byggts.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter -->
+<section class="newsletter">
+  <div class="newsletter-inner">
+    <div class="eyebrow" style="justify-content: center; margin-bottom: 24px;">
+      <span>Klubben</span>
+    </div>
+    <h2>Få besked när lådorna kommer in.</h2>
+    <p>Limited Editions, Reservas och Edición Regional släpps i små partier. Anmäl dig så är du först i kön.</p>
+    <form>
+      <input type="email" placeholder="Din e-postadress" required />
+      <button type="submit">Anmäl mig</button>
+    </form>
+    <small>Vi mailar dig max två gånger per månad. Ingen spam, ingen vidareförsäljning.</small>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo">Gott Eftermaten<small>Malmö · Sedan 1987</small></a>
+        <p>Officiell svensk återförsäljare av kubanska cigarrer, piptobak och tillbehör. Habanos Nordic-licensiering. LCdH-certifierad.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Butik</h5>
+        <ul>
+          <li><a href="#">Havannor</a></li>
+          <li><a href="#">Pipsrök</a></li>
+          <li><a href="#">Tillbehör</a></li>
+          <li><a href="#">Säsongsläpp</a></li>
+          <li><a href="#">Presentkort</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Information</h5>
+        <ul>
+          <li><a href="#">Om oss</a></li>
+          <li><a href="#">Journal</a></li>
+          <li><a href="#">Vår humidor</a></li>
+          <li><a href="#">Lägg till butik</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Kundservice</h5>
+        <ul>
+          <li><a href="#">Leverans &amp; BankID</a></li>
+          <li><a href="#">Retur &amp; reklamation</a></li>
+          <li><a href="#">Köpvillkor</a></li>
+          <li><a href="#">Cookies &amp; integritet</a></li>
+          <li><a href="#">Kontakt</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Hitta oss</h5>
+        <ul>
+          <li>Östra Förstadsgatan 16</li>
+          <li>211 31 Malmö</li>
+          <li><a href="tel:+46401234567">+46 40 123 45 67</a></li>
+          <li><a href="mailto:butik@gotteftermaten.se">butik@gotteftermaten.se</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-warn">
+      ⚠ Tobak skadar din hälsa · Försäljning endast till personer över 18 år · Folkhälsomyndighetens märkning gäller
+    </div>
+    <div class="footer-bottom">
+      <span>© 1987–2026 Gott Eftermaten AB · Org.nr 556789-1234 · Tobakshandelstillstånd Malmö stad</span>
+      <div class="pay-icons">
+        <span>Klarna</span>
+        <span>Swish</span>
+        <span>BankID</span>
+        <span>Visa</span>
+        <span>Mastercard</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

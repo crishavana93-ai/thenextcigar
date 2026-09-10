@@ -1,12 +1,12 @@
 // Cloudflare Pages Function — POST /api/shop/checkout
 // ---------------------------------------------------------------------------
 // Creates a Stripe Checkout Session for a product on /shop/. Returns the
-// redirect URL. Client posts { slug, name, sku, price, currency, supplier,
-// supplierUrl, cover, quantity? } — we don't trust price from the browser
-// but re-read it here from the payload's `expectedPrice`. In production the
-// canonical price should be re-fetched from the source of truth (products
-// content collection or a Supabase catalogue mirror) — this MVP trusts the
-// server-computed price that Astro rendered into the button below.
+// redirect URL. Client posts { slug, quantity?, cover? } (older clients also
+// send name/price/etc — ignored). Price, name, SKU, supplier and availability
+// are read from catalogue.json, generated at build time from the products
+// content collection by scripts/build-catalogue.mjs. Nothing money-related is
+// trusted from the browser.
+import catalogue from "./catalogue.json";
 //
 // Env vars required in Cloudflare Pages → Settings → Environment variables:
 //   STRIPE_SECRET_KEY              — sk_live_...  or  sk_test_...
@@ -68,13 +68,32 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       );
     }
 
-    const body = (await request.json()) as CheckoutPayload;
-    if (!body?.slug || !body?.name || !body?.price) {
+    const raw = (await request.json()) as CheckoutPayload;
+    const item = raw?.slug ? (catalogue as Record<string, any>)[raw.slug] : undefined;
+    if (!item) {
       return new Response(
-        JSON.stringify({ ok: false, error: "Missing required fields: slug, name, price." }),
+        JSON.stringify({ ok: false, error: "Unknown product." }),
         { status: 400, headers: { "content-type": "application/json" } }
       );
     }
+    if (item.isArchived || item.comingSoon || !item.inStock) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "This product is not available to order yet." }),
+        { status: 409, headers: { "content-type": "application/json" } }
+      );
+    }
+    // Everything below comes from the catalogue, not the request.
+    const body: CheckoutPayload = {
+      slug: raw.slug,
+      name: item.name,
+      sku: item.sku,
+      price: item.price,
+      currency: item.currency,
+      supplier: item.supplier,
+      supplierUrl: item.supplierUrl,
+      cover: typeof raw.cover === "string" && /^https:\/\//.test(raw.cover) ? raw.cover : undefined,
+      quantity: raw.quantity,
+    };
 
     const currency = normalizeCurrency(body.currency);
     const quantity = safeQuantity(body.quantity);

@@ -6,7 +6,6 @@ import CigarCursor from "../components/newspaper/CigarCursor.astro";
 import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
 import SectionFlag from "../components/newspaper/SectionFlag.astro";
 import { MASTHEAD as masthead } from "../data/masthead";
-import VideoIntroHero from "../components/newspaper/VideoIntroHero.astro";
 
 /**
  * TNC homepage — cinematic newspaper edition.
@@ -24,6 +23,13 @@ const allPosts = (await getCollection("blog")).sort(
   (a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
 );
 const categories = await getCollection("categories");
+const authors = await getCollection("authors");
+/** Bylines: the blog frontmatter stores the author *slug*; show the person's name. */
+function authorName(slug?: string) {
+  if (!slug) return "TNC editorial";
+  const a = authors.find((x) => x.id === slug || (x.data as any).slug === slug);
+  return (a?.data as any)?.name || "TNC editorial";
+}
 const categoryByslug = new Map(categories.map((c) => [c.data.slug, c.data]));
 
 // Lead — featured post if any, otherwise most recent
@@ -78,8 +84,6 @@ function categoryFlag(slug: string | null): string {
   <div class="tnc-cinema">
     <CigarCursor />
 
-    <VideoIntroHero videoSrc="/cinematic/hero.mp4" />
-
     <main class="site-body">
       <NewspaperMasthead
         volume={masthead.volume}
@@ -108,7 +112,7 @@ function categoryFlag(slug: string | null): string {
             </a>
             <div class="lead-copy">
               <div class="byline">
-                Report · <em>by {lead.data.author || "TNC editorial"} · {lead.data.publishedAt.toLocaleDateString("en-GB", { month: "long", day: "numeric" })}</em>
+                Report · <em>by {authorName(lead.data.author)} · {lead.data.publishedAt.toLocaleDateString("en-GB", { month: "long", day: "numeric" })}</em>
               </div>
               <h1>{lead.data.title}</h1>
               <p class="standfirst">{excerptOf(lead)}</p>
@@ -196,11 +200,11 @@ function categoryFlag(slug: string | null): string {
             <div class="room-num"><span>/04</span><span class="arrow">→</span></div>
             <div>
               <h3>The Shop <em>+ Guatabey</em></h3>
-              <p>Cedar tubes, concrete ashtrays, one magnetic cutter under our own mark. And the first drop of Guatabey — a numbered guayabera in Irish linen. 50 shirts, once a year.</p>
+              <p>Cutters, lighters, humidor gear and the pieces we actually use — chosen for the magazine, stocked in small numbers. And Guatabey, our guayabera, in the making.</p>
             </div>
             <div class="stat">
-              <span class="val">04</span>
-              <span class="lab">Launch SKUs · Aug 2026</span>
+              <span class="val">/04</span>
+              <span class="lab">Accessories · opening soon</span>
             </div>
           </a>
         </div>

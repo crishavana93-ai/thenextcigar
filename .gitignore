@@ -52,3 +52,5 @@ outreach/
 # Gemini / AI source files dropped at project root — not for production
 Gemini_Generated_Image_*.png
 /5.png
+_bak/
+functions/api/shop/catalogue.json

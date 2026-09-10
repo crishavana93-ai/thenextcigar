@@ -70,7 +70,7 @@ function typeFlag(t: string) {
 
 <BaseLayout
   title="The Lounge — Society & Travel · The Next Cigar"
-  description={`The private network of European Cuban-cigar smokers. ${totalPlaces} verified lounges across ${cityCount} cities, live-price watchlist alerts, city-by-city check-ins. From $9/month or free for everything public.`}
+  description={`The members\' side of The Next Cigar: ${totalPlaces} cigar lounges, Casas del Habano and shops mapped across ${cityCount} cities, price watchlists and city check-ins. Membership is free.`}
   bareChrome={true}
 >
   <link
@@ -89,7 +89,7 @@ function typeFlag(t: string) {
         number="/02"
         section="The Lounge"
         title={`Society &amp; Travel<em> — the room behind the price tag.</em>`}
-        status={`${totalPlaces} verified lounges · ${cityCount} cities · OG Member tier closes 1 June`}
+        status={`${totalPlaces} places mapped · ${cityCount} cities · membership free`}
         live={true}
       />
 
@@ -99,18 +99,22 @@ function typeFlag(t: string) {
           <div class="lead-eyebrow">This week's Casa del Habano</div>
           <div class="lead-grid">
             <div class="lead-photo">
-              <img
-                src={(featuredCasa as any).image || 'https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1600'}
-                alt={`${featuredCasa.name}, ${featuredCasa.city}`}
-                loading="eager"
-              />
+              {(featuredCasa as any).image ? (
+                <img src={(featuredCasa as any).image} alt={`${featuredCasa.name}, ${featuredCasa.city}`} loading="eager" />
+              ) : (
+                <div class="lead-placard" aria-hidden="true">
+                  <span class="placard-type">{typeLabel(featuredCasa.type)}</span>
+                  <span class="placard-name">{featuredCasa.name}</span>
+                  <span class="placard-city">{featuredCasa.city}</span>
+                </div>
+              )}
               <span class="cutline"><strong>Above &middot;</strong> {featuredCasa.name}, {featuredCasa.city}. {typeLabel(featuredCasa.type)}.</span>
             </div>
             <div class="lead-copy">
               <div class="byline">Featured place · <em>{featuredCasa.city}, {featuredCasa.country}</em></div>
               <h1>{featuredCasa.name}</h1>
               <p class="standfirst">
-                {featuredCasa.note || `A verified ${typeLabel(featuredCasa.type).toLowerCase()} in ${featuredCasa.city}. One of ${totalPlaces} places in the Lounge index — cross-referenced with member check-ins so you know who's likely to be there tonight.`}
+                {featuredCasa.note || `A ${typeLabel(featuredCasa.type).toLowerCase()} in ${featuredCasa.city}. One of ${totalPlaces} places in the Lounge index; members can check in so you know who is around.`}
               </p>
               <div class="lead-facts">
                 <div><span class="k">City</span><span class="v">{featuredCasa.city}</span></div>
@@ -127,51 +131,25 @@ function typeFlag(t: string) {
         </section>
       )}
 
-      <!-- MEMBERSHIP TIERS — three-column display ad -->
+      <!-- MEMBERSHIP — free, one tier -->
       <section class="tiers-band">
         <div class="tiers-head">
           <div class="tiers-flag">Membership</div>
-          <h2>Three ways <em>to sit at the table.</em></h2>
+          <h2>One table, <em>no cover charge.</em></h2>
         </div>
-        <div class="tiers-grid">
-          <div class="tier">
-            <div class="tier-name">Free</div>
-            <div class="tier-price">€0<span>/mo</span></div>
-            <p class="tier-desc">Everything public. The Finder ({snapshotCount.toLocaleString()} live prices across {retailerCount} retailers), the Magazine, and full read access to every long-read.</p>
-            <ul class="tier-list">
-              <li>Live price ticker · {retailerCount} retailers · {countryCount} countries</li>
-              <li>Every article, every issue</li>
-              <li>Read-only Casa del Habano map</li>
-            </ul>
-            <a href="/subscribe/" class="tier-cta" data-hover>Start free</a>
-          </div>
-
+        <div class="tiers-grid tiers-grid--single">
           <div class="tier featured">
-            <div class="tier-flag">Most popular</div>
+            <div class="tier-flag">Free</div>
             <div class="tier-name">The Lounge</div>
-            <div class="tier-price">$9<span>/mo</span></div>
-            <p class="tier-desc">Watchlist alerts on any vitola, check into any Casa, message any member, weekly market letter, and travel-mode so you can find the room in a city you've never been to.</p>
+            <div class="tier-price">€0<span> · for now</span></div>
+            <p class="tier-desc">Everything public stays public: the Finder, the Magazine, every long-read. Members also get the map of {totalPlaces} places in {cityCount} cities, city check-ins, member messaging and watchlist alerts on any vitola. First access to every Guatabey drop.</p>
             <ul class="tier-list">
-              <li>Price-drop alerts by email + push</li>
+              <li>Price watchlists · alerts by email</li>
+              <li>Casa del Habano map · {cityCount} cities · travel mode</li>
               <li>City check-ins + member messaging</li>
-              <li>Travel mode — Casa map for any city</li>
-              <li>Weekly market letter</li>
+              <li>First access · Guatabey</li>
             </ul>
-            <a href="/lounge/app/" class="tier-cta primary" data-hover>Enter the Lounge →</a>
-          </div>
-
-          <div class="tier">
-            <div class="tier-flag oxblood">Closes 1 June</div>
-            <div class="tier-name">OG Member</div>
-            <div class="tier-price">$79<span>/year</span></div>
-            <p class="tier-desc">Lifetime OG-Member tier. Locked pricing for as long as your card keeps working, first access to every new drop (including Guatabey), and your name in the founding-members ledger.</p>
-            <ul class="tier-list">
-              <li>Everything in Lounge tier · locked pricing</li>
-              <li>First access · every Guatabey drop</li>
-              <li>Founding-members ledger listing</li>
-              <li>Direct line to the editor</li>
-            </ul>
-            <a href="/subscribe/" class="tier-cta primary" data-hover>Lock founding price →</a>
+            <a href="/lounge/signup/" class="tier-cta primary" data-hover>Join the Lounge →</a>
           </div>
         </div>
       </section>
@@ -181,7 +159,7 @@ function typeFlag(t: string) {
         <div class="city-index-head">
           <div class="city-index-flag">City index</div>
           <h2>Every city <em>we've mapped.</em></h2>
-          <p>{cityCount} cities · {totalPlaces} verified places. Click any city to open the members' map.</p>
+          <p>{cityCount} cities · {totalPlaces} places mapped. Click any city to open the members' map.</p>
         </div>
         <div class="city-index">
           {citiesList.map((city) => (
@@ -584,4 +562,9 @@ function typeFlag(t: string) {
     .places-grid { grid-template-columns: 1fr; }
     .city-index { grid-template-columns: 1fr 1fr; }
   }
+  .tiers-grid--single { grid-template-columns: minmax(0, 560px); justify-content: center; }
+  .lead-placard { display: grid; place-content: center; text-align: center; gap: 10px; aspect-ratio: 4 / 3; background: #e4dccb; border: 1px solid #c9bfa8; padding: 24px; }
+  .lead-placard .placard-type { font-family: var(--news-mono, monospace); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #7a2e26; }
+  .lead-placard .placard-name { font-family: var(--news-serif, Georgia, serif); font-size: clamp(22px, 3vw, 40px); line-height: 1.1; color: #1a1512; }
+  .lead-placard .placard-city { font-style: italic; color: #5c554b; }
 </style>

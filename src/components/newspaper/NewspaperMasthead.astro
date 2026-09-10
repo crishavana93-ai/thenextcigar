@@ -6,6 +6,8 @@
  * distinguishes /finder from /magazine from /lounge etc.
  */
 
+import { MASTHEAD } from "../../data/masthead";
+
 interface Props {
   volume?: string;
   issue?: string;
@@ -13,9 +15,9 @@ interface Props {
 }
 
 const {
-  volume = "Vol. III",
-  issue = "Issue Four",
-  date = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+  volume = MASTHEAD.volume,
+  issue = MASTHEAD.issue,
+  date = MASTHEAD.date,
 } = Astro.props;
 ---
 
@@ -29,7 +31,7 @@ const {
     </div>
     <div class="tnc-mast-nav-right">
       <a href="/lounge/app/" data-hover>Sign in</a>
-      <a href="/subscribe/" class="tnc-subscribe" data-hover>Enter · $9/mo</a>
+      <a href="/lounge/signup/" class="tnc-subscribe" data-hover>Join · free</a>
     </div>
   </nav>
   <a href="/" class="tnc-mast-title" data-hover>The Next Cigar</a>
