@@ -392,10 +392,12 @@ function parseNoblegoHtml(html: string): ParsedOffer[] {
     const priceStr = m[4];
     const price = germanPriceToNumber(priceStr);
     if (!packSize || !price) continue;
-    const inStock =
-      !availClass.includes("out-of-stock") &&
-      !availClass.includes("nicht-lieferbar") &&
-      !availClass.includes("ausverkauft");
+    // Only the known in-stock classes count as in stock. Anything else
+    // ("out-of-stock", "nicht-lieferbar", the newer "Momentan ausverkauft,
+    // Liefertermin unbekannt" variants, or a class we have never seen) is
+    // treated as unavailable — a false "in stock" sends a reader to a sold-out
+    // page, which is the one thing the Finder must never do.
+    const inStock = availClass.includes("instock");
     offers.push({ packSize, price, currency: "EUR", inStock });
   }
 
