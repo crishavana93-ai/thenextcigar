@@ -7,6 +7,10 @@ name: Finder — scheduled scrape
 #
 # SECRETS REQUIRED (Settings → Secrets and variables → Actions):
 #   SCRAPER_ADMIN_TOKEN — same token Cloudflare Pages uses (X-Scraper-Token)
+#   CF_DEPLOY_HOOK      — Cloudflare Pages deploy hook URL (Settings → Builds →
+#                         Deploy hooks). The site is static: fresh prices only
+#                         reach /finder/ when the site is rebuilt, so the last
+#                         job below triggers a rebuild after every scrape.
 #
 # CRON CADENCE
 #   Every 6h, on the hour: 02:00, 08:00, 14:00, 20:00 UTC.
@@ -191,3 +195,29 @@ jobs:
             echo "| events detected | $detected |"
             echo "| alerts fired | $fired |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # The public Finder is built statically from Supabase (src/data/finder-live.ts),
+  # so a scrape only becomes visible after a rebuild. Fire the Cloudflare Pages
+  # deploy hook once the scrape matrix has finished (even if a retailer failed —
+  # partial fresh data beats none).
+  rebuild:
+    needs: scrape
+    if: always() && needs.scrape.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - name: Trigger Cloudflare Pages rebuild
+        env:
+          CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CF_DEPLOY_HOOK:-}" ]; then
+            echo "::warning::CF_DEPLOY_HOOK secret is not set — site will only refresh on the next git push"
+            exit 0
+          fi
+          code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$CF_DEPLOY_HOOK")
+          echo "Deploy hook → HTTP $code"
+          echo "## Rebuild" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cloudflare Pages deploy hook returned HTTP $code" >> "$GITHUB_STEP_SUMMARY"

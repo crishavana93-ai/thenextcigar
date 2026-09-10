@@ -7,7 +7,7 @@
  * .ts files go through the full TypeScript pipeline cleanly.
  */
 
-import type { Sku, PriceSnapshot, Retailer, Country } from "../../data/finder-data";
+import type { Sku, PriceSnapshot, Retailer, Country } from "../../data/finder-live";
 
 type BestOffer = {
   snap: PriceSnapshot;

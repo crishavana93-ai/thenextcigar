@@ -7,7 +7,7 @@ import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astr
 import SectionFlag from "../../components/newspaper/SectionFlag.astro";
 import StickyScene from "../../components/newspaper/scrolly/StickyScene.astro";
 import { MASTHEAD as masthead } from "../../data/masthead";
-import { SKUS, RETAILERS, bestPriceForSku, formatPrice } from "../../data/finder-data";
+import { SKUS, RETAILERS, bestPriceForSku, formatPrice } from "../../data/finder-live";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");

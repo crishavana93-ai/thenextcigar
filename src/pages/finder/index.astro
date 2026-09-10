@@ -13,7 +13,9 @@ import {
   bestPriceForSku,
   formatPrice,
   toEUR,
-} from "../../data/finder-data.ts";
+  LIVE_COUNT,
+  checkedLabel,
+} from "../../data/finder-live";
 
 /**
  * /finder/ — The Finder section in newspaper "Business & Markets" style.
@@ -79,9 +81,10 @@ for (const country of COUNTRIES) {
 // Honest freshness: the newest scrapedAt in the dataset, and how many
 // retailers actually have a price row (vs. the directory of shops).
 const newestScrape = PRICE_SNAPSHOTS.map((s) => s.scrapedAt).sort().at(-1) || "";
-const lastUpdated = newestScrape
-  ? "checked " + new Date(newestScrape).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-  : "unverified";
+const newestLabel = newestScrape ? new Date(newestScrape).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
+const lastUpdated = LIVE_COUNT > 0
+  ? `${LIVE_COUNT} live prices · latest ${newestLabel}`
+  : newestLabel ? `checked ${newestLabel}` : "unverified";
 const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
 const pricedCountries = new Set(
   PRICE_SNAPSHOTS.map((s) => RETAILERS.find((r) => r.id === s.retailerId)?.country).filter(Boolean)
@@ -133,7 +136,7 @@ function fmtFlag(code: string) {
         section="The Finder"
         title={`Business &amp; Markets<em> — Cuban cigars, compared.</em>`}
         status={`${SKUS.length} SKUs · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · ${lastUpdated}`}
-        live={false}
+        live={LIVE_COUNT > 0}
       />
 
       <section class="body-grid">
@@ -166,7 +169,7 @@ function fmtFlag(code: string) {
                   </td>
                   <td class="country">{fmtFlag(row.retailer.country)} {fmtCountry(row.retailer.country)}</td>
                   <td class="num">{fmtBest(row)}</td>
-                  <td class="num">{row.retailer.name} <span class="checked">· {new Date(row.snap.scrapedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span></td>
+                  <td class="num">{row.retailer.name} <span class={"checked" + (row.snap.live ? " live" : "")}>· {checkedLabel(row.snap)}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -261,7 +264,7 @@ function fmtFlag(code: string) {
 
           <div class="side-explain">
             <h4>How <em>the Finder</em> works.</h4>
-            <p><span class="drop">W</span>e keep a directory of {RETAILERS.length} licensed Habanos retailers in {COUNTRIES.length} European countries and record box prices from the {pricedRetailers} that publish them, in {pricedCountries} countries. Every price carries the date we checked it; stock and price change often, so confirm on the retailer's page before you order. Automatic re-checks are being added retailer by retailer. Free to read, no signup — members get watchlist alerts on any vitola.</p>
+            <p><span class="drop">W</span>e keep a directory of {RETAILERS.length} licensed Habanos retailers in {COUNTRIES.length} European countries and record box prices from the {pricedRetailers} that publish them, in {pricedCountries} countries. Prices marked <em>live</em> were re-read from the retailer's own product page by our scraper within the last two weeks; the rest carry the date we last checked them by hand. Stock and price change often, so confirm on the retailer's page before you order. Free to read, no signup — members get watchlist alerts on any vitola.</p>
             <a href="/subscribe/" class="side-cta" data-hover>Get price alerts →</a>
           </div>
         </aside>
@@ -496,4 +499,5 @@ function fmtFlag(code: string) {
     .footer-strip { padding: 32px 20px 20px; }
   }
   .ticker .checked { color: var(--news-ink-3, #7a7368); font-size: 0.78em; white-space: nowrap; }
+  .ticker .checked.live { color: #2f6b3a; }
 </style>
