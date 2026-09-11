@@ -45,6 +45,8 @@ jobs:
           - de-cigarworld
           - ch-cigarmust
           - ch-egmcigars
+          - uk-smoke-king
+          - ie-jamesfox
       # Don't kill the matrix if one retailer fails — we want partial success.
       fail-fast: false
     steps:

@@ -42,7 +42,7 @@ function currencyForCountry(country: string): string {
 }
 
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection";
 
 interface PdpUrl {
   url: string;
@@ -76,6 +76,28 @@ interface ScraperConfig {
 }
 
 const SCRAPERS: Record<string, ScraperConfig> = {
+  // ── Shopify collections ───────────────────────────────────────────────
+  // One request each. The store hands over its whole Cuban shelf as JSON, we
+  // match what we recognise and ignore the rest. Adds the UK and Ireland to
+  // the board with live prices for the first time.
+  "uk-smoke-king": {
+    country: "uk",
+    stack: "shopify_collection",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://www.smoke-king.co.uk/collections/cuban-cigars/products.json?limit=250" },
+    ],
+  },
+
+  "ie-jamesfox": {
+    country: "ie",
+    stack: "shopify_collection",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://jamesfox.ie/collections/handmade-cigars/products.json?limit=250" },
+    ],
+  },
+
   "de-noblego": {
     country: "de",
     stack: "noblego_html",
@@ -680,6 +702,156 @@ function parseCigarmustHtml(html: string): ParsedOffer[] {
 // We map each variant's title → pack size and emit one ParsedOffer per variant.
 // Currency comes from the config (Shopify omits it in the per-product endpoint;
 // it's a shop-level setting).
+
+// ---------------------------------------------------------------------------
+// Shopify collections — one request, the retailer's whole Cuban shelf
+// ---------------------------------------------------------------------------
+// A Shopify store will hand over an entire collection as JSON at
+// <collection>/products.json. That is far better than a list of hand-written
+// product URLs: it never goes stale when the retailer renames a page, and it
+// picks up cigars we didn't know they stocked. The cost is that we have to
+// decide for ourselves which of their products is which of our vitolas, so the
+// matcher below is deliberately strict — an unmatched product is skipped, not
+// guessed at. A wrong match would put someone else's price on our board.
+
+interface CanonSku { id: string; brand: string; vitola: string; box: number }
+const CANON_SKUS: CanonSku[] = [
+  { id: "cohiba-robustos", brand: "Cohiba", vitola: "Robustos", box: 25 },
+  { id: "cohiba-behike-52", brand: "Cohiba", vitola: "Behike 52", box: 10 },
+  { id: "cohiba-siglo-iv", brand: "Cohiba", vitola: "Siglo IV", box: 25 },
+  { id: "cohiba-esplendidos", brand: "Cohiba", vitola: "Espléndidos", box: 25 },
+  { id: "montecristo-no-4", brand: "Montecristo", vitola: "No. 4", box: 25 },
+  { id: "montecristo-no-2", brand: "Montecristo", vitola: "No. 2", box: 25 },
+  { id: "montecristo-petit-edmundo", brand: "Montecristo", vitola: "Petit Edmundo", box: 25 },
+  { id: "partagas-serie-d-no-4", brand: "Partagás", vitola: "Serie D No. 4", box: 25 },
+  { id: "romeo-y-julieta-petit-coronas", brand: "Romeo y Julieta", vitola: "Petit Coronas", box: 25 },
+  { id: "hoyo-de-monterrey-epicure-no-2", brand: "Hoyo de Monterrey", vitola: "Epicure No. 2", box: 25 },
+  { id: "trinidad-reyes", brand: "Trinidad", vitola: "Reyes", box: 12 },
+  { id: "bolivar-belicosos-finos", brand: "Bolívar", vitola: "Belicosos Finos", box: 25 },
+  { id: "cohiba-siglo-vi", brand: "Cohiba", vitola: "Siglo VI", box: 25 },
+  { id: "montecristo-edmundo", brand: "Montecristo", vitola: "Edmundo", box: 25 },
+  { id: "romeo-y-julieta-wide-churchills", brand: "Romeo y Julieta", vitola: "Wide Churchills", box: 25 },
+  { id: "partagas-lusitanias", brand: "Partagás", vitola: "Lusitanias", box: 25 },
+  { id: "h-upmann-magnum-46", brand: "H. Upmann", vitola: "Magnum 46", box: 25 },
+  { id: "cohiba-siglo-ii", brand: "Cohiba", vitola: "Siglo II", box: 25 },
+  { id: "romeo-y-julieta-short-churchills", brand: "Romeo y Julieta", vitola: "Short Churchills", box: 25 },
+  { id: "bolivar-royal-coronas", brand: "Bolívar", vitola: "Royal Coronas", box: 25 },
+  { id: "hoyo-de-monterrey-epicure-especial", brand: "Hoyo de Monterrey", vitola: "Epicure Especial", box: 25 },
+  { id: "trinidad-vigia", brand: "Trinidad", vitola: "Vigia", box: 12 },
+  { id: "montecristo-no-5", brand: "Montecristo", vitola: "No. 5", box: 25 },
+  { id: "cohiba-medio-siglo", brand: "Cohiba", vitola: "Medio Siglo", box: 25 },
+  { id: "partagas-serie-e-no-2", brand: "Partagás", vitola: "Serie E No. 2", box: 25 },
+  { id: "hoyo-de-monterrey-le-hoyo-de-rio-seco", brand: "Hoyo de Monterrey", vitola: "Le Hoyo de Río Seco", box: 10 },
+  { id: "h-upmann-magnum-50", brand: "H. Upmann", vitola: "Magnum 50", box: 25 },
+  { id: "romeo-y-julieta-churchill", brand: "Romeo y Julieta", vitola: "Churchill", box: 25 },
+  { id: "cohiba-maduro-5-magicos", brand: "Cohiba", vitola: "Magicos", box: 10 },
+  { id: "trinidad-coloniales", brand: "Trinidad", vitola: "Coloniales", box: 12 },
+  { id: "bolivar-petit-coronas", brand: "Bolívar", vitola: "Petit Coronas", box: 25 },
+  { id: "partagas-serie-d-no-6", brand: "Partagás", vitola: "Serie D No. 6", box: 20 },
+  { id: "montecristo-open-junior", brand: "Montecristo", vitola: "Open Junior", box: 20 },
+  { id: "montecristo-double-edmundo", brand: "Montecristo", vitola: "Double Edmundo", box: 10 },
+  { id: "cohiba-siglo-iii", brand: "Cohiba", vitola: "Siglo III", box: 25 },
+  { id: "romeo-y-julieta-no-1-tubos", brand: "Romeo y Julieta", vitola: "No. 1 Tubos", box: 25 },
+  { id: "h-upmann-connoisseur-no-1", brand: "H. Upmann", vitola: "Connoisseur No. 1", box: 25 },
+  { id: "juan-lopez-seleccion-no-1", brand: "Juan López", vitola: "Selección No. 1", box: 25 },
+  { id: "vegas-robaina-famosos", brand: "Vegas Robaina", vitola: "Famosos", box: 25 },
+  { id: "quai-d-orsay-no-50", brand: "Quai d'Orsay", vitola: "No. 50", box: 10 },
+  { id: "ramon-allones-specially-selected", brand: "Ramón Allones", vitola: "Specially Selected", box: 25 },
+  { id: "saint-luis-rey-regios", brand: "Saint Luis Rey", vitola: "Regios", box: 25 },
+  { id: "el-rey-del-mundo-choix-supreme", brand: "El Rey del Mundo", vitola: "Choix Suprême", box: 25 },
+  { id: "por-larranaga-petit-coronas", brand: "Por Larrañaga", vitola: "Petit Coronas", box: 25 },
+  { id: "la-gloria-cubana-medaille-d-or-no-4", brand: "La Gloria Cubana", vitola: "Medaille D'Or No. 4", box: 25 },
+  { id: "diplomaticos-no-2", brand: "Diplomáticos", vitola: "No. 2", box: 25 },
+  { id: "san-cristobal-la-punta", brand: "San Cristóbal de la Habana", vitola: "La Punta", box: 25 },
+  { id: "sancho-panza-belicosos", brand: "Sancho Panza", vitola: "Belicosos", box: 25 },
+  { id: "rafael-gonzalez-petit-coronas", brand: "Rafael González", vitola: "Petit Coronas", box: 25 },
+  { id: "jose-l-piedra-brevas", brand: "José L. Piedra", vitola: "Brevas", box: 25 },
+  { id: "quintero-brevas", brand: "Quintero", vitola: "Brevas", box: 25 },
+  { id: "fonseca-cosacos", brand: "Fonseca", vitola: "Cosacos", box: 25 },
+];
+
+/** Normalise for comparison: lowercase, strip accents, punctuation, noise
+ *  words and the retailer's packaging language. */
+function norm(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/\bbhk\b/g, "behike")
+    .replace(/\bn[ory]?\.?\s*(\d)/g, "no $1")   // "No.4", "Nr 4", "N°4" → "no 4"
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+const NOISE = new Set("cuban cuba habanos habano cigar cigars cigarr cigarrer cigarro cigarros zigarre zigarren puro puros single singles stick sticks box boxes pack packs packet tubo tubos tubed tube slb sbn cab cabinet of the de del el la los las und and en aluminium".split(" "));
+/** A word that turns one vitola into another. If a title carries one of these
+ *  and our vitola name doesn't, it is a different cigar — Petit No. 2 is not
+ *  No. 2, and Double Edmundo is not Edmundo. Refusing to guess is the whole
+ *  point: a wrong match puts someone else's price on the board. */
+const QUALIFIERS = new Set("petit short wide double gran grand extra especial special junior mini medio maduro reserva anejados edicion limitada regional coleccion humidor jar".split(" "));
+
+const stem = (w: string) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w);
+const words = (s: string) => norm(s).split(" ").filter((w) => w && !NOISE.has(w)).map(stem);
+
+/** Match a retailer's product title to one of our vitolas, or null. */
+function matchCanonSku(title: string): CanonSku | null {
+  const t = words(title);
+  if (t.length === 0) return null;
+  const bag = new Set(t);
+  let best: { sku: CanonSku; score: number; vit: string[] } | null = null;
+
+  for (const sku of CANON_SKUS) {
+    const brand = words(sku.brand);
+    const vit = words(sku.vitola);
+    if (brand.length === 0 || vit.length === 0) continue;
+    if (!brand.every((w) => bag.has(w))) continue;
+    if (!vit.every((w) => bag.has(w))) continue;
+    const score = vit.length * 100 + vit.join("").length;
+    if (!best || score > best.score) best = { sku, score, vit };
+  }
+  if (!best) return null;
+
+  // Any qualifier in the title that our vitola doesn't share means the
+  // retailer is selling a different cigar from the one we matched.
+  const ours = new Set([...best.vit, ...words(best.sku.brand)]);
+  for (const w of t) if (QUALIFIERS.has(w) && !ours.has(w)) return null;
+
+  return best.sku;
+}
+
+interface CollectionOffer extends ParsedOffer { skuId: string; url: string }
+
+/** Parse a Shopify collection's products.json into per-SKU offers. */
+function parseShopifyCollection(body: string, currency: string, origin: string): CollectionOffer[] {
+  let data: any;
+  try { data = JSON.parse(body); } catch { return []; }
+  const products: any[] = Array.isArray(data?.products) ? data.products : [];
+  const out: CollectionOffer[] = [];
+  for (const p of products) {
+    const title = String(p?.title ?? "");
+    const sku = matchCanonSku(title);
+    if (!sku) continue;
+    const handle = String(p?.handle ?? "");
+    const url = handle ? `${origin}/products/${handle}` : origin;
+    const variants: any[] = Array.isArray(p?.variants) ? p.variants : [];
+    const byPack = new Map<number, CollectionOffer>();
+    for (const v of variants) {
+      const price = parseFloat(String(v?.price ?? ""));
+      if (!price || price <= 0) continue;
+      // The pack can be named on the variant, or only in the product title
+      // ("… – Box of 25"). Try the variant first, then the title.
+      const packSize = parsePackSizeFromTitle(String(v?.option1 || v?.title || ""))
+        || parsePackSizeFromTitle(title);
+      if (!packSize) continue;
+      const inStock = typeof v?.available === "boolean" ? v.available
+        : typeof v?.inventory_quantity === "number" ? v.inventory_quantity > 0 : true;
+      if (!byPack.has(packSize)) byPack.set(packSize, { packSize, price, currency, inStock, skuId: sku.id, url });
+    }
+    for (const o of byPack.values()) out.push(o);
+  }
+  return out;
+}
+
 function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[] {
   let data: Record<string, unknown>;
   try { data = JSON.parse(body); } catch { return []; }
@@ -922,6 +1094,12 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
     const size = Math.ceil(config.pdps.length / sliceTotal);
     pdpsToProcess = config.pdps.slice(sliceN * size, (sliceN + 1) * size);
   }
+  // A retailer with one collection URL has nothing to do in slices 2 and 3.
+  // That is success, not failure — say so rather than logging a red job.
+  if (pdpsToProcess.length === 0) {
+    return json({ ok: true, retailer: retailerId, scrapedAt, rowsInserted: 0, note: `nothing in slice ${sliceN + 1} of ${sliceTotal}` });
+  }
+
   const rowsToInsert: Array<Record<string, unknown>> = [];
   const debugLog: Array<Record<string, unknown>> = [];
   // Hard errors — things that block a row from being inserted and represent
@@ -967,6 +1145,47 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       }
       const html = await res.text();
       bytesDownloaded += html.length;
+
+      // A Shopify collection is one fetch that yields many vitolas, so it
+      // writes its own rows and returns — the per-PDP path below assumes one
+      // SKU per URL.
+      if (config.stack === "shopify_collection") {
+        const currency = currencyForCountry(config.country);
+        const origin = new URL(pdp.url).origin;
+        const found = parseShopifyCollection(html, currency, origin);
+        const minEurC = config.minPriceEur ?? 20;
+        let kept = 0, floored = 0;
+        const seen = new Set<string>();
+        for (const o of found) {
+          const eur = o.price * (FX_TO_EUR[o.currency] || 0);
+          if (eur < minEurC) { floored++; continue; }
+          const key = `${o.skuId}|${o.packSize}`;
+          if (seen.has(key)) continue;   // one row per sku+pack per run
+          seen.add(key);
+          rowsToInsert.push({
+            sku: o.skuId,
+            retailer_id: retailerId,
+            pack_size: o.packSize,
+            price: o.price,
+            currency: o.currency,
+            price_eur: Math.round(eur * 100) / 100,
+            in_stock: o.inStock,
+            source_url: o.url,
+            country_code: config.country,
+            parser: config.stack,
+            scraped_at: scrapedAt,
+          });
+          kept++;
+        }
+        stats.offersRejectedByFloor += floored;
+        if (floored) notices.push(`${pdp.url}: ${floored} offer(s) under €${minEurC} sanity floor`);
+        debugLog.push({ url: pdp.url, status: 200, bytes: html.length, offersFound: kept, packsFound: [`${found.length} matched of collection`] });
+        if (kept === 0) {
+          stats.pdpsParserZero += 1;
+          errors.push(`${pdp.url}: collection parsed but matched none of our vitolas`);
+        }
+        return;
+      }
 
       // Dispatch on stack
       let parsed: ParsedOffer[];
