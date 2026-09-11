@@ -1,189 +1,37 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import PaperLayout from "../../layouts/PaperLayout.astro";
+/** /lounge/login/ — sign in with a password, or by emailed link / 6-digit code. */
 ---
-
-<BaseLayout
-  title="Sign in — The Lounge"
-  description="Sign in to The Lounge — The Next Cigar's members network."
-  noIndex
->
-  <section class="lounge-auth">
-    <div class="lounge-auth__inner reveal">
-      <p class="lounge-auth__eyebrow">The Lounge · Welcome back</p>
-      <h1 class="lounge-auth__title">Sign in.</h1>
-      <p class="lounge-auth__lead">
-        Email + password. Or use the older magic-link option below if you haven't set a password yet.
-      </p>
-
-      {/* ── Primary: email + password login ─────────────────────────────── */}
-      <form id="login-pw-form" class="lounge-auth__form">
-        <label class="lounge-auth__label">
-          Email
-          <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
-        </label>
-
-        <label class="lounge-auth__label">
-          Password
-          <input type="password" name="password" required minlength="8" autocomplete="current-password" placeholder="••••••••" />
-        </label>
-
-        <button type="submit" class="lounge-auth__button">Sign in →</button>
-
-        <button type="button" id="login-forgot" class="lounge-auth__ghost">
-          First time? Set a password
-        </button>
+<PaperLayout title="Sign in · The Lounge · The Next Cigar" description="Sign in to the Lounge." section="lounge" compact={true} noIndex>
+  <div class="dateline"><h1>Sign in <em>— the Lounge.</em></h1><p class="st">Members</p></div>
+  <div class="auth">
+    <div class="auth-card">
+      <span class="kick">With a password</span>
+      <form id="login-pw-form" class="rw" style="margin-top:10px">
+        <label>Email<input type="email" name="email" required autocomplete="email" placeholder="you@example.com" /></label>
+        <label>Password<input type="password" name="password" required autocomplete="current-password" minlength="8" /></label>
+        <button type="submit" class="cta">Sign in →</button>
+        <button type="button" id="login-forgot" class="ghost">No password yet? Set one</button>
       </form>
-
-      {/* ── Fallback: magic-link / OTP code ──────────────────────────────── */}
-      <details class="lounge-auth__details">
-        <summary>Or sign in with an email link instead</summary>
-
-        <form id="login-magic-form" class="lounge-auth__form" style="margin-top: 1rem;">
-          <label class="lounge-auth__label">
-            Email
-            <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
-          </label>
-          <button type="submit" class="lounge-auth__button lounge-auth__button--secondary">
-            Email me a sign-in link →
-          </button>
-        </form>
-
-        {/* Code-entry form — shown after the magic-link email is sent */}
-        <form id="login-code-form" class="lounge-auth__form" hidden style="margin-top: 1rem;">
-          <label class="lounge-auth__label">
-            6-digit code <span style="color:var(--color-text-muted); font-weight:500;">— check your email</span>
-            <input
-              type="text"
-              name="token"
-              required
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              maxlength="6"
-              pattern="[0-9]{6}"
-              placeholder="123456"
-              style="font-size: 1.4rem; letter-spacing: 0.4em; text-align: center; font-family: var(--font-display); font-weight: 800;" />
-          </label>
-          <button type="submit" class="lounge-auth__button">Sign in →</button>
-          <button type="button" id="login-resend" class="lounge-auth__ghost">Resend the code</button>
-        </form>
-      </details>
-
-      <p id="login-status" class="lounge-auth__status" hidden></p>
-
-      <p class="lounge-auth__alt">
-        Not a member yet? <a href="/lounge/signup/">Reserve your place</a>
-      </p>
+      <div class="rulehead" style="margin-top:26px"><h2>Or by email</h2></div>
+      <form id="login-magic-form" class="rw">
+        <label>Email<input type="email" name="email" required autocomplete="email" placeholder="you@example.com" /></label>
+        <button type="submit" class="cta">Email me a sign-in link</button>
+      </form>
+      <form id="login-code-form" class="rw" hidden style="margin-top:10px">
+        <label>The 6-digit code from that email<input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" /></label>
+        <button type="submit" class="cta">Use the code →</button>
+        <button type="button" id="login-resend" class="ghost">Resend the code</button>
+      </form>
+      <p id="login-status" class="note auth-status" hidden aria-live="polite"></p>
+      <p class="note" style="margin-top:16px">Not a member? <a href="/lounge/signup/">Join free</a>.</p>
     </div>
-  </section>
-</BaseLayout>
-
-<style>
-  .lounge-auth {
-    min-height: calc(100vh - 80px);
-    background:
-      radial-gradient(circle at 15% 25%, rgba(110, 38, 32, 0.10), transparent 55%),
-      radial-gradient(circle at 85% 75%, rgba(255, 46, 46, 0.06), transparent 55%),
-      var(--color-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem 1.5rem;
-  }
-  .lounge-auth__inner {
-    width: 100%;
-    max-width: 28rem;
-    background: var(--color-bg-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    padding: 2.5rem;
-  }
-  .lounge-auth__eyebrow {
-    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--color-accent); margin: 0 0 0.85rem 0;
-  }
-  .lounge-auth__title {
-    font-family: var(--font-display); font-size: 2.25rem; font-weight: 800;
-    line-height: 1.05; letter-spacing: -0.02em;
-    color: var(--color-text); margin: 0 0 0.85rem 0;
-  }
-  .lounge-auth__lead {
-    font-size: 0.95rem; line-height: 1.55;
-    color: var(--color-text-soft); margin: 0 0 1.5rem 0;
-  }
-  .lounge-auth__form { display: flex; flex-direction: column; gap: 1rem; }
-  .lounge-auth__label {
-    display: flex; flex-direction: column; gap: 0.4rem;
-    font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.12em; color: var(--color-text-muted);
-  }
-  .lounge-auth__label input {
-    padding: 0.75rem 0.85rem; border: 1px solid var(--color-border);
-    border-radius: 3px; background: #fff; font-size: 0.95rem;
-    color: var(--color-text); text-transform: none; letter-spacing: normal;
-  }
-  .lounge-auth__label input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
-  .lounge-auth__button {
-    margin-top: 0.4rem; padding: 0.65rem 1.2rem;
-    background: var(--color-accent); color: #fff; border: none; border-radius: 999px;
-    font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-    cursor: pointer; transition: background 0.15s ease;
-  }
-  .lounge-auth__button:hover { background: var(--color-accent-hover); }
-  .lounge-auth__button:disabled { opacity: 0.6; cursor: wait; }
-  .lounge-auth__button--secondary {
-    background: transparent;
-    color: var(--color-accent);
-    border: 1px solid var(--color-accent);
-  }
-  .lounge-auth__button--secondary:hover {
-    background: rgba(110, 38, 32, 0.08);
-  }
-  .lounge-auth__ghost {
-    background: none; border: none;
-    color: var(--color-gold, #c9a961);
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 8px 0; font: inherit;
-    margin-top: 4px;
-    font-size: 0.85rem;
-    text-align: center;
-  }
-  .lounge-auth__details {
-    margin-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
-    padding-top: 1rem;
-  }
-  .lounge-auth__details summary {
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    padding: 4px 0;
-    list-style: none;
-  }
-  .lounge-auth__details summary::-webkit-details-marker { display: none; }
-  .lounge-auth__details summary::before {
-    content: "› ";
-    display: inline-block;
-    transition: transform 0.15s ease;
-    color: var(--color-gold, #c9a961);
-    font-weight: 700;
-  }
-  .lounge-auth__details[open] summary::before {
-    transform: rotate(90deg);
-  }
-  .lounge-auth__status {
-    margin-top: 1rem; padding: 0.85rem 1rem;
-    background: var(--color-cream); border-left: 3px solid var(--color-accent);
-    border-radius: 3px; font-size: 0.88rem; line-height: 1.5; color: var(--color-text);
-  }
-  .lounge-auth__status.is-error { background: #fde9e9; border-color: #c62828; }
-  .lounge-auth__alt {
-    margin-top: 1.25rem; text-align: center;
-    font-size: 0.85rem; color: var(--color-text-muted);
-  }
-  .lounge-auth__alt a { color: var(--color-accent); font-weight: 600; text-decoration: underline; }
-</style>
-
+    <aside class="auth-side">
+      <div class="rulehead"><h2>Trouble?</h2></div>
+      <p class="t">Links expire after an hour and work once. If yours has, ask for a new one above. Still stuck: <a href="mailto:contact@thenextcigar.com?subject=Lounge%20sign-in">write to the desk</a>.</p>
+    </aside>
+  </div>
+</PaperLayout>
 <script>
   import { getSupabase, getCurrentUser } from "../../lib/supabase";
 
@@ -241,7 +89,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           /invalid login credentials/i.test(msg) || /invalid_grant/i.test(msg);
         if (looksLikeNoPassword) {
           showStatus(
-            `That email exists but no password is set yet. Tap <strong>"First time? Set a password"</strong> below to get a reset email — takes 30 seconds.`,
+            `That email exists but no password is set yet. Tap <strong>"No password yet? Set one"</strong> below to get a reset email — takes 30 seconds.`,
             true,
           );
         } else {
@@ -252,7 +100,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       }
     });
 
-    // ── "First time? Set a password" — sends reset email ───────────────
+    // ── "No password yet? Set one" — sends reset email ───────────────
     document.getElementById("login-forgot")?.addEventListener("click", async () => {
       const emailInput = pwForm?.querySelector('input[name=email]') as HTMLInputElement;
       const email = emailInput.value.trim();
@@ -278,7 +126,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         showStatus(err?.message || "Couldn't send reset email. Try again.", true);
       } finally {
         btn.disabled = false;
-        btn.textContent = "First time? Set a password";
+        btn.textContent = "No password yet? Set one";
       }
     });
 
@@ -316,7 +164,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       } catch (err: any) {
         showStatus(err?.message || "Couldn't send. Try again.", true);
         btn.disabled = false;
-        btn.textContent = "Email me a sign-in link →";
+        btn.textContent = "Email me a sign-in link";
       }
     });
 

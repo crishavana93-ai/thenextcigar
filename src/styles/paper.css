@@ -345,3 +345,15 @@ table.mk td.door small{color:var(--mute);font-weight:400}
 .rw input,.rw select{font-family:var(--sans);font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:9px 10px;border-radius:0;width:100%;box-sizing:border-box}
 .rw button.cta{border:0;background:var(--ink);color:var(--paper);font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:12px;cursor:pointer;text-align:center}
 .rw button[disabled]{opacity:.6}
+
+/* ---------- Lounge auth ---------- */
+.auth{display:grid;grid-template-columns:minmax(0,520px) 1fr;gap:40px;margin-bottom:40px}
+.auth-card{border:1px solid var(--ink);padding:24px 26px}
+.auth .rw label{display:block;font-family:var(--sans);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600}
+.auth .rw label small{text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;margin-left:6px}
+.auth .rw label input{display:block;margin-top:6px;font-size:15px}
+.auth .rw .ghost{background:none;border:0;border-bottom:1px solid var(--rule);font-family:var(--sans);font-size:12px;color:var(--ox);padding:8px 0 6px;cursor:pointer;justify-self:start}
+.auth-status{font-style:normal;color:var(--ink);border-left:2px solid var(--live);padding-left:10px}
+.auth-status.is-error{border-left-color:var(--ox)}
+@media (max-width:860px){.auth{grid-template-columns:1fr}}
+.rw[hidden],.landed[hidden],[hidden]{display:none!important}

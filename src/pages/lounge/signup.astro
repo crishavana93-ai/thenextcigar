@@ -1,189 +1,37 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import PaperLayout from "../../layouts/PaperLayout.astro";
+/** /lounge/signup/ — join the Lounge. Free; an email and a display name.
+ *  Magic link by Supabase OTP; the referral code (creator links) is optional. */
 ---
-
-<BaseLayout
-  title="Join The Lounge — The Next Cigar"
-  description="Sign up for the founding cohort of The Lounge — a private cigar-traveler network."
-  noIndex
->
-  <section class="lounge-auth">
-    <div class="lounge-auth__inner reveal">
-      <p class="lounge-auth__eyebrow">The Lounge · Founding Cohort</p>
-      <h1 class="lounge-auth__title">Reserve your place.</h1>
-      <p class="lounge-auth__lead">
-        Enter your email and we'll send a one-time magic link. No password to remember,
-        no fee during the founding-cohort beta. You'll be inside the app in 60 seconds.
-      </p>
-
-      <form id="signup-form" class="lounge-auth__form">
-        <label class="lounge-auth__label">
-          Email
-          <input type="email" name="email" required autocomplete="email" placeholder="your-email@anywhere.com" />
-        </label>
-
-        <label class="lounge-auth__label">
-          First name + initial (how others see you)
-          <input type="text" name="display_name" required maxlength="40" placeholder="Cris O." />
-        </label>
-
-        <label class="lounge-auth__label">
-          Referral code <span style="font-weight:500; text-transform:none; letter-spacing:normal; color:var(--color-text-muted);">— optional</span>
-          <input
-            type="text"
-            name="ref_code"
-            id="signup-ref-code"
-            maxlength="32"
-            autocapitalize="characters"
-            autocorrect="off"
-            spellcheck="false"
-            pattern="[A-Za-z0-9_-]{2,32}"
-            placeholder="UKCE, FTCE, CCELily…"
-            style="text-transform: uppercase;"
-          />
-          <span id="ref-code-applied" hidden style="margin-top:6px; font-size:0.78rem; color:var(--color-gold,#c9a961); text-transform:none; letter-spacing:normal; font-weight:600;">
-            ✓ Code applied — you're signing up via a creator's link
-          </span>
-        </label>
-
-        <button type="submit" class="lounge-auth__button">Send magic link →</button>
+<PaperLayout title="Join the Lounge — free · The Next Cigar" description="Join the members' room of The Next Cigar: the map, the watchlist, the members. Free. An email and a name." section="lounge" compact={true} noIndex>
+  <div class="dateline"><h1>Join the Lounge <em>— free.</em></h1><p class="st">The members' room</p></div>
+  <div class="auth">
+    <div class="auth-card">
+      <span class="kick">No card · no fee · nothing to cancel</span>
+      <h2 class="head" style="margin:8px 0 6px">An email and a name.</h2>
+      <p class="t">We send you a link; open it and you're in. No password unless you want one later.</p>
+      <form id="signup-form" class="rw" style="margin-top:18px">
+        <label>Email<input type="email" name="email" required autocomplete="email" placeholder="you@example.com" /></label>
+        <label>Name, as other members see it<input type="text" name="display_name" required maxlength="40" autocomplete="nickname" placeholder="Cris O." /></label>
+        <label>Referral code <small>optional</small><input type="text" id="signup-ref-code" name="referral_code" maxlength="32" autocomplete="off" placeholder="From a creator's link" /></label>
+        <p class="note" id="ref-code-applied" hidden>Code applied — you'll be counted to that creator.</p>
+        <button type="submit" class="cta">Email me the link →</button>
       </form>
-
-      <p id="signup-status" class="lounge-auth__status" hidden></p>
-
-      <p class="lounge-auth__alt">
-        Already a member? <a href="/lounge/login/">Sign in</a>
-      </p>
-
-      <p class="lounge-auth__legal">
-        By joining you agree to the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>.
-        21+ only. Cigar smokers and aficionados; not a marketplace for tobacco sale.
-      </p>
+      <p id="signup-status" class="note auth-status" hidden aria-live="polite"></p>
+      <p class="note" style="margin-top:16px">Already a member? <a href="/lounge/login/">Sign in</a>. By joining you accept the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>. 21+ only.</p>
     </div>
-  </section>
-</BaseLayout>
-
-<style>
-  .lounge-auth {
-    min-height: calc(100vh - 80px);
-    background:
-      radial-gradient(circle at 15% 25%, rgba(110, 38, 32, 0.10), transparent 55%),
-      radial-gradient(circle at 85% 75%, rgba(255, 46, 46, 0.06), transparent 55%),
-      var(--color-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem 1.5rem;
-  }
-  .lounge-auth__inner {
-    width: 100%;
-    max-width: 28rem;
-    background: var(--color-bg-soft);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    padding: 2.5rem;
-  }
-  .lounge-auth__eyebrow {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin: 0 0 0.85rem 0;
-  }
-  .lounge-auth__title {
-    font-family: var(--font-display);
-    font-size: 2.25rem;
-    font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    color: var(--color-text);
-    margin: 0 0 0.85rem 0;
-  }
-  .lounge-auth__lead {
-    font-size: 0.95rem;
-    line-height: 1.55;
-    color: var(--color-text-soft);
-    margin: 0 0 1.5rem 0;
-  }
-  .lounge-auth__form { display: flex; flex-direction: column; gap: 1rem; }
-  .lounge-auth__label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--color-text-muted);
-  }
-  .lounge-auth__label input {
-    padding: 0.75rem 0.85rem;
-    border: 1px solid var(--color-border);
-    border-radius: 3px;
-    background: #fff;
-    font-size: 0.95rem;
-    font-weight: 400;
-    color: var(--color-text);
-    text-transform: none;
-    letter-spacing: normal;
-  }
-  .lounge-auth__label input:focus {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 1px;
-  }
-  .lounge-auth__button {
-    margin-top: 0.4rem;
-    padding: 0.65rem 1.2rem;
-    background: var(--color-accent);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-size: 0.76rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  .lounge-auth__button:hover { background: var(--color-accent-hover); }
-  .lounge-auth__button:disabled { opacity: 0.6; cursor: wait; }
-  .lounge-auth__status {
-    margin-top: 1rem;
-    padding: 0.85rem 1rem;
-    background: var(--color-cream);
-    border-left: 3px solid var(--color-accent);
-    border-radius: 3px;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    color: var(--color-text);
-  }
-  .lounge-auth__status.is-error {
-    background: #fde9e9;
-    border-color: #c62828;
-  }
-  .lounge-auth__alt {
-    margin-top: 1.25rem;
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-  }
-  .lounge-auth__alt a {
-    color: var(--color-accent);
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  .lounge-auth__legal {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--color-border);
-    font-size: 0.72rem;
-    color: var(--color-text-muted);
-    line-height: 1.5;
-  }
-  .lounge-auth__legal a { color: var(--color-text-soft); text-decoration: underline; }
-</style>
-
+    <aside class="auth-side">
+      <div class="rulehead"><h2>What's inside</h2></div>
+      <ul class="eds">
+        <li><span>The map</span><span>lounges, Casas, shops</span></li>
+        <li><span>The watchlist</span><span>price &amp; restock alerts</span></li>
+        <li><span>Check-ins &amp; messages</span><span>members near you</span></li>
+        <li><span>First access</span><span>Guatabey, Shop arrivals</span></li>
+      </ul>
+      <p class="note">Why it's free, and what we ask in return: <a href="/lounge/">the Lounge page</a>.</p>
+    </aside>
+  </div>
+</PaperLayout>
 <script>
   import { getSupabase } from "../../lib/supabase";
 
@@ -276,10 +124,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         if (status) {
           status.hidden = false;
           status.classList.add("is-error");
-          status.textContent = err.message || "Something went wrong. Try again, or email guatabeycigars@gmail.com if it persists.";
+          status.textContent = err.message || "Something went wrong. Try again, or email contact@thenextcigar.com if it persists.";
         }
         btn.disabled = false;
-        btn.textContent = "Send magic link →";
+        btn.textContent = "Email me the link →";
       }
     });
   }
