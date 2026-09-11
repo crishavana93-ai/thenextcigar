@@ -128,6 +128,16 @@ const HISTORY_DAYS = 90;
 
 async function fetchHistory(): Promise<Map<string, HistoryPoint[]>> {
   const out = new Map<string, HistoryPoint[]>();
+  // Local fixture for testing the chart and index pages without Supabase:
+  // FINDER_HISTORY_FIXTURE=path/to/history.json  ({ skuId: [{day, eur, offers}] })
+  const fixture = process.env.FINDER_HISTORY_FIXTURE;
+  if (fixture) {
+    const { readFileSync } = await import("node:fs");
+    const data = JSON.parse(readFileSync(fixture, "utf8")) as Record<string, HistoryPoint[]>;
+    for (const [k, v] of Object.entries(data)) out.set(k, v);
+    console.log(`[finder-live] history from fixture ${fixture}: ${out.size} SKUs`);
+    return out;
+  }
   if (!SUPABASE_URL || !SUPABASE_KEY) return out;
   const since = new Date(Date.now() - HISTORY_DAYS * 86400e3).toISOString().slice(0, 10);
   const box = new Map(seed.SKUS.map((s) => [s.id, (s as any).boxSize as number]));

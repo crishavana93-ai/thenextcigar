@@ -1,0 +1,161 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import { SKUS, PRICE_HISTORY, bestPriceForSku, RETAILERS, PRICE_SNAPSHOTS } from "../../../data/finder-live";
+
+/**
+ * /finder/index/ — The Habanos Index.
+ *
+ * An equal-weighted index of the cheapest in-stock per-cigar price in Europe
+ * across every vitola on the board, base 100 on the first day the scraper
+ * has readings for at least half the basket. Every number is derived from
+ * finder_price_daily; nothing is estimated. Until the history is long enough
+ * the page says so instead of drawing a line.
+ */
+
+const MIN_COVERAGE = 0.5;
+// day → { skuId → per-cigar EUR }
+const byDay = new Map<string, Map<string, number>>();
+for (const sku of SKUS) {
+  for (const h of PRICE_HISTORY.get(sku.id) ?? []) {
+    if (!byDay.has(h.day)) byDay.set(h.day, new Map());
+    byDay.get(h.day)!.set(sku.id, h.eur / sku.boxSize);
+  }
+}
+const days = [...byDay.keys()].sort();
+const baseDay = days.find((d) => byDay.get(d)!.size >= SKUS.length * MIN_COVERAGE) ?? null;
+const base = baseDay ? byDay.get(baseDay)! : null;
+
+// Chain each day against the base on the SKUs both have.
+const series = baseDay
+  ? days.filter((d) => d >= baseDay).map((d) => {
+      const m = byDay.get(d)!;
+      let n = 0, sum = 0;
+      for (const [id, p] of m) { const b = base!.get(id); if (b) { sum += p / b; n++; } }
+      return { day: d, value: n >= SKUS.length * MIN_COVERAGE ? Math.round((sum / n) * 1000) / 10 : null, n };
+    }).filter((p) => p.value !== null) as { day: string; value: number; n: number }[]
+  : [];
+const latest = series.at(-1) ?? null;
+const first = series[0] ?? null;
+const monthAgo = latest ? series.filter((p) => Date.parse(p.day) <= Date.parse(latest.day) - 30 * 86400e3).at(-1) ?? null : null;
+const weekAgo = latest ? series.filter((p) => Date.parse(p.day) <= Date.parse(latest.day) - 7 * 86400e3).at(-1) ?? null : null;
+const pct = (a: number, b: number) => Math.round(((a - b) / b) * 1000) / 10;
+
+// Brand sub-indices (same method, per brand, latest vs base).
+const brands = [...new Set(SKUS.map((s) => s.brand))].sort();
+const brandIdx = latest && base ? brands.map((b) => {
+  const ids = SKUS.filter((s) => s.brand === b).map((s) => s.id);
+  const m = byDay.get(latest.day)!;
+  let n = 0, sum = 0;
+  for (const id of ids) { const p = m.get(id), q = base.get(id); if (p && q) { sum += p / q; n++; } }
+  return n > 0 ? { brand: b, value: Math.round((sum / n) * 1000) / 10, n } : null;
+}).filter((x): x is NonNullable<typeof x> => !!x).sort((a, b) => b.value - a.value) : [];
+
+// Movers since base, per vitola.
+const movers = latest && base ? SKUS.map((s) => {
+  const p = byDay.get(latest.day)!.get(s.id), q = base.get(s.id);
+  return p && q ? { sku: s, now: p, then: q, pct: pct(p, q) } : null;
+}).filter((x): x is NonNullable<typeof x> => !!x).sort((a, b) => b.pct - a.pct) : [];
+const up = movers.slice(0, 5), down = movers.slice(-5).reverse();
+
+// Chart
+let chart: { path: string; lo: number; hi: number; ticks: { x: number; label: string }[]; dot: { x: number; y: number } } | null = null;
+if (series.length >= 3) {
+  const W = 900, H = 260, PL = 46, PR = 12, PT = 12, PB = 26;
+  const vals = series.map((p) => p.value);
+  const lo = Math.floor(Math.min(...vals, 100) - 1), hi = Math.ceil(Math.max(...vals, 100) + 1);
+  const t0 = Date.parse(series[0].day), t1 = Date.parse(series.at(-1)!.day) || t0 + 1;
+  const x = (d: string) => PL + ((Date.parse(d) - t0) / Math.max(1, t1 - t0)) * (W - PL - PR);
+  const y = (v: number) => PT + ((hi - v) / (hi - lo)) * (H - PT - PB);
+  chart = {
+    path: "M" + series.map((p) => `${x(p.day).toFixed(1)},${y(p.value).toFixed(1)}`).join(" L"),
+    lo, hi,
+    ticks: [0, 0.5, 1].map((f) => ({ x: PL + f * (W - PL - PR), label: new Date(t0 + f * (t1 - t0)).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) })),
+    dot: { x: x(series.at(-1)!.day), y: y(series.at(-1)!.value) },
+  };
+  (chart as any).y100 = y(100);
+}
+const fmt = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+const coverage = latest ? latest.n : 0;
+const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
+const perCigar = SKUS.map((s) => ({ s, p: bestPriceForSku(s.id) })).filter((x) => x.p).map((x) => ({ s: x.s, v: x.p!.eur / x.s.boxSize })).sort((a, b) => b.v - a.v);
+const dearest = perCigar[0]?.s, cheapest = perCigar.at(-1)?.s;
+
+const jsonLd = { "@context": "https://schema.org", "@type": "Dataset", name: "The Habanos Index", description: "Equal-weighted index of the cheapest in-stock per-cigar price in Europe across the Cuban vitolas tracked by The Next Cigar.", url: "https://thenextcigar.com/finder/index/", creator: { "@type": "Organization", name: "The Next Cigar" }, temporalCoverage: baseDay ? `${baseDay}/${latest?.day}` : undefined, license: "https://creativecommons.org/licenses/by/4.0/" };
+---
+
+<PaperLayout title="The Habanos Index — what a Cuban cigar costs in Europe, day by day · The Next Cigar" description={latest ? `The Habanos Index stands at ${latest.value} (base 100 on ${fmt(baseDay!)}): the cheapest per-cigar price across ${coverage} Cuban vitolas at ${pricedRetailers} European retailers.` : `An equal-weighted index of the cheapest per-cigar price in Europe across ${SKUS.length} Cuban vitolas. Publishing from the first month of readings.`} section="markets" jsonLd={jsonLd}>
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Markets · <a href="/finder/">the board</a> · index</p>
+  <div class="dateline">
+    <h1>The Habanos Index <em>— {latest ? `${latest.value}` : "opening soon"}</em></h1>
+    <p class="st">{latest ? `${fmt(latest.day)} · base 100 = ${fmt(baseDay!)} · ${coverage} of ${SKUS.length} vitolas` : `${SKUS.length} vitolas · ${pricedRetailers} retailers · daily`}</p>
+  </div>
+
+  <div class="front">
+    <aside>
+      <div class="rulehead"><h2>Reading</h2></div>
+      {latest ? (
+        <>
+          <div class="quote">
+            <p class="t">Index · {fmt(latest.day)}</p>
+            <p class="big">{latest.value.toFixed(1)}</p>
+            <p class="sub">{weekAgo ? `${pct(latest.value, weekAgo.value) >= 0 ? "+" : ""}${pct(latest.value, weekAgo.value)}% on the week` : "first week"}{monthAgo ? ` · ${pct(latest.value, monthAgo.value) >= 0 ? "+" : ""}${pct(latest.value, monthAgo.value)}% on the month` : ""}</p>
+            <p class="sub" style="margin-top:6px">{first && first.day !== latest.day ? `Since ${fmt(first.day)}: ${pct(latest.value, first.value) >= 0 ? "+" : ""}${pct(latest.value, first.value)}%` : ""}</p>
+          </div>
+          {brandIdx.length > 0 && (<><div class="rulehead"><h2>By brand</h2></div><ul class="eds">{brandIdx.map((b) => (<li><span>{b.brand} <small style="color:var(--mute)">({b.n})</small></span><span style={`color:${b.value >= 100 ? "var(--ox)" : "var(--live)"}`}>{b.value.toFixed(1)}</span></li>))}</ul></>)}
+        </>
+      ) : (
+        <div class="quote"><p class="t">Not yet published</p><p class="sub">The index needs readings for at least half the basket on one day to set its base. The scraper reads {pricedRetailers} retailers four times a day; the first value appears here by itself.</p></div>
+      )}
+    </aside>
+
+    <section>
+      {chart ? (
+        <div class="spark" style="margin-top:0">
+          <div class="rulehead"><h2>The line <em>· base 100 on {fmt(baseDay!)}</em></h2></div>
+          <svg viewBox="0 0 900 260" role="img" aria-label={`Habanos Index from ${fmt(first!.day)} to ${fmt(latest!.day)}, now ${latest!.value}`}>
+            <line class="grid" x1="46" x2="888" y1={(chart as any).y100} y2={(chart as any).y100} style="stroke:var(--ox);stroke-dasharray:3 4" />
+            <text class="l" x="42" y="16" text-anchor="end">{chart.hi}</text>
+            <text class="l" x="42" y={(chart as any).y100 + 4} text-anchor="end" style="fill:var(--ox)">100</text>
+            <text class="l" x="42" y="236" text-anchor="end">{chart.lo}</text>
+            {chart.ticks.map((t, i) => (<text class="l" x={t.x} y="254" text-anchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}>{t.label}</text>))}
+            <path class="line" d={chart.path} />
+            <circle class="dot" cx={chart.dot.x} cy={chart.dot.y} r="4" />
+          </svg>
+        </div>
+      ) : (
+        <div class="box" style="margin-top:0"><span class="kick">The line</span><h3 class="head">Drawn from the third daily reading.</h3><p>{days.length > 0 ? `Readings so far: ${days.length} day${days.length > 1 ? "s" : ""}, the latest covering ${byDay.get(days.at(-1)!)!.size} vitolas.` : "No daily readings yet."}</p></div>
+      )}
+
+      {movers.length > 0 && (
+        <div class="three" style="grid-template-columns:1fr 1fr;margin-top:26px">
+          <article>
+            <div class="rulehead"><h2>Dearer since base</h2></div>
+            <table class="mk"><tbody>{up.map((m) => (<tr><td class="v"><a href={`/finder/sku/${m.sku.slug}/`}>{m.sku.brand} {m.sku.vitola}</a><small>€{m.then.toFixed(2)} → €{m.now.toFixed(2)} per cigar</small></td><td class="p" style="color:var(--ox)">{m.pct >= 0 ? "+" : ""}{m.pct}%</td></tr>))}</tbody></table>
+          </article>
+          <article>
+            <div class="rulehead"><h2>Cheaper since base</h2></div>
+            <table class="mk"><tbody>{down.map((m) => (<tr><td class="v"><a href={`/finder/sku/${m.sku.slug}/`}>{m.sku.brand} {m.sku.vitola}</a><small>€{m.then.toFixed(2)} → €{m.now.toFixed(2)} per cigar</small></td><td class="p" style="color:var(--live)">{m.pct >= 0 ? "+" : ""}{m.pct}%</td></tr>))}</tbody></table>
+          </article>
+        </div>
+      )}
+
+      <div class="rulehead" style="margin-top:26px"><h2>How it is made</h2></div>
+      <div class="prose" style="max-width:none;font-size:15.5px">
+        <p><b>The basket</b> is every Cuban vitola on the Markets board — {SKUS.length} at present, {dearest && cheapest ? `from the ${dearest.brand} ${dearest.vitola} to the ${cheapest.brand} ${cheapest.vitola} — ` : ""}each weighted equally. A vitola enters the day's reading when at least one tracked retailer has it in stock at a price our scraper read that day.</p>
+        <p><b>The price</b> for each vitola is the cheapest in-stock box anywhere in Europe that day, in euros at our reference rate, divided by the canonical box size. Per-cigar, because a box of 10 and a box of 25 are not comparable otherwise.</p>
+        <p><b>The index</b> is 100 on the base day — the first day with readings for at least half the basket — and on any later day is the average, across vitolas with a reading on both days, of that day's price over the base price. Days with fewer than half the basket are skipped rather than estimated. Brand indices use the same method on that brand's vitolas.</p>
+        <p><b>What it is not.</b> It is not Habanos S.A.'s list price, not a survey of every retailer in Europe, and not what any one buyer pays after duty. It is a daily measure of the cheapest legal way to buy each cigar online in Europe, from the {pricedRetailers} retailers we read. When a retailer sells out, the next-cheapest sets the price; that is a real cost to a buyer, so it stays in.</p>
+        <p>The data are free to reuse with attribution (CC BY 4.0). Write to <a href="mailto:contact@thenextcigar.com?subject=Habanos%20Index">the desk</a> for the daily series.</p>
+      </div>
+    </section>
+
+    <aside class="rail">
+      <div class="rulehead"><h2>Read next</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/finder/">The board</a><p class="by">Every vitola, cheapest listing today</p></div></li>
+        <li><div><a class="head" href="/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">Why the index isn't your door price</p></div></li>
+      </ul>
+      <div class="box"><span class="kick">Watchlist · free</span><h3 class="head">A move you'd want to know about.</h3><p>Price alerts on any vitola in the basket, from the Lounge.</p><a class="cta" href="/lounge/signup/">Join the Lounge</a></div>
+    </aside>
+  </div>
+</PaperLayout>
