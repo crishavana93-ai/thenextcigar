@@ -617,6 +617,16 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   }
   .feed-row:last-child { border-bottom: none; }
   .feed-row:hover { background: color-mix(in srgb, var(--color-gold) 4%, transparent); }
+
+  /* The "start your watchlist" tile. It used to carry its colours inline —
+     a dark gradient with cream type — so the skin went straight past it and
+     the third line came out unreadable. It is a ruled tile now. */
+  .events-strip__card--start {
+    background: var(--color-bg-soft);
+    border-color: var(--color-accent);
+    border-left-width: 3px;
+  }
+  .events-strip__card--start .events-strip__date { color: var(--color-accent); }
   .feed-row--intro { background: color-mix(in srgb, var(--color-gold) 6%, transparent); padding-left: 12px; padding-right: 12px; border-left: 3px solid var(--color-gold); border-radius: 6px; margin-bottom: 6px; }
 
   .feed-row__avatar {
@@ -1352,10 +1362,10 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
 
     // Prepend the "start a watchlist" CTA card so the empty state has a path.
     strip.innerHTML =
-      `<a class="events-strip__card" href="/lounge/app/finder/" style="background:linear-gradient(135deg,var(--color-charcoal, #1a1d2e) 0%,#3a2e22 100%);color:var(--color-cream, #f5efe0);border:1px solid var(--color-gold, #c9a961);">
-         <p class="events-strip__date" style="color:var(--color-gold, #c9a961);">START</p>
-         <h3 class="events-strip__title" style="color:var(--color-cream, #f5efe0);">Your watchlist</h3>
-         <p class="events-strip__venue" style="color:#d0c2a0;">Save a cigar to get drop alerts</p>
+      `<a class="events-strip__card events-strip__card--start" href="/lounge/app/finder/">
+         <p class="events-strip__date">START</p>
+         <h3 class="events-strip__title">Your watchlist</h3>
+         <p class="events-strip__venue">Save a cigar to get drop alerts</p>
        </a>` + strip.innerHTML;
 
     section.hidden = false;

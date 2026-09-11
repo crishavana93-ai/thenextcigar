@@ -434,7 +434,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     bottom: calc(64px + env(safe-area-inset-bottom));
     z-index: 30;
     padding: 10px 0 8px;
-    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0.85) 100%);
+    background: linear-gradient(180deg, transparent 0%, rgba(242, 240, 234, 0.85) 35%, #F2F0EA 100%);
     pointer-events: none;
   }
   @media (min-width: 1024px) {
@@ -1721,10 +1721,14 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
           showVenueSheet(lounge);
         }
       } else if (myCity) {
+        // Centre on the member's city but open wide enough to show the network.
+        // At zoom 12 the map looked like the only cigar shops in the world were
+        // the four in Malmö; at 5 you see your country and its neighbours, and
+        // the city is still under the crosshair when you zoom in.
         const lounge = allLounges.find(
           (l) => l.city.toLowerCase() === myCity.toLowerCase() && isValidCoord(l.lat, l.lng),
         );
-        if (lounge) map.setView([lounge.lat, lounge.lng], 12);
+        if (lounge) map.setView([lounge.lat, lounge.lng], 5);
       }
     }
     } finally {

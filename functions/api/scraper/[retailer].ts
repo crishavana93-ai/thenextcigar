@@ -296,10 +296,19 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       // defaults to a non-canonical pack size and returns CHF 448 (≈ 3-pack
       // price marked as 25-pack). Re-enable once we find the box-of-10
       // combination URL (likely 209-{comboId}-cohiba-behike-52-...html).
-      { url: "https://cigarmust.com/en/cohiba/224-cohiba-siglo-iv-7612907060945.html",                       skuHint: "cohiba-siglo-iv" },
-      { url: "https://cigarmust.com/en/cohiba/212-cohiba-esplendidos-7612907060600.html",                    skuHint: "cohiba-esplendidos" },
+      // { url: "https://cigarmust.com/en/cohiba/224-cohiba-siglo-iv-7612907060945.html",                       skuHint: "cohiba-siglo-iv" },
+      // ⚠️ No combination id in the URL, so PrestaShop served its default pack
+      //    and we filed it as a box of 25 (CHF 322). Re-enable with the
+      //    box-of-25 combination URL: /{id}-{comboId}-cohiba-siglo-iv-7612907060945.html
+      // { url: "https://cigarmust.com/en/cohiba/212-cohiba-esplendidos-7612907060600.html",                    skuHint: "cohiba-esplendidos" },
+      // ⚠️ No combination id in the URL, so PrestaShop served its default pack
+      //    and we filed it as a box of 25 (CHF 396). Re-enable with the
+      //    box-of-25 combination URL: /{id}-{comboId}-cohiba-esplendidos-7612907060600.html
       { url: "https://cigarmust.com/en/montecristo/341-70-montecristo-no4-7612907062178.html",               skuHint: "montecristo-no-4" },
-      { url: "https://cigarmust.com/en/montecristo/339-montecristo-no2-7612907062123.html",                  skuHint: "montecristo-no-2" },
+      // { url: "https://cigarmust.com/en/montecristo/339-montecristo-no2-7612907062123.html",                  skuHint: "montecristo-no-2" },
+      // ⚠️ No combination id in the URL, so PrestaShop served its default pack
+      //    and we filed it as a box of 25 (CHF 303). Re-enable with the
+      //    box-of-25 combination URL: /{id}-{comboId}-montecristo-no2-7612907062123.html
       { url: "https://cigarmust.com/en/montecristo/336-40-montecristo-petit-edmundo-7612907062314.html",     skuHint: "montecristo-petit-edmundo" },
       { url: "https://cigarmust.com/en/partagas/367-85-partagas-serie-d-no4-7612907062994.html",             skuHint: "partagas-serie-d-no-4" },
       { url: "https://cigarmust.com/en/hoyo-de-monterrey/273-18-hoyo-de-monterrey-epicure-no-2-7612907061461.html", skuHint: "hoyo-de-monterrey-epicure-no-2" },
@@ -608,6 +617,22 @@ function parseHavanaHouseHtml(html: string): ParsedOffer[] {
 //
 // Stock state isn't in OG, so we look for the "In Stock" / "Out of Stock"
 // text and the addtocart button's data-available attribute.
+/**
+ * Cigarmust runs PrestaShop, where a product's pack sizes are "combinations"
+ * of one product id. A PDP URL of the form /{id}-{combination}-{slug}.html
+ * loads the pack we asked for; the same URL WITHOUT the combination segment
+ * loads the shop's default pack — and the page still presents it as the
+ * product, so we stored a 3- or 10-pack price as a box of 25.
+ *
+ * That is how Montecristo No. 2 came to read CHF 303 a box: about a third of
+ * the real price, which then showed up in a member's humidor as "€13 a cigar,
+ * down 49.5% in 90 days". The Behike 52 PDP was disabled by hand for the same
+ * reason months ago; this makes the rule structural instead.
+ */
+export function cigarmustUrlHasCombination(url: string): boolean {
+  return /\/\d+-\d+-/.test(url);
+}
+
 function parseCigarmustHtml(html: string): ParsedOffer[] {
   // Helper — read a <meta> tag's content regardless of attribute order
   // (property=... can come before OR after content=...). PrestaShop themes
@@ -1129,6 +1154,13 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
 
   async function processPdp(pdp: PdpUrl): Promise<void> {
     try {
+      // PrestaShop combination guard — see cigarmustUrlHasCombination. A PDP
+      // without a combination id serves the shop's default pack, which we
+      // would then file as a box. Refuse the URL rather than store the row.
+      if (config.stack === "cigarmust_html" && !cigarmustUrlHasCombination(pdp.url)) {
+        errors.push(`${pdp.url}: no PrestaShop combination id — would report a non-box pack as a box`);
+        return;
+      }
       const res = await fetch(pdp.url, {
         headers: BROWSER_HEADERS,
         cf: { cacheTtl: 0 },

@@ -377,14 +377,19 @@ table.mk td.door small{color:var(--mute);font-weight:400}
    has asked their system for stillness gets a still paper.
    ========================================================================= */
 @media (prefers-reduced-motion: no-preference) {
+  /* The drift used to travel 5% over 24 seconds — about two tenths of a
+     percent a second, which is below what an eye notices. A photograph that
+     moves and cannot be seen moving is just a still with extra work in it.
+     It now travels 11% over 18 seconds, and pans as well as zooms, so the
+     picture reads as alive without ever becoming a slideshow. */
   @keyframes drift {
-    0%   { transform: scale(1.00) translate3d(0, 0, 0) }
-    50%  { transform: scale(1.05) translate3d(-0.8%, -1%, 0) }
-    100% { transform: scale(1.00) translate3d(0, 0, 0) }
+    0%   { transform: scale(1.02) translate3d(0, 0, 0) }
+    50%  { transform: scale(1.13) translate3d(-2.2%, -2.6%, 0) }
+    100% { transform: scale(1.02) translate3d(0, 0, 0) }
   }
   figure, .lead figure, .cubierta, .tile .ph, .goods .ph, .four article a, .three article a { overflow: hidden }
-  .foto { animation: drift 24s ease-in-out infinite; will-change: transform }
-  figure:hover .foto, .tile:hover .foto, .goods article:hover .foto, .four article:hover .foto { animation-duration: 12s }
+  .foto { animation: drift 18s ease-in-out infinite; will-change: transform }
+  figure:hover .foto, .tile:hover .foto, .goods article:hover .foto, .four article:hover .foto { animation-duration: 7s }
 
   /* Newsprint that remembers it was a photograph: the lead and the article
      cover print grey and take on colour as you reach them. */
@@ -394,7 +399,7 @@ table.mk td.door small{color:var(--mute);font-weight:400}
       to   { filter: grayscale(0) contrast(1) }
     }
     .lead figure .foto, .art .cubierta .foto {
-      animation: drift 24s ease-in-out infinite, grade 1s linear both;
+      animation: drift 18s ease-in-out infinite, grade 1s linear both;
       animation-timeline: auto, view();
       animation-range: normal, entry 15% cover 45%;
     }
