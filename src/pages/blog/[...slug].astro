@@ -1,6 +1,7 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
 import { srcFor, srcsetFor } from "../../lib/img";
+import { toolsFor, metaDescription, pageTitle } from "../../lib/seo";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
 
@@ -100,8 +101,8 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 ---
 
 <PaperLayout
-  title={`${d.title} · The Next Cigar`}
-  description={d.excerpt || d.title}
+  title={pageTitle(d.title)}
+  description={metaDescription(d.excerpt || d.title)}
   image={coverUrl}
   section="magazine"
   compact={true}
@@ -162,6 +163,18 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
         <Content />
       </div>
     </div>
+
+    <section class="band">
+      <div class="rulehead flat"><h2>From the tools</h2><a class="more" href="/tools/">All of them →</a></div>
+      <div class="toolstrip">
+        {toolsFor(d.title, d.category, d.excerpt).map((t) => (
+          <a class="toolstrip__item" href={t.href}>
+            <span class="toolstrip__label">{t.label}</span>
+            <span class="toolstrip__blurb">{t.blurb}</span>
+          </a>
+        ))}
+      </div>
+    </section>
 
     <section class="band">
       <div class="rulehead flat"><h2>Read next</h2><a class="more" href="/blog/">The archive →</a></div>

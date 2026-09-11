@@ -408,3 +408,21 @@ table.mk td.door small{color:var(--mute);font-weight:400}
   /* The ticker already scrolls; hold it still while a reader reads one. */
   .ticker:hover .run { animation-play-state: paused }
 }
+
+/* ---- the tools strip under an article --------------------------------------
+   Three ruled panels sending the reader to the calculator the piece implies.
+   Not decoration: until this existed, 49 of 57 articles linked to neither the
+   board nor the tools, so the pages we most want found were the pages nothing
+   pointed at. */
+.toolstrip{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--ink)}
+@media (min-width:720px){.toolstrip{grid-template-columns:repeat(3,1fr)}}
+.toolstrip__item{display:block;padding:14px 0;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit}
+@media (min-width:720px){
+  .toolstrip__item{padding:14px 16px;border-bottom:0;border-right:1px solid var(--rule)}
+  .toolstrip__item:last-child{border-right:0}
+  .toolstrip__item:first-child{padding-left:0}
+}
+.toolstrip__item:hover{background:var(--paper-2);text-decoration:none}
+.toolstrip__label{display:block;font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ox);font-weight:600}
+.toolstrip__blurb{display:block;margin-top:5px;font-family:var(--serif);font-size:16px;line-height:1.35;color:var(--ink)}
+
