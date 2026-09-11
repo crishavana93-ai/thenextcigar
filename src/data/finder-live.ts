@@ -87,7 +87,11 @@ function merge(rows: Row[]): LiveSnapshot[] {
     const box = (sku as any).boxSize as number | undefined;
     if (box && r.pack_size && r.pack_size !== box) continue;
     const key = `${r.sku}|${r.retailer_id}`;
-    if (!latest.has(key)) latest.set(key, r); // rows arrive newest first
+    const held = latest.get(key);
+    // Rows arrive newest first. Prefer the newest row that states the pack
+    // size; only fall back to one that doesn't when nothing better exists.
+    if (!held) latest.set(key, r);
+    else if (held.pack_size == null && r.pack_size === box) latest.set(key, r);
   }
 
   const out: LiveSnapshot[] = seed.PRICE_SNAPSHOTS.map((s) => ({
@@ -155,7 +159,10 @@ async function fetchHistory(): Promise<Map<string, HistoryPoint[]>> {
       const rows = (await res.json()) as { sku: string; pack_size: number | null; day: string; min_eur: string | number; offers: number }[];
       for (const r of rows) {
         const b = box.get(r.sku);
-        if (!b || (r.pack_size && r.pack_size !== b)) continue;
+        // A row with no pack_size could be any pack — a 10 priced as a 25
+        // halves the apparent price and invents a "50% fall". Only exact
+        // matches count; a SKU with no matching rows simply has no history.
+        if (!b || r.pack_size !== b) continue;
         if (!out.has(r.sku)) out.set(r.sku, []);
         out.get(r.sku)!.push({ day: r.day, eur: Number(r.min_eur), offers: r.offers });
       }

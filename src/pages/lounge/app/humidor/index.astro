@@ -82,7 +82,7 @@ const board = { priced, skus: SKUS.map((s) => ({ id: s.id, name: `${s.brand} ${s
 
       <section id="hum-list-wrap" hidden>
         <table class="hum-table">
-          <thead><tr><th>Cigar</th><th class="n">Qty</th><th class="n">Paid</th><th class="n">Worth now</th><th class="n">Age</th><th></th></tr></thead>
+          <thead><tr><th class="c">Cigar</th><th class="n">Qty</th><th class="n">Paid</th><th class="n">Worth now</th><th class="n">Age</th><th class="n"><span class="sr">Actions</span></th></tr></thead>
           <tbody id="hum-list"></tbody>
         </table>
       </section>
@@ -199,7 +199,7 @@ const board = { priced, skus: SKUS.map((s) => ({ id: s.id, name: `${s.brand} ${s
         const move = p && p.changePct !== null
           ? `<small class="${p.changePct >= 0 ? "up" : "down"}">${p.changePct >= 0 ? "+" : ""}${p.changePct}% in 90 days</small>` : "";
         return `<tr data-id="${r.id}">
-          <td class="c"><b>${name}</b><small>${r.form === "box" ? "sealed box" : "singles"}${r.retailer ? " · " + r.retailer : ""}${p ? " · " + p.checked : ""}</small></td>
+          <td class="c"><b>${name}</b><br><small>${r.form === "box" ? "sealed box" : "singles"}${r.retailer ? " · " + r.retailer : ""}${p ? " · " + p.checked : ""}</small></td>
           <td class="n">${cigars(r)}</td>
           <td class="n">${r.paid ? `${r.currency} ${Number(r.paid).toFixed(0)}` : "—"}</td>
           <td class="n">${w !== null ? `<b>${eur(w)}</b>${move}` : `<span class="muted">not on the board</span>`}</td>
@@ -346,6 +346,8 @@ const board = { priced, skus: SKUS.map((s) => ({ id: s.id, name: `${s.brand} ${s
     .hum-empty h2 { margin:0 0 8px; font-size:22px }
     .hum-empty p { margin:0 0 16px; color:var(--color-text-soft) }
     .hum-table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums }
+    .hum-table th.c { text-align:left }
+    .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0) }
     .hum-table th { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--color-text-muted); border-bottom:1px solid var(--color-text); padding:8px 10px; text-align:left }
     .hum-table th.n, .hum-table td.n { text-align:right }
     .hum-table td { padding:11px 10px; border-bottom:1px solid var(--color-border); vertical-align:top }

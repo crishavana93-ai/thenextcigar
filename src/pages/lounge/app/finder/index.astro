@@ -44,6 +44,9 @@ const dropRows = PRICE_SNAPSHOTS
 
 const totalSnapshots = PRICE_SNAPSHOTS.length;
 const totalRetailers = RETAILERS.length;
+// "Live" means the scraper re-read it recently — not every row we hold.
+const livePrices = PRICE_SNAPSHOTS.filter((x: any) => x.live).length;
+const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((x) => x.retailerId)).size;
 const totalCountries = COUNTRIES.length;
 const totalSkus      = SKUS.length;
 
@@ -108,7 +111,7 @@ const cataloguePerSku = SKUS.map((sku) => ({
           <p class="lounge-label lounge-label--gold">The Finder · Lounge edition</p>
           <h1 class="lounge-h1">Your Cuban cigar watchlist</h1>
           <p class="finder-strip__lead">
-            Track {totalSnapshots} live prices across {totalRetailers} European retailers in {totalCountries} countries.
+            {livePrices > 0 ? `${livePrices} live prices` : `${totalSnapshots} prices`} from the {pricedRetailers} retailers that publish them, out of {totalRetailers} we track across {totalCountries} countries.
             Unlimited alerts, push notifications, full price history.
           </p>
         </div>

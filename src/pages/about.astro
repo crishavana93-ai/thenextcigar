@@ -1,10 +1,11 @@
 ---
 import PaperLayout from "../layouts/PaperLayout.astro";
 import { getCollection } from "astro:content";
-import { SKUS, RETAILERS, COUNTRIES } from "../data/finder-live";
+import { SKUS, RETAILERS, COUNTRIES, PRICE_SNAPSHOTS } from "../data/finder-live";
 /** /about/ */
 const posts = (await getCollection("blog")).filter((p) => !(p.data as any).draft).length;
 const author = (await getCollection("authors"))[0];
+const priced = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
 const jsonLd = { "@context": "https://schema.org", "@type": "AboutPage", name: "About The Next Cigar", url: "https://thenextcigar.com/about/", mainEntity: { "@type": "Organization", name: "The Next Cigar", url: "https://thenextcigar.com/", email: "contact@thenextcigar.com" } };
 ---
 <PaperLayout title="About the paper · The Next Cigar" description="Why The Next Cigar exists, who writes it, how it is paid for, and what it will not do." section="about" compact={true} jsonLd={jsonLd}>
@@ -17,7 +18,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "AboutPage", name: "
           <dt>Founded</dt><dd>2025</dd>
           <dt>Editor</dt><dd>{(author?.data as any)?.name ?? "Cristian Ortiz Suárez"}</dd>
           <dt>Desk</dt><dd>Malmö, Sweden</dd>
-          <dt>The board</dt><dd>{SKUS.length} vitolas · {RETAILERS.length} retailers · {COUNTRIES.length} countries</dd>
+          <dt>The board</dt><dd>{SKUS.length} vitolas · {priced} retailers priced · {RETAILERS.length} in the directory</dd>
           <dt>The magazine</dt><dd>{posts} pieces</dd>
           <dt>Write to us</dt><dd><a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a></dd>
         </dl>
@@ -25,7 +26,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "AboutPage", name: "
       <div class="prose cap">
         <p>The cigar world is older than most magazines. The way it gets covered is not. The Next Cigar exists because people who actually smoke deserve writing that respects them — and a place that treats the leaf, the makers and the rituals around them with the same seriousness as the cigar itself.</p>
         <h2>What we do</h2>
-        <p>News on the brands, regulators and factories that move the industry. Long reads on the history and culture of cigars and the people who make them. Practical writing for people who want to smoke better, not louder. And the Markets board: box prices for {SKUS.length} Cuban vitolas, read from {RETAILERS.length} licensed European retailers, each price carrying the date it was checked.</p>
+        <p>News on the brands, regulators and factories that move the industry. Long reads on the history and culture of cigars and the people who make them. Practical writing for people who want to smoke better, not louder. And the Markets board: box prices for {SKUS.length} Cuban vitolas. We keep a directory of {RETAILERS.length} licensed Habanos retailers across {COUNTRIES.length} European countries and read prices from the {priced} that publish them, each price carrying the date it was checked.</p>
         <h2>How it is paid for</h2>
         <p>Not by advertising, and not by a paywall. When a reader clicks from the board to a licensed retailer and buys a box, the retailer pays us a small commission; the reader's price is unchanged. The Shop sells accessories and clothing at a margin. That is the whole business. Sponsorship, if we ever accept it, is labelled on the page and limited to things we would carry ourselves.</p>
         <h2>What we will not do</h2>
