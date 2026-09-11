@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { srcFor, srcsetFor } from "../lib/img";
 import PaperLayout from "../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, COUNTRIES, PRICE_SNAPSHOTS, bestPriceForSku, formatPrice, checkedLabel } from "../data/finder-live";
 import { events } from "../data/cigar-events";
@@ -142,7 +143,7 @@ const jsonLd = {
       <p class="by">By {authorName(lead.data.author)} · {fmtDate(lead.data.updatedAt || lead.data.publishedAt)}</p>
       {cover(lead) && (
         <figure>
-          <a href={`/blog/${lead.data.slug}/`}><img class="foto" src={cover(lead)} alt="" width="1200" height="675" fetchpriority="high" /></a>
+          <a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(lead), 1024)} srcset={srcsetFor(cover(lead))} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a>
         </figure>
       )}
       <div class="twin">
@@ -164,7 +165,7 @@ const jsonLd = {
           {accessories.map((p) => (
             <li>
               <div><a class="head" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>{p.data.excerpt && <p class="by">{p.data.excerpt.slice(0, 90)}{p.data.excerpt.length > 90 ? "…" : ""}</p>}</div>
-              {cover(p) && <img class="foto" src={cover(p)} alt="" width="54" height="54" loading="lazy" />}
+              {cover(p) && <img class="foto" src={srcFor(cover(p), 160)} alt="" width="54" height="54" loading="lazy" />}
             </li>
           ))}
         </ul>
@@ -198,7 +199,7 @@ const jsonLd = {
       {longReads.map((p) => (
         <article>
           <span class="kick mute">{String(p.data.category).replace(/-/g, " ")}</span>
-          {cover(p) && <a href={`/blog/${p.data.slug}/`}><img class="foto" src={cover(p)} alt="" width="640" height="480" loading="lazy" /></a>}
+          {cover(p) && <a href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(p), 768)} srcset={srcsetFor(cover(p), [320, 480, 768])} sizes="(max-width: 700px) 45vw, 300px" alt="" width="640" height="480" loading="lazy" /></a>}
           <a class="head" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>
           {p.data.excerpt && <p class="t">{p.data.excerpt.slice(0, 140)}{p.data.excerpt.length > 140 ? "…" : ""}</p>}
         </article>

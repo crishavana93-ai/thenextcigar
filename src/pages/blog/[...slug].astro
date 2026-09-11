@@ -1,5 +1,6 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
+import { srcFor, srcsetFor } from "../../lib/img";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
 
@@ -170,7 +171,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
           return (
             <article>
               <span class="kick mute">{String(p.data.category).replace(/-/g, " ")}</span>
-              {c && <a href={`/blog/${p.data.slug}/`}><img class="foto" src={c} alt="" width="640" height="480" loading="lazy" style="aspect-ratio:4/3;object-fit:cover;width:100%;margin:8px 0 10px" /></a>}
+              {c && <a href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(c, 768)} srcset={srcsetFor(c, [320, 480, 768])} sizes="(max-width: 700px) 45vw, 300px" alt="" width="640" height="480" loading="lazy" style="aspect-ratio:4/3;object-fit:cover;width:100%;margin:8px 0 10px" /></a>}
               <a class="head" style="font-size:21px" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>
               {p.data.excerpt && <p class="t" style="margin-top:8px">{p.data.excerpt.slice(0, 120)}…</p>}
             </article>

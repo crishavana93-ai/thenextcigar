@@ -18,7 +18,7 @@
 // ============================================================================
 
 import type { CountryCode, Currency } from "../../data/finder-data";
-import { CZK_TO_EUR, DUTY_RATES, type DutyRate, type DutyUnit } from "../../data/duty-rates";
+import { CZK_TO_EUR, rateFor, type DutyRate, type DutyUnit } from "../../data/duty-rates";
 
 export interface LandedInput {
   price: number;
@@ -65,8 +65,8 @@ function quantity(unit: DutyUnit, n: number, grams: number): number {
 }
 
 export function landedCost(i: LandedInput): LandedResult {
-  const to = DUTY_RATES[i.toCountry];
-  const from = DUTY_RATES[i.fromCountry];
+  const to = rateFor(i.toCountry);
+  const from = rateFor(i.fromCountry);
   const grams = estimateGrams(i.ring, i.lengthMm);
   const listedEur = i.price * i.fx[i.currency];
   const caveats: string[] = [];

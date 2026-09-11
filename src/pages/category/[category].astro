@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { srcFor, srcsetFor } from "../../lib/img";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 
 /** /category/[slug]/
@@ -35,7 +36,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
         <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
         {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
         <p class="by">By {by(lead.data.author)} · {fmt(lead.data.publishedAt, true)}</p>
-        {cover(lead) && <figure><a href={`/blog/${lead.data.slug}/`}><img class="foto" src={cover(lead)} alt="" width="1200" height="675" fetchpriority="high" /></a></figure>}
+        {cover(lead) && <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(lead), 1024)} srcset={srcsetFor(cover(lead))} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>}
         <ul class="list" style="margin-top:18px">
           {rest.map((p) => (
             <li style="grid-template-columns:1fr auto;gap:18px;align-items:baseline">

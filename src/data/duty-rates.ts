@@ -37,6 +37,17 @@ export interface DutyRate {
   confidence: "official" | "secondary" | "unconfirmed";
   source: { title: string; url: string };
   note?: string;
+  /** A rate change that is already law but not yet in force. Written here once,
+   *  with the date it starts, so the table changes itself on the day instead of
+   *  waiting for somebody to remember. rateFor() folds it in. */
+  scheduled?: {
+    from: string;
+    specific?: { amount: number; unit: DutyUnit };
+    adValoremPct?: number;
+    minimum?: { amount: number; unit: DutyUnit; note?: string };
+    vatPct?: number;
+    note?: string;
+  };
 }
 
 export const CZK_TO_EUR = 0.0405; // September 2026 reference; excise only
@@ -73,7 +84,8 @@ export const DUTY_RATES: Record<CountryCode, DutyRate> = {
     customs: { insideUnion: 0, outsideUnion: 25, note: "UK Global Tariff 2402100000: 25% third-country duty. The EU preference (0%) applies only to goods of EU origin; Cuban cigars shipped from an EU retailer do not qualify." },
     specific: { amount: 440.93, unit: "per_kg" },
     effective: "2025-11-26", confidence: "official",
-    note: "Rises to £508.12 per kg on 1 October 2026.",
+    scheduled: { from: "2026-10-01", specific: { amount: 508.12, unit: "per_kg" },
+      note: "Rate set in the same GOV.UK publication as the November 2025 rise." },
     source: { title: "GOV.UK — Changes to tobacco duty rates from 26 November 2025 and 1 October 2026", url: "https://www.gov.uk/government/publications/tobacco-duty-rate-changes/changes-to-tobacco-duty-rates-from-26-november-2025-and-1-october-2026" } },
   nl: { code: "nl", currency: "EUR", union: "EU", vatPct: 21, customs: EU,
     adValoremPct: 11,
@@ -95,6 +107,7 @@ export const DUTY_RATES: Record<CountryCode, DutyRate> = {
   fi: { code: "fi", currency: "EUR", union: "EU", vatPct: 25.5, customs: EU,
     specific: { amount: 0.1674, unit: "per_piece" }, adValoremPct: 34, minimum: { amount: 0.4256, unit: "per_piece" },
     effective: "2026-07-01", confidence: "official",
+    note: "Finland re-indexes tobacco excise each 1 January; check Vero's table after the turn of the year.",
     source: { title: "Vero — Excise duty table for tobacco", url: "https://www.vero.fi/en/businesses-and-corporations/taxes-and-charges/excise-taxation/excise-duty-on-tobacco/excise-duty-table-for-tobacco/" } },
   pt: { code: "pt", currency: "EUR", union: "EU", vatPct: 23, customs: EU,
     adValoremPct: 25,
@@ -127,3 +140,22 @@ export const DUTY_RATES: Record<CountryCode, DutyRate> = {
     effective: "2026-01-01", confidence: "official",
     source: { title: "Douanes Luxembourg — Taux d'accises 2026", url: "https://douanes.public.lu/content/dam/douanes/fr/accises/taux-accises-lu-01012026.pdf" } },
 };
+
+/**
+ * The rate in force on a given day.
+ *
+ * A published-but-not-yet-live change lives on the rate as `scheduled`; this
+ * folds it in once its date has passed, so a page built on 1 October quotes the
+ * new figure without anyone editing the table. Only the fields the change names
+ * are replaced — a VAT change does not silently reset the excise.
+ */
+export function rateFor(code: CountryCode, on: Date = new Date()): DutyRate {
+  const base = DUTY_RATES[code];
+  if (!base?.scheduled) return base;
+  const { from, note, ...fields } = base.scheduled;
+  if (on < new Date(from + "T00:00:00Z")) return base;
+  const next: DutyRate = { ...base, ...fields, effective: from };
+  next.note = note ?? base.note;
+  delete next.scheduled;
+  return next;
+}

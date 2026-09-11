@@ -28,11 +28,11 @@ for (const v of videos) byChannel.set(v.channelName, (byChannel.get(v.channelNam
         <span class="kick">Latest · {feature.channelName}</span>
         <h2 class="head" style="margin-top:8px"><a href={`https://www.youtube.com/watch?v=${feature.videoId}`} target="_blank" rel="noopener">{feature.title}</a></h2>
         <p class="by">{fmt(feature.publishedAt)} · opens on YouTube</p>
-        <figure><a href={`https://www.youtube.com/watch?v=${feature.videoId}`} target="_blank" rel="noopener"><img class="foto" src={feature.thumbnail} alt="" width="1280" height="720" fetchpriority="high" /></a></figure>
+        <figure><a href={`https://www.youtube.com/watch?v=${feature.videoId}`} target="_blank" rel="noopener" aria-hidden="true" tabindex="-1"><img class="foto" src={feature.thumbnail} alt="" width="1280" height="720" fetchpriority="high" /></a></figure>
         <div class="three" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));row-gap:22px;margin-top:22px">
           {grid.map((v) => (
             <article>
-              <a href={`https://www.youtube.com/watch?v=${v.videoId}`} target="_blank" rel="noopener"><img class="foto" src={v.thumbnail} alt="" width="640" height="360" loading="lazy" style="aspect-ratio:16/9;object-fit:cover;width:100%;margin:0 0 8px" /></a>
+              <a href={`https://www.youtube.com/watch?v=${v.videoId}`} target="_blank" rel="noopener" aria-hidden="true" tabindex="-1"><img class="foto" src={v.thumbnail} alt="" width="640" height="360" loading="lazy" style="aspect-ratio:16/9;object-fit:cover;width:100%;margin:0 0 8px" /></a>
               <span class="kick mute">{v.channelName}</span>
               <a class="head" style="font-size:17px;display:block;margin-top:4px" href={`https://www.youtube.com/watch?v=${v.videoId}`} target="_blank" rel="noopener">{v.title}</a>
               <p class="by">{fmt(v.publishedAt)}</p>
