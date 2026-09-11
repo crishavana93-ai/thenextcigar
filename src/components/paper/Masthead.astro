@@ -1,0 +1,43 @@
+---
+import { MASTHEAD } from "../../data/masthead";
+
+interface Props {
+  section?: string;
+  compact?: boolean;
+}
+const { section = "none", compact = false } = Astro.props;
+const isHome = Astro.url.pathname === "/";
+
+const items: [string, string, string][] = [
+  ["front", "/", "Front page"],
+  ["markets", "/finder/", "Markets"],
+  ["magazine", "/blog/", "Magazine"],
+  ["accessories", "/category/cigar-accessories/", "Accessories"],
+  ["diary", "/category/cigar-events/", "Diary"],
+  ["lounge", "/lounge/", "The Lounge"],
+  ["shop", "/shop/", "Shop"],
+];
+---
+
+<header class:list={["mast", { small: compact }]}>
+  {isHome
+    ? <h1><a href="/">The Next Cigar</a></h1>
+    : <p class="h1"><a href="/">The Next Cigar</a></p>}
+  <p class="tag">The anthology of the leaf — Cuban cigars, the European market, and the things worth owning.</p>
+  <div class="ed">
+    <span>{MASTHEAD.volume} · {MASTHEAD.issue.replace("Issue", "No.")}</span>
+    <span>Independent · Reader-supported · No tobacco sold here</span>
+    <span>{MASTHEAD.date} · Published from Sweden</span>
+  </div>
+  <nav class="sec" aria-label="Sections">
+    <ul>
+      {items.map(([key, href, label]) => (
+        <li><a href={href} class:list={{ on: key === section }}>{label}</a></li>
+      ))}
+    </ul>
+    <div class="acct">
+      <a href="/lounge/app/">Sign in</a>
+      <a class="join" href="/lounge/signup/">Join · free</a>
+    </div>
+  </nav>
+</header>

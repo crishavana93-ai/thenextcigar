@@ -1,0 +1,77 @@
+---
+import { getCollection } from "astro:content";
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+
+/**
+ * /paper/shop/ — PREVIEW ROUTE (noindex). Ships as /shop/.
+ *
+ * The goods page. Accessories first (they can be sold everywhere), grouped
+ * by kind; pieces without confirmed stock or photographs are marked "in the
+ * pipeline" and cannot be bought. Guatabey stays "in the making" with no
+ * claims until the shirts exist.
+ */
+const all = (await getCollection("products")).filter((p) => !p.data.isArchived);
+const label: Record<string, string> = { cutter: "Cutters & tools", lighter: "Lighters", humidor: "Humidors & storage", accessories: "Accessories", case: "Travel cases", ashtray: "Ashtrays", cedar: "Cedar & humidity", merch: "The Guatabey line", print: "Prints & paper", guide: "Guides" };
+const order = ["cutter", "lighter", "humidor", "accessories", "case", "ashtray", "cedar", "print", "guide", "merch"];
+const groups = new Map<string, typeof all>();
+for (const p of all) { const c = (p.data as any).category || "accessories"; if (!groups.has(c)) groups.set(c, []); groups.get(c)!.push(p); }
+const ordered = [...groups.entries()].sort((a, b) => (order.indexOf(a[0]) + 100) % 100 - (order.indexOf(b[0]) + 100) % 100);
+const cover = (p: (typeof all)[number]) => { const c: any = p.data.cover; return !c ? "" : typeof c === "string" ? c : c.src; };
+const money = (p: (typeof all)[number]) => { const d: any = p.data; const s = d.currency === "EUR" ? "€" : d.currency === "GBP" ? "£" : "$"; return `${s}${d.price}`; };
+// "Expected June 2026" must never print after June 2026.
+const eta = (d: any) => { const t = Date.parse(`1 ${d.expectedArrival ?? ""}`); return d.expectedArrival && !isNaN(t) && t + 31 * 86400e3 > Date.now() ? `Expected ${d.expectedArrival}` : "Price when it lands"; };
+const buyable = all.filter((p) => !(p.data as any).comingSoon && p.data.inStock).length;
+
+const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: "The Next Cigar Shop", url: "https://thenextcigar.com/shop/" };
+---
+
+<PaperLayout title="The Shop — cutters, lighters, humidors and the Guatabey line · The Next Cigar" description={`${all.length} pieces of cigar gear chosen by the paper. ${buyable} available now, the rest in the pipeline. No tobacco sold here.`} section="shop" compact={true} noIndex={true} jsonLd={jsonLd}>
+  <div class="dateline">
+    <h1>The Shop <em>— goods, not tobacco.</em></h1>
+    <p class="st">{buyable} available · {all.length - buyable} in the pipeline · ships to the EU, UK, CH, US &amp; CA</p>
+  </div>
+
+  <section class="gb">
+    <div>
+      <span class="kick">Guatabey · in the making</span>
+      <h2>Guatabey. <em>A guayabera, done properly.</em></h2>
+      <p class="deck">Our own guayabera, cut in the Cuban tradition. We are working on the first small run now; when the shirts exist you will see the real ones here, photographed, with the fabric, the maker and the price — not before.</p>
+      <dl class="file" style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+        <div><dt>What</dt><dd style="font-size:15px">A four-pocket guayabera, Cuban cut</dd></div>
+        <div><dt>How many</dt><dd style="font-size:15px">A small numbered run</dd></div>
+        <div><dt>Where</dt><dd style="font-size:15px">The maker is named when the run is confirmed</dd></div>
+        <div><dt>Who first</dt><dd style="font-size:15px">Lounge members, then everyone</dd></div>
+      </dl>
+      <a class="cta" href="/lounge/signup/">Tell me when it's ready →</a>
+    </div>
+    <div class="mark"><b>GB</b><small>Guatabey (n.) — Taíno for chief. The first people to smoke tobacco.</small></div>
+  </section>
+
+  {ordered.map(([cat, items]) => (
+    <section class="band" style="padding-top:0">
+      <div class="rulehead flat"><h2>{label[cat] ?? cat}</h2><span class="more">{items.length}</span></div>
+      <div class="goods">
+        {items.map((p) => {
+          const d: any = p.data; const soon = d.comingSoon || !d.inStock;
+          return (
+            <article>
+              {soon && <span class="soon">{d.comingSoon ? "In the pipeline" : "Sold out"}</span>}
+              <a class="ph" href={`/paper/shop/${d.slug}/`}>{cover(p) ? <img src={cover(p)} alt="" width="600" height="600" loading="lazy" /> : <span class="stamp">Photo to come</span>}</a>
+              <a class="head" href={`/paper/shop/${d.slug}/`}>{d.name}</a>
+              {d.excerpt && <p class="by" style="margin-top:6px">{d.excerpt.slice(0, 110)}{d.excerpt.length > 110 ? "…" : ""}</p>}
+              <p class="price">{soon ? eta(d) : <>{money(p)}{d.compareAtPrice ? <s>{d.currency === "EUR" ? "€" : "$"}{d.compareAtPrice}</s> : null}</>}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  ))}
+
+  <section class="band">
+    <div class="three">
+      <article><span class="kick">How it works</span><p class="t" style="margin-top:8px">Pieces marked available ship from our own stock or straight from the maker. Checkout is by card through Stripe; delivery country and cost are shown before you pay.</p></article>
+      <article><span class="kick">Pipeline</span><p class="t" style="margin-top:8px">A piece is "in the pipeline" until we have held it, photographed it and confirmed stock. Until then there is no button — we do not take money for things we cannot yet ship.</p></article>
+      <article><span class="kick">No tobacco</span><p class="t" style="margin-top:8px">The Shop sells accessories and clothing only. For cigars, the <a href="/paper/markets/">Markets</a> page shows licensed retailers in your country.</p></article>
+    </div>
+  </section>
+</PaperLayout>

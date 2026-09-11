@@ -1,0 +1,40 @@
+---
+import PaperLayout from "../../layouts/PaperLayout.astro";
+import { getCollection } from "astro:content";
+import { SKUS, RETAILERS, COUNTRIES } from "../../data/finder-live";
+/** /paper/about/ — PREVIEW ROUTE (noindex). Ships as /about/. */
+const posts = (await getCollection("blog")).filter((p) => !(p.data as any).draft).length;
+const author = (await getCollection("authors"))[0];
+const jsonLd = { "@context": "https://schema.org", "@type": "AboutPage", name: "About The Next Cigar", url: "https://thenextcigar.com/about/", mainEntity: { "@type": "Organization", name: "The Next Cigar", url: "https://thenextcigar.com/", email: "contact@thenextcigar.com" } };
+---
+<PaperLayout title="About the paper · The Next Cigar" description="Why The Next Cigar exists, who writes it, how it is paid for, and what it will not do." section="about" compact={true} noIndex={true} jsonLd={jsonLd}>
+  <div class="dateline"><h1>About <em>— the paper, and the people behind it.</em></h1><p class="st">Independent · Malmö · Lisbon</p></div>
+  <article class="art">
+    <div class="artbody">
+      <aside class="side">
+        <p class="t">The file</p>
+        <dl>
+          <dt>Founded</dt><dd>2025</dd>
+          <dt>Editor</dt><dd>{(author?.data as any)?.name ?? "Cristian Ortiz Suárez"}</dd>
+          <dt>Desks</dt><dd>Malmö · Lisbon</dd>
+          <dt>The board</dt><dd>{SKUS.length} vitolas · {RETAILERS.length} retailers · {COUNTRIES.length} countries</dd>
+          <dt>The magazine</dt><dd>{posts} pieces</dd>
+          <dt>Write to us</dt><dd><a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a></dd>
+        </dl>
+      </aside>
+      <div class="prose cap">
+        <p>The cigar world is older than most magazines. The way it gets covered is not. The Next Cigar exists because people who actually smoke deserve writing that respects them — and a place that treats the leaf, the makers and the rituals around them with the same seriousness as the cigar itself.</p>
+        <h2>What we do</h2>
+        <p>News on the brands, regulators and factories that move the industry. Long reads on the history and culture of cigars and the people who make them. Practical writing for people who want to smoke better, not louder. And the Markets board: box prices for {SKUS.length} Cuban vitolas, read from {RETAILERS.length} licensed European retailers, each price carrying the date it was checked.</p>
+        <h2>How it is paid for</h2>
+        <p>Not by advertising, and not by a paywall. When a reader clicks from the board to a licensed retailer and buys a box, the retailer pays us a small commission; the reader's price is unchanged. The Shop sells accessories and clothing at a margin. That is the whole business. Sponsorship, if we ever accept it, is labelled on the page and limited to things we would carry ourselves.</p>
+        <h2>What we will not do</h2>
+        <p>We do not sell tobacco. We do not invent reviews, ratings or awards. We do not call a price "live" unless the scraper read it within the last fortnight, and we do not send you to a page that is sold out on purpose. When we get something wrong we correct it on the same page and say so.</p>
+        <h2>Who writes it</h2>
+        <p>{(author?.data as any)?.name ?? "Cristian Ortiz Suárez"} is the founder and editor: Cuban-Portuguese, based between Malmö and Lisbon, writing about the leaf, the markets and the people who shape the European Habanos world. The site is designed and built by <a href="https://turquinostudios.com" rel="noopener">Turquino Studios</a>.</p>
+        <h2>The rooms</h2>
+        <p><a href="/paper/markets/">Markets</a> is the board. <a href="/paper/magazine/">Magazine</a> is the long reads. <a href="/paper/lounge/">The Lounge</a> is the members' room — free — with the map and the watchlist. <a href="/paper/shop/">The Shop</a> is our own small line of goods, and the Guatabey guayabera when it exists.</p>
+      </div>
+    </div>
+  </article>
+</PaperLayout>

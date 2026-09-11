@@ -1,0 +1,54 @@
+---
+/**
+ * Ear — the strip above the masthead: date, a market ticker built from the
+ * Finder's freshest prices, and the edition note. Static at build time; the
+ * ticker scrolls with CSS only.
+ */
+import { SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
+
+const RET = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
+const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
+
+// Prefer flagship + premium SKUs with a live price, fall back to any priced.
+const rows = SKUS
+  .map((sku) => ({ sku, best: bestPriceForSku(sku.id) }))
+  .filter((r) => r.best)
+  .sort((a, b) => {
+    const la = a.best!.snap.live ? 0 : 1, lb = b.best!.snap.live ? 0 : 1;
+    if (la !== lb) return la - lb;
+    const pa = a.sku.prestige === "flagship" ? 0 : a.sku.prestige === "premium" ? 1 : 2;
+    const pb = b.sku.prestige === "flagship" ? 0 : b.sku.prestige === "premium" ? 1 : 2;
+    return pa - pb;
+  })
+  .slice(0, 10)
+  .map(({ sku, best }) => {
+    const s = best!.snap;
+    const r = RET[s.retailerId];
+    const drop = s.originalPrice && s.originalPrice > s.price ? Math.round(((s.originalPrice - s.price) / s.originalPrice) * 100) : 0;
+    return {
+      href: `/finder/sku/${sku.slug}/`,
+      name: `${sku.brand} ${sku.vitola}`,
+      price: formatPrice(s.price, s.currency),
+      retailer: r?.name ?? s.retailerId,
+      flag: drop ? `▼ ${drop}%` : s.live ? "live" : checkedLabel(s),
+      cls: drop ? "" : s.live ? "" : "old",
+    };
+  });
+
+const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+---
+
+<div class="ear" aria-label="Market ticker">
+  <span class="l">{today} · Malmö · Lisbon</span>
+  <div class="ticker">
+    <span class="run">
+      {rows.map((r) => (
+        <a href={r.href}><b>{r.name}</b> {r.price} {r.retailer} <i class={r.cls}>{r.flag}</i></a>
+      ))}
+      {rows.map((r) => (
+        <a href={r.href} aria-hidden="true" tabindex="-1"><b>{r.name}</b> {r.price} {r.retailer} <i class={r.cls}>{r.flag}</i></a>
+      ))}
+    </span>
+  </div>
+  <span class="r">Free to read · {pricedRetailers} retailers · {LIVE_COUNT > 0 ? `${LIVE_COUNT} live prices` : "prices checked by hand"}</span>
+</div>

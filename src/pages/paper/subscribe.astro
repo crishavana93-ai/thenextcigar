@@ -1,0 +1,27 @@
+---
+import PaperLayout from "../../layouts/PaperLayout.astro";
+/** /paper/subscribe/ — PREVIEW ROUTE (noindex). Ships as /subscribe/.
+ *  The only page on the paper that loads a third-party script (the MailerLite form). */
+---
+<PaperLayout title="The newsletter · The Next Cigar" description="One email when there is something to say: new guides, price moves worth knowing, the odd essay. Free, no schedule, no nagging." section="about" compact={true} noIndex={true}>
+  <div class="dateline"><h1>The paper, by email <em>— when there's something to say.</em></h1><p class="st">Free · 21+ · unsubscribe in one click</p></div>
+  <div class="front">
+    <section style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
+      <div class="prose" style="max-width:none"><p>No fixed day. When a guide is finished, a price on the board moves enough to matter, or there's an essay worth your ten minutes, you get one email. If nothing happens, you get nothing. We never sell or share the address.</p></div>
+      <link rel="preconnect" href="https://assets.mailerlite.com" />
+      <div class="ml-embedded" data-form="Xn19hv" style="max-width:520px;margin:22px 0"></div>
+      <noscript><p class="note">The signup form needs JavaScript. Or write to <a href="mailto:contact@thenextcigar.com?subject=Subscribe">contact@thenextcigar.com</a> with "Subscribe" and we'll add you by hand.</p></noscript>
+      <script is:inline>
+        (function(w,d,e,u,f,l,n){w[f]=w[f]||function(){(w[f].q=w[f].q||[]).push(arguments);},l=d.createElement(e),l.async=1,l.src=u,n=d.getElementsByTagName(e)[0],n.parentNode.insertBefore(l,n);})(window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
+        ml('account', '2332920');
+      </script>
+    </section>
+    <aside class="rail">
+      <div class="rulehead"><h2>Rather not?</h2></div>
+      <ul class="eds">
+        <li><a href="/rss.xml">RSS feed</a><span>every piece</span></li>
+        <li><a href="/paper/lounge/">The Lounge</a><span>price alerts only</span></li>
+      </ul>
+    </aside>
+  </div>
+</PaperLayout>

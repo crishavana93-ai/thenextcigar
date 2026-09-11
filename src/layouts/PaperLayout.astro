@@ -1,0 +1,105 @@
+---
+/**
+ * PaperLayout — the broadsheet chrome for every public page.
+ *
+ * Deliberately light: self-hosted fonts, one stylesheet, the ear, the
+ * masthead, the footer. No Tailwind, no Google Fonts, no third-party
+ * scripts on the public paper. The Lounge app keeps BaseLayout.
+ */
+import "../styles/paper.css";
+import Ear from "../components/paper/Ear.astro";
+import Masthead from "../components/paper/Masthead.astro";
+import PaperFooter from "../components/paper/PaperFooter.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Absolute or root-relative OG image. */
+  image?: string;
+  canonicalURL?: string;
+  noIndex?: boolean;
+  /** Which nav item is underlined. */
+  section?: "front" | "markets" | "finder" | "magazine" | "accessories" | "diary" | "lounge" | "shop" | "none";
+  /** Small masthead for inner pages. */
+  compact?: boolean;
+  /** Hide the price ticker (e.g. legal pages). */
+  noEar?: boolean;
+  /** JSON-LD graph, already an object. */
+  jsonLd?: unknown;
+  ogType?: "website" | "article" | "product";
+  /** Extra <link rel="alternate">, etc. */
+  published?: string;
+  modified?: string;
+}
+
+const {
+  title,
+  description,
+  image = "/og-default.svg",
+  canonicalURL = new URL(Astro.url.pathname, Astro.site).toString(),
+  noIndex = false,
+  section = "none",
+  compact = false,
+  noEar = false,
+  jsonLd,
+  ogType = "website",
+  published,
+  modified,
+} = Astro.props;
+
+const siteName = "The Next Cigar";
+const ogImage = new URL(image, Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    {noIndex ? <meta name="robots" content="noindex, nofollow" /> : <meta name="robots" content="index, follow, max-image-preview:large" />}
+    <meta name="theme-color" content="#F2F0EA" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/lounge-app-icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={siteName} href="/rss.xml" />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImage} />
+    {published && <meta property="article:published_time" content={published} />}
+    {modified && <meta property="article:modified_time" content={modified} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Impact.com / Partnerize publisher verification (kept from the previous build) -->
+    <meta name="impact-site-verification" content="25aa9188-d00c-497a-9b96-3ae2e4a285dd" />
+    <meta name="partnerize-verification" content="Ascend Confirmation" />
+
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/newsreader-normal.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/newsreader-italic.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" crossorigin />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="wrap">
+      {!noEar && <Ear />}
+      <Masthead section={section} compact={compact} />
+      <main id="main">
+        <slot />
+      </main>
+      <PaperFooter />
+    </div>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import {
+  COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
+  bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl,
+} from "../../../data/finder-live";
+
+/**
+ * /finder/ — "Markets", the stock page of the paper.
+ *
+ * Every claim on this page is derived: the counts come from the data, each
+ * price carries the date it was read, and only rows the scraper re-read
+ * within 14 days are called live.
+ */
+
+const RET = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
+
+const priced = SKUS
+  .map((sku) => {
+    const best = bestPriceForSku(sku.id);
+    if (!best) return null;
+    const retailer = RET[best.snap.retailerId];
+    if (!retailer) return null;
+    return { sku, snap: best.snap, retailer, eur: best.eur };
+  })
+  .filter((r): r is NonNullable<typeof r> => r !== null);
+
+const cheapest = priced.slice().sort((a, b) => a.eur / a.sku.boxSize - b.eur / b.sku.boxSize).slice(0, 6);
+
+// The mover: the biggest live discount on the board.
+const mover = PRICE_SNAPSHOTS
+  .filter((s) => s.originalPrice && s.inStock && s.originalPrice > s.price)
+  .map((s) => {
+    const sku = SKUS.find((k) => k.id === s.skuId);
+    const retailer = RET[s.retailerId];
+    if (!sku || !retailer) return null;
+    return { snap: s, sku, retailer, pct: Math.round(((s.originalPrice! - s.price) / s.originalPrice!) * 100) };
+  })
+  .filter((m): m is NonNullable<typeof m> => m !== null)
+  .sort((a, b) => b.pct - a.pct)[0];
+
+// The full board, alphabetical by brand then vitola.
+const board = priced.slice().sort((a, b) =>
+  a.sku.brand.localeCompare(b.sku.brand) || a.sku.vitola.localeCompare(b.sku.vitola));
+const brands = [...new Set(board.map((r) => r.sku.brand))];
+
+const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
+const pricedCountries = new Set(PRICE_SNAPSHOTS.map((s) => RET[s.retailerId]?.country).filter(Boolean)).size;
+const newest = NEWEST_SCRAPE ? new Date(NEWEST_SCRAPE).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
+
+const open = COUNTRIES.filter((c) => c.status === "open");
+const restricted = COUNTRIES.filter((c) => c.status !== "open");
+const skusIn = (code: string) => new Set(
+  PRICE_SNAPSHOTS.filter((s) => RET[s.retailerId]?.country === code && s.inStock).map((s) => s.skuId)
+).size;
+
+const status = LIVE_COUNT > 0
+  ? `${SKUS.length} vitolas · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · <b>${LIVE_COUNT} live</b> · latest ${newest}`
+  : `${SKUS.length} vitolas · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · checked ${newest}`;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Cuban cigar box prices across Europe",
+  numberOfItems: board.length,
+  itemListElement: board.slice(0, 25).map((r, i) => ({
+    "@type": "ListItem", position: i + 1,
+    item: {
+      "@type": "Product", name: `${r.sku.brand} ${r.sku.vitola} — box of ${r.sku.boxSize}`,
+      url: `https://thenextcigar.com/finder/sku/${r.sku.slug}/`,
+      offers: { "@type": "Offer", price: r.snap.price, priceCurrency: r.snap.currency, availability: r.snap.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", seller: { "@type": "Organization", name: r.retailer.name } },
+    },
+  })),
+};
+---
+
+<PaperLayout
+  title="Markets — Cuban cigar box prices compared across Europe · The Next Cigar"
+  description={`Box prices for ${SKUS.length} Cuban vitolas compared across ${pricedRetailers} European retailers in ${pricedCountries} countries. Every price carries the date it was read. Free, no signup.`}
+  section="markets"
+  compact={true}
+  jsonLd={jsonLd}
+>
+  <div class="dateline">
+    <h1>Markets <em>— Cuban cigars, compared.</em></h1>
+    <p class="st" set:html={status} />
+  </div>
+
+  <div class="front">
+    <!-- LEFT: cheapest per cigar -->
+    <aside>
+      <div class="rulehead"><h2>Cheapest <em>per cigar</em></h2></div>
+      <table class="mk">
+        <thead><tr><th>Vitola</th><th class="num">Per cigar</th></tr></thead>
+        <tbody>
+          {cheapest.map(({ sku, snap, retailer, eur }) => (
+            <tr>
+              <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>{retailer.name} · {String(retailer.country).toUpperCase()}</small></td>
+              <td class="p">€{(eur / sku.boxSize).toFixed(0)}<small class:list={{ old: !snap.live }}>{checkedLabel(snap)}</small></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="note">Per-cigar price is the box price divided by the canonical box size — the only honest way to compare a box of 10 against a box of 25.</p>
+
+      <div class="rulehead" style="margin-top:26px"><h2>Where you can buy</h2></div>
+      <ul class="eds">
+        {open.map((c) => (<li><a href={`/finder/${c.code}/`}>{c.name}</a><span>{skusIn(c.code)} in stock</span></li>))}
+      </ul>
+      {restricted.length > 0 && (
+        <>
+          <p class="note" style="margin-top:14px"><b>Restricted markets.</b> {restricted.map((c) => c.name).join(", ")} — listed for reference; online sale to consumers is limited or in-country only.</p>
+        </>
+      )}
+    </aside>
+
+    <!-- CENTRE: the mover + the board -->
+    <section>
+      {mover && (
+        <article style="padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:18px">
+          <span class="kick">This week's mover</span>
+          <h2 class="head" style="font-size:clamp(28px,3vw,42px);margin-top:8px">
+            {mover.retailer.name} cut the {mover.sku.brand} {mover.sku.vitola} by {mover.pct}%.
+          </h2>
+          <p class="deck" style="margin-top:10px">
+            {formatPrice(mover.snap.price, mover.snap.currency)} for the box of {mover.sku.boxSize}, down from {formatPrice(mover.snap.originalPrice!, mover.snap.currency)} — {checkedLabel(mover.snap)}. {mover.sku.blurb}
+          </p>
+          <p class="by" style="margin-top:8px">
+            <a href={`/finder/sku/${mover.sku.slug}/`}>Compare every retailer for this vitola →</a>
+          </p>
+        </article>
+      )}
+
+      <div class="rulehead"><h2>The board <em>· {board.length} vitolas, cheapest listing</em></h2><span class="more">{brands.length} brands</span></div>
+      <table class="mk wide">
+        <thead>
+          <tr><th>Vitola</th><th>Cheapest at</th><th class="num">Box</th><th class="num">Per cigar</th></tr>
+        </thead>
+        <tbody>
+          {board.map(({ sku, snap, retailer, eur }) => (
+            <tr class:list={{ oos: !snap.inStock }}>
+              <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>box of {sku.boxSize} · {sku.shape}</small></td>
+              <td class="v" style="font-size:14px">
+                <a href={effectiveShopUrl(snap.sourceUrl, sku, retailer).url} rel="nofollow noopener" target="_blank">{retailer.name}</a>
+                <small>{String(retailer.country).toUpperCase()} · {checkedLabel(snap)}{snap.inStock ? "" : " · sold out"}</small>
+              </td>
+              <td class="num p">{formatPrice(snap.price, snap.currency)}</td>
+              <td class="num p">€{(eur / sku.boxSize).toFixed(0)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- RIGHT: how it works -->
+    <aside class="rail">
+      <div class="rulehead"><h2>How the board works</h2></div>
+      <div class="prose" style="font-size:15px;max-width:none">
+        <p>We keep a directory of {RETAILERS.length} licensed Habanos retailers across {COUNTRIES.length} European countries and record box prices from the {pricedRetailers} that publish them, in {pricedCountries} countries.</p>
+        <p>Prices marked <b style="color:var(--live)">live</b> were re-read from the retailer's own product page by our scraper within the last fortnight. The rest carry the date a person last checked them. Stock and price move constantly, so confirm on the retailer's page before you order.</p>
+        <p>Every price is the retailer's listed price for the canonical box, in their own currency, with their own tax included. It is not what you will pay at your door: a box crossing a border picks up destination duty and VAT.</p>
+      </div>
+      <div class="box">
+        <span class="kick">Watchlist · free</span>
+        <h3 class="head">Tell me when it drops.</h3>
+        <p>Members get an email when any vitola on the board falls or comes back in stock. No charge.</p>
+        <a class="cta" href="/lounge/signup/">Join the Lounge</a>
+      </div>
+      <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/">The European retailer map</a><p class="by">Who ships where, and whose price is all-in</p></div></li>
+        <li><div><a class="head" href="/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">What a cross-border box really costs</p></div></li>
+        <li><div><a class="head" href="/blog/cuban-cigar-sizes-vitolas-explained-2026-guide/">Vitolas explained</a><p class="by">Why a box of 10 and a box of 25 aren't comparable</p></div></li>
+      </ul>
+    </aside>
+  </div>
+</PaperLayout>

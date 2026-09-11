@@ -47,31 +47,29 @@ export function buildSkuFaq(input: SkuFaqInput): FaqItem[] {
 
   const editorialIntro = sku.editorial.split("\n\n")[0];
 
+  const spec = sku.shape + ", ring " + sku.ring + ", " + sku.lengthMm + " mm, " + sku.strength.replace("_", " ") + " strength, sold in a box of " + sku.boxSize;
   const compareAnswer = sameBrandLinks.length > 0
-    ? "<p>" + editorialIntro + "</p><p>If you want a side-by-side comparison of " + sku.brand + " other vitolas at current European prices, the SKUs we track are: " + sameBrandLinks + ". Each link opens its own live price-comparison page.</p>"
-    : "<p>" + editorialIntro + "</p>";
+    ? "<p>" + sku.brand + " " + sku.vitola + " is a " + spec + ". The other " + sku.brand + " vitolas on the board, each with its own price page, are " + sameBrandLinks + ". Per-cigar price is the fair way to compare them: box sizes differ.</p>"
+    : "<p>" + sku.brand + " " + sku.vitola + " is a " + spec + ".</p>";
 
   const dutyAnswer =
-    "<p>The Duty / Ships column above tells you exactly that. Each retailer listed price is " +
-    "<strong>all-in (excise duty + VAT included) only in their home country</strong>. " +
-    "Buy from a German retailer as a German buyer: what you see is what you pay. " +
-    "Buy cross-border (e.g. a Swiss retailer shipping to Germany, or any EU retailer " +
-    "shipping to the UK, Sweden, Denmark, Finland, or Ireland) and the destination " +
-    "country will charge its own tobacco excise + VAT at the door — typically " +
-    "<strong>€100–€300 extra</strong> on a box of 25 Habanos, sometimes much more for the UK.</p>" +
-    "<p>If you set your destination country on the page, every row that is genuinely " +
-    "all-in for you gets highlighted in green. The dimmed rows are honest-looking " +
-    "prices that will cost more than they show.</p>";
+    "<p>Only if you live where the retailer is. Every price on this page is " +
+    "<strong>all-in (excise duty + VAT included) in the retailer's home country</strong> " +
+    "and nowhere else. Buy from a German retailer to a German address and what you see is what you pay. " +
+    "Buy across a border — a Swiss retailer shipping into the EU, or any EU retailer shipping to the UK, " +
+    "Sweden, Denmark, Finland or Ireland — and the destination country charges its own tobacco excise " +
+    "and VAT on arrival. How much depends on the destination's excise rate; our " +
+    "<a href=\"/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/\">import-duty guide</a> walks through the main markets.</p>" +
+    "<p>The few retailers whose price is all-in beyond their home market carry a \"duty paid EU\" mark in the table.</p>";
 
   const dropAnswer =
     "<p>Habanos S.A. (the Cuban state tobacco monopoly) sets the worldwide " +
     "release-price floor for every Habano in this catalogue. That floor went up " +
     "roughly 40% during the 2022–2024 global price harmonisation, and Habanos " +
     "has signalled further annual increases through 2027. So the long-term trend is up, not down.</p>" +
-    "<p>Short-term, prices fluctuate at the retailer level — Swiss promotional " +
-    "weeks, German LCDH clearance, the occasional Spanish over-stock. The Finder " +
-    "catches those. A drop alert with no target price will email you on any " +
-    "meaningful reduction; setting a target locks the alert to your specific budget.</p>";
+    "<p>Short-term, prices move at the retailer level — promotions, clearance, a restock at a different price. " +
+    "Where we have a history, the 90-day line on this page shows what the cheapest box in Europe has actually done. A price alert with no target " +
+    "emails you on any drop; setting a target limits it to your budget.</p>";
 
   return [
     {
@@ -105,10 +103,9 @@ function buildCheapestAnswer(
     "<p>The cheapest verified box of " + sku.brand + " " + sku.vitola +
     " in Europe right now is at <strong>" + retailer + "</strong> in " + country +
     " at approximately <strong>€" + eur.toLocaleString("en-US") + "</strong> for a box of " +
-    sku.boxSize + " (about €" + perCigar + " per cigar). The full ranking — " +
-    "refreshed every six hours across " + offersCount + " European retailers — is in the table above.</p>" +
-    "<p>Prices and availability shift weekly. Save this SKU to your watchlist with the " +
-    "Save price alert button to get an email the moment any retailer in your country " +
-    "drops below your target price.</p>"
+    sku.boxSize + " (about €" + perCigar + " per cigar). All " + offersCount + " retailers we track for this vitola are in the table above, " +
+    "each with the date its price was read: rows marked live were re-read by our scraper within the last fortnight, the rest were checked by hand.</p>" +
+    "<p>Prices and stock move. Save a price alert and we email you when any retailer drops below your target " +
+    "or the box comes back in stock.</p>"
   );
 }

@@ -1,0 +1,51 @@
+---
+import { getCollection } from "astro:content";
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import { events, upcomingEvents } from "../../../data/cigar-events.ts";
+
+/** /paper/category/cigar-events/ — PREVIEW ROUTE (noindex). The diary: every
+ *  festival, fair and gala we track, upcoming first, then the coverage. */
+const now = new Date();
+const upcoming = upcomingEvents(now);
+const past = events.filter((e) => Date.parse(e.endDate) < now.getTime()).sort((a, b) => Date.parse(b.startDate) - Date.parse(a.startDate));
+const posts = (await getCollection("blog")).filter((p) => !(p.data as any).draft && p.data.category === "cigar-events").sort((a, b) => Date.parse(b.data.publishedAt as any) - Date.parse(a.data.publishedAt as any));
+const range = (e: (typeof events)[number]) => {
+  const a = new Date(e.startDate), b = new Date(e.endDate);
+  const d = (x: Date, m = true) => x.toLocaleDateString("en-GB", m ? { day: "numeric", month: "short" } : { day: "numeric" });
+  return a.toDateString() === b.toDateString() ? `${d(a)} ${a.getFullYear()}` : a.getMonth() === b.getMonth() ? `${d(a, false)}–${d(b)} ${a.getFullYear()}` : `${d(a)} – ${d(b)} ${a.getFullYear()}`;
+};
+const typeLabel = { festival: "Festival", "trade-show": "Trade fair", gala: "Gala", regional: "Regional" };
+const jsonLd = { "@context": "https://schema.org", "@graph": upcoming.map((e) => ({ "@type": "Event", name: e.name, startDate: e.startDate, endDate: e.endDate, url: e.url, description: e.tagline, location: { "@type": "Place", name: e.location, geo: { "@type": "GeoCoordinates", latitude: e.lat, longitude: e.lng } }, ...(e.host && { organizer: { "@type": "Organization", name: e.host } }) })) };
+---
+
+<PaperLayout title="The Diary — cigar festivals, fairs and galas in Europe and Cuba · The Next Cigar" description={`${upcoming.length} upcoming cigar events, dated and located, from the Festival del Habano to the regional evenings worth a train ticket.`} section="diary" compact={true} noIndex={true} jsonLd={jsonLd}>
+  <div class="dateline">
+    <h1>The Diary <em>— where the smoke is.</em></h1>
+    <p class="st">{upcoming.length} upcoming · {past.length} past · {posts.length} reports</p>
+  </div>
+
+  <div class="front">
+    <section style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
+      <div class="rulehead"><h2>Upcoming</h2></div>
+      <ul class="list">
+        {upcoming.map((e) => (
+          <li style="grid-template-columns:120px 1fr;gap:18px">
+            <span class="by" style="color:var(--ox);font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding-top:4px">{range(e)}</span>
+            <div>
+              <span class="kick mute">{typeLabel[e.type]}{e.host ? ` · ${e.host}` : ""}</span>
+              <a class="head" style="font-size:22px;display:block;margin:4px 0" href={e.url} target="_blank" rel="noopener">{e.name}</a>
+              <p class="by">{e.location}{e.priceFrom ? ` · from ${e.priceCurrency ?? "EUR"} ${e.priceFrom}` : ""}</p>
+              <p class="t" style="margin-top:6px">{e.tagline}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {past.length > 0 && (<><div class="rulehead" style="margin-top:26px"><h2>Past <em>· for the record</em></h2></div><ul class="eds">{past.map((e) => (<li><a href={e.url} target="_blank" rel="noopener">{e.name}</a><span>{range(e)}</span></li>))}</ul></>)}
+    </section>
+    <aside class="rail">
+      <div class="rulehead"><h2>Reports</h2></div>
+      {posts.length > 0 ? <ul class="list">{posts.map((p) => (<li><div><a class="head" href={`/paper/read/${p.data.slug}/`}>{p.data.title}</a><p class="by">{new Date(p.data.publishedAt as any).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p></div></li>))}</ul> : <p class="note">No reports filed yet.</p>}
+      <div class="box"><span class="kick">Missing one?</span><h3 class="head">Tell us about an event.</h3><p>Regional evenings, shop tastings, club nights — if it's open to the public we'll list it.</p><a class="cta" href="/contact/">Write to the desk</a></div>
+    </aside>
+  </div>
+</PaperLayout>

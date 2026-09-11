@@ -116,6 +116,50 @@ function merge(rows: Row[]): LiveSnapshot[] {
 }
 
 export const PRICE_SNAPSHOTS: LiveSnapshot[] = merge(await fetchLiveRows());
+
+// ----------------------------------------------------------------------------
+// Price history — one point per day per SKU: the cheapest in-stock box in
+// Europe (EUR). Read from the finder_price_daily view (migration 028). Rows
+// are paged through PostgREST's Range header so the dashboard's max-rows cap
+// never silently truncates the series. Missing view → empty history.
+// ----------------------------------------------------------------------------
+export interface HistoryPoint { day: string; eur: number; offers: number }
+const HISTORY_DAYS = 90;
+
+async function fetchHistory(): Promise<Map<string, HistoryPoint[]>> {
+  const out = new Map<string, HistoryPoint[]>();
+  if (!SUPABASE_URL || !SUPABASE_KEY) return out;
+  const since = new Date(Date.now() - HISTORY_DAYS * 86400e3).toISOString().slice(0, 10);
+  const box = new Map(seed.SKUS.map((s) => [s.id, (s as any).boxSize as number]));
+  const params = new URLSearchParams({
+    select: "sku,pack_size,day,min_eur,offers",
+    day: `gte.${since}`,
+    order: "sku.asc,day.asc",
+  });
+  try {
+    for (let from = 0, page = 1000; ; from += page) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/finder_price_daily?${params}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Range: `${from}-${from + page - 1}` },
+      });
+      if (!res.ok) { if (from === 0) console.warn(`[finder-live] history ${res.status} — no chart`); break; }
+      const rows = (await res.json()) as { sku: string; pack_size: number | null; day: string; min_eur: string | number; offers: number }[];
+      for (const r of rows) {
+        const b = box.get(r.sku);
+        if (!b || (r.pack_size && r.pack_size !== b)) continue;
+        if (!out.has(r.sku)) out.set(r.sku, []);
+        out.get(r.sku)!.push({ day: r.day, eur: Number(r.min_eur), offers: r.offers });
+      }
+      if (rows.length < page) break;
+    }
+  } catch (err) {
+    console.warn("[finder-live] history fetch failed — no chart", err);
+  }
+  if (out.size) console.log(`[finder-live] history: ${out.size} SKUs over ${HISTORY_DAYS} days`);
+  return out;
+}
+
+export const PRICE_HISTORY: Map<string, HistoryPoint[]> = await fetchHistory();
+export function historyForSku(skuId: string): HistoryPoint[] { return PRICE_HISTORY.get(skuId) ?? []; }
 export const LIVE_COUNT = PRICE_SNAPSHOTS.filter((s) => s.live).length;
 export const NEWEST_SCRAPE = PRICE_SNAPSHOTS.map((s) => s.scrapedAt).sort().at(-1) || "";
 

@@ -1,0 +1,92 @@
+---
+import { getCollection, render } from "astro:content";
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+
+/** /paper/shop/[slug]/ — PREVIEW ROUTE (noindex). Ships as /shop/[slug]/.
+ *  The client sends only the slug; price, name and supplier are resolved
+ *  server-side from catalogue.json by /api/shop/checkout. */
+export async function getStaticPaths() {
+  const products = (await getCollection("products")).filter((p) => !p.data.isArchived);
+  return products.map((p) => ({ params: { slug: p.data.slug }, props: { product: p } }));
+}
+const { product } = Astro.props;
+const { Content } = await render(product);
+const d: any = product.data;
+const img = (c: any) => (!c ? "" : typeof c === "string" ? c : c.src);
+const cover = img(d.cover);
+const gallery: string[] = [cover, ...((d.gallery ?? []).map(img))].filter((x, i, a) => x && a.indexOf(x) === i);
+const sym = d.currency === "EUR" ? "€" : d.currency === "GBP" ? "£" : "$";
+const soon = !!d.comingSoon;
+const buyable = !soon && d.inStock;
+const etaT = Date.parse(`1 ${d.expectedArrival ?? ""}`);
+const eta = d.expectedArrival && !isNaN(etaT) && etaT + 31 * 86400e3 > Date.now() ? `Expected ${d.expectedArrival}` : "Price when it lands";
+const others = (await getCollection("products")).filter((p) => !p.data.isArchived && p.data.slug !== d.slug && (p.data as any).category === d.category).slice(0, 3);
+const url = `https://thenextcigar.com/shop/${d.slug}/`;
+const jsonLd = { "@context": "https://schema.org", "@graph": [
+  { "@type": "Product", name: d.name, description: d.excerpt || d.name, image: gallery, sku: d.sku, url,
+    ...(buyable && { offers: { "@type": "Offer", price: d.price, priceCurrency: d.currency || "USD", availability: "https://schema.org/InStock", url } }) },
+  { "@type": "BreadcrumbList", itemListElement: [ { "@type": "ListItem", position: 1, name: "Shop", item: "https://thenextcigar.com/shop/" }, { "@type": "ListItem", position: 2, name: d.name, item: url } ] },
+] };
+---
+
+<PaperLayout title={`${d.name} · The Shop · The Next Cigar`} description={d.seo?.metaDescription || d.excerpt || d.name} image={cover} section="shop" compact={true} noIndex={true} ogType="product" jsonLd={jsonLd}>
+  <p class="miga">Shop · <a href="/paper/shop/">all goods</a>{d.category && <> · {d.category}</>}</p>
+  <div class="product">
+    <div class="gal">
+      {cover ? <img src={cover} alt={d.name} width="900" height="900" fetchpriority="high" /> : <div class="ph" style="aspect-ratio:1;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center"><span class="stamp">Photographed when it lands</span></div>}
+      {gallery.length > 1 && <div class="thumbs">{gallery.slice(1, 6).map((g) => <img src={g} alt="" width="200" height="200" loading="lazy" />)}</div>}
+    </div>
+    <div>
+      <span class="kick">{soon ? "In the pipeline" : buyable ? "Available" : "Sold out"}{d.sku ? ` · ${d.sku}` : ""}</span>
+      <h1>{d.name}</h1>
+      {d.excerpt && <p class="deck">{d.excerpt}</p>}
+      {buyable ? (
+        <>
+          <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
+          <button type="button" class="buy" id="buy" data-slug={d.slug}>Buy — {sym}{d.price}</button>
+          <p class="fine" id="buy-status" aria-live="polite"></p>
+          <p class="fine">Card checkout by Stripe. Delivery country and shipping cost are shown before you pay. {d.type === "digital" ? "Instant download after payment." : "Dispatch and delivery times are confirmed in your order email."}</p>
+        </>
+      ) : (
+        <>
+          <p class="price" style="font-size:22px">{soon ? eta : "Sold out"}</p>
+          <a class="cta" href="/lounge/signup/" style="display:block;text-align:center">Tell me when it's available →</a>
+          <p class="fine">No button until we have held it, photographed it and confirmed stock.</p>
+        </>
+      )}
+    </div>
+  </div>
+
+  <div class="artbody">
+    <aside class="side">
+      <p class="t">The file</p>
+      <dl>
+        {d.category && <><dt>Kind</dt><dd style="text-transform:capitalize">{d.category}</dd></>}
+        {d.weight && <><dt>Weight</dt><dd>{d.weight} g</dd></>}
+        <dt>Ships</dt><dd>{d.requiresShipping ? "EU, UK, CH, NO, US, CA" : "Digital"}</dd>
+      </dl>
+      {others.length > 0 && (<><p class="t">Also in this drawer</p><ul class="eds">{others.map((p) => (<li><a href={`/paper/shop/${p.data.slug}/`}>{p.data.name}</a></li>))}</ul></>)}
+    </aside>
+    <div class="prose"><Content /></div>
+  </div>
+
+  {buyable && (
+    <script is:inline>
+      (function () {
+        var btn = document.getElementById("buy"), st = document.getElementById("buy-status");
+        if (!btn) return;
+        btn.addEventListener("click", async function () {
+          if (btn.disabled) return;
+          var orig = btn.textContent; btn.disabled = true; btn.textContent = "Opening checkout…";
+          try {
+            var res = await fetch("/api/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: btn.dataset.slug }) });
+            var data = await res.json();
+            if (data.ok && data.url) { window.location.href = data.url; return; }
+            st.textContent = data.error || "Checkout failed — try again.";
+          } catch (e) { st.textContent = "Network error — try again."; }
+          btn.disabled = false; btn.textContent = orig;
+        });
+      })();
+    </script>
+  )}
+</PaperLayout>

@@ -1,0 +1,235 @@
+---
+import PaperLayout from "../../../../layouts/PaperLayout.astro";
+import PriceAlertModal from "../../../../components/finder/PriceAlertModal.astro";
+import SaveAlertButton from "../../../../components/finder/SaveAlertButton.astro";
+import {
+  SKUS, RETAILER_BY_ID, COUNTRY_BY_CODE, snapshotsForSku, formatPrice, toEUR,
+  effectiveShopUrl, dutyPaidCountries, checkedLabel, historyForSku,
+} from "../../../../data/finder-live";
+import { buildSkuFaq } from "../../../../lib/finder/skuFaq.ts";
+
+/**
+ * /paper/finder/sku/[sku]/ — PREVIEW ROUTE (noindex). Ships as /finder/sku/.
+ *
+ * The stock-table page for one vitola: every retailer we track, the cheapest
+ * in-stock box, a 90-day line of the cheapest price in Europe (from the
+ * scraper's own history — omitted until there is one), the editorial, and the
+ * questions people actually ask. Every number carries its date.
+ */
+
+export async function getStaticPaths() {
+  return SKUS.map((sku) => ({ params: { sku: sku.slug } }));
+}
+const { sku: skuSlug } = Astro.params as { sku: string };
+const sku = SKUS.find((s) => s.slug === skuSlug);
+if (!sku) return Astro.redirect("/finder/");
+
+const offers = snapshotsForSku(sku.id)
+  .map((snap) => {
+    const retailer = RETAILER_BY_ID[snap.retailerId];
+    if (!retailer) return null;
+    const country = COUNTRY_BY_CODE[retailer.country];
+    const eur = toEUR(snap.price, snap.currency);
+    return { snap, retailer, country, eur, per: eur / sku.boxSize, link: effectiveShopUrl(snap.sourceUrl, sku, retailer) };
+  })
+  .filter((o): o is NonNullable<typeof o> => !!o)
+  .sort((a, b) => (a.snap.inStock !== b.snap.inStock ? (a.snap.inStock ? -1 : 1) : a.eur - b.eur));
+
+const inStock = offers.filter((o) => o.snap.inStock);
+const best = inStock[0];
+const minEur = inStock[0]?.eur ?? 0;
+const maxEur = inStock.at(-1)?.eur ?? 0;
+const spread = minEur && maxEur ? Math.round(((maxEur - minEur) / minEur) * 100) : 0;
+const countries = [...new Set(offers.map((o) => o.country.code))];
+const liveCount = offers.filter((o) => o.snap.live).length;
+
+// 90-day history → SVG line, built at build time.
+const hist = historyForSku(sku.id);
+let chart: { path: string; area: string; lo: number; hi: number; last: number; first: string; lastDay: string; ticks: { x: number; label: string }[]; dot: { x: number; y: number } } | null = null;
+if (hist.length >= 3) {
+  const W = 600, H = 150, PL = 44, PR = 10, PT = 10, PB = 22;
+  const lo = Math.min(...hist.map((h) => h.eur)), hi = Math.max(...hist.map((h) => h.eur));
+  const t0 = Date.parse(hist[0].day), t1 = Date.parse(hist.at(-1)!.day) || t0 + 1;
+  const x = (d: string) => PL + ((Date.parse(d) - t0) / Math.max(1, t1 - t0)) * (W - PL - PR);
+  const y = (v: number) => PT + (hi === lo ? 0.5 : (hi - v) / (hi - lo)) * (H - PT - PB);
+  const pts = hist.map((h) => `${x(h.day).toFixed(1)},${y(h.eur).toFixed(1)}`);
+  const path = "M" + pts.join(" L");
+  const area = `${path} L${x(hist.at(-1)!.day).toFixed(1)},${H - PB} L${PL},${H - PB} Z`;
+  const ticks = [0, 0.5, 1].map((f) => {
+    const t = t0 + f * (t1 - t0);
+    return { x: PL + f * (W - PL - PR), label: new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) };
+  });
+  chart = { path, area, lo, hi, last: hist.at(-1)!.eur, first: hist[0].day, lastDay: hist.at(-1)!.day, ticks, dot: { x: x(hist.at(-1)!.day), y: y(hist.at(-1)!.eur) } };
+}
+
+const siblings = SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 5);
+const faq = buildSkuFaq({ sku, best: best ? { snap: best.snap, retailer: best.retailer, country: best.country, eur: best.eur, perCigarEur: best.per } as any : undefined, offersCount: offers.length, sameBrandSkus: siblings.slice(0, 4) });
+const fmtDay = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+const url = `https://thenextcigar.com/finder/sku/${sku.slug}/`;
+const graph: any[] = [
+  {
+    "@type": "Product",
+    name: `${sku.brand} ${sku.vitola}`,
+    brand: { "@type": "Brand", name: sku.brand },
+    description: sku.blurb,
+    category: "Premium Cuban Cigar",
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "Vitola", value: sku.shape },
+      { "@type": "PropertyValue", name: "Ring gauge", value: String(sku.ring) },
+      { "@type": "PropertyValue", name: "Length", value: `${sku.lengthMm} mm` },
+      { "@type": "PropertyValue", name: "Box size", value: String(sku.boxSize) },
+    ],
+    ...(inStock.length > 0 && {
+      offers: {
+        "@type": "AggregateOffer", priceCurrency: "EUR", lowPrice: minEur.toFixed(2), highPrice: maxEur.toFixed(2),
+        offerCount: String(inStock.length), availability: "https://schema.org/InStock",
+        offers: inStock.map((o) => ({
+          "@type": "Offer", url: o.snap.sourceUrl, price: o.snap.price.toFixed(2), priceCurrency: o.snap.currency,
+          availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: o.retailer.name, url: o.retailer.url }, areaServed: o.country.name,
+        })),
+      },
+    }),
+  },
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Markets", item: "https://thenextcigar.com/finder/" },
+      { "@type": "ListItem", position: 2, name: `${sku.brand} ${sku.vitola}`, item: url },
+    ],
+  },
+];
+if (faq.length >= 2) graph.push({ "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a.replace(/<[^>]+>/g, "") } })) });
+const jsonLd = { "@context": "https://schema.org", "@graph": graph };
+
+const title = `${sku.brand} ${sku.vitola} — box price compared across Europe · The Next Cigar`;
+const description = best
+  ? `${sku.brand} ${sku.vitola}, box of ${sku.boxSize}: ${offers.length} European retailers compared, cheapest ${formatPrice(best.snap.price, best.snap.currency)} at ${best.retailer.name} (${checkedLabel(best.snap)}). Free price alerts.`
+  : `${sku.brand} ${sku.vitola}, box of ${sku.boxSize}: European retailers compared, with the date each price was read.`;
+---
+
+<PaperLayout title={title} description={description} section="markets" compact={true} noIndex={true} jsonLd={jsonLd}>
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Markets · <a href="/paper/markets/">the board</a> · {sku.brand}</p>
+  <div class="dateline">
+    <h1>{sku.brand} {sku.vitola} <em>— box of {sku.boxSize}, compared.</em></h1>
+    <p class="st">
+      {offers.length} retailers in {countries.length} countries · {inStock.length} in stock
+      {spread > 0 && <> · <b>{spread}% spread</b> between cheapest and dearest</>}
+      {liveCount > 0 && <> · <b style="color:var(--live)">{liveCount} live</b></>}
+    </p>
+  </div>
+
+  <div class="front">
+    <!-- LEFT: the file + the quote -->
+    <aside>
+      {best ? (
+        <div class="quote">
+          <p class="t">Cheapest in stock</p>
+          <p class="big">{formatPrice(best.snap.price, best.snap.currency)}</p>
+          <p class="sub">≈ €{Math.round(best.eur).toLocaleString("en-GB")} · €{best.per.toFixed(2)} per cigar</p>
+          <p class="sub" style="margin-top:6px">at <b style="color:var(--ink)">{best.retailer.name}</b>, {best.country.name} · {checkedLabel(best.snap)}</p>
+          <a class="cta" href={best.link.url} target="_blank" rel="noopener nofollow sponsored">{best.link.isExact ? `Buy at ${best.retailer.name}` : `Search ${best.retailer.name}`} →</a>
+          <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="ghost" />
+          <p class="note" style="margin-top:10px">Clicking through may earn us a commission. Your price is unchanged.</p>
+        </div>
+      ) : (
+        <div class="quote"><p class="t">No in-stock listing</p><p class="sub">Every retailer we track is sold out. Save an alert and we'll email when one comes back.</p><SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} variant="ghost" /></div>
+      )}
+
+      <div class="rulehead"><h2>The file</h2></div>
+      <dl class="file">
+        <dt>Line</dt><dd>{sku.line}</dd>
+        <dt>Shape</dt><dd>{sku.shape} · ring {sku.ring} · {sku.lengthMm} mm</dd>
+        <dt>Canonical box</dt><dd>{sku.boxSize} cigars</dd>
+        <dt>Strength</dt><dd style="text-transform:capitalize">{sku.strength.replace("_", " ")}</dd>
+        {sku.flavorNotes?.length > 0 && <><dt>Notes</dt><dd style="font-size:14px">{sku.flavorNotes.join(", ")}</dd></>}
+        <dt>Tier</dt><dd style="text-transform:capitalize">{sku.prestige}</dd>
+      </dl>
+
+      {siblings.length > 0 && (
+        <>
+          <div class="rulehead"><h2>Also by {sku.brand}</h2></div>
+          <ul class="eds">
+            {siblings.map((s) => (<li><a href={`/paper/finder/sku/${s.slug}/`}>{s.vitola}</a><span>box of {s.boxSize}</span></li>))}
+          </ul>
+        </>
+      )}
+    </aside>
+
+    <!-- CENTRE: the offers, the chart, the piece -->
+    <section>
+      <div class="rulehead"><h2>Every listing <em>· cheapest first</em></h2><span class="more">{offers.length} retailers</span></div>
+      <table class="mk wide offers">
+        <thead><tr><th>Retailer</th><th class="num">Box</th><th class="num">Per cigar</th><th></th></tr></thead>
+        <tbody>
+          {offers.map((o) => (
+            <tr class:list={{ oos: !o.snap.inStock }}>
+              <td class="v">
+                {o.retailer.name} <span class="tag">{o.country.code.toUpperCase()}</span>
+                {dutyPaidCountries(o.retailer).length > 1 && <span class="tag ok">duty paid EU</span>}
+                <small>{o.retailer.status === "lcdh" ? "La Casa del Habano" : o.retailer.status === "habanos-specialist" ? "Habanos Specialist" : o.retailer.city ?? o.country.name} · {checkedLabel(o.snap)}{o.snap.inStock ? "" : " · sold out"}{o.snap.originalPrice && o.snap.originalPrice > o.snap.price ? ` · was ${formatPrice(o.snap.originalPrice, o.snap.currency)}` : ""}</small>
+              </td>
+              <td class="num p">{formatPrice(o.snap.price, o.snap.currency)}<small>≈ €{Math.round(o.eur)}</small></td>
+              <td class="num p">€{o.per.toFixed(2)}</td>
+              <td class="num"><a class="go" href={o.link.url} target="_blank" rel="noopener nofollow sponsored">{o.link.isExact ? "Buy" : "Search"} →</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="note">Listed price for the box of {sku.boxSize} in the retailer's own currency, their own tax included. A box crossing a border picks up destination duty and VAT on top — the "duty paid EU" mark shows the few retailers whose price is all-in beyond their home market.</p>
+
+      {chart && (
+        <div class="spark">
+          <div class="rulehead"><h2>Ninety days <em>· cheapest in-stock box in Europe, in euros</em></h2></div>
+          <svg viewBox="0 0 600 150" role="img" aria-label={`Cheapest European price for ${sku.brand} ${sku.vitola}, ${fmtDay(chart.first)} to ${fmtDay(chart.lastDay)}: low €${Math.round(chart.lo)}, high €${Math.round(chart.hi)}, now €${Math.round(chart.last)}.`}>
+            <line class="grid" x1="44" x2="590" y1="10" y2="10" /><line class="grid" x1="44" x2="590" y1="69" y2="69" /><line class="grid" x1="44" x2="590" y1="128" y2="128" />
+            <text class="l" x="40" y="14" text-anchor="end">€{Math.round(chart.hi)}</text>
+            <text class="l" x="40" y="132" text-anchor="end">€{Math.round(chart.lo)}</text>
+            {chart.ticks.map((t, i) => (<text class="l" x={t.x} y="146" text-anchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}>{t.label}</text>))}
+            <path class="area" d={chart.area} /><path class="line" d={chart.path} />
+            <circle class="dot" cx={chart.dot.x} cy={chart.dot.y} r="3.5" />
+          </svg>
+          <p class="spark-legend"><span>Now <b>€{Math.round(chart.last)}</b></span><span>90-day low <b>€{Math.round(chart.lo)}</b></span><span>90-day high <b>€{Math.round(chart.hi)}</b></span><span>{hist.length} readings</span></p>
+        </div>
+      )}
+
+      <div class="rulehead"><h2>The piece</h2></div>
+      <div class="prose cap" style="max-width:none">
+        <p><b>{sku.blurb}</b></p>
+        {sku.editorial.split(/\n\s*\n/).map((para) => <p>{para}</p>)}
+      </div>
+
+      {faq.length > 0 && (
+        <>
+          <div class="rulehead" style="margin-top:26px"><h2>Questions</h2></div>
+          <ul class="faq">
+            {faq.map((f) => (<li><h3>{f.q}</h3><div set:html={f.a} /></li>))}
+          </ul>
+        </>
+      )}
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="rail">
+      <div class="rulehead"><h2>Where it's cheapest</h2></div>
+      <ul class="eds">
+        {countries.map((c) => {
+          const o = inStock.find((x) => x.country.code === c);
+          return (<li><a href={`/paper/finder/${c}/`}>{COUNTRY_BY_CODE[c].name}</a><span>{o ? `€${Math.round(o.eur)}` : "sold out"}</span></li>);
+        })}
+      </ul>
+      <div class="box">
+        <span class="kick">Watchlist · free</span>
+        <h3 class="head">Tell me when it drops.</h3>
+        <p>One email when this vitola falls below your price or comes back in stock. No charge, no newsletter unless you ask.</p>
+        {best && <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="primary" />}
+      </div>
+      <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/paper/read/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">What a cross-border box really costs</p></div></li>
+        <li><div><a class="head" href="/paper/read/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/">The European retailer map</a><p class="by">Who ships where</p></div></li>
+      </ul>
+    </aside>
+  </div>
+  <PriceAlertModal />
+</PaperLayout>

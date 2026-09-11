@@ -1,0 +1,48 @@
+---
+import { COUNTRIES, PRICE_SNAPSHOTS, RETAILERS } from "../../data/finder-live";
+const RET = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
+const covered = new Set(PRICE_SNAPSHOTS.map((s) => RET[s.retailerId]?.country).filter(Boolean));
+const editions = COUNTRIES.filter((c) => covered.has(c.code)).slice(0, 6);
+const year = new Date().getFullYear();
+---
+
+<footer class="paper">
+  <div class="cols">
+    <div>
+      <div class="m">The Next Cigar</div>
+      <p style="margin-top:8px;max-width:38ch">An independent paper about Cuban cigars and the European market. We compare prices and write about the leaf; we do not sell tobacco.</p>
+    </div>
+    <div>
+      <div class="t">Sections</div>
+      <ul>
+        <li><a href="/finder/">Markets · The Finder</a></li>
+        <li><a href="/blog/">Magazine</a></li>
+        <li><a href="/category/cigar-accessories/">Accessories</a></li>
+        <li><a href="/category/cigar-events/">Diary</a></li>
+        <li><a href="/lounge/">The Lounge</a></li>
+        <li><a href="/shop/">Shop</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="t">Editions</div>
+      <ul>
+        {editions.map((c) => <li><a href={`/finder/${c.code}/`}>{c.name}</a></li>)}
+        <li><a href="/finder/">All countries</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="t">The paper</div>
+      <ul>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/subscribe/">Newsletter</a></li>
+        <li><a href="/privacy/">Privacy</a></li>
+        <li><a href="/terms/">Terms</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>© {year} The Next Cigar · Registered in Sweden · 18+ · Smoking harms your health</span>
+    <span>Designed by <a href="https://turquinostudios.com" rel="noopener">Turquino Studios</a></span>
+  </div>
+</footer>

@@ -1,0 +1,69 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import { places } from "../../../data/cigar-places.ts";
+import { SKUS, RETAILERS, COUNTRIES } from "../../../data/finder-live";
+import { upcomingEvents } from "../../../data/cigar-events.ts";
+
+/** /paper/lounge/ — PREVIEW ROUTE (noindex). Ships as /lounge/.
+ *  The members' page. Membership is free; the page says what a member gets
+ *  and nothing else — no tiers, no founder pricing, no counts we can't show. */
+const cities = [...new Set(places.map((p) => p.city))].sort();
+const byType = (t: string) => places.filter((p) => p.type === t).length;
+const casas = places.filter((p) => p.type === "casadelhabano").slice(0, 6);
+const typeLabel: Record<string, string> = { casadelhabano: "Casa del Habano", house: "Brand house", lounge: "Lounge", retailer: "Retailer", club: "Private club", pub: "Cigar-friendly bar" };
+const upcoming = upcomingEvents().slice(0, 4);
+const fmt = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: "The Lounge", url: "https://thenextcigar.com/lounge/", isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" } };
+---
+
+<PaperLayout title="The Lounge — free membership: the map, the watchlist, the members · The Next Cigar" description={`${places.length} lounges, Casas del Habano and shops mapped in ${cities.length} cities, price alerts on ${SKUS.length} vitolas, and other members to meet. Free.`} section="lounge" compact={true} noIndex={true} jsonLd={jsonLd}>
+  <div class="dateline">
+    <h1>The Lounge <em>— the members' room.</em></h1>
+    <p class="st">{places.length} places · {cities.length} cities · membership free</p>
+  </div>
+
+  <div class="front">
+    <aside>
+      <div class="rulehead"><h2>What a member gets</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/lounge/signup/">The map</a><p class="by">{places.length} rooms worth walking into, in {cities.length} cities: {byType("casadelhabano")} Casas del Habano, {byType("lounge")} lounges, {byType("retailer")} shops, {byType("pub")} bars that let you light up.</p></div></li>
+        <li><div><a class="head" href="/lounge/signup/">The watchlist</a><p class="by">An email when any of the {SKUS.length} vitolas on the board drops below your price or comes back in stock — scoped to countries that can deliver to you.</p></div></li>
+        <li><div><a class="head" href="/lounge/signup/">Check-ins &amp; messages</a><p class="by">Say where you're smoking tonight; find members in the same city; message them directly.</p></div></li>
+        <li><div><a class="head" href="/lounge/signup/">First access</a><p class="by">The Guatabey run and every Shop arrival go to members first.</p></div></li>
+      </ul>
+      <div class="box">
+        <span class="kick">Free · no card</span>
+        <h3 class="head">Join the Lounge.</h3>
+        <p>An email address and a password. Nothing to pay, nothing to cancel. Already a member? <a href="/lounge/login/">Sign in</a>.</p>
+        <a class="cta" href="/lounge/signup/">Join free →</a>
+      </div>
+    </aside>
+
+    <section>
+      <div class="rulehead"><h2>Why it's free</h2></div>
+      <div class="prose cap" style="max-width:none">
+        <p>The paper is reader-supported and independent. We earn a small commission when a reader clicks through to a licensed retailer from the Markets board and buys a box, and a margin on the accessories in the Shop. That pays for the scraper, the hosting and the writing. It does not pay for a paywall, so there isn't one: everything public stays public, and the members' tools are free because a bigger, more useful map and a busier room are worth more to us than a subscription line.</p>
+        <p>What we ask in return is small. Add the good room you know in your city if we've missed it. Tell us when a price on the board is wrong. And if a retailer treats you badly after we sent you there, tell us that too — the board only works if it is honest.</p>
+      </div>
+
+      <div class="rulehead" style="margin-top:26px"><h2>Six rooms from the map</h2></div>
+      <div class="three" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));row-gap:22px">
+        {casas.map((p) => (
+          <article>
+            <span class="kick mute">{typeLabel[p.type] ?? p.type} · {p.city}</span>
+            <a class="head" style="font-size:20px;display:block;margin:6px 0 2px" href="/lounge/signup/">{p.name}</a>
+            {p.address && <p class="by">{p.address}</p>}
+          </article>
+        ))}
+      </div>
+      <p class="note">The full map, with opening hours, walk-in policy and members' notes, is inside the Lounge.</p>
+    </section>
+
+    <aside class="rail">
+      <div class="rulehead"><h2>The map, by city</h2></div>
+      <ul class="eds">{cities.slice(0, 14).map((c) => (<li><a href="/lounge/signup/">{c}</a><span>{places.filter((p) => p.city === c).length}</span></li>))}</ul>
+      {cities.length > 14 && <p class="note">and {cities.length - 14} more cities.</p>}
+      {upcoming.length > 0 && (<><div class="rulehead" style="margin-top:24px"><h2>Diary</h2></div><ul class="list diary">{upcoming.map((e) => (<li><span class="d">{fmt(e.startDate)}</span><div><a class="head" href="/paper/category/cigar-events/">{e.name}</a><p class="by">{e.location}</p></div></li>))}</ul></>)}
+    </aside>
+  </div>
+</PaperLayout>
