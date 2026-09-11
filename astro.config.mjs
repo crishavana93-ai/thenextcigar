@@ -14,7 +14,14 @@ export default defineConfig({
   // shadcn/ui, 21st.dev components). Static SEO pages stay pure Astro;
   // React is only loaded where islands are explicitly mounted with
   // <Component client:load /> or client:visible / client:idle.
-  integrations: [mdx(), sitemap(), react()],
+  integrations: [
+    mdx(),
+    sitemap({
+      // Private, gated or transactional pages never belong in the sitemap.
+      filter: (page) => !/\/(admin|lounge\/(app|login|signup|reset-password)|shop\/thank-you)\/?/.test(page),
+    }),
+    react(),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },
