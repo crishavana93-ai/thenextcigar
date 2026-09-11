@@ -326,3 +326,18 @@ table.mk .go{font-family:var(--sans);font-size:12px;white-space:nowrap}
 .product .buy[disabled]{background:var(--mute);cursor:default}
 .product .fine{font-family:var(--sans);font-size:12px;color:var(--mute);line-height:1.6;margin-top:12px}
 @media (max-width:860px){.gb{grid-template-columns:1fr}.gb .mark{display:none}.product{grid-template-columns:1fr}}
+
+/* ---------- Landed cost ---------- */
+.dest{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--sans);font-size:12.5px;margin:0 0 10px}
+.dest label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ox);font-weight:600}
+.dest select{font-family:var(--sans);font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:6px 8px;border-radius:0}
+.dest .hint{color:var(--mute);font-style:italic}
+table.mk td.door{color:var(--ox);font-weight:600}
+table.mk td.door small{color:var(--mute);font-weight:400}
+.landed{margin:22px 0 8px;border-top:2px solid var(--ink)}
+.landed-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.bill{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:13px;font-variant-numeric:tabular-nums}
+.bill td{padding:7px 0;border-bottom:1px solid var(--rule-2)}
+.bill td:last-child{text-align:right;white-space:nowrap}
+.bill tr.tot td{font-family:var(--serif);font-size:17px;font-weight:600;border-bottom:0;padding-top:10px}
+@media (max-width:860px){.landed-grid{grid-template-columns:1fr}}

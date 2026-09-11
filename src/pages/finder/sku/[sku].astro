@@ -7,6 +7,8 @@ import {
   effectiveShopUrl, dutyPaidCountries, checkedLabel, historyForSku,
 } from "../../../data/finder-live";
 import { buildSkuFaq } from "../../../lib/finder/skuFaq.ts";
+import { COUNTRIES, FX_TO_EUR } from "../../../data/finder-live";
+import { DUTY_RATES } from "../../../data/duty-rates";
 
 /**
  * /finder/sku/[sku]/
@@ -64,6 +66,14 @@ if (hist.length >= 3) {
 
 const siblings = SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 5);
 const faq = buildSkuFaq({ sku, best: best ? { snap: best.snap, retailer: best.retailer, country: best.country, eur: best.eur, perCigarEur: best.per } as any : undefined, offersCount: offers.length, sameBrandSkus: siblings.slice(0, 4) });
+// Landed-cost picker: everything the browser needs, nothing it doesn't.
+const landedData = {
+  sku: { boxSize: sku.boxSize, ring: sku.ring, lengthMm: sku.lengthMm },
+  fx: FX_TO_EUR,
+  offers: offers.map((o, idx) => ({ idx, price: o.snap.price, currency: o.snap.currency, from: o.country.code, inStock: o.snap.inStock, retailer: o.retailer.name })),
+  names: Object.fromEntries(COUNTRIES.map((c) => [c.code, c.name])),
+};
+const destinations = COUNTRIES.filter((c) => DUTY_RATES[c.code]).sort((a, b) => a.name.localeCompare(b.name));
 const fmtDay = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 const url = `https://thenextcigar.com/finder/sku/${sku.slug}/`;
@@ -159,8 +169,13 @@ const description = best
     <!-- CENTRE: the offers, the chart, the piece -->
     <section>
       <div class="rulehead"><h2>Every listing <em>· cheapest first</em></h2><span class="more">{offers.length} retailers</span></div>
-      <table class="mk wide offers">
-        <thead><tr><th>Retailer</th><th class="num">Box</th><th class="num">Per cigar</th><th></th></tr></thead>
+      <p class="dest">
+        <label for="dest">Delivered to</label>
+        <select id="dest"><option value="">— choose your country —</option>{destinations.map((c) => <option value={c.code}>{c.name}</option>)}</select>
+        <span class="hint" id="dest-hint">Pick a country to see what each box costs at your door.</span>
+      </p>
+      <table class="mk wide offers" id="offers">
+        <thead><tr><th>Retailer</th><th class="num">Box</th><th class="num">Per cigar</th><th class="num door" hidden>At your door</th><th></th></tr></thead>
         <tbody>
           {offers.map((o) => (
             <tr class:list={{ oos: !o.snap.inStock }}>
@@ -171,12 +186,24 @@ const description = best
               </td>
               <td class="num p">{formatPrice(o.snap.price, o.snap.currency)}<small>≈ €{Math.round(o.eur)}</small></td>
               <td class="num p">€{o.per.toFixed(2)}</td>
+              <td class="num p door" hidden data-idx={offers.indexOf(o)}></td>
               <td class="num"><a class="go" href={o.link.url} target="_blank" rel="noopener nofollow sponsored">{o.link.isExact ? "Buy" : "Search"} →</a></td>
             </tr>
           ))}
         </tbody>
       </table>
       <p class="note">Listed price for the box of {sku.boxSize} in the retailer's own currency, their own tax included. A box crossing a border picks up destination duty and VAT on top — the "duty paid EU" mark shows the few retailers whose price is all-in beyond their home market.</p>
+      <div class="landed" id="landed" hidden>
+        <div class="rulehead"><h2>At your door <em id="landed-title"></em></h2></div>
+        <div class="landed-grid">
+          <table class="bill" id="landed-bill"></table>
+          <div class="prose" style="font-size:14px;max-width:none">
+            <p id="landed-how"></p>
+            <p id="landed-caveats" class="note" style="margin-top:8px"></p>
+            <p class="note" id="landed-src"></p>
+          </div>
+        </div>
+      </div>
 
       {chart && (
         <div class="spark">
@@ -232,4 +259,40 @@ const description = best
     </aside>
   </div>
   <PriceAlertModal />
+  <script type="application/json" id="landed-data" set:html={JSON.stringify(landedData)} />
+  <script>
+    import { landedCost } from "../../../lib/finder/landed";
+    import { DUTY_RATES } from "../../../data/duty-rates";
+    const data = JSON.parse(document.getElementById("landed-data")!.textContent || "{}");
+    const sel = document.getElementById("dest") as HTMLSelectElement;
+    const hint = document.getElementById("dest-hint")!;
+    const eur = (n: number) => "€" + Math.round(n).toLocaleString("en-GB");
+    function render(code: string) {
+      const doorCells = document.querySelectorAll<HTMLElement>("#offers .door");
+      const panel = document.getElementById("landed")!;
+      if (!code || !(DUTY_RATES as any)[code]) { doorCells.forEach((c) => (c.hidden = true)); panel.hidden = true; hint.textContent = "Pick a country to see what each box costs at your door."; return; }
+      let best: any = null;
+      for (const o of data.offers) {
+        const r = landedCost({ price: o.price, currency: o.currency, fromCountry: o.from, toCountry: code, boxSize: data.sku.boxSize, ring: data.sku.ring, lengthMm: data.sku.lengthMm, fx: data.fx });
+        const cell = document.querySelector<HTMLElement>(`#offers td.door[data-idx="${o.idx}"]`);
+        if (cell) { cell.hidden = false; cell.innerHTML = `${eur(r.totalEur)}<small>${r.sameCountry ? "no extra tax" : "€" + r.perCigarEur.toFixed(2) + " per cigar"}</small>`; }
+        if (o.inStock && (!best || r.totalEur < best.r.totalEur)) best = { o, r };
+      }
+      doorCells.forEach((c) => (c.hidden = false));
+      hint.textContent = `Estimated for delivery to ${data.names[code]}. Sorted by listed price; read the last column for what you'd actually pay.`;
+      if (!best) { panel.hidden = true; return; }
+      const { o, r } = best;
+      document.getElementById("landed-title")!.textContent = `· cheapest to ${data.names[code]}: ${o.retailer}`;
+      const rows = [[`Listed price at ${o.retailer}${r.sameCountry ? "" : r.baseEur < o.price * data.fx[o.currency] - 0.5 ? " (minus their VAT — exports are zero-rated)" : ""}`, r.baseEur], ...r.lines.map((l: any) => [l.label, l.eur])];
+      document.getElementById("landed-bill")!.innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${eur(v as number)}</td></tr>`).join("") + `<tr class="tot"><td>At your door · box of ${data.sku.boxSize}</td><td>${eur(r.totalEur)}</td></tr><tr class="tot"><td>Per cigar</td><td>€${r.perCigarEur.toFixed(2)}</td></tr>`;
+      document.getElementById("landed-how")!.textContent = r.sameCountry
+        ? `A ${data.names[code]} retailer delivering inside ${data.names[code]}: duty and VAT are already in the price. Nothing is added at the door.`
+        : `Estimate. Excise is worked out on ${r.gramsPerCigar} g per cigar (from the vitola's ring and length) and on the price paid; VAT is charged on price, duty and excise together. Border parcels are assessed by customs — this is what the law says they should charge, not a promise of what your carrier will do.`;
+      document.getElementById("landed-caveats")!.textContent = r.caveats.join(" ");
+      document.getElementById("landed-src")!.innerHTML = `Rates: <a href="${r.rate.source.url}" rel="noopener" target="_blank">${r.rate.source.title}</a>, in force from ${r.rate.effective}${r.rate.note ? " — " + r.rate.note : ""}. Checked 11 September 2026.`;
+      panel.hidden = false;
+    }
+    sel.addEventListener("change", () => { render(sel.value); try { localStorage.setItem("tnc-dest", sel.value); } catch {} });
+    try { const saved = localStorage.getItem("tnc-dest"); if (saved) { sel.value = saved; render(saved); } } catch {}
+  </script>
 </PaperLayout>
