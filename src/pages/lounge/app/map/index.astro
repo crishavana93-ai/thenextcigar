@@ -1046,8 +1046,11 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const params = new URLSearchParams(window.location.search);
     const urlCity = params.get("city") || "";
     const cities = Array.from(new Set(allLounges.map((l) => l.city)));
+    // The map used to open filtered to the member's own city, which made a
+    // world map of 50-odd rooms look like a map of four. Open on everything
+    // and fly to their city instead: they see the whole map, and they still
+    // land where they live.
     if (urlCity && cities.includes(urlCity)) filterCity = urlCity;
-    else if (myCity && cities.includes(myCity)) filterCity = myCity;
     updateChipUi();
   }
 
@@ -1552,6 +1555,12 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
 
     renderMembersAndVenues();
     renderMyActive();
+
+    // Open on the member's city without hiding the rest of the world.
+    if (!filterCity && myCity) {
+      const home = allLounges.find((l) => l.city === myCity);
+      if (home) map.setView([home.lat, home.lng], 11);
+    }
 
     // ── Realtime — live pin updates as members check in / out ─────────────
     // Subscribes to INSERT, UPDATE, and DELETE on `checkins`. On any change,
