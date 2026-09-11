@@ -157,6 +157,9 @@ a.btn.ox{background:var(--ox)}
 .class{margin-top:30px;border-top:1px solid var(--ink);padding-top:12px}
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .tile{border:1px solid var(--rule);padding:14px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;background:var(--paper-2)}
+.tile .ph{aspect-ratio:1;background:var(--paper);margin:-14px -14px 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--rule)}
+.tile .ph img{width:100%;height:100%;object-fit:cover}
+.tile .ph .stamp{font-family:var(--sans);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);border:1px solid var(--rule);padding:4px 8px;transform:rotate(-6deg)}
 .tile .n{font-family:var(--serif);font-size:19px;font-weight:500;line-height:1.1}
 .tile .m{font-family:var(--sans);font-size:11px;color:var(--mute);margin-top:6px;line-height:1.4}
 .tile .pr{font-family:var(--sans);font-size:13px;font-weight:600;margin-top:12px;display:flex;justify-content:space-between}
@@ -361,55 +364,42 @@ table.mk td.door small{color:var(--mute);font-weight:400}
 /* ============================================================================
    Moving photographs
    ============================================================================
-   The Prophet trick: pictures in a printed paper that quietly move. Done with
-   CSS only — no library, no JavaScript, no layout shift — so it costs nothing
-   in crawl budget or Core Web Vitals and a crawler sees the same markup it
-   always did. Everything here is inside @media (prefers-reduced-motion: no-
-   preference), so a reader who has asked their system for stillness gets a
-   still paper.
+   The Prophet trick: pictures in a printed paper that quietly move. CSS only —
+   no library, no JavaScript, no layout shift — so it costs nothing in crawl
+   budget or Core Web Vitals, and a crawler sees the markup it always did.
 
-   Three effects:
-     .foto        — a slow, barely-there drift once the image is on screen
-     .foto.grade  — prints in greyscale and takes on colour as you reach it
-     figure:hover — the drift quickens slightly under the cursor
+   An earlier version hung the whole effect on `animation-timeline: view()`,
+   which Chrome only honours under conditions this markup didn't meet, so
+   nothing moved at all. The drift now simply runs; only the greyscale-to-
+   colour pass, which genuinely needs scroll position, is behind @supports.
+
+   Everything is inside prefers-reduced-motion: no-preference, so a reader who
+   has asked their system for stillness gets a still paper.
    ========================================================================= */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes drift {
-    0%   { transform: scale(1.00) translate3d(0,0,0) }
-    50%  { transform: scale(1.045) translate3d(-0.6%, -0.8%, 0) }
-    100% { transform: scale(1.00) translate3d(0,0,0) }
+    0%   { transform: scale(1.00) translate3d(0, 0, 0) }
+    50%  { transform: scale(1.05) translate3d(-0.8%, -1%, 0) }
+    100% { transform: scale(1.00) translate3d(0, 0, 0) }
   }
-  figure, .goods .ph, .three article a:has(> .foto) { overflow: hidden }
-  .foto { will-change: transform; animation: drift 26s ease-in-out infinite; animation-play-state: paused }
-  /* Only animate what the reader can actually see. */
-  @supports (animation-timeline: view()) {
-    .foto { animation-play-state: running; animation-timeline: auto; view-timeline-name: --f }
-  }
-  @supports not (animation-timeline: view()) {
-    .foto { animation-play-state: running }
-  }
-  figure:hover .foto, .goods article:hover .foto { animation-duration: 14s }
+  figure, .lead figure, .cubierta, .tile .ph, .goods .ph, .four article a, .three article a { overflow: hidden }
+  .foto { animation: drift 24s ease-in-out infinite; will-change: transform }
+  figure:hover .foto, .tile:hover .foto, .goods article:hover .foto, .four article:hover .foto { animation-duration: 12s }
 
-  /* Greyscale that warms up as the piece comes into view: newsprint that
-     remembers it was a photograph. Applied to covers, not to the market
-     tables or the classifieds thumbnails. */
-  .lead figure .foto, .art .cubierta .foto { filter: grayscale(0.55) contrast(1.04) }
+  /* Newsprint that remembers it was a photograph: the lead and the article
+     cover print grey and take on colour as you reach them. */
   @supports (animation-timeline: view()) {
-    @keyframes grade { from { filter: grayscale(0.9) contrast(1.06) } to { filter: grayscale(0) contrast(1) } }
+    @keyframes grade {
+      from { filter: grayscale(0.85) contrast(1.05) }
+      to   { filter: grayscale(0) contrast(1) }
+    }
     .lead figure .foto, .art .cubierta .foto {
-      animation: drift 26s ease-in-out infinite, grade 1ms linear both;
+      animation: drift 24s ease-in-out infinite, grade 1s linear both;
       animation-timeline: auto, view();
-      animation-range: auto, entry 10% cover 42%;
+      animation-range: normal, entry 15% cover 45%;
     }
   }
 
-  /* The ticker already scrolls; pause it when a reader hovers to read one. */
+  /* The ticker already scrolls; hold it still while a reader reads one. */
   .ticker:hover .run { animation-play-state: paused }
-
-  /* Rules that draw themselves once, under the section heads. */
-  @keyframes ruledraw { from { transform: scaleX(0) } to { transform: scaleX(1) } }
-  @supports (animation-timeline: view()) {
-    .rulehead { position: relative }
-    .rulehead::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--ink); transform-origin: left; animation: ruledraw 1ms linear both; animation-timeline: view(); animation-range: entry 0% entry 60% }
-  }
 }

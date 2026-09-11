@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import SubscribeModal from "../components/SubscribeModal.astro";
 import CookieBanner from "../components/CookieBanner.astro";
 import TravelSheet from "../components/lounge/TravelSheet.astro";
+import LoungeSkin from "../components/lounge/LoungeSkin.astro";
 // ClientRouter (view transitions) was removed 2026-05-10 because it was
 // preventing MailerLite forms, Astro <Image> components, and the Snipcart
 // cart from re-mounting on client-side navigation — symptom: forms invisible
@@ -179,9 +180,9 @@ const loungeSkin = path.startsWith("/lounge/app");
     </script>
 
     {/* <ClientRouter /> — disabled, see frontmatter comment */}
-    {loungeSkin && <link rel="stylesheet" href="/lounge-paper.css" />}
   </head>
   <body class="min-h-screen bg-bg text-text antialiased">
+    {loungeSkin && <LoungeSkin />}
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:text-bg focus:px-4 focus:py-2 focus:rounded">
       Skip to content
     </a>

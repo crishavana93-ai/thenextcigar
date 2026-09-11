@@ -211,11 +211,14 @@ const jsonLd = {
     <div class="rulehead flat"><h2>Classifieds <em>· the shop</em></h2><a class="more" href="/shop/">Opening soon · stocked in fives →</a></div>
     <div class="tiles">
       {tiles.map((p) => {
-        const buyable = p.data.inStock && !p.data.comingSoon;
+        const d: any = p.data;
+        const buyable = d.inStock && !d.comingSoon;
+        const img = !d.cover ? "" : typeof d.cover === "string" ? d.cover : d.cover.src;
         return (
-          <a class="tile" href={`/shop/${p.data.slug}/`}>
-            <div><div class="n">{p.data.name}</div><div class="m">{p.data.excerpt}</div></div>
-            <div class="pr">{money(p.data.price, p.data.currency)} <span>{buyable ? "in stock" : "pending stock"}</span></div>
+          <a class="tile" href={`/shop/${d.slug}/`}>
+            <div class="ph">{img ? <img class="foto" src={img} alt="" width="400" height="400" loading="lazy" /> : <span class="stamp">Photo to come</span>}</div>
+            <div><div class="n">{d.name}</div><div class="m">{d.excerpt}</div></div>
+            <div class="pr">{money(d.price, d.currency)} <span>{buyable ? "in stock" : "pending stock"}</span></div>
           </a>
         );
       })}

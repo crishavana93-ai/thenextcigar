@@ -1,0 +1,13 @@
+---
+/**
+ * The Lounge's newsprint skin.
+ *
+ * This exists so the stylesheet goes through Astro's bundler and gets a
+ * content hash in its filename. It used to be a plain <link> to a file in
+ * /public, which meant Cloudflare and the browser cached it forever: a fix
+ * shipped, the page kept loading the old file, and the home screen's prompt
+ * stayed black on black for hours after it was corrected. A hashed filename
+ * cannot go stale.
+ */
+import "../../styles/lounge-paper.css";
+---
