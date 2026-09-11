@@ -21,7 +21,7 @@ const fmt = (d: any, long = false) => new Date(d).toLocaleDateString("en-GB", lo
 const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: cat.name, url: `https://thenextcigar.com/category/${cat.slug}/`, isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" } };
 ---
 
-<PaperLayout title={`${cat.name} · The Next Cigar`} description={cat.description || `${posts.length} pieces filed under ${cat.name} in The Next Cigar magazine.`} section="magazine" compact={true} jsonLd={jsonLd}>
+<PaperLayout title={`${cat.name} · The Next Cigar`} description={cat.description || `${posts.length} pieces filed under ${cat.name} in The Next Cigar magazine.`} section="none" compact={true} jsonLd={jsonLd}>
   <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Magazine · <a href="/blog/">all sections</a></p>
   <div class="dateline">
     <h1>{cat.name}{cat.description && <em> — {cat.description}</em>}</h1>

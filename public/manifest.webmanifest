@@ -1,7 +1,7 @@
 {
   "name": "The Next Cigar",
   "short_name": "The Next Cigar",
-  "description": "Modern editorial for the cigar aficionado — culture, craft, and The Lounge, a vetted IRL network for cigar travelers.",
+  "description": "Modern editorial for the cigar aficionado \u2014 culture, craft, and The Lounge, a vetted IRL network for cigar travelers.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -10,25 +10,29 @@
   "theme_color": "#151515",
   "background_color": "#ffffff",
   "lang": "en",
-  "categories": ["lifestyle", "news", "social"],
+  "categories": [
+    "lifestyle",
+    "news",
+    "social"
+  ],
   "icons": [
     {
       "src": "/favicon.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "/logo-mark.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/lounge-app-icon-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [

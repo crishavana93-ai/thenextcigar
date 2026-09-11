@@ -1534,10 +1534,12 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const L = (window as any).L;
     map = L.map("lounge-map", { worldCopyJump: true, zoomControl: false }).setView([40, 0], 2);
     L.control.zoom({ position: "topright" }).addTo(map);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
+    // CARTO's hosted basemaps now require an API key and render "API KEY
+    // REQUIRED" across every tile without one. OpenStreetMap's own tiles are
+    // free, need no key, and suit the paper better than a dark theme.
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
-      subdomains: "abcd",
     }).addTo(map);
 
     // Toggle pin labels at zoom 11+

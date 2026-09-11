@@ -96,25 +96,38 @@ a:hover{text-decoration:underline;text-underline-offset:2px}
 .lounge-tab.is-active{color:var(--ox)}
 .lounge-tab.is-active .lounge-tab__label{font-weight:600}
 
-/* ---- chrome: the app's cards, buttons, inputs, chips --------------------- */
-/* Newsprint has no rounded corners and no shadows; it has rules. */
+/* ---- chrome: the app's cards, buttons, inputs, tables --------------------- */
+/* Substring selectors are deliberately narrow here. An earlier version used
+   [class*="cta"], which also matched .hero-cta__body and painted the home
+   screen's prompt black on black. Match whole words only. */
+/* BEM: style the block (disc-card) but never its elements (disc-card__name) —
+   an earlier version drew a box around every member's name. */
 [class*="card"],[class*="panel"],[class*="tile"],[class*="sheet"],[class*="modal"],
-[class*="chip"],[class*="pill"],[class*="badge"],[class*="btn"],[class*="button"],
-input,select,textarea{border-radius:0!important;box-shadow:none!important}
+[class*="chip"],[class*="pill"],[class*="badge"],[class*="btn"],
+button,input,select,textarea{border-radius:0!important;box-shadow:none!important}
 
-[class*="card"],[class*="panel"],[class*="tile"]{background:var(--paper);border:1px solid var(--rule)}
+[class*="-card"]:not([class*="card__"]):not([class*="card--"]),
+[class*="-panel"]:not([class*="panel__"]),
+[class*="-tile"]:not([class*="tile__"]){background:var(--paper);border:1px solid var(--rule)}
 
-button,.btn,[class*="btn"]{font-family:var(--sans);letter-spacing:.08em}
-.btn-primary,[class*="btn"][class*="primary"],[class*="cta"]{background:var(--ink);color:var(--paper);border:0}
-.btn-primary:hover,[class*="btn"][class*="primary"]:hover{background:var(--ox);color:var(--paper)}
-[class*="btn"][class*="ghost"],[class*="btn"][class*="secondary"]{background:transparent;border:1px solid var(--ink);color:var(--ink)}
+button,[class*="btn"]{font-family:var(--sans);letter-spacing:.08em}
+.btn-primary,.lbtn-primary{background:var(--ink);color:var(--paper);border:0}
+.btn-primary:hover,.lbtn-primary:hover{background:var(--ox);color:var(--paper)}
+.btn-secondary,.lbtn-secondary,[class*="btn"][class*="ghost"]{background:transparent;border:1px solid var(--ink);color:var(--ink)}
 
 input,select,textarea{font-family:var(--sans);background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
 input::placeholder,textarea::placeholder{color:var(--mute)}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--ox);outline-offset:-2px}
 
-/* Eyebrows and section flags the app renders as small uppercase text. */
-[class*="eyebrow"],[class*="kicker"],[class*="flag"],[class*="label"]{font-family:var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ox)}
+/* Eyebrows the app renders as small uppercase text. */
+[class*="eyebrow"],[class*="kicker"],[class*="__flag"],[class*="-flag"]{font-family:var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ox)}
+
+/* The home screen's "for you" prompt: a ruled box, not a dark slab. */
+.hero-cta{background:var(--paper)!important;border:1px solid var(--ink)!important;color:var(--ink)!important}
+.hero-cta__icon{background:var(--ox)!important;color:var(--paper)!important;border-radius:0!important}
+.hero-cta__title{font-family:var(--serif)!important;color:var(--ink)!important}
+.hero-cta__body,.hero-cta__sub,.hero-cta__arrow{background:transparent!important;color:inherit!important}
+.hero-cta__kicker{color:var(--ox)!important;background:transparent!important}
 
 /* Tables read like the board. */
 table{border-collapse:collapse;font-variant-numeric:tabular-nums}
