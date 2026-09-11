@@ -1,0 +1,126 @@
+---
+import PaperLayout from "../../layouts/PaperLayout.astro";
+import { ALLOWANCES, CUBA_EXPORT } from "../../data/allowances";
+
+/** /tools/allowance/ — how many cigars you can carry home, and what happens
+ *  if you carry more. Calculates in the browser. */
+const faq = [
+  { q: "How many Cuban cigars can I bring back from Cuba?", a: "Into the EU, fifty — and that fifty is instead of, not on top of, your cigarette allowance. Into the UK, fifty as well. Into Switzerland, up to 250 units of tobacco all told. Into Norway there is no cigar count at all: 250 grams of tobacco, which is about twenty robustos. Leaving Cuba is a separate question — twenty loose cigars need nothing, fifty need sealed boxes, more than fifty needs an invoice from a state shop." },
+  { q: "Can I bring cigars from Germany to Sweden?", a: "Yes, as many as are plainly for you. Inside the EU, duty has already been paid where you bought them and there is no legal cap for personal use; 200 cigars is the indicative level above which customs may ask what they're for. Finland is the one to watch — its customs quote fifty." },
+  { q: "What happens if I'm over?", a: "You declare, and you pay. In the UK that means duty on the whole quantity, not just the excess — a habit worth knowing before you buy the fifty-first. Norway lets you settle at a flat NOK 388 per 100 grams in the customs app. Elsewhere it's the destination's excise plus its VAT. Not declaring risks losing the cigars as well as paying." },
+  { q: "Does duty-free at the airport count?", a: "Yes. Cigars bought airside on the way home still come out of your allowance when you land. The shop sells them to you tax-free; your own customs decide whether you owe anything on arrival." },
+];
+const jsonLd = { "@context": "https://schema.org", "@graph": [
+  { "@type": "WebApplication", name: "Traveller's cigar allowance calculator", url: "https://thenextcigar.com/tools/allowance/", applicationCategory: "TravelApplication", offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" }, operatingSystem: "Any" },
+  { "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
+] };
+---
+
+<PaperLayout title="Traveller's cigar allowance — how many you can carry home · The Next Cigar" description="How many cigars you may bring into the EU, UK, Switzerland and Norway, what you pay above the limit, and what Cuba lets you take out. Sourced from each customs authority." section="markets" compact={true} jsonLd={jsonLd}>
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Tools · allowance</p>
+  <div class="dateline">
+    <h1>Traveller's allowance <em>— how many you can carry home.</em></h1>
+    <p class="st">Five customs regimes · checked 11 September 2026</p>
+  </div>
+
+  <div class="front">
+    <section style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
+      <form id="al-form" class="rw" style="grid-template-columns:repeat(3,1fr);display:grid;gap:10px;max-width:640px">
+        <label>Travelling to<select id="al-to">{ALLOWANCES.map((a) => <option value={a.code}>{a.name}</option>)}</select></label>
+        <label>Coming from<select id="al-from"><option value="out">Outside (Cuba, US, Asia…)</option><option value="eu">Another EU country</option><option value="ch">Switzerland</option><option value="uk">The UK</option></select></label>
+        <label>Cigars carried<input type="number" id="al-n" min="0" max="2000" value="50" /></label>
+      </form>
+      <p class="note" style="margin-top:6px">A robusto weighs about 12 g. Norway counts grams, so the answer there is a weight.</p>
+
+      <div class="quote" id="al-out" style="margin:18px 0 0;max-width:640px">
+        <p class="t" id="al-verdict-label">Verdict</p>
+        <p class="big" id="al-verdict" style="font-size:clamp(26px,3vw,36px)"></p>
+        <p class="sub" id="al-basis"></p>
+        <p class="sub" id="al-over" style="margin-top:8px"></p>
+      </div>
+      <p class="note" id="al-quirk"></p>
+      <p class="note" id="al-src"></p>
+
+      <div class="rulehead" style="margin-top:26px"><h2>Every regime, side by side</h2></div>
+      <table class="mk wide">
+        <thead><tr><th>Arriving in</th><th>From outside</th><th>From the EU</th><th class="num">Age</th></tr></thead>
+        <tbody>
+          {ALLOWANCES.map((a) => (
+            <tr>
+              <td class="v">{a.name}</td>
+              <td class="v" style="font-size:14px">{a.duty_free.cigars ? `${a.duty_free.cigars} cigars` : "250 g of tobacco"}<small>{a.duty_free.basis}</small></td>
+              <td class="v" style="font-size:14px">{a.guide.cigars ? `${a.guide.cigars} — indicative` : "n/a"}<small>{a.guide.note.slice(0, 90)}…</small></td>
+              <td class="num p">{a.duty_free.minAge}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div class="rulehead" style="margin-top:26px"><h2>Leaving Cuba</h2></div>
+      <table class="mk">
+        <tbody>{CUBA_EXPORT.tiers.map((t) => (<tr><td class="v">{t.limit}</td><td style="text-align:right;font-family:var(--sans);font-size:13px;max-width:320px">{t.need}</td></tr>))}</tbody>
+      </table>
+      <p class="note">{CUBA_EXPORT.note} Cuban customs publish little in English; this is the best-sourced reading we have — <a href={CUBA_EXPORT.source.url} rel="noopener" target="_blank">{CUBA_EXPORT.source.title}</a> — and worth confirming with the shop when you buy.</p>
+
+      <div class="rulehead" style="margin-top:26px"><h2>Questions</h2></div>
+      <ul class="faq">{faq.map((f) => (<li><h3>{f.q}</h3><div><p>{f.a}</p></div></li>))}</ul>
+    </section>
+
+    <aside class="rail">
+      <div class="rulehead"><h2>The traps</h2></div>
+      <ul class="list">
+        <li><div><a class="head" style="font-size:17px">It's a choice, not a sum</a><p class="by">Into the EU: 50 cigars <b>or</b> 200 cigarettes. Not both.</p></div></li>
+        <li><div><a class="head" style="font-size:17px">The UK charges on the lot</a><p class="by">One over, and duty is due on every cigar.</p></div></li>
+        <li><div><a class="head" style="font-size:17px">Norway weighs them</a><p class="by">250 g — about twenty robustos.</p></div></li>
+        <li><div><a class="head" style="font-size:17px">Finland won't take post</a><p class="by">Carrying is fine; mailing is illegal.</p></div></li>
+      </ul>
+      <div class="rulehead" style="margin-top:24px"><h2>Sources</h2></div>
+      <ul class="eds">{ALLOWANCES.map((a) => (<li><a href={a.source.url} rel="noopener" target="_blank">{a.name}</a><span>{a.confidence}</span></li>))}</ul>
+      <p class="note">We're a paper, not your customs officer. Rates and quotas change; the link by each country is the authority.</p>
+      <div class="rulehead" style="margin-top:24px"><h2>More tools</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/tools/box-code/">Box code decoder</a><p class="by">What the stamp on the box says</p></div></li>
+        <li><div><a class="head" href="/finder/">The board</a><p class="by">What to pay before you fly</p></div></li>
+      </ul>
+    </aside>
+  </div>
+
+  <script>
+    import { ALLOWANCES } from "../../data/allowances";
+    const to = document.getElementById("al-to") as HTMLSelectElement;
+    const from = document.getElementById("al-from") as HTMLSelectElement;
+    const n = document.getElementById("al-n") as HTMLInputElement;
+    const GRAMS = 12;
+    function run() {
+      const a = ALLOWANCES.find((x) => x.code === to.value)!;
+      const count = Math.max(0, Number(n.value) || 0);
+      const intraEU = from.value === "eu" && a.code !== "uk" && a.code !== "ch" && a.code !== "no";
+      const verdict = document.getElementById("al-verdict")!, basis = document.getElementById("al-basis")!;
+      const over = document.getElementById("al-over")!, label = document.getElementById("al-verdict-label")!;
+      if (intraEU && a.guide.cigars !== null) {
+        const okay = count <= a.guide.cigars;
+        label.textContent = "Inside the EU";
+        verdict.textContent = okay ? "Nothing to pay." : `${count} is above the ${a.guide.cigars}-cigar guide.`;
+        basis.textContent = a.guide.note;
+        over.textContent = okay ? "" : "That isn't a limit — it's the point at which you may be asked to show the cigars are for you and not for resale. Keep the receipt.";
+      } else {
+        const limitC = a.duty_free.cigars;
+        const grams = count * GRAMS;
+        const okay = limitC !== null ? count <= limitC : grams <= 250;
+        label.textContent = `Arriving in ${a.name}`;
+        verdict.textContent = okay
+          ? "Within the allowance — nothing to pay."
+          : limitC !== null ? `${count - limitC} over the ${limitC}-cigar allowance.` : `${grams} g — over the 250 g quota.`;
+        basis.textContent = a.duty_free.basis + (limitC === null ? ` At about ${GRAMS} g a cigar, ${count} cigars is roughly ${grams} g.` : "");
+        over.textContent = okay ? "" : a.over.basis === "flat"
+          ? `Declare and pay the flat rate: ${a.over.figures}`
+          : `Declare and pay: ${a.over.figures}${a.code === "uk" ? " — and the UK charges on the whole quantity, not the excess." : ""}`;
+      }
+      document.getElementById("al-quirk")!.textContent = a.quirk ?? "";
+      const src = document.getElementById("al-src")!;
+      src.innerHTML = `Source: <a href="${a.source.url}" rel="noopener" target="_blank">${a.source.title}</a>${a.confidence === "secondary" ? " — read from a secondary copy of the official text." : ""} Minimum age ${a.duty_free.minAge}.${a.duty_free.reduced ? " " + a.duty_free.reduced : ""}`;
+    }
+    [to, from, n].forEach((el) => el.addEventListener("input", run));
+    run();
+  </script>
+</PaperLayout>

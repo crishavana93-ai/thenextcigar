@@ -1,0 +1,104 @@
+---
+import PaperLayout from "../../layouts/PaperLayout.astro";
+import { EXAMPLES } from "../../lib/boxcode";
+
+/** /tools/box-code/ — read the stamp on the bottom of a Habanos box.
+ *  Decodes in the browser; nothing is sent anywhere. */
+const faq = [
+  { q: "Does the box code prove my cigars are real?", a: "No. A code can be copied, and a code we don't recognise doesn't mean the box is fake — it may simply predate a table we have, or come from a period nobody outside Habanos has ever documented. The stamp is one signal among several; the branding itself (genuine boxes have \"Hecho en Cuba\" and \"Totalmente a Mano\" burnt into the cedar, not flat-printed) tells you more than the letters do." },
+  { q: "Why won't you tell me the factory?", a: "Because for any box made since about 2003 nobody outside Habanos S.A. can. The three-letter factory code rotates on a schedule the company holds; the Cuban Cigar Website, the most careful public reference, calls tracking it virtually impossible. The tables you'll find elsewhere labelled \"current\" are the 1985–1998 list under a new heading. We decode what's knowable and say so when it isn't." },
+  { q: "Is the date the harvest year?", a: "No — it's when the box was filled. Cuban leaf is usually fermented and aged for eighteen months to two years before it's rolled, so a box stamped January 2018 holds tobacco harvested around 2016." },
+  { q: "What about the barcode on the warranty seal?", a: "Boxes made since 2009 carry a seal with a hologram and a barcode unique to that box, registered in Habanos S.A.'s own database. Their verification site is the only thing that can check it — and smokers report it is slow, rate-limited and often down. It's a supporting signal, not proof." },
+];
+const jsonLd = { "@context": "https://schema.org", "@graph": [
+  { "@type": "WebApplication", name: "Cuban box code decoder", applicationCategory: "ReferenceApplication", url: "https://thenextcigar.com/tools/box-code/", offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" }, operatingSystem: "Any" },
+  { "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
+] };
+---
+
+<PaperLayout title="Box code decoder — read the stamp on a Cuban cigar box · The Next Cigar" description="Type the code from the bottom of a Habanos box and get the month and year it was filled. Honest about the factory code: since 2003 nobody outside Habanos can decode it." section="markets" compact={true} jsonLd={jsonLd}>
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Tools · box code</p>
+  <div class="dateline">
+    <h1>Box code decoder <em>— what the stamp says.</em></h1>
+    <p class="st">Free · nothing leaves your browser</p>
+  </div>
+
+  <div class="front">
+    <section style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
+      <form id="bc-form" class="rw" style="max-width:460px">
+        <label>The code stamped on the bottom of the box
+          <input type="text" id="bc-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="MAY 24" />
+        </label>
+        <p class="note" style="margin:0">Try: {EXAMPLES.map((e, i) => (<>{i > 0 ? " · " : ""}<a href="#" class="bc-eg" data-eg={e}>{e}</a></>))}</p>
+      </form>
+
+      <div id="bc-out" hidden>
+        <div class="rulehead" style="margin-top:22px"><h2>Reading</h2></div>
+        <div class="quote" id="bc-date" hidden style="margin:0 0 18px">
+          <p class="t">Filled</p>
+          <p class="big" id="bc-when"></p>
+          <p class="sub" id="bc-age"></p>
+        </div>
+        <table class="mk" id="bc-rows"><tbody></tbody></table>
+        <div id="bc-notes"></div>
+      </div>
+
+      <div class="rulehead" style="margin-top:26px"><h2>What's on the bottom of the box</h2></div>
+      <div class="prose" style="max-width:none;font-size:15.5px">
+        <p><b>Burnt into the cedar</b>, not printed: <i>Hecho en Cuba</i> (since about 1960), <i>Habanos s.a.</i> (since 1994 — before that, <i>Cubatabaco</i>) and <i>Totalmente a Mano</i> (since 1989, when it replaced <i>Hecho a Mano</i>). Branding you can feel with a fingernail is one of the better forgery tells; counterfeits often print it flat.</p>
+        <p><b>Inked underneath</b>: the factory code and the date. Since 2000 the date is a three-letter Spanish month and a two-digit year — ENE, FEB, MAR, ABR, MAY, JUN, JUL, AGO, SEP, OCT, NOV, DIC. Before that it was a cipher: from 1985 to 1998 the word <i>NIVELACUSO</i> stood for the digits one to zero, so NNSU read 1198 — November 1998. A second keyword ran briefly in early 1999, and for the rest of that year the code carried no factory at all, which distributors disliked enough that it was reinstated.</p>
+        <p><b>A small TC</b> means <i>tripa corta</i> — short filler.</p>
+        <p><b>The seals.</b> Every box since 1994 carries the Habanos denomination-of-origin seal. The Cuban government warranty seal was redesigned in 2009 with a self-destructing hologram, microdots and a barcode unique to that box, registered in a central database.</p>
+        <p><b>What none of it does</b> is prove the cigars are genuine. Codes can be copied; an unfamiliar code may just be a period nobody has documented. And the factory, which collectors once chased, matters less than it did: quality control across the Havana factories has been level since around 2005.</p>
+      </div>
+
+      <div class="rulehead" style="margin-top:26px"><h2>Questions</h2></div>
+      <ul class="faq">{faq.map((f) => (<li><h3>{f.q}</h3><div><p>{f.a}</p></div></li>))}</ul>
+    </section>
+
+    <aside class="rail">
+      <div class="rulehead"><h2>Sources</h2></div>
+      <ul class="eds">
+        <li><a href="https://www.cubancigarwebsite.com/packaging/information" rel="noopener" target="_blank">Cuban Cigar Website</a><span>packaging</span></li>
+        <li><a href="https://www.habanos.com/en/marks-of-distinction/" rel="noopener" target="_blank">Habanos S.A.</a><span>marks of distinction</span></li>
+        <li><a href="https://www.cigaraficionado.com/article/cigar-insider-cubas-new-box-code-8095" rel="noopener" target="_blank">Cigar Aficionado</a><span>the 2000 code change</span></li>
+        <li><a href="https://www.habanos.com/en/authenticity-check/" rel="noopener" target="_blank">Habanos S.A.</a><span>seal verification</span></li>
+      </ul>
+      <p class="note">Checked 11 September 2026. Spotted something wrong? <a href="/contact/">Tell the desk</a> — corrections run on the page.</p>
+      <div class="rulehead" style="margin-top:24px"><h2>More tools</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/tools/allowance/">Traveller's allowance</a><p class="by">How many you can carry home, and what you'd pay</p></div></li>
+        <li><div><a class="head" href="/finder/">The board</a><p class="by">What every vitola costs across Europe</p></div></li>
+      </ul>
+    </aside>
+  </div>
+
+  <script>
+    import { decodeBoxCode } from "../../lib/boxcode";
+    const input = document.getElementById("bc-input") as HTMLInputElement;
+    const out = document.getElementById("bc-out")!, dateBox = document.getElementById("bc-date")!;
+    const rows = document.querySelector("#bc-rows tbody")!, notes = document.getElementById("bc-notes")!;
+    function run() {
+      const v = input.value.trim();
+      if (!v) { out.hidden = true; return; }
+      const d = decodeBoxCode(v);
+      const r: [string, string][] = [];
+      if (d.date) {
+        dateBox.hidden = false;
+        document.getElementById("bc-when")!.textContent = `${d.date.monthEn} ${d.date.year}`;
+        document.getElementById("bc-age")!.textContent = d.date.ageYears >= 0 ? `${d.date.ageYears} years in the box` : "a date in the future — check the year";
+      } else dateBox.hidden = true;
+      if (d.cipher) r.push(["Cipher", `${d.cipher.name} (${d.cipher.period}) → ${d.cipher.digits} → ${d.cipher.reading}`]);
+      if (d.factory) r.push(["Factory", `${d.factory.factory} — code known from ${d.factory.period}${d.factory.confidence === "disputed" ? ", though sources disagree on this one" : ""}`]);
+      if (d.tripaCorta) r.push(["TC", "Tripa corta — short filler"]);
+      if (d.unknownTokens.length && !d.factory) r.push(["Not recognised", d.unknownTokens.join(", ")]);
+      rows.innerHTML = r.map(([k, v2]) => `<tr><td class="v">${k}</td><td style="text-align:right;font-family:var(--sans);font-size:13px">${v2}</td></tr>`).join("");
+      notes.innerHTML = (d.notes.length ? d.notes : (d.date || d.cipher ? [] : ["Nothing here we recognise. The date is the part worth typing — three letters and two digits, like MAY 24."]))
+        .map((n) => `<p class="note">${n}</p>`).join("");
+      out.hidden = false;
+    }
+    input.addEventListener("input", run);
+    document.getElementById("bc-form")!.addEventListener("submit", (e) => { e.preventDefault(); run(); });
+    document.querySelectorAll<HTMLAnchorElement>(".bc-eg").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); input.value = a.dataset.eg!; run(); input.focus(); }));
+  </script>
+</PaperLayout>

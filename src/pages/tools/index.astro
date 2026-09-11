@@ -1,0 +1,28 @@
+---
+import PaperLayout from "../../layouts/PaperLayout.astro";
+import { SKUS, RETAILERS, COUNTRIES } from "../../data/finder-live";
+
+/** /tools/ — the working end of the paper. Everything here answers a question
+ *  a cigar buyer actually has, with its sources on the page. */
+const tools = [
+  { href: "/finder/", kick: "The board", title: "What a box costs, across Europe", blurb: `Box prices for ${SKUS.length} Cuban vitolas read from ${RETAILERS.length} licensed retailers in ${COUNTRIES.length} countries, each carrying the date it was checked. Free, no signup.` },
+  { href: "/finder/index/", kick: "The index", title: "The Habanos Index", blurb: "An equal-weighted daily index of the cheapest per-cigar price in Europe. Base 100, brand sub-indices, biggest movers. Free to reuse with attribution." },
+  { href: "/tools/box-code/", kick: "Decoder", title: "Read the stamp on the box", blurb: "Type the code from the bottom of a Habanos box for the month and year it was filled — and an honest answer about the factory code, which nobody outside Habanos can decode since 2003." },
+  { href: "/tools/allowance/", kick: "Travelling", title: "How many you can carry home", blurb: "The duty-free allowance for cigars into the EU, UK, Switzerland and Norway, what you pay above it, and what Cuba lets you take out. Sourced from each customs authority." },
+  { href: "/lounge/signup/", kick: "Alerts · free", title: "Tell me when it drops", blurb: "An email when a vitola falls below your price or comes back in stock, and when something new is listed at a retailer you watch. Free with a Lounge account." },
+];
+const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: "Tools", url: "https://thenextcigar.com/tools/" };
+---
+<PaperLayout title="Tools — the working end of the paper · The Next Cigar" description="Price comparison across Europe, the Habanos Index, a box-code decoder, a traveller's allowance calculator and free price alerts. Every figure sourced." section="tools" compact={true} jsonLd={jsonLd}>
+  <div class="dateline"><h1>Tools <em>— the working end of the paper.</em></h1><p class="st">Free · no signup except where it says</p></div>
+  <div class="prose" style="max-width:720px;margin-bottom:22px"><p>Things a cigar buyer actually needs and mostly cannot get: what a box really costs in another country, what it costs once it has crossed a border, what the stamp on the bottom says, and how many you may legally carry home. Every figure on these pages carries the date it was read and a link to where it came from.</p></div>
+  <div class="three" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));row-gap:26px">
+    {tools.map((t) => (
+      <article>
+        <span class="kick">{t.kick}</span>
+        <a class="head" style="font-size:24px;display:block;margin:6px 0 8px" href={t.href}>{t.title}</a>
+        <p class="t">{t.blurb}</p>
+      </article>
+    ))}
+  </div>
+</PaperLayout>
