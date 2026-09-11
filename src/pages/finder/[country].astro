@@ -1,461 +1,183 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import "../../styles/newspaper.css";
-import CigarCursor from "../../components/newspaper/CigarCursor.astro";
-import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
-import SectionFlag from "../../components/newspaper/SectionFlag.astro";
-import FaqSchema from "../../components/finder/FaqSchema.astro";
-import { MASTHEAD as masthead } from "../../data/masthead";
+import PaperLayout from "../../layouts/PaperLayout.astro";
 import {
-  COUNTRIES,
-  RETAILERS,
-  SKUS,
-  PRICE_SNAPSHOTS,
-  snapshotsForCountry,
-  retailersForCountry,
-  bestPriceInCountry,
-  formatPrice,
-  toEUR,
-  type CountryCode,
+  COUNTRIES, COUNTRY_BY_CODE, RETAILERS, SKUS, RETAILER_BY_ID, snapshotsForCountry, retailersForCountry,
+  bestPriceInCountry, formatPrice, toEUR, checkedLabel, effectiveShopUrl, type CountryCode,
 } from "../../data/finder-live";
 import { policyFor } from "../../data/country-config.ts";
 import { places as cigarPlaces } from "../../data/cigar-places.ts";
 
+/**
+ * /finder/[country]/
+ *
+ * A country edition: what the law allows, who sells, what the board looks like
+ * from inside that market, and the rooms worth knowing. Restricted markets get
+ * a directory instead of a shop button — the legal posture comes from
+ * country-config.ts, never from this page.
+ */
+
 export async function getStaticPaths() {
   return COUNTRIES.map((c) => ({ params: { country: c.code } }));
 }
-
-const { country: countryCode } = Astro.params as { country: CountryCode };
-const country = COUNTRIES.find((c) => c.code === countryCode);
+const { country: code } = Astro.params as { country: CountryCode };
+const country = COUNTRY_BY_CODE[code];
 if (!country) return Astro.redirect("/finder/");
+const policy = policyFor(code);
+const retailers = retailersForCountry(code);
+const snapshots = snapshotsForCountry(code);
 
-const policy = policyFor(country.code);
-const retailers = retailersForCountry(country.code);
-const snapshots = snapshotsForCountry(country.code);
+const rows = SKUS
+  .map((sku) => ({ sku, snap: bestPriceInCountry(sku.id, code) }))
+  .filter((r): r is { sku: (typeof SKUS)[number]; snap: NonNullable<ReturnType<typeof bestPriceInCountry>> } => !!r.snap)
+  .map((r) => ({ ...r, retailer: RETAILER_BY_ID[r.snap.retailerId], eur: toEUR(r.snap.price, r.snap.currency) }))
+  .sort((a, b) => a.eur / a.sku.boxSize - b.eur / b.sku.boxSize);
+const liveCount = rows.filter((r) => (r.snap as any).live).length;
 
-// SKUs available in this country, sorted cheapest first
-const skuRows = SKUS
-  .map((sku) => ({ sku, snap: bestPriceInCountry(sku.id, country.code) }))
-  .filter((r): r is { sku: typeof SKUS[number]; snap: NonNullable<ReturnType<typeof bestPriceInCountry>> } => !!r.snap)
-  .sort((a, b) => a.snap.price - b.snap.price);
+// Where this market is beaten: for each vitola priced here, the cheapest elsewhere.
+const beaten = rows
+  .map((r) => {
+    const elsewhere = COUNTRIES.filter((c) => c.code !== code && c.status === "open")
+      .map((c) => ({ c, s: bestPriceInCountry(r.sku.id, c.code) }))
+      .filter((x) => x.s)
+      .map((x) => ({ c: x.c, eur: toEUR(x.s!.price, x.s!.currency) }))
+      .sort((a, b) => a.eur - b.eur)[0];
+    if (!elsewhere || elsewhere.eur >= r.eur) return null;
+    return { sku: r.sku, here: r.eur, there: elsewhere.eur, where: elsewhere.c, pct: Math.round(((r.eur - elsewhere.eur) / r.eur) * 100) };
+  })
+  .filter((x): x is NonNullable<typeof x> => !!x)
+  .sort((a, b) => b.pct - a.pct)
+  .slice(0, 5);
 
-const statusLabel: Record<typeof country.status, string> = {
-  open: "Online sale legal",
-  restricted: "Restricted online sale",
-  closed: "No online sale",
-};
+const statusLabel = { open: "Online sale legal", restricted: "Online sale restricted", closed: "No online sale" }[country.status];
+const typeLabel: Record<string, string> = { casadelhabano: "Casa del Habano", house: "Brand flagship", lounge: "Lounge", retailer: "Retailer", club: "Private club", pub: "Cigar-friendly bar" };
+const places = cigarPlaces.filter((p) => p.country.toLowerCase() === country.name.toLowerCase()).slice(0, 8);
+const tier = (s: string) => (s === "lcdh" ? "La Casa del Habano" : s === "habanos-specialist" ? "Habanos Specialist" : s === "reservation" ? "Reservation only" : "Tobacconist");
+const otherEditions = COUNTRIES.filter((c) => c.code !== code && retailersForCountry(c.code).length > 0);
 
-// FAQ block (SEO-preserved)
-const cheapestRow = skuRows[0];
-const retailerCount = retailers.length;
-const cheapestLine = cheapestRow
-  ? `The cheapest in-stock box on our ${country.name} tracker right now is <strong><a href="/finder/sku/${cheapestRow.sku.slug}/">${cheapestRow.sku.brand} ${cheapestRow.sku.vitola}</a></strong> at approximately <strong>${cheapestRow.snap.currency} ${Math.round(cheapestRow.snap.price).toLocaleString("en-US")}</strong>.`
-  : `We're tracking ${SKUS.length} Cuban SKUs across this market — refresh weekly for live availability.`;
-
-const statusAnswers: Record<typeof country.status, string> = {
-  open: `<p>Yes. Licensed retailers based in ${country.name} sell Cuban (Habanos) cigars online with public pricing and ship domestically. Cross-border EU shipments are accepted by many of them but face destination-country tobacco duty + VAT.</p>`,
-  restricted: `<p>Restricted. ${country.name} permits online tobacco sale only under specific conditions (often: identity verification, no public price display, or shipping limited to certain regions).</p>`,
-  closed: `<p>No. ${country.name} does not permit online Cuban-cigar sale. The retailers listed are in-store walk-in only.</p>`,
-};
-
-const countryFaq = [
-  { q: `Can I legally buy Cuban cigars online in ${country.name}?`, a: statusAnswers[country.status] },
+const faq = [
+  { q: `Can I buy Cuban cigars online in ${country.name}?`,
+    a: country.status === "open" ? `Yes. Licensed retailers in ${country.name} sell Habanos online with public prices and ship domestically.${policy.crossBorderImportAllowed ? " Buying from another EU country is legal too, but the box picks up destination duty and VAT." : ""}`
+     : country.status === "restricted" ? `Only in part. ${country.name} limits online tobacco sale — typically to domestic delivery, identity checks or no public price display. ${policy.regulatoryWarning ?? ""}`
+     : `No. ${country.name} does not permit online sale of tobacco. The shops below are walk-in only.` },
   { q: `Where is the cheapest place to buy Cuban cigars in ${country.name} right now?`,
-    a: `<p>${cheapestLine}</p>` },
-  { q: `Will I pay tobacco duty + VAT on top of the listed price?`,
-    a: `<p>If you buy from a retailer based in ${country.name} and ship to a ${country.name} address: <strong>no</strong> — duty + VAT are already included in the listed price. If you buy from a retailer in another country and ship to ${country.name}: <strong>yes</strong> — ${country.name} charges its own tobacco excise + VAT at customs.</p>` },
-  { q: `What's the difference between an LCDH, a Habanos Specialist, and a generic tobacconist?`,
-    a: `<p><strong>LCDH (La Casa del Habano)</strong> is the official franchise network of Habanos S.A. <strong>Habanos Specialist</strong> is licensed with trained staff and guaranteed authenticity. <strong>Generic tobacconist</strong> sells Cuban alongside other origins.</p>` },
+    a: rows[0] ? `On our board the cheapest box per cigar in ${country.name} is the ${rows[0].sku.brand} ${rows[0].sku.vitola} at ${formatPrice(rows[0].snap.price, rows[0].snap.currency)} from ${rows[0].retailer.name} (${checkedLabel(rows[0].snap)}).` : `We list ${retailers.length} retailers in ${country.name} but none publishes prices online.` },
+  { q: `Will I pay duty and VAT on top of the listed price?`,
+    a: `Not when you buy from a retailer in ${country.name} and ship within ${country.name} — duty and VAT are already in the price. Buying from abroad, ${country.name} charges its own tobacco excise and VAT at the border.` },
 ];
 
-// Local places
-const placeTypeLabels: Record<string, string> = {
-  casadelhabano: "Casa del Habano", house: "Brand flagship", lounge: "Lounge",
-  retailer: "Retailer", club: "Private club", pub: "Cigar-friendly bar",
-};
-const localPlaces = cigarPlaces
-  .filter((p) => p.country.toLowerCase() === country.name.toLowerCase())
-  .slice(0, 8)
-  .map((p) => ({
-    ...p,
-    typeLabel: placeTypeLabels[p.type] || p.type,
-    mapHref: p.website || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`,
-  }));
-
-// JSON-LD (SEO preserved)
-const itemListJsonLd = {
-  "@context": "https://schema.org/",
-  "@type": "ItemList",
-  name: `Cuban cigar prices in ${country.name}`,
-  numberOfItems: skuRows.length,
-  itemListElement: skuRows.map(({ sku, snap }, i) => ({
-    "@type": "ListItem", position: i + 1,
-    item: {
-      "@type": "Product", name: `${sku.brand} ${sku.vitola}`,
-      brand: { "@type": "Brand", name: sku.brand },
-      url: `https://thenextcigar.com/finder/sku/${sku.slug}/`,
-      offers: {
-        "@type": "Offer", priceCurrency: snap.currency, price: snap.price.toFixed(2),
-        availability: "https://schema.org/InStock",
-        seller: { "@type": "Organization", name: RETAILERS.find((r) => r.id === snap.retailerId)!.name },
-      },
-    },
-  })),
-};
-
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org/", "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "The Finder", item: "https://thenextcigar.com/finder/" },
-    { "@type": "ListItem", position: 2, name: country.name, item: `https://thenextcigar.com/finder/${country.code}/` },
-  ],
-};
-
-const statusFlagClass: Record<typeof country.status, string> = {
-  open: "finder", restricted: "market", closed: "people",
-};
+const url = `https://thenextcigar.com/finder/${code}/`;
+const jsonLd = { "@context": "https://schema.org", "@graph": [
+  { "@type": "ItemList", name: `Cuban cigar prices in ${country.name}`, numberOfItems: rows.length,
+    itemListElement: rows.slice(0, 25).map((r, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "Product", name: `${r.sku.brand} ${r.sku.vitola}`, url: `https://thenextcigar.com/finder/sku/${r.sku.slug}/`,
+      offers: { "@type": "Offer", price: r.snap.price.toFixed(2), priceCurrency: r.snap.currency, availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: r.retailer.name } } } })) },
+  { "@type": "BreadcrumbList", itemListElement: [ { "@type": "ListItem", position: 1, name: "Markets", item: "https://thenextcigar.com/finder/" }, { "@type": "ListItem", position: 2, name: country.name, item: url } ] },
+  { "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
+] };
 ---
 
-<BaseLayout
-  title={`Cuban cigar prices in ${country.name} — The Finder · The Next Cigar`}
-  description={`${skuRows.length} live prices across ${retailerCount} licensed Habanos retailers in ${country.name}. ${statusLabel[country.status]}.`}
-  bareChrome={true}
+<PaperLayout
+  title={`Cuban cigar prices in ${country.name} — retailers, law and the board · The Next Cigar`}
+  description={`${retailers.length} licensed Habanos retailers in ${country.name}, ${rows.length} vitolas priced, and what the law lets you order. ${statusLabel}.`}
+  section="markets" compact={true} jsonLd={jsonLd}
 >
-  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd)} />
-  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
-  <FaqSchema items={countryFaq} />
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Markets · <a href="/finder/">the board</a> · editions</p>
+  <div class="dateline">
+    <h1>{country.name} <em>— prices, shops and the law.</em></h1>
+    <p class="st">{retailers.length} retailers · {rows.length} vitolas priced{liveCount > 0 && <> · <b style="color:var(--live)">{liveCount} live</b></>} · <span class:list={{ tag: true, ok: country.status === "open", warn: country.status !== "open" }} style="letter-spacing:.12em">{statusLabel}</span></p>
+  </div>
 
-  <div class="tnc-cinema">
-    <CigarCursor />
+  <div class="front">
+    <aside>
+      <div class="rulehead"><h2>The law</h2></div>
+      <div class="prose" style="font-size:15px;max-width:none">
+        <p>{country.note}</p>
+        {policy.regulatoryWarning && <p><b>{policy.regulatoryWarning}</b></p>}
+      </div>
+      <dl class="file">
+        <dt>Importer of record</dt><dd style="font-size:14px">{policy.importerOfRecord}</dd>
+        <dt>Framework</dt><dd style="font-size:14px">{policy.regulationCite}</dd>
+        <dt>Cross-border import</dt><dd style="font-size:14px">{policy.crossBorderImportAllowed ? "Permitted, duty and VAT due on arrival" : "Not permitted"}</dd>
+        {policy.bestForCrossBorder && policy.bestForCrossBorder.length > 0 && <><dt>Legal routes in</dt><dd style="font-size:14px">{policy.bestForCrossBorder.map((c) => COUNTRY_BY_CODE[c]?.name).filter(Boolean).join(", ")}</dd></>}
+      </dl>
 
-    <main class="site-body">
-      <NewspaperMasthead {...masthead} />
-
-      <SectionFlag
-        number="/01"
-        section={`The Finder · ${country.name}`}
-        title={`${country.flag} ${country.name}<em> — Cuban cigar prices, live.</em>`}
-        status={`${skuRows.length} SKUs · ${retailerCount} retailers · ${statusLabel[country.status]}`}
-        live={country.status === "open"}
-      />
-
-      <section class="country-hero">
-        <a href="/finder/" class="country-back" data-hover>← All countries</a>
-        <div class="country-hero-grid">
-          <div>
-            <span class={`country-status-flag ${statusFlagClass[country.status]}`}>{statusLabel[country.status]}</span>
-            {policy?.notes && <p class="country-policy">{policy.notes}</p>}
-          </div>
-          <div class="country-hero-stats">
-            <div><span class="k">SKUs tracked</span><span class="v">{skuRows.length}</span></div>
-            <div><span class="k">Retailers</span><span class="v">{retailerCount}</span></div>
-            <div><span class="k">Snapshots</span><span class="v">{snapshots.length}</span></div>
-          </div>
-        </div>
-      </section>
-
-      {skuRows.length > 0 && (
-        <section class="table-band">
-          <div class="table-head">
-            <div class="table-flag">Live prices · sorted cheapest first</div>
-            <h2>{skuRows.length} SKUs <em>in {country.name} today.</em></h2>
-          </div>
-          <table class="ticker">
-            <thead>
-              <tr>
-                <th>Vitola</th>
-                <th class="num">Price</th>
-                <th class="num">EUR eq.</th>
-                <th>Retailer</th>
-                <th></th>
-              </tr>
-            </thead>
+      {beaten.length > 0 && (
+        <>
+          <div class="rulehead"><h2>Where {country.name} is beaten</h2></div>
+          <table class="mk">
             <tbody>
-              {skuRows.map(({ sku, snap }) => {
-                const retailer = RETAILERS.find((r) => r.id === snap.retailerId);
-                const eur = toEUR(snap.price, snap.currency);
-                return (
-                  <tr>
-                    <td>
-                      <a href={`/finder/sku/${sku.slug}/`} data-hover>
-                        <span class="brand">{sku.brand}</span>
-                        <span class="name">{sku.vitola}</span>
-                      </a>
-                    </td>
-                    <td class="num">{formatPrice(snap.price, snap.currency)}</td>
-                    <td class="num eur">€{Math.round(eur).toLocaleString()}</td>
-                    <td>{retailer?.name}{retailer?.city && <span class="brand">{retailer.city}</span>}</td>
-                    <td class="num"><a href={`/finder/sku/${sku.slug}/`} data-hover class="row-cta">Compare all →</a></td>
-                  </tr>
-                );
-              })}
+              {beaten.map((b) => (
+                <tr><td class="v"><a href={`/finder/sku/${b.sku.slug}/`}>{b.sku.brand} {b.sku.vitola}</a><small>{b.where.name} · €{Math.round(b.there)} vs €{Math.round(b.here)}</small></td><td class="p" style="color:var(--ox)">−{b.pct}%</td></tr>
+              ))}
             </tbody>
           </table>
-        </section>
+          <p class="note">Before duty. A cheaper box abroad is only cheaper if it stays cheaper after {country.name}'s excise and VAT.</p>
+        </>
+      )}
+    </aside>
+
+    <section>
+      {rows.length > 0 ? (
+        <>
+          <div class="rulehead"><h2>The board <em>· cheapest per cigar, {country.name} retailers only</em></h2><span class="more">{rows.length} vitolas</span></div>
+          <table class="mk wide">
+            <thead><tr><th>Vitola</th><th>Retailer</th><th class="num">Box</th><th class="num">Per cigar</th></tr></thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr>
+                  <td class="v"><a href={`/finder/sku/${r.sku.slug}/`}>{r.sku.brand} {r.sku.vitola}</a><small>box of {r.sku.boxSize}</small></td>
+                  <td class="v" style="font-size:14px">
+                    {policy.onlineSaleAllowed ? <a href={effectiveShopUrl(r.snap.sourceUrl, r.sku, r.retailer).url} target="_blank" rel="noopener nofollow">{r.retailer.name}</a> : r.retailer.name}
+                    <small>{checkedLabel(r.snap)}</small>
+                  </td>
+                  <td class="num p">{formatPrice(r.snap.price, r.snap.currency)}</td>
+                  <td class="num p">€{(r.eur / r.sku.boxSize).toFixed(0)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!policy.onlineSaleAllowed && <p class="note">Prices are for reference — online sale to consumers is not permitted in {country.name}, so retailer names are not linked to shops.</p>}
+        </>
+      ) : (
+        <div class="box" style="margin-top:0"><span class="kick">No public prices</span><h3 class="head">Nobody in {country.name} publishes a price online.</h3><p>The retailers below are the licensed rooms to visit. For a price comparison, see the <a href="/finder/">European board</a>.</p></div>
       )}
 
-      {retailers.length > 0 && (
-        <section class="retailers-band">
-          <div class="retailers-head">
-            <div class="retailers-flag">Licensed retailers</div>
-            <h2>{retailerCount} shops <em>we track in {country.name}.</em></h2>
-          </div>
-          <div class="retailers-grid">
-            {retailers.map((r) => (
-              <a href={r.url} target="_blank" rel="noopener" class="retailer" data-hover>
-                <div class="retailer-name">{r.name}</div>
-                {r.city && <div class="retailer-city">{r.city}</div>}
-                <div class="retailer-status">{r.status.toUpperCase()}</div>
-                <div class="retailer-cta">Visit site →</div>
-              </a>
+      <div class="rulehead" style="margin-top:26px"><h2>Licensed retailers <em>· {retailers.length} in {country.name}</em></h2></div>
+      <div class="three" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));row-gap:22px">
+        {retailers.map((r) => (
+          <article>
+            <span class="kick mute">{tier(r.status)}</span>
+            <a class="head" style="font-size:20px;display:block;margin:6px 0 2px" href={r.url} target="_blank" rel="noopener">{r.name}</a>
+            <p class="by">{r.city ?? country.name} · {r.shipsTo === "worldwide" ? "ships worldwide" : r.shipsTo === "eu" ? "ships within the EU" : "domestic delivery"}{r.hasPublicPricing ? "" : " · no online prices"}</p>
+          </article>
+        ))}
+      </div>
+
+      {places.length > 0 && (
+        <>
+          <div class="rulehead" style="margin-top:26px"><h2>The rooms <em>· lounges, houses and bars</em></h2></div>
+          <ul class="list">
+            {places.map((p) => (
+              <li><div><a class="head" href={p.website || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`} target="_blank" rel="noopener">{p.name}</a><p class="by">{typeLabel[p.type] ?? p.type} · {p.city}{p.address ? ` · ${p.address}` : ""}</p></div></li>
             ))}
-          </div>
-        </section>
+          </ul>
+        </>
       )}
 
-      {localPlaces.length > 0 && (
-        <section class="places-band">
-          <div class="places-head">
-            <div class="places-flag">Visit in person</div>
-            <h2>Lounges &amp; houses <em>worth the trip.</em></h2>
-          </div>
-          <div class="places-grid">
-            {localPlaces.map((p) => (
-              <a href={p.mapHref} target="_blank" rel="noopener" class="place" data-hover>
-                <div class="place-type">{p.typeLabel}</div>
-                <h3>{p.name}</h3>
-                <div class="place-city">{p.city}</div>
-                {p.note && <p>{p.note}</p>}
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      <div class="rulehead" style="margin-top:26px"><h2>Questions</h2></div>
+      <ul class="faq">{faq.map((f) => (<li><h3>{f.q}</h3><div><p>{f.a}</p></div></li>))}</ul>
+    </section>
 
-      <section class="faq-band">
-        <div class="faq-head">
-          <div class="faq-flag">Frequently asked</div>
-          <h2>Buying Cuban <em>in {country.name}.</em></h2>
-        </div>
-        <div class="faq-list">
-          {countryFaq.map((item, i) => (
-            <details class="faq-item" open={i === 0}>
-              <summary>{item.q}</summary>
-              <div class="faq-answer" set:html={item.a}></div>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      <section class="footer-strip">
-        <div class="footer-strip-inner">
-          <div>
-            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
-            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
-          </div>
-          <div class="footer-strip-links">
-            <a href="/finder/" data-hover>Finder</a>
-            <a href="/lounge/" data-hover>Lounge</a>
-            <a href="/blog/" data-hover>Magazine</a>
-            <a href="/shop/" data-hover>Shop</a>
-            <a href="/about/" data-hover>About</a>
-            <a href="/contact/" data-hover>Contact</a>
-          </div>
-        </div>
-        <div class="footer-strip-copy">
-          <span>© 2025–2026 The Next Cigar</span>
-          <a href="https://turquinostudios.com" target="_blank" rel="noopener" class="footer-turquino" data-hover>
-            <img src="/cinematic/turquino-mark.jpg" alt="" />
-            <span>Designed by <em>Turquino Studios</em></span>
-          </a>
-        </div>
-      </section>
-    </main>
+    <aside class="rail">
+      <div class="rulehead"><h2>Other editions</h2></div>
+      <ul class="eds">
+        {otherEditions.map((c) => (<li><a href={`/finder/${c.code}/`}>{c.name}</a><span>{retailersForCountry(c.code).length} shops</span></li>))}
+      </ul>
+      <div class="box">
+        <span class="kick">Watchlist · free</span>
+        <h3 class="head">Price drops in {country.name}.</h3>
+        <p>Members can scope alerts to a country, so you only hear about boxes you can legally have delivered.</p>
+        <a class="cta" href="/lounge/signup/">Join the Lounge</a>
+      </div>
+    </aside>
   </div>
-</BaseLayout>
-
-<style>
-  .site-body { padding-bottom: 40px; }
-
-  .country-hero { max-width: 1400px; margin: 0 auto; padding: 32px 40px 40px; border-bottom: 1px solid var(--news-rule); }
-  .country-back {
-    display: inline-block;
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--news-oxblood);
-    padding-bottom: 3px; border-bottom: 1px solid transparent; transition: all 0.2s;
-    margin-bottom: 24px;
-  }
-  .country-back:hover { border-bottom-color: var(--news-oxblood); }
-  .country-hero-grid { display: grid; grid-template-columns: 8fr 4fr; gap: 48px; align-items: start; }
-  .country-status-flag {
-    display: inline-block;
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-ink); color: var(--news-paper); padding: 5px 12px; margin-bottom: 16px;
-  }
-  .country-status-flag.finder { background: var(--news-pine); }
-  .country-status-flag.market { background: var(--news-mahogany); }
-  .country-status-flag.people { background: var(--news-ink-mute); }
-  .country-policy {
-    font-family: var(--news-serif); font-style: italic;
-    font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.55;
-    color: var(--news-ink-soft); margin: 0; max-width: 640px;
-  }
-  .country-hero-stats {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-    padding: 20px 24px; border: 1px solid var(--news-ink); background: var(--news-paper-cream);
-  }
-  .country-hero-stats > div { text-align: center; }
-  .country-hero-stats .k {
-    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.2em;
-    text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-bottom: 6px;
-  }
-  .country-hero-stats .v {
-    font-family: var(--news-serif); font-weight: 600;
-    font-size: clamp(1.4rem, 2.2vw, 1.9rem); color: var(--news-oxblood); letter-spacing: -0.018em;
-  }
-
-  /* Ticker table */
-  .table-band { max-width: 1400px; margin: 0 auto; padding: 40px 40px; border-bottom: 1px solid var(--news-rule); }
-  .table-head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 24px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink);
-    flex-wrap: wrap; gap: 12px;
-  }
-  .table-flag {
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-oxblood); color: var(--news-paper); padding: 6px 12px;
-  }
-  .table-head h2 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.4rem, 2.2vw, 1.85rem); margin: 0; letter-spacing: -0.016em;
-  }
-  .table-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .ticker { width: 100%; border-collapse: collapse; border-top: 2px solid var(--news-ink); border-bottom: 2px solid var(--news-ink); font-family: var(--news-serif); font-size: 14px; }
-  .ticker thead th {
-    font-family: var(--news-mono); font-weight: 500; font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
-    color: var(--news-ink); text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--news-ink); background: var(--news-paper-dark);
-  }
-  .ticker thead th.num { text-align: right; }
-  .ticker tbody tr { border-bottom: 1px solid var(--news-rule); transition: background 0.2s; }
-  .ticker tbody tr:hover { background: rgba(138, 43, 30, 0.06); }
-  .ticker td { padding: 12px 8px; vertical-align: middle; }
-  .ticker td.num { text-align: right; font-family: var(--news-mono); font-size: 13px; font-weight: 500; }
-  .ticker td.num.eur { color: var(--news-oxblood); }
-  .ticker .brand { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-top: 2px; }
-  .ticker .name { font-family: var(--news-serif); font-weight: 500; font-size: 15px; color: var(--news-ink); }
-  .row-cta { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--news-oxblood); text-transform: uppercase; }
-  .row-cta:hover { color: var(--news-ember); }
-
-  /* Retailers grid — cards */
-  .retailers-band { max-width: 1400px; margin: 0 auto; padding: 40px 40px; border-bottom: 1px solid var(--news-rule); }
-  .retailers-head { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink); }
-  .retailers-flag {
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-mahogany); color: var(--news-paper); padding: 6px 12px; align-self: start;
-  }
-  .retailers-head h2 { font-family: var(--news-serif); font-weight: 500; font-size: clamp(1.4rem, 2.2vw, 1.85rem); margin: 0; letter-spacing: -0.016em; }
-  .retailers-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .retailers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .retailer {
-    display: flex; flex-direction: column; gap: 4px;
-    padding: 16px 18px; border: 1px solid var(--news-ink); background: var(--news-paper);
-    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .retailer:hover { transform: translateY(-2px); }
-  .retailer-name { font-family: var(--news-serif); font-weight: 500; font-size: 15px; color: var(--news-ink); letter-spacing: -0.012em; }
-  .retailer-city { font-family: var(--news-serif); font-style: italic; font-size: 12.5px; color: var(--news-ink-soft); }
-  .retailer-status { font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.18em; color: var(--news-oxblood); margin-top: 6px; }
-  .retailer-cta { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--news-ink-mute); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--news-rule); }
-
-  /* Places */
-  .places-band { max-width: 1400px; margin: 0 auto; padding: 40px 40px; border-bottom: 1px solid var(--news-rule); }
-  .places-head { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink); }
-  .places-flag {
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: #3a2a1c; color: var(--news-paper); padding: 6px 12px; align-self: start;
-  }
-  .places-head h2 { font-family: var(--news-serif); font-weight: 500; font-size: clamp(1.4rem, 2.2vw, 1.85rem); margin: 0; letter-spacing: -0.016em; }
-  .places-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .places-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .place {
-    padding: 18px 20px; border: 1px solid var(--news-ink); background: var(--news-paper);
-    display: flex; flex-direction: column; gap: 6px;
-    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .place:hover { transform: translateY(-2px); }
-  .place-type { font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 4px; }
-  .place h3 { font-family: var(--news-serif); font-weight: 500; font-size: 17px; letter-spacing: -0.014em; color: var(--news-ink); margin: 0; }
-  .place-city { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--news-ink-mute); }
-  .place p { font-family: var(--news-serif); font-style: italic; font-size: 13px; line-height: 1.5; color: var(--news-ink-soft); margin: 6px 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-  /* FAQ */
-  .faq-band { max-width: 900px; margin: 0 auto; padding: 40px 40px; border-bottom: 1px solid var(--news-rule); }
-  .faq-head { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink); }
-  .faq-flag {
-    display: inline-block;
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-ink); color: var(--news-paper); padding: 5px 12px; margin-bottom: 12px;
-  }
-  .faq-head h2 { font-family: var(--news-serif); font-weight: 500; font-size: clamp(1.6rem, 2.8vw, 2.2rem); margin: 0; letter-spacing: -0.018em; }
-  .faq-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .faq-list { display: flex; flex-direction: column; }
-  .faq-item {
-    border-bottom: 1px solid var(--news-rule);
-    padding: 16px 0;
-  }
-  .faq-item summary {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.05rem, 1.5vw, 1.25rem); letter-spacing: -0.01em;
-    color: var(--news-ink); cursor: none;
-    list-style: none;
-    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
-  }
-  .faq-item summary::-webkit-details-marker { display: none; }
-  .faq-item summary::after {
-    content: "+"; font-family: var(--news-mono); font-weight: 500; font-size: 22px;
-    color: var(--news-oxblood); transition: transform 0.25s;
-  }
-  .faq-item[open] summary::after { content: "−"; }
-  .faq-item[open] summary { color: var(--news-oxblood); }
-  .faq-answer {
-    font-family: var(--news-serif); font-size: 15px; line-height: 1.6;
-    color: var(--news-ink-soft); padding-top: 12px; padding-left: 4px;
-  }
-  .faq-answer :global(a) {
-    color: var(--news-oxblood); border-bottom: 1px solid var(--news-oxblood); padding-bottom: 1px;
-  }
-  .faq-answer :global(a:hover) { color: var(--news-ember); border-bottom-color: var(--news-ember); }
-  .faq-answer :global(strong) { font-weight: 600; color: var(--news-ink); }
-
-  /* Footer strip */
-  .footer-strip { max-width: 1400px; margin: 0 auto; padding: 40px 40px 24px; }
-  .footer-strip-inner { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--news-rule); }
-  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
-  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
-  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
-  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
-  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
-
-  @media (max-width: 900px) {
-    .country-hero-grid { grid-template-columns: 1fr; gap: 24px; }
-    .country-hero-stats { grid-template-columns: repeat(3, 1fr); }
-    .retailers-grid, .places-grid { grid-template-columns: 1fr 1fr; }
-    .retailers-head, .places-head { grid-template-columns: 1fr; gap: 12px; }
-    .country-hero, .table-band, .retailers-band, .places-band, .faq-band, .footer-strip { padding: 24px 20px; }
-    .ticker { font-size: 12px; }
-    .ticker td { padding: 8px 4px; }
-    .ticker thead th { font-size: 8px; padding: 8px 4px; }
-    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
-  }
-  @media (max-width: 620px) {
-    .retailers-grid, .places-grid { grid-template-columns: 1fr; }
-    .country-hero-stats { grid-template-columns: 1fr; gap: 8px; }
-    .ticker thead th:nth-child(4), .ticker tbody td:nth-child(4) { display: none; }
-  }
-</style>
+</PaperLayout>

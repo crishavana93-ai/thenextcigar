@@ -1,91 +1,57 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import PostCard from "../../components/PostCard.astro";
-import Newsletter from "../../components/Newsletter.astro";
-import AdSlot from "../../components/AdSlot.astro";
+import PaperLayout from "../../layouts/PaperLayout.astro";
 
+/** /category/[slug]/
+ *  A section front: lead piece, then the dated index. cigar-events has its own page. */
 export async function getStaticPaths() {
-  const categories = await getCollection("categories");
-  const allPosts = await getCollection("blog");
-  return categories.map((cat) => {
-    const posts = allPosts
-      .filter((p) => p.data.category === cat.data.slug)
-      .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
-    return {
-      params: { category: cat.data.slug },
-      props: { category: cat, posts },
-    };
-  });
+  const cats = await getCollection("categories");
+  return cats.filter((c) => c.data.slug !== "cigar-events").map((c) => ({ params: { category: c.data.slug }, props: { cat: c.data } }));
 }
-
-const { category, posts } = Astro.props;
-const allCategories = await getCollection("categories");
-const categoryByslug = new Map(allCategories.map((c) => [c.data.slug, c.data]));
+const { cat } = Astro.props;
+const posts = (await getCollection("blog"))
+  .filter((p) => !(p.data as any).draft && p.data.category === cat.slug)
+  .sort((a, b) => Date.parse(b.data.publishedAt as any) - Date.parse(a.data.publishedAt as any));
+const authors = await getCollection("authors");
+const by = (slug?: string) => (authors.find((a) => a.id === slug || (a.data as any).slug === slug)?.data as any)?.name ?? "The Next Cigar";
+const cover = (p: (typeof posts)[number]) => { const c: any = p.data.cover; return !c ? undefined : typeof c === "string" ? c : c.src; };
+const [lead, ...rest] = posts;
+const cats = (await getCollection("categories")).filter((c) => c.data.slug !== cat.slug);
+const fmt = (d: any, long = false) => new Date(d).toLocaleDateString("en-GB", long ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "short" });
+const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: cat.name, url: `https://thenextcigar.com/category/${cat.slug}/`, isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" } };
 ---
 
-<BaseLayout
-  title={`${category.data.name} — The Next Cigar`}
-  description={category.data.description || `${posts.length} stories on ${category.data.name}.`}
->
-  {/* Compact header — breadcrumb + title in one tight band so the photos appear without scrolling */}
-  <section class="container-wide pt-20 md:pt-24 pb-4">
-    <nav class="mb-3 text-xs tracking-widest uppercase text-[color:var(--color-text-muted)]" aria-label="Breadcrumb">
-      <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
-      <span class="mx-2">/</span>
-      <a href="/blog" class="hover:text-[color:var(--color-accent)] transition-colors">News</a>
-      <span class="mx-2">/</span>
-      <span class="text-[color:var(--color-text)]">{category.data.name}</span>
-    </nav>
-    <div class="flex items-baseline justify-between gap-4 flex-wrap">
-      <h1 class="font-display text-3xl md:text-4xl leading-tight">{category.data.name}</h1>
-      <p class="text-[color:var(--color-text-muted)] text-sm tracking-wide">
-        {posts.length} {posts.length === 1 ? "story" : "stories"}
-      </p>
+<PaperLayout title={`${cat.name} · The Next Cigar`} description={cat.description || `${posts.length} pieces filed under ${cat.name} in The Next Cigar magazine.`} section="magazine" compact={true} jsonLd={jsonLd}>
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Magazine · <a href="/blog/">all sections</a></p>
+  <div class="dateline">
+    <h1>{cat.name}{cat.description && <em> — {cat.description}</em>}</h1>
+    <p class="st">{posts.length} pieces</p>
+  </div>
+
+  {lead ? (
+    <div class="front">
+      <section class="lead" style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
+        <span class="kick">Latest</span>
+        <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
+        {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
+        <p class="by">By {by(lead.data.author)} · {fmt(lead.data.publishedAt, true)}</p>
+        {cover(lead) && <figure><a href={`/blog/${lead.data.slug}/`}><img class="foto" src={cover(lead)} alt="" width="1200" height="675" fetchpriority="high" /></a></figure>}
+        <ul class="list" style="margin-top:18px">
+          {rest.map((p) => (
+            <li style="grid-template-columns:1fr auto;gap:18px;align-items:baseline">
+              <div><a class="head" style="font-size:20px" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>{p.data.excerpt && <p class="by" style="margin-top:4px">{p.data.excerpt.slice(0, 130)}…</p>}</div>
+              <span class="by" style="white-space:nowrap">{fmt(p.data.publishedAt)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <aside class="rail">
+        <div class="rulehead"><h2>Other sections</h2></div>
+        <ul class="eds">{cats.map((c) => (<li><a href={c.data.slug === "cigar-events" ? "/category/cigar-events/" : `/category/${c.data.slug}/`}>{c.data.name}</a></li>))}</ul>
+        <div class="box"><span class="kick">The paper, by email</span><h3 class="head">One dispatch, when there's something to say.</h3><a class="cta" href="/subscribe/">Get the newsletter</a></div>
+      </aside>
     </div>
-    {category.data.description && (
-      <p class="mt-2 text-[color:var(--color-text-soft)] max-w-2xl text-base">{category.data.description}</p>
-    )}
-  </section>
-
-  {/* Category filter pills moved to TOP so navigation is immediate, no scrolling required */}
-  <section class="container-wide pb-6">
-    <nav class="flex flex-wrap gap-2" aria-label="Other categories">
-      <a href="/blog" class="px-4 py-2 text-sm rounded-sm border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] tracking-wide transition-colors">All stories</a>
-      {allCategories.map((c) => (
-        <a
-          href={`/category/${c.data.slug}`}
-          class:list={[
-            "px-4 py-2 text-sm rounded-sm tracking-wide transition-colors",
-            c.data.slug === category.data.slug
-              ? "bg-[color:var(--color-accent)] text-[color:var(--color-bg)]"
-              : "border border-[color:var(--color-border)] text-[color:var(--color-text-soft)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
-          ]}
-        >
-          {c.data.name}
-        </a>
-      ))}
-    </nav>
-  </section>
-
-  {/* Sponsored ad — kept here for editorial-publication feel, between filters and content */}
-  <section class="container-wide pb-8">
-    <AdSlot variant="leaderboard" />
-  </section>
-
-  {/* Posts grid — main content, now visible above the fold on most screens */}
-  <section class="container-wide pb-24">
-    {posts.length === 0 ? (
-      <p class="text-[color:var(--color-text-muted)]">No stories in this category yet.</p>
-    ) : (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        {posts.map((post, i) => {
-          const c = post.data.category ? categoryByslug.get(post.data.category) : null;
-          return <PostCard post={post} categoryName={c?.name} delay={((i % 3) + 1) as 1 | 2 | 3} />;
-        })}
-      </div>
-    )}
-  </section>
-
-  <Newsletter />
-</BaseLayout>
+  ) : (
+    <div class="box"><span class="kick">{cat.name}</span><h3 class="head">Nothing filed here yet.</h3><p>Try the <a href="/blog/">Magazine</a>.</p></div>
+  )}
+</PaperLayout>

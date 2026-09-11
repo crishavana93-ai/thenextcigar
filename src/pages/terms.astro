@@ -1,19 +1,13 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-
+import PaperLayout from "../layouts/PaperLayout.astro";
+/** /terms/ */
 const lastUpdated = "May 6, 2026";
 ---
 
-<BaseLayout
-  title="Terms of Service — TNext Cigar"
-  description="Terms governing your use of TNext Cigar."
->
-  <section class="container-prose pt-20 md:pt-32 pb-24">
-    <p class="eyebrow mb-4">Legal</p>
-    <h1 class="font-display text-4xl md:text-6xl leading-tight">Terms of Service</h1>
-    <p class="text-sm text-[color:var(--color-text-muted)] mt-4 uppercase tracking-wider">Last updated: {lastUpdated}</p>
-
-    <div class="prose mt-12">
+<PaperLayout title="Terms of Service · The Next Cigar" description="Terms of Service for thenextcigar.com." section="legal" compact={true}>
+  <div class="dateline"><h1>Terms of Service</h1><p class="st">Legal · last updated {lastUpdated}</p></div>
+  <article class="art">
+    <div class="prose" style="max-width:720px">
       <h2>1. Who we are</h2>
       <p>
         TNext Cigar is an independent editorial publication about cigars, owned and operated by Cris Ortiz Suárez. By using <a href="https://thenextcigar.com">thenextcigar.com</a>, you agree to these terms.
@@ -79,5 +73,5 @@ const lastUpdated = "May 6, 2026";
         Questions about these terms? Email <a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a>.
       </p>
     </div>
-  </section>
-</BaseLayout>
+  </article>
+</PaperLayout>

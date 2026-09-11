@@ -1,503 +1,177 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import "../../styles/newspaper.css";
-import CigarCursor from "../../components/newspaper/CigarCursor.astro";
-import NewspaperMasthead from "../../components/newspaper/NewspaperMasthead.astro";
-import SectionFlag from "../../components/newspaper/SectionFlag.astro";
-import { MASTHEAD as masthead } from "../../data/masthead";
+import PaperLayout from "../../layouts/PaperLayout.astro";
 import {
-  COUNTRIES,
-  SKUS,
-  RETAILERS,
-  PRICE_SNAPSHOTS,
-  bestPriceForSku,
-  formatPrice,
-  toEUR,
-  LIVE_COUNT,
-  checkedLabel,
+  COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
+  bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl,
 } from "../../data/finder-live";
 
 /**
- * /finder/ — The Finder section in newspaper "Business & Markets" style.
+ * /finder/ — "Markets", the stock page of the paper.
  *
- * Layout: masthead + section flag + top-of-fold live price ticker + featured
- * "mover" story + country delta grid + full SKU listing + explainer sidebar.
- * All data live from finder-data.ts — no mockup content.
+ * Every claim on this page is derived: the counts come from the data, each
+ * price carries the date it was read, and only rows the scraper re-read
+ * within 14 days are called live.
  */
 
-// Resolve each SKU's best price → { sku, snap, retailer, eur }.
-// bestPriceForSku returns { snap, eur } only; we join the retailer
-// separately here so downstream code can access .retailer.country
-// and friends without null-checking every hop.
-const RETAILER_BY_ID = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
+const RET = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
 
 const priced = SKUS
   .map((sku) => {
     const best = bestPriceForSku(sku.id);
     if (!best) return null;
-    const retailer = RETAILER_BY_ID[best.snap.retailerId];
+    const retailer = RET[best.snap.retailerId];
     if (!retailer) return null;
     return { sku, snap: best.snap, retailer, eur: best.eur };
   })
-  .filter((row): row is NonNullable<typeof row> => row !== null);
+  .filter((r): r is NonNullable<typeof r> => r !== null);
 
-const topMovers = priced.slice().sort((a, b) => a.eur - b.eur).slice(0, 5);
+const cheapest = priced.slice().sort((a, b) => a.eur / a.sku.boxSize - b.eur / b.sku.boxSize).slice(0, 6);
 
-// Featured mover — biggest current price drop in the snapshots
-const bestDrop = PRICE_SNAPSHOTS
+// The mover: the biggest live discount on the board.
+const mover = PRICE_SNAPSHOTS
   .filter((s) => s.originalPrice && s.inStock && s.originalPrice > s.price)
   .map((s) => {
     const sku = SKUS.find((k) => k.id === s.skuId);
-    const retailer = RETAILERS.find((r) => r.id === s.retailerId);
+    const retailer = RET[s.retailerId];
     if (!sku || !retailer) return null;
-    const pct = Math.round(((s.originalPrice! - s.price) / s.originalPrice!) * 100);
-    return { snap: s, sku, retailer, pct };
+    return { snap: s, sku, retailer, pct: Math.round(((s.originalPrice! - s.price) / s.originalPrice!) * 100) };
   })
-  .filter(Boolean)
-  .sort((a, b) => (b!.pct) - (a!.pct))[0];
+  .filter((m): m is NonNullable<typeof m> => m !== null)
+  .sort((a, b) => b.pct - a.pct)[0];
 
-// All SKUs listed alphabetically by brand for the archive-style table
-const allSkus = priced.slice().sort((a, b) => a.sku.brand.localeCompare(b.sku.brand));
+// The full board, alphabetical by brand then vitola.
+const board = priced.slice().sort((a, b) =>
+  a.sku.brand.localeCompare(b.sku.brand) || a.sku.vitola.localeCompare(b.sku.vitola));
+const brands = [...new Set(board.map((r) => r.sku.brand))];
 
-type PricedRow = typeof priced[number];
-
-// Country grid — every country grouped by retail status
-const openCountries = COUNTRIES.filter((c) => c.status === "open");
-const restrictedCountries = COUNTRIES.filter((c) => c.status === "restricted");
-
-// Per-country cheapest listing count — a quick "what's live in each country" signal
-const skusPerCountry: Record<string, number> = {};
-for (const country of COUNTRIES) {
-  skusPerCountry[country.code] = new Set(
-    PRICE_SNAPSHOTS
-      .filter((s) => {
-        const r = RETAILERS.find((r) => r.id === s.retailerId);
-        return r?.country === country.code && s.inStock;
-      })
-      .map((s) => s.skuId)
-  ).size;
-}
-
-// Honest freshness: the newest scrapedAt in the dataset, and how many
-// retailers actually have a price row (vs. the directory of shops).
-const newestScrape = PRICE_SNAPSHOTS.map((s) => s.scrapedAt).sort().at(-1) || "";
-const newestLabel = newestScrape ? new Date(newestScrape).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
-const lastUpdated = LIVE_COUNT > 0
-  ? `${LIVE_COUNT} live prices · latest ${newestLabel}`
-  : newestLabel ? `checked ${newestLabel}` : "unverified";
 const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
-const pricedCountries = new Set(
-  PRICE_SNAPSHOTS.map((s) => RETAILERS.find((r) => r.id === s.retailerId)?.country).filter(Boolean)
+const pricedCountries = new Set(PRICE_SNAPSHOTS.map((s) => RET[s.retailerId]?.country).filter(Boolean)).size;
+const newest = NEWEST_SCRAPE ? new Date(NEWEST_SCRAPE).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
+
+const open = COUNTRIES.filter((c) => c.status === "open");
+const restricted = COUNTRIES.filter((c) => c.status !== "open");
+const skusIn = (code: string) => new Set(
+  PRICE_SNAPSHOTS.filter((s) => RET[s.retailerId]?.country === code && s.inStock).map((s) => s.skuId)
 ).size;
 
+const status = LIVE_COUNT > 0
+  ? `${SKUS.length} vitolas · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · <b>${LIVE_COUNT} live</b> · latest ${newest}`
+  : `${SKUS.length} vitolas · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · checked ${newest}`;
 
-
-// Fmt helpers
-function fmtBest(row: PricedRow) {
-  return formatPrice(row.snap.price, row.snap.currency);
-}
-function fmtCountry(code: string) {
-  const c = COUNTRIES.find((c) => c.code === code);
-  return c?.name || code;
-}
-function fmtFlag(code: string) {
-  const flags: Record<string, string> = {
-    DE: "🇩🇪", FR: "🇫🇷", ES: "🇪🇸", IT: "🇮🇹", CH: "🇨🇭", GB: "🇬🇧",
-    NL: "🇳🇱", BE: "🇧🇪", SE: "🇸🇪", DK: "🇩🇰", NO: "🇳🇴", FI: "🇫🇮",
-    AT: "🇦🇹", PT: "🇵🇹", IE: "🇮🇪", LU: "🇱🇺", PL: "🇵🇱", CZ: "🇨🇿",
-  };
-  return flags[code] || "";
-}
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Cuban cigar box prices across Europe",
+  numberOfItems: board.length,
+  itemListElement: board.slice(0, 25).map((r, i) => ({
+    "@type": "ListItem", position: i + 1,
+    item: {
+      "@type": "Product", name: `${r.sku.brand} ${r.sku.vitola} — box of ${r.sku.boxSize}`,
+      url: `https://thenextcigar.com/finder/sku/${r.sku.slug}/`,
+      offers: { "@type": "Offer", price: r.snap.price, priceCurrency: r.snap.currency, availability: r.snap.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", seller: { "@type": "Organization", name: r.retailer.name } },
+    },
+  })),
+};
 ---
 
-<BaseLayout
-  title="The Finder — Cuban cigar prices across Europe, compared · The Next Cigar"
-  description={`Cuban cigar prices compared across Europe: ${SKUS.length} SKUs, ${pricedRetailers} retailers with verified prices, ${RETAILERS.length} shops in the directory across ${COUNTRIES.length} countries. Each price shows the date it was checked. Free, no signup.`}
-  bareChrome={true}
+<PaperLayout
+  title="Markets — Cuban cigar box prices compared across Europe · The Next Cigar"
+  description={`Box prices for ${SKUS.length} Cuban vitolas compared across ${pricedRetailers} European retailers in ${pricedCountries} countries. Every price carries the date it was read. Free, no signup.`}
+  section="markets"
+  compact={true}
+  jsonLd={jsonLd}
 >
-  <link
-    is:inline
-    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap"
-    rel="stylesheet"
-  />
-
-  <div class="tnc-cinema">
-    <CigarCursor />
-
-    <main class="site-body">
-      <NewspaperMasthead
-        volume={masthead.volume}
-        issue={masthead.issue}
-        date={masthead.date}
-      />
-
-      <SectionFlag
-        number="/01"
-        section="The Finder"
-        title={`Business &amp; Markets<em> — Cuban cigars, compared.</em>`}
-        status={`${SKUS.length} SKUs · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · ${lastUpdated}`}
-        live={LIVE_COUNT > 0}
-      />
-
-      <section class="body-grid">
-
-        <!-- MAIN COLUMN -->
-        <div class="main-col">
-
-          <div class="ticker-head">
-            <h2>The <em>five cheapest</em> we've recorded.</h2>
-            <span class="updated">{PRICE_SNAPSHOTS.length.toLocaleString()} prices · {lastUpdated} · verify on the retailer before you buy</span>
-          </div>
-
-          <table class="ticker">
-            <thead>
-              <tr>
-                <th>Vitola</th>
-                <th>Cheapest at</th>
-                <th class="num">Price</th>
-                <th class="num">Retailer · checked</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topMovers.map((row) => (
-                <tr>
-                  <td>
-                    <a href={`/finder/sku/${row.sku.slug}/`} data-hover>
-                      <span class="brand">{row.sku.brand}</span>
-                      <span class="name">{row.sku.vitola}</span>
-                    </a>
-                  </td>
-                  <td class="country">{fmtFlag(row.retailer.country)} {fmtCountry(row.retailer.country)}</td>
-                  <td class="num">{fmtBest(row)}</td>
-                  <td class="num">{row.retailer.name} <span class={"checked" + (row.snap.live ? " live" : "")}>· {checkedLabel(row.snap)}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {bestDrop && (
-            <div class="mover">
-              <div
-                class="mover-photo"
-                style={`background-image: url("${(bestDrop.sku as any).heroImage || 'https://images.pexels.com/photos/1298844/pexels-photo-1298844.jpeg?auto=compress&cs=tinysrgb&w=1400'}")`}
-              ></div>
-              <div class="mover-copy">
-                <div class="mover-flag">This week's mover</div>
-                <h3>
-                  {bestDrop.sku.brand} <em>{bestDrop.sku.vitola}.</em> {bestDrop.retailer.city || fmtCountry(bestDrop.retailer.country)} undercut the field by {bestDrop.pct}%.
-                </h3>
-                <p class="mover-stats">
-                  Now <strong>{formatPrice(bestDrop.snap.price, bestDrop.snap.currency)}</strong>
-                  — was {formatPrice(bestDrop.snap.originalPrice!, bestDrop.snap.currency)}
-                  — at <strong>{bestDrop.retailer.name}</strong>.
-                </p>
-                <p>{bestDrop.sku.blurb}</p>
-                <a href={`/finder/sku/${bestDrop.sku.slug}/`} class="mover-cta" data-hover>
-                  Open this SKU <span class="arrow">→</span>
-                </a>
-              </div>
-            </div>
-          )}
-
-          <div class="all-head">
-            <h2>The full <em>catalogue.</em></h2>
-            <span class="updated">{allSkus.length} vitolas · sorted by brand</span>
-          </div>
-
-          <table class="ticker">
-            <thead>
-              <tr>
-                <th>Brand · Vitola</th>
-                <th>Cheapest at</th>
-                <th class="num">Best price</th>
-                <th class="num">EUR eq.</th>
-                <th class="num"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {allSkus.map((row) => (
-                <tr>
-                  <td>
-                    <a href={`/finder/sku/${row.sku.slug}/`} data-hover>
-                      <span class="brand">{row.sku.brand}</span>
-                      <span class="name">{row.sku.vitola}</span>
-                    </a>
-                  </td>
-                  <td class="country">{fmtFlag(row.retailer.country)} {fmtCountry(row.retailer.country)}</td>
-                  <td class="num">{formatPrice(row.snap.price, row.snap.currency)}</td>
-                  <td class="num eur">€{Math.round(row.eur).toLocaleString()}</td>
-                  <td class="num"><a href={`/finder/sku/${row.sku.slug}/`} data-hover class="row-cta">Compare →</a></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-        </div>
-
-        <!-- SIDEBAR -->
-        <aside class="sidebar">
-          <div class="side-head">By country · retail status</div>
-          <div class="country-grid">
-            {openCountries.map((c) => (
-              <a href={`/finder/${c.code.toLowerCase()}/`} class="country" data-hover>
-                <div class="flag">{fmtFlag(c.code)} {c.code}</div>
-                <div class="c-name">{c.name}</div>
-                <div class="skus">{skusPerCountry[c.code] || 0} SKUs</div>
-              </a>
-            ))}
-          </div>
-
-          {restrictedCountries.length > 0 && (
-            <>
-              <div class="side-head restricted">Restricted markets</div>
-              <div class="country-grid">
-                {restrictedCountries.map((c) => (
-                  <div class="country restricted-c">
-                    <div class="flag">{fmtFlag(c.code)} {c.code}</div>
-                    <div class="c-name">{c.name}</div>
-                    <div class="skus">In-country only</div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          <div class="side-explain">
-            <h4>How <em>the Finder</em> works.</h4>
-            <p><span class="drop">W</span>e keep a directory of {RETAILERS.length} licensed Habanos retailers in {COUNTRIES.length} European countries and record box prices from the {pricedRetailers} that publish them, in {pricedCountries} countries. Prices marked <em>live</em> were re-read from the retailer's own product page by our scraper within the last two weeks; the rest carry the date we last checked them by hand. Stock and price change often, so confirm on the retailer's page before you order. Free to read, no signup — members get watchlist alerts on any vitola.</p>
-            <a href="/subscribe/" class="side-cta" data-hover>Get price alerts →</a>
-          </div>
-        </aside>
-
-      </section>
-
-      <section class="footer-strip">
-        <div class="footer-strip-inner">
-          <div>
-            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
-            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
-          </div>
-          <div class="footer-strip-links">
-            <a href="/finder/" data-hover>Finder</a>
-            <a href="/lounge/" data-hover>Lounge</a>
-            <a href="/blog/" data-hover>Magazine</a>
-            <a href="/shop/" data-hover>Shop</a>
-            <a href="/about/" data-hover>About</a>
-            <a href="/contact/" data-hover>Contact</a>
-          </div>
-        </div>
-        <div class="footer-strip-copy">
-          <span>© 2025–2026 The Next Cigar</span>
-          <a href="https://turquinostudios.com" target="_blank" rel="noopener" class="footer-turquino" data-hover>
-            <img src="/cinematic/turquino-mark.jpg" alt="" />
-            <span>Designed by <em>Turquino Studios</em></span>
-          </a>
-        </div>
-      </section>
-    </main>
+  <div class="dateline">
+    <h1>Markets <em>— Cuban cigars, compared.</em></h1>
+    <p class="st" set:html={status} />
   </div>
-</BaseLayout>
 
-<style>
-  .site-body { padding-bottom: 40px; }
+  <div class="front">
+    <!-- LEFT: cheapest per cigar -->
+    <aside>
+      <div class="rulehead"><h2>Cheapest <em>per cigar</em></h2></div>
+      <table class="mk">
+        <thead><tr><th>Vitola</th><th class="num">Per cigar</th></tr></thead>
+        <tbody>
+          {cheapest.map(({ sku, snap, retailer, eur }) => (
+            <tr>
+              <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>{retailer.name} · {String(retailer.country).toUpperCase()}</small></td>
+              <td class="p">€{(eur / sku.boxSize).toFixed(0)}<small class:list={{ old: !snap.live }}>{checkedLabel(snap)}</small></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="note">Per-cigar price is the box price divided by the canonical box size — the only honest way to compare a box of 10 against a box of 25.</p>
 
-  /* Main + sidebar broadsheet split */
-  .body-grid {
-    max-width: 1520px; margin: 0 auto; padding: 40px 40px 64px;
-    display: grid; grid-template-columns: 8fr 4fr; gap: 48px;
-  }
+      <div class="rulehead" style="margin-top:26px"><h2>Where you can buy</h2></div>
+      <ul class="eds">
+        {open.map((c) => (<li><a href={`/finder/${c.code}/`}>{c.name}</a><span>{skusIn(c.code)} in stock</span></li>))}
+      </ul>
+      {restricted.length > 0 && (
+        <>
+          <p class="note" style="margin-top:14px"><b>Restricted markets.</b> {restricted.map((c) => c.name).join(", ")} — listed for reference; online sale to consumers is limited or in-country only.</p>
+        </>
+      )}
+    </aside>
 
-  /* ── TICKER TABLE HEAD ── */
-  .ticker-head, .all-head {
-    display: flex; justify-content: space-between; align-items: end;
-    margin-bottom: 20px; flex-wrap: wrap; gap: 16px;
-  }
-  .all-head { margin-top: 56px; padding-top: 32px; border-top: 4px double var(--news-ink); }
-  .ticker-head h2, .all-head h2 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
-    line-height: 1.1; letter-spacing: -0.015em; margin: 0;
-  }
-  .ticker-head h2 :global(em), .all-head h2 :global(em) {
-    font-style: italic; color: var(--news-oxblood); font-weight: 400;
-  }
-  .ticker-head .updated, .all-head .updated {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--news-ink-mute);
-  }
+    <!-- CENTRE: the mover + the board -->
+    <section>
+      {mover && (
+        <article style="padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:18px">
+          <span class="kick">This week's mover</span>
+          <h2 class="head" style="font-size:clamp(28px,3vw,42px);margin-top:8px">
+            {mover.retailer.name} cut the {mover.sku.brand} {mover.sku.vitola} by {mover.pct}%.
+          </h2>
+          <p class="deck" style="margin-top:10px">
+            {formatPrice(mover.snap.price, mover.snap.currency)} for the box of {mover.sku.boxSize}, down from {formatPrice(mover.snap.originalPrice!, mover.snap.currency)} — {checkedLabel(mover.snap)}. {mover.sku.blurb}
+          </p>
+          <p class="by" style="margin-top:8px">
+            <a href={`/finder/sku/${mover.sku.slug}/`}>Compare every retailer for this vitola →</a>
+          </p>
+        </article>
+      )}
 
-  /* ── TICKER TABLE ── */
-  .ticker {
-    width: 100%; border-collapse: collapse;
-    border-top: 2px solid var(--news-ink);
-    border-bottom: 2px solid var(--news-ink);
-    font-family: var(--news-serif); font-size: 14px;
-  }
-  .ticker thead th {
-    font-family: var(--news-mono); font-weight: 500; font-size: 9px;
-    letter-spacing: 0.22em; text-transform: uppercase; color: var(--news-ink);
-    text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--news-ink);
-    background: var(--news-paper-dark);
-  }
-  .ticker thead th.num { text-align: right; }
-  .ticker tbody tr { border-bottom: 1px solid var(--news-rule); transition: background 0.2s; }
-  .ticker tbody tr:hover { background: rgba(138, 43, 30, 0.06); }
-  .ticker td { padding: 12px 8px; vertical-align: middle; }
-  .ticker td.num { text-align: right; font-family: var(--news-mono); font-size: 13px; font-weight: 500; }
-  .ticker td.num.eur { color: var(--news-oxblood); }
-  .ticker td .brand {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-bottom: 2px;
-  }
-  .ticker td .name {
-    font-family: var(--news-serif); font-weight: 500; font-size: 15px; color: var(--news-ink);
-  }
-  .ticker .country { font-family: var(--news-mono); font-size: 12px; letter-spacing: 0.06em; }
-  .row-cta {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
-    color: var(--news-oxblood); text-transform: uppercase;
-  }
-  .row-cta:hover { color: var(--news-ember); }
+      <div class="rulehead"><h2>The board <em>· {board.length} vitolas, cheapest listing</em></h2><span class="more">{brands.length} brands</span></div>
+      <table class="mk wide">
+        <thead>
+          <tr><th>Vitola</th><th>Cheapest at</th><th class="num">Box</th><th class="num">Per cigar</th></tr>
+        </thead>
+        <tbody>
+          {board.map(({ sku, snap, retailer, eur }) => (
+            <tr class:list={{ oos: !snap.inStock }}>
+              <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>box of {sku.boxSize} · {sku.shape}</small></td>
+              <td class="v" style="font-size:14px">
+                <a href={effectiveShopUrl(snap.sourceUrl, sku, retailer).url} rel="nofollow noopener" target="_blank">{retailer.name}</a>
+                <small>{String(retailer.country).toUpperCase()} · {checkedLabel(snap)}{snap.inStock ? "" : " · sold out"}</small>
+              </td>
+              <td class="num p">{formatPrice(snap.price, snap.currency)}</td>
+              <td class="num p">€{(eur / sku.boxSize).toFixed(0)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
 
-  /* ── FEATURED MOVER ── */
-  .mover {
-    margin-top: 48px;
-    display: grid; grid-template-columns: 5fr 7fr; gap: 32px; align-items: start;
-    padding: 24px 0;
-    border-top: 4px double var(--news-ink); border-bottom: 4px double var(--news-ink);
-  }
-  .mover-photo {
-    aspect-ratio: 4 / 5;
-    background-size: cover; background-position: center;
-    background-color: var(--news-paper-dark);
-    filter: grayscale(0.85) sepia(0.35) contrast(1.06);
-  }
-  .mover-flag {
-    display: inline-block;
-    font-family: var(--news-sans); font-weight: 700; font-size: 9px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-oxblood); color: var(--news-paper); padding: 4px 10px;
-    margin-bottom: 14px;
-  }
-  .mover-copy h3 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.4rem, 2.2vw, 1.9rem); line-height: 1.1;
-    letter-spacing: -0.018em; color: var(--news-ink); margin: 0 0 16px;
-  }
-  .mover-copy h3 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .mover-copy .mover-stats {
-    font-family: var(--news-serif); font-size: 15px; line-height: 1.55;
-    color: var(--news-ink); margin: 0 0 12px;
-    padding: 12px 0; border-top: 1px solid var(--news-rule); border-bottom: 1px solid var(--news-rule);
-  }
-  .mover-copy .mover-stats strong { font-weight: 600; color: var(--news-oxblood); }
-  .mover-copy p {
-    font-family: var(--news-serif); font-size: 15px; line-height: 1.6;
-    color: var(--news-ink-soft); margin: 0 0 16px;
-  }
-  .mover-cta {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
-    letter-spacing: 0.1em; text-transform: uppercase; color: var(--news-oxblood);
-    border-bottom: 1px solid var(--news-oxblood); padding-bottom: 3px;
-  }
-  .mover-cta:hover { color: var(--news-ember); border-bottom-color: var(--news-ember); }
-
-  /* ── SIDEBAR ── */
-  .sidebar { position: sticky; top: 32px; align-self: start; }
-  .side-head {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--news-oxblood);
-    padding-bottom: 8px; border-bottom: 1px solid var(--news-ink); margin-bottom: 16px;
-  }
-  .side-head.restricted { margin-top: 32px; color: var(--news-ink-mute); }
-  .country-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
-    background: var(--news-rule); padding: 1px;
-  }
-  .country {
-    padding: 12px 10px; background: var(--news-paper-warm);
-    transition: background 0.2s; display: block;
-  }
-  .country:hover { background: var(--news-paper-cream); }
-  .country .flag {
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
-    color: var(--news-ink-mute); margin-bottom: 4px;
-  }
-  .country .c-name {
-    font-family: var(--news-serif); font-weight: 500; font-size: 14px;
-    color: var(--news-ink); letter-spacing: -0.01em; margin-bottom: 2px;
-  }
-  .country .skus {
-    font-family: var(--news-mono); font-size: 10px; color: var(--news-oxblood);
-    letter-spacing: 0.06em;
-  }
-  .country.restricted-c { opacity: 0.7; cursor: default; }
-  .country.restricted-c .skus { color: var(--news-ink-mute); }
-
-  .side-explain {
-    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--news-ink);
-  }
-  .side-explain h4 {
-    font-family: var(--news-serif); font-weight: 500; font-size: 20px;
-    line-height: 1.15; margin: 0 0 12px;
-    color: var(--news-ink); letter-spacing: -0.012em;
-  }
-  .side-explain h4 em { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .side-explain p {
-    font-family: var(--news-serif); font-size: 14px; line-height: 1.55;
-    color: var(--news-ink-soft); margin-bottom: 16px;
-  }
-  .side-explain .drop {
-    font-family: var(--news-serif); font-weight: 600; font-size: 3em;
-    line-height: 0.85; float: left; margin: 0.08em 5px 0 0; color: var(--news-oxblood);
-  }
-  .side-cta {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
-    letter-spacing: 0.1em; text-transform: uppercase; color: var(--news-oxblood);
-    border-bottom: 1px solid var(--news-oxblood); padding-bottom: 2px;
-  }
-
-  /* ── Footer strip ── */
-  .footer-strip {
-    max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px;
-  }
-  .footer-strip-inner {
-    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
-    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
-  }
-  .footer-strip-mark {
-    font-family: var(--news-serif); font-weight: 600; font-size: 22px;
-    letter-spacing: -0.008em; color: var(--news-ink); display: block;
-  }
-  .footer-strip-tag {
-    font-family: var(--news-serif); font-style: italic; font-size: 13px;
-    color: var(--news-ink-mute); margin-top: 2px;
-  }
-  .footer-strip-links {
-    display: flex; gap: 24px; flex-wrap: wrap;
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
-    text-transform: uppercase; color: var(--news-ink-mute);
-  }
-  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
-  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
-  .footer-strip-copy {
-    margin-top: 16px;
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
-    color: var(--news-ink-mute);
-  }
-
-  @media (max-width: 900px) {
-    .body-grid { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
-    .sidebar { position: relative; top: 0; }
-    .country-grid { grid-template-columns: 1fr 1fr; }
-    .mover { grid-template-columns: 1fr; gap: 20px; }
-    .ticker { font-size: 13px; }
-    .ticker td { padding: 10px 6px; }
-    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
-    .footer-strip { padding: 32px 20px 20px; }
-  }
-  .ticker .checked { color: var(--news-ink-3, #7a7368); font-size: 0.78em; white-space: nowrap; }
-  .ticker .checked.live { color: #2f6b3a; }
-</style>
+    <!-- RIGHT: how it works -->
+    <aside class="rail">
+      <div class="rulehead"><h2>How the board works</h2></div>
+      <div class="prose" style="font-size:15px;max-width:none">
+        <p>We keep a directory of {RETAILERS.length} licensed Habanos retailers across {COUNTRIES.length} European countries and record box prices from the {pricedRetailers} that publish them, in {pricedCountries} countries.</p>
+        <p>Prices marked <b style="color:var(--live)">live</b> were re-read from the retailer's own product page by our scraper within the last fortnight. The rest carry the date a person last checked them. Stock and price move constantly, so confirm on the retailer's page before you order.</p>
+        <p>Every price is the retailer's listed price for the canonical box, in their own currency, with their own tax included. It is not what you will pay at your door: a box crossing a border picks up destination duty and VAT.</p>
+      </div>
+      <div class="box">
+        <span class="kick">Watchlist · free</span>
+        <h3 class="head">Tell me when it drops.</h3>
+        <p>Members get an email when any vitola on the board falls or comes back in stock. No charge.</p>
+        <a class="cta" href="/lounge/signup/">Join the Lounge</a>
+      </div>
+      <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/">The European retailer map</a><p class="by">Who ships where, and whose price is all-in</p></div></li>
+        <li><div><a class="head" href="/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">What a cross-border box really costs</p></div></li>
+        <li><div><a class="head" href="/blog/cuban-cigar-sizes-vitolas-explained-2026-guide/">Vitolas explained</a><p class="by">Why a box of 10 and a box of 25 aren't comparable</p></div></li>
+      </ul>
+    </aside>
+  </div>
+</PaperLayout>

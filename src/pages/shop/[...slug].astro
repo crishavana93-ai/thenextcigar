@@ -1,254 +1,92 @@
 ---
 import { getCollection, render } from "astro:content";
-import { Image } from "astro:assets";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import ProductCard from "../../components/ProductCard.astro";
-import Newsletter from "../../components/Newsletter.astro";
-import NotifyMeForm from "../../components/NotifyMeForm.astro";
+import PaperLayout from "../../layouts/PaperLayout.astro";
 
+/** /shop/[slug]/
+ *  The client sends only the slug; price, name and supplier are resolved
+ *  server-side from catalogue.json by /api/shop/checkout. */
 export async function getStaticPaths() {
   const products = (await getCollection("products")).filter((p) => !p.data.isArchived);
-  return products.map((product) => ({
-    params: { slug: product.data.slug },
-    props: { product },
-  }));
+  return products.map((p) => ({ params: { slug: p.data.slug }, props: { product: p } }));
 }
-
 const { product } = Astro.props;
 const { Content } = await render(product);
-const data = product.data;
-
-const fmtPrice = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: data.currency }).format(n);
-
-const isOnSale = data.compareAtPrice && data.compareAtPrice > data.price;
-const isComingSoon = (data as any).comingSoon === true;
-const expectedArrival = (data as any).expectedArrival as string | undefined;
-
-// Related products (same type, excluding this one)
-const allProducts = await getCollection("products");
-const related = allProducts
-  .filter((p) => p.id !== product.id && !p.data.isArchived && p.data.type === data.type)
-  .slice(0, 3);
-
-// The site's canonical URL for the product (used by Snipcart's data-item-url)
-const productUrl = `https://thenextcigar.com/shop/${data.slug}/`;
-
-// Convert variants to Snipcart custom-fields markup
-const variantAttrs = (data.variants || []).map((v, i) => {
-  const num = i + 1;
-  return {
-    name: `data-item-custom${num}-name`,
-    value: v.name,
-    options: `data-item-custom${num}-options`,
-    optionsValue: v.options.join("|"),
-  };
-});
+const d: any = product.data;
+const img = (c: any) => (!c ? "" : typeof c === "string" ? c : c.src);
+const cover = img(d.cover);
+const gallery: string[] = [cover, ...((d.gallery ?? []).map(img))].filter((x, i, a) => x && a.indexOf(x) === i);
+const sym = d.currency === "EUR" ? "€" : d.currency === "GBP" ? "£" : "$";
+const soon = !!d.comingSoon;
+const buyable = !soon && d.inStock;
+const etaT = Date.parse(`1 ${d.expectedArrival ?? ""}`);
+const eta = d.expectedArrival && !isNaN(etaT) && etaT + 31 * 86400e3 > Date.now() ? `Expected ${d.expectedArrival}` : "Price when it lands";
+const others = (await getCollection("products")).filter((p) => !p.data.isArchived && p.data.slug !== d.slug && (p.data as any).category === d.category).slice(0, 3);
+const url = `https://thenextcigar.com/shop/${d.slug}/`;
+const jsonLd = { "@context": "https://schema.org", "@graph": [
+  { "@type": "Product", name: d.name, description: d.excerpt || d.name, image: gallery, sku: d.sku, url,
+    ...(buyable && { offers: { "@type": "Offer", price: d.price, priceCurrency: d.currency || "USD", availability: "https://schema.org/InStock", url } }) },
+  { "@type": "BreadcrumbList", itemListElement: [ { "@type": "ListItem", position: 1, name: "Shop", item: "https://thenextcigar.com/shop/" }, { "@type": "ListItem", position: 2, name: d.name, item: url } ] },
+] };
 ---
 
-<BaseLayout
-  title={data.seo?.metaTitle || `${data.name} — TNext Cigar Shop`}
-  description={data.seo?.metaDescription || data.excerpt || data.name}
-  image={typeof data.cover === "string" ? data.cover : data.cover.src}
->
-  <article class="container-wide pt-12 md:pt-20 pb-24">
-    <nav class="mb-8 text-xs tracking-widest uppercase text-[color:var(--color-text-muted)]" aria-label="Breadcrumb">
-      <a href="/" class="hover:text-[color:var(--color-accent)] transition-colors">Home</a>
-      <span class="mx-2">/</span>
-      <a href="/shop/" class="hover:text-[color:var(--color-accent)] transition-colors">Shop</a>
-      <span class="mx-2">/</span>
-      <span class="text-[color:var(--color-text)]">{data.name}</span>
-    </nav>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-      {/* GALLERY */}
-      <div class="reveal">
-        <div class="rounded-sm overflow-hidden bg-[color:var(--color-surface)] aspect-square">
-          {typeof data.cover === "string" ? (
-            <img src={data.cover} alt={data.name} class="w-full h-full object-cover" loading="eager" />
-          ) : (
-            <Image
-              src={data.cover}
-              alt={data.name}
-              widths={[600, 1200]}
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              class="w-full h-full object-cover"
-              loading="eager"
-            />
-          )}
-        </div>
-        {data.gallery && data.gallery.length > 1 && (
-          <div class="mt-3 grid grid-cols-4 gap-3">
-            {data.gallery.map((img, i) => (
-              <div class="rounded-sm overflow-hidden bg-[color:var(--color-surface)] aspect-square">
-                {typeof img === "string" ? (
-                  <img src={img} alt={`${data.name} — view ${i + 1}`} class="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <Image src={img} alt={`${data.name} — view ${i + 1}`} widths={[200, 400]} sizes="120px" class="w-full h-full object-cover" loading="lazy" />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* DETAILS */}
-      <div class="reveal" data-reveal-delay="1">
-        <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-3">
-          {data.type === "digital" ? "Digital · Instant download" : data.type === "merch" ? "Branded merch · Made on order" : "Accessory · Drop-ship from US"}
-        </p>
-        <h1 class="font-display text-3xl md:text-5xl leading-[1.1] tracking-tight">{data.name}</h1>
-
-        {data.excerpt && (
-          <p class="lead mt-6">{data.excerpt}</p>
-        )}
-
-        {isComingSoon ? (
-          <>
-            {/* COMING SOON STATE — replaces price + Snipcart button */}
-            <div class="mt-8 inline-flex items-center gap-3 px-3 py-1.5 bg-[color:var(--color-burgundy)] text-white text-xs font-bold tracking-widest uppercase rounded-sm">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Coming Soon
-              {expectedArrival && <span class="opacity-80 normal-case tracking-normal">· Arriving {expectedArrival}</span>}
-            </div>
-
-            <div class="mt-6">
-              <NotifyMeForm
-                sku={data.slug}
-                productName={data.name}
-                expectedArrival={expectedArrival}
-                variant="card"
-              />
-            </div>
-
-            <div class="mt-6 text-xs text-[color:var(--color-text-muted)] space-y-1">
-              <p>✓ One email when this product lands — no spam</p>
-              <p>✓ Founding-customer pricing locked in for the first 200 sign-ups</p>
-              <p>✓ Full sourcing story in <a href="/blog/sourcing-diary-no-1-six-pieces-of-gear-coming-to-the-shop/" class="text-[color:var(--color-accent)] underline">Sourcing Diary No. 1</a></p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div class="mt-8 flex items-baseline gap-4">
-              <span class="font-display text-3xl font-bold text-[color:var(--color-text)]">{fmtPrice(data.price)}</span>
-              {isOnSale && (
-                <span class="text-lg text-[color:var(--color-text-mute-2)] line-through">{fmtPrice(data.compareAtPrice!)}</span>
-              )}
-              {isOnSale && (
-                <span class="px-2 py-0.5 text-[0.65rem] font-bold tracking-widest uppercase bg-[color:var(--color-accent)] text-white rounded-sm">
-                  {Math.round(((data.compareAtPrice! - data.price) / data.compareAtPrice!) * 100)}% off
-                </span>
-              )}
-            </div>
-
-            {/* Stripe Checkout button — replaces Snipcart. On click, POSTs
-                to /api/shop/checkout which creates a Stripe Session and
-                returns the redirect URL. Drop-ship pipeline: Stripe →
-                webhook → Supabase shop_orders → email Cris + customer. */}
-            <div class="mt-8">
-              <button
-                type="button"
-                id="tnc-stripe-buy"
-                class="btn btn-primary !px-8 !py-4 text-base"
-                data-slug={data.slug}
-                data-name={data.name}
-                data-sku={data.sku}
-                data-price={data.price}
-                data-currency={data.currency}
-                data-supplier={(data as any).supplier || ""}
-                data-supplier-url={(data as any).supplierUrl || ""}
-                data-cover={typeof data.cover === "string" ? data.cover : data.cover.src}
-                disabled={!data.inStock}
-              >
-                {data.inStock ? `Buy now — ${fmtPrice(data.price)}` : "Sold out"}
-              </button>
-              <span id="tnc-buy-status" class="ml-3 text-sm text-[color:var(--color-text-muted)]"></span>
-            </div>
-
-            <script is:inline>
-              (function() {
-                const btn = document.getElementById("tnc-stripe-buy");
-                const status = document.getElementById("tnc-buy-status");
-                if (!btn) return;
-                btn.addEventListener("click", async () => {
-                  if (btn.disabled) return;
-                  const original = btn.textContent;
-                  btn.disabled = true;
-                  btn.textContent = "Opening checkout…";
-                  try {
-                    const res = await fetch("/api/shop/checkout", {
-                      method: "POST",
-                      headers: { "content-type": "application/json" },
-                      body: JSON.stringify({
-                        slug: btn.dataset.slug,
-                        name: btn.dataset.name,
-                        sku: btn.dataset.sku,
-                        price: Number(btn.dataset.price),
-                        currency: btn.dataset.currency,
-                        supplier: btn.dataset.supplier,
-                        supplierUrl: btn.dataset.supplierUrl,
-                        cover: btn.dataset.cover,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (data.ok && data.url) {
-                      window.location.href = data.url;
-                    } else {
-                      status.textContent = data.error || "Checkout failed — try again.";
-                      btn.disabled = false;
-                      btn.textContent = original;
-                    }
-                  } catch (err) {
-                    status.textContent = "Network error — try again.";
-                    btn.disabled = false;
-                    btn.textContent = original;
-                  }
-                });
-              })();
-            </script>
-
-            <div class="mt-6 text-xs text-[color:var(--color-text-muted)] space-y-1">
-              {data.type === "digital" && (
-                <p>✓ Instant download · DRM-free PDF · Yours forever</p>
-              )}
-              {data.type !== "digital" && data.requiresShipping && (
-                <>
-                  <p>✓ Ships within 1–3 business days</p>
-                  <p>✓ 30-day return window on unused items</p>
-                </>
-              )}
-              <p>✓ Secure checkout via Stripe (Snipcart)</p>
-            </div>
-          </>
-        )}
-
-        {/* DESCRIPTION */}
-        <div class="prose mt-12 max-w-none">
-          <Content />
-        </div>
-
-        {/* TRUST FOOTER */}
-        <div class="hairline my-10"></div>
-        <p class="text-xs text-[color:var(--color-text-muted)] leading-relaxed">
-          <strong class="text-[color:var(--color-text)]">We don't sell tobacco.</strong> TNext Cigar is a publication. The shop carries non-tobacco accessories, branded merch, and digital products only. For cigars, see our retailer affiliates linked from individual articles.
-        </p>
-      </div>
+<PaperLayout title={`${d.name} · The Shop · The Next Cigar`} description={d.seo?.metaDescription || d.excerpt || d.name} image={cover} section="shop" compact={true} ogType="product" jsonLd={jsonLd}>
+  <p class="miga">Shop · <a href="/shop/">all goods</a>{d.category && <> · {d.category}</>}</p>
+  <div class="product">
+    <div class="gal">
+      {cover ? <img src={cover} alt={d.name} width="900" height="900" fetchpriority="high" /> : <div class="ph" style="aspect-ratio:1;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center"><span class="stamp">Photographed when it lands</span></div>}
+      {gallery.length > 1 && <div class="thumbs">{gallery.slice(1, 6).map((g) => <img src={g} alt="" width="200" height="200" loading="lazy" />)}</div>}
     </div>
-  </article>
+    <div>
+      <span class="kick">{soon ? "In the pipeline" : buyable ? "Available" : "Sold out"}{d.sku ? ` · ${d.sku}` : ""}</span>
+      <h1>{d.name}</h1>
+      {d.excerpt && <p class="deck">{d.excerpt}</p>}
+      {buyable ? (
+        <>
+          <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
+          <button type="button" class="buy" id="buy" data-slug={d.slug}>Buy — {sym}{d.price}</button>
+          <p class="fine" id="buy-status" aria-live="polite"></p>
+          <p class="fine">Card checkout by Stripe. Delivery country and shipping cost are shown before you pay. {d.type === "digital" ? "Instant download after payment." : "Dispatch and delivery times are confirmed in your order email."}</p>
+        </>
+      ) : (
+        <>
+          <p class="price" style="font-size:22px">{soon ? eta : "Sold out"}</p>
+          <a class="cta" href="/lounge/signup/" style="display:block;text-align:center">Tell me when it's available →</a>
+          <p class="fine">No button until we have held it, photographed it and confirmed stock.</p>
+        </>
+      )}
+    </div>
+  </div>
 
-  {related.length > 0 && (
-    <section class="py-16 bg-[color:var(--color-bg-soft)] border-t border-[color:var(--color-border)]">
-      <div class="container-wide">
-        <p class="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] mb-2">More like this</p>
-        <h2 class="section-eyebrow mb-12">Related</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-          {related.map((p, i) => (
-            <ProductCard product={p} delay={((i % 3) + 1) as 1 | 2 | 3} />
-          ))}
-        </div>
-      </div>
-    </section>
+  <div class="artbody">
+    <aside class="side">
+      <p class="t">The file</p>
+      <dl>
+        {d.category && <><dt>Kind</dt><dd style="text-transform:capitalize">{d.category}</dd></>}
+        {d.weight && <><dt>Weight</dt><dd>{d.weight} g</dd></>}
+        <dt>Ships</dt><dd>{d.requiresShipping ? "EU, UK, CH, NO, US, CA" : "Digital"}</dd>
+      </dl>
+      {others.length > 0 && (<><p class="t">Also in this drawer</p><ul class="eds">{others.map((p) => (<li><a href={`/shop/${p.data.slug}/`}>{p.data.name}</a></li>))}</ul></>)}
+    </aside>
+    <div class="prose"><Content /></div>
+  </div>
+
+  {buyable && (
+    <script is:inline>
+      (function () {
+        var btn = document.getElementById("buy"), st = document.getElementById("buy-status");
+        if (!btn) return;
+        btn.addEventListener("click", async function () {
+          if (btn.disabled) return;
+          var orig = btn.textContent; btn.disabled = true; btn.textContent = "Opening checkout…";
+          try {
+            var res = await fetch("/api/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: btn.dataset.slug }) });
+            var data = await res.json();
+            if (data.ok && data.url) { window.location.href = data.url; return; }
+            st.textContent = data.error || "Checkout failed — try again.";
+          } catch (e) { st.textContent = "Network error — try again."; }
+          btn.disabled = false; btn.textContent = orig;
+        });
+      })();
+    </script>
   )}
-
-  <Newsletter />
-</BaseLayout>
+</PaperLayout>

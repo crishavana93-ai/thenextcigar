@@ -1,10 +1,10 @@
 ---
-import PaperLayout from "../../../layouts/PaperLayout.astro";
-import { places } from "../../../data/cigar-places.ts";
-import { SKUS, RETAILERS, COUNTRIES } from "../../../data/finder-live";
-import { upcomingEvents } from "../../../data/cigar-events.ts";
+import PaperLayout from "../../layouts/PaperLayout.astro";
+import { places } from "../../data/cigar-places.ts";
+import { SKUS, RETAILERS, COUNTRIES } from "../../data/finder-live";
+import { upcomingEvents } from "../../data/cigar-events.ts";
 
-/** /paper/lounge/ — PREVIEW ROUTE (noindex). Ships as /lounge/.
+/** /lounge/
  *  The members' page. Membership is free; the page says what a member gets
  *  and nothing else — no tiers, no founder pricing, no counts we can't show. */
 const cities = [...new Set(places.map((p) => p.city))].sort();
@@ -16,7 +16,7 @@ const fmt = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numer
 const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: "The Lounge", url: "https://thenextcigar.com/lounge/", isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" } };
 ---
 
-<PaperLayout title="The Lounge — free membership: the map, the watchlist, the members · The Next Cigar" description={`${places.length} lounges, Casas del Habano and shops mapped in ${cities.length} cities, price alerts on ${SKUS.length} vitolas, and other members to meet. Free.`} section="lounge" compact={true} noIndex={true} jsonLd={jsonLd}>
+<PaperLayout title="The Lounge — free membership: the map, the watchlist, the members · The Next Cigar" description={`${places.length} lounges, Casas del Habano and shops mapped in ${cities.length} cities, price alerts on ${SKUS.length} vitolas, and other members to meet. Free.`} section="lounge" compact={true} jsonLd={jsonLd}>
   <div class="dateline">
     <h1>The Lounge <em>— the members' room.</em></h1>
     <p class="st">{places.length} places · {cities.length} cities · membership free</p>
@@ -63,7 +63,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: "Th
       <div class="rulehead"><h2>The map, by city</h2></div>
       <ul class="eds">{cities.slice(0, 14).map((c) => (<li><a href="/lounge/signup/">{c}</a><span>{places.filter((p) => p.city === c).length}</span></li>))}</ul>
       {cities.length > 14 && <p class="note">and {cities.length - 14} more cities.</p>}
-      {upcoming.length > 0 && (<><div class="rulehead" style="margin-top:24px"><h2>Diary</h2></div><ul class="list diary">{upcoming.map((e) => (<li><span class="d">{fmt(e.startDate)}</span><div><a class="head" href="/paper/category/cigar-events/">{e.name}</a><p class="by">{e.location}</p></div></li>))}</ul></>)}
+      {upcoming.length > 0 && (<><div class="rulehead" style="margin-top:24px"><h2>Diary</h2></div><ul class="list diary">{upcoming.map((e) => (<li><span class="d">{fmt(e.startDate)}</span><div><a class="head" href="/category/cigar-events/">{e.name}</a><p class="by">{e.location}</p></div></li>))}</ul></>)}
     </aside>
   </div>
 </PaperLayout>

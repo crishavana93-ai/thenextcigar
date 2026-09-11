@@ -43,3 +43,8 @@ https://lounge.thenextcigar.com/profile         /lounge/app/profile/          20
 https://lounge.thenextcigar.com/profile/        /lounge/app/profile/          200
 https://lounge.thenextcigar.com/member          /lounge/app/member/           200
 https://lounge.thenextcigar.com/member/         /lounge/app/member/           200
+
+# 2026-09-11 broadsheet relaunch: retired pages
+/collection /lounge/ 301
+/shelves /lounge/ 301
+/paper/* /:splat 301

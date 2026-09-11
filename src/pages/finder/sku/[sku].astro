@@ -1,537 +1,235 @@
 ---
-import BaseLayout from "../../../layouts/BaseLayout.astro";
-import "../../../styles/newspaper.css";
-import CigarCursor from "../../../components/newspaper/CigarCursor.astro";
-import NewspaperMasthead from "../../../components/newspaper/NewspaperMasthead.astro";
-import SectionFlag from "../../../components/newspaper/SectionFlag.astro";
+import PaperLayout from "../../../layouts/PaperLayout.astro";
 import PriceAlertModal from "../../../components/finder/PriceAlertModal.astro";
 import SaveAlertButton from "../../../components/finder/SaveAlertButton.astro";
-import FaqSchema from "../../../components/finder/FaqSchema.astro";
-import { MASTHEAD as masthead } from "../../../data/masthead";
 import {
-  SKUS,
-  RETAILERS,
-  snapshotsForSku,
-  formatPrice,
-  toEUR,
-  COUNTRY_BY_CODE,
-  RETAILER_BY_ID,
-  effectiveShopUrl,
-  dutyPaidCountries,
+  SKUS, RETAILER_BY_ID, COUNTRY_BY_CODE, snapshotsForSku, formatPrice, toEUR,
+  effectiveShopUrl, dutyPaidCountries, checkedLabel, historyForSku,
 } from "../../../data/finder-live";
 import { buildSkuFaq } from "../../../lib/finder/skuFaq.ts";
+
+/**
+ * /finder/sku/[sku]/
+ *
+ * The stock-table page for one vitola: every retailer we track, the cheapest
+ * in-stock box, a 90-day line of the cheapest price in Europe (from the
+ * scraper's own history — omitted until there is one), the editorial, and the
+ * questions people actually ask. Every number carries its date.
+ */
 
 export async function getStaticPaths() {
   return SKUS.map((sku) => ({ params: { sku: sku.slug } }));
 }
-
 const { sku: skuSlug } = Astro.params as { sku: string };
 const sku = SKUS.find((s) => s.slug === skuSlug);
 if (!sku) return Astro.redirect("/finder/");
 
-const snapshots = snapshotsForSku(sku.id);
-
-// Decorate every snapshot with resolved retailer, country, per-cigar EUR, and
-// the exact shop link (effectiveShopUrl → product page if we have it,
-// otherwise a same-site search).
-const offers = snapshots
-  .map(function decorateOffer(snap) {
+const offers = snapshotsForSku(sku.id)
+  .map((snap) => {
     const retailer = RETAILER_BY_ID[snap.retailerId];
-    const country  = COUNTRY_BY_CODE[retailer.country];
-    const eur      = toEUR(snap.price, snap.currency);
-    const link     = effectiveShopUrl(snap.sourceUrl, sku, retailer);
-    const shopLabel = link.isExact ? "Shop this SKU →" : "Search on site →";
-    return {
-      snap, retailer, country, eur,
-      perCigarEur: eur / sku.boxSize,
-      link, shopLabel,
-      verifiedDate: new Date(snap.scrapedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
-    };
+    if (!retailer) return null;
+    const country = COUNTRY_BY_CODE[retailer.country];
+    const eur = toEUR(snap.price, snap.currency);
+    return { snap, retailer, country, eur, per: eur / sku.boxSize, link: effectiveShopUrl(snap.sourceUrl, sku, retailer) };
   })
-  .sort(function rankOffers(a, b) {
-    if (a.snap.inStock !== b.snap.inStock) return a.snap.inStock ? -1 : 1;
-    return a.eur - b.eur;
+  .filter((o): o is NonNullable<typeof o> => !!o)
+  .sort((a, b) => (a.snap.inStock !== b.snap.inStock ? (a.snap.inStock ? -1 : 1) : a.eur - b.eur));
+
+const inStock = offers.filter((o) => o.snap.inStock);
+const best = inStock[0];
+const minEur = inStock[0]?.eur ?? 0;
+const maxEur = inStock.at(-1)?.eur ?? 0;
+const spread = minEur && maxEur ? Math.round(((maxEur - minEur) / minEur) * 100) : 0;
+const countries = [...new Set(offers.map((o) => o.country.code))];
+const liveCount = offers.filter((o) => o.snap.live).length;
+
+// 90-day history → SVG line, built at build time.
+const hist = historyForSku(sku.id);
+let chart: { path: string; area: string; lo: number; hi: number; last: number; first: string; lastDay: string; ticks: { x: number; label: string }[]; dot: { x: number; y: number } } | null = null;
+if (hist.length >= 3) {
+  const W = 600, H = 150, PL = 44, PR = 10, PT = 10, PB = 22;
+  const lo = Math.min(...hist.map((h) => h.eur)), hi = Math.max(...hist.map((h) => h.eur));
+  const t0 = Date.parse(hist[0].day), t1 = Date.parse(hist.at(-1)!.day) || t0 + 1;
+  const x = (d: string) => PL + ((Date.parse(d) - t0) / Math.max(1, t1 - t0)) * (W - PL - PR);
+  const y = (v: number) => PT + (hi === lo ? 0.5 : (hi - v) / (hi - lo)) * (H - PT - PB);
+  const pts = hist.map((h) => `${x(h.day).toFixed(1)},${y(h.eur).toFixed(1)}`);
+  const path = "M" + pts.join(" L");
+  const area = `${path} L${x(hist.at(-1)!.day).toFixed(1)},${H - PB} L${PL},${H - PB} Z`;
+  const ticks = [0, 0.5, 1].map((f) => {
+    const t = t0 + f * (t1 - t0);
+    return { x: PL + f * (W - PL - PR), label: new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) };
   });
+  chart = { path, area, lo, hi, last: hist.at(-1)!.eur, first: hist[0].day, lastDay: hist.at(-1)!.day, ticks, dot: { x: x(hist.at(-1)!.day), y: y(hist.at(-1)!.eur) } };
+}
 
-const inStockOffers = offers.filter((o) => o.snap.inStock);
-const best          = inStockOffers[0];
-const eurPrices = inStockOffers.map((o) => o.eur);
-const minEur    = eurPrices[0] || 0;
-const maxEur    = eurPrices[eurPrices.length - 1] || 0;
-const spread    = maxEur && minEur ? Math.round(((maxEur - minEur) / minEur) * 100) : 0;
-const allCountries = Array.from(new Set(offers.map((o) => o.country.code)));
+const siblings = SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 5);
+const faq = buildSkuFaq({ sku, best: best ? { snap: best.snap, retailer: best.retailer, country: best.country, eur: best.eur, perCigarEur: best.per } as any : undefined, offersCount: offers.length, sameBrandSkus: siblings.slice(0, 4) });
+const fmtDay = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
-// JSON-LD — Product + AggregateOffer + Breadcrumb (SEO preserved)
-const productJsonLd = {
-  "@context": "https://schema.org/",
-  "@type": "Product",
-  name: `${sku.brand} ${sku.vitola}`,
-  brand: { "@type": "Brand", name: sku.brand },
-  description: sku.blurb,
-  category: "Premium Cuban Cigar",
-  additionalProperty: [
-    { "@type": "PropertyValue", name: "Vitola", value: sku.shape },
-    { "@type": "PropertyValue", name: "Ring gauge", value: String(sku.ring) },
-    { "@type": "PropertyValue", name: "Length", value: `${sku.lengthMm} mm` },
-    { "@type": "PropertyValue", name: "Box size", value: String(sku.boxSize) },
-    { "@type": "PropertyValue", name: "Origin", value: "Cuba (Habanos S.A.)" },
-  ],
-  ...(inStockOffers.length > 0 && {
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "EUR",
-      lowPrice: minEur.toFixed(2),
-      highPrice: maxEur.toFixed(2),
-      offerCount: String(inStockOffers.length),
-      availability: "https://schema.org/InStock",
-      offers: inStockOffers.map((o) => ({
-        "@type": "Offer",
-        url: o.snap.sourceUrl,
-        price: o.snap.price.toFixed(2),
-        priceCurrency: o.snap.currency,
-        availability: "https://schema.org/InStock",
-        seller: { "@type": "Organization", name: o.retailer.name, url: o.retailer.url },
-        areaServed: o.country.name,
-      })),
-    },
-  }),
-};
-const breadcrumbJsonLd = {
-  "@context": "https://schema.org/",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "The Finder", item: "https://thenextcigar.com/finder/" },
-    { "@type": "ListItem", position: 2, name: sku.brand, item: `https://thenextcigar.com/finder/sku/${sku.slug}/` },
-  ],
-};
+const url = `https://thenextcigar.com/finder/sku/${sku.slug}/`;
+const graph: any[] = [
+  {
+    "@type": "Product",
+    name: `${sku.brand} ${sku.vitola}`,
+    brand: { "@type": "Brand", name: sku.brand },
+    description: sku.blurb,
+    category: "Premium Cuban Cigar",
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "Vitola", value: sku.shape },
+      { "@type": "PropertyValue", name: "Ring gauge", value: String(sku.ring) },
+      { "@type": "PropertyValue", name: "Length", value: `${sku.lengthMm} mm` },
+      { "@type": "PropertyValue", name: "Box size", value: String(sku.boxSize) },
+    ],
+    ...(inStock.length > 0 && {
+      offers: {
+        "@type": "AggregateOffer", priceCurrency: "EUR", lowPrice: minEur.toFixed(2), highPrice: maxEur.toFixed(2),
+        offerCount: String(inStock.length), availability: "https://schema.org/InStock",
+        offers: inStock.map((o) => ({
+          "@type": "Offer", url: o.snap.sourceUrl, price: o.snap.price.toFixed(2), priceCurrency: o.snap.currency,
+          availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: o.retailer.name, url: o.retailer.url }, areaServed: o.country.name,
+        })),
+      },
+    }),
+  },
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Markets", item: "https://thenextcigar.com/finder/" },
+      { "@type": "ListItem", position: 2, name: `${sku.brand} ${sku.vitola}`, item: url },
+    ],
+  },
+];
+if (faq.length >= 2) graph.push({ "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a.replace(/<[^>]+>/g, "") } })) });
+const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 
-const faqItems = buildSkuFaq({
-  sku,
-  best,
-  offersCount: offers.length,
-  sameBrandSkus: SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 4),
-});
-
-const ogTitle = `${sku.brand} ${sku.vitola} — ${best ? `from ${best.snap.currency} ${best.snap.price.toFixed(0)}` : "European price comparison"}`;
-const ogDescription = best
-  ? `${offers.length} live offers · cheapest ${formatPrice(best.snap.price, best.snap.currency)} at ${best.retailer.name} · ${allCountries.length} countries tracked.`
-  : `Live European price comparison for the ${sku.brand} ${sku.vitola}. Track drops, get alerts.`;
-
-// Same-brand siblings for the "Cigars like this" band
-const siblings = SKUS.filter((s) => s.brand === sku.brand && s.id !== sku.id).slice(0, 4);
+const title = `${sku.brand} ${sku.vitola} — box price compared across Europe · The Next Cigar`;
+const description = best
+  ? `${sku.brand} ${sku.vitola}, box of ${sku.boxSize}: ${offers.length} European retailers compared, cheapest ${formatPrice(best.snap.price, best.snap.currency)} at ${best.retailer.name} (${checkedLabel(best.snap)}). Free price alerts.`
+  : `${sku.brand} ${sku.vitola}, box of ${sku.boxSize}: European retailers compared, with the date each price was read.`;
 ---
 
-<BaseLayout title={ogTitle} description={ogDescription} bareChrome={true}>
-  <link is:inline href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script type="application/ld+json" set:html={JSON.stringify(productJsonLd)} />
-  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
-  <FaqSchema items={faqItems} />
-
-  <div class="tnc-cinema">
-    <CigarCursor />
-
-    <main class="site-body">
-      <NewspaperMasthead {...masthead} />
-
-      <SectionFlag
-        number="/01"
-        section="The Finder · SKU"
-        title={`${sku.brand} <em>${sku.vitola}</em>`}
-        status={best ? `Cheapest ${formatPrice(best.snap.price, best.snap.currency)} · ${best.retailer.name}, ${best.country.name}` : `${offers.length} tracked offers`}
-        live={inStockOffers.length > 0}
-      />
-
-      <section class="sku-hero">
-        <div class="sku-hero-inner">
-          <a href="/finder/" class="sku-back" data-hover>← Back to the Finder</a>
-
-          <div class="sku-hero-grid">
-            <div class="sku-hero-lead">
-              <div class="sku-hero-brand">{sku.brand} · {sku.line}</div>
-              <h1 class="sku-hero-title">{sku.vitola}</h1>
-              <p class="sku-hero-blurb">{sku.blurb}</p>
-
-              <div class="sku-hero-specs">
-                <div><span class="k">Shape</span><span class="v">{sku.shape}</span></div>
-                <div><span class="k">Ring</span><span class="v">{sku.ring}</span></div>
-                <div><span class="k">Length</span><span class="v">{sku.lengthMm} mm</span></div>
-                <div><span class="k">Box</span><span class="v">{sku.boxSize} cigars</span></div>
-                {sku.prestige && <div><span class="k">Tier</span><span class="v">{sku.prestige}</span></div>}
-                {sku.strength && <div><span class="k">Strength</span><span class="v">{sku.strength}</span></div>}
-              </div>
-            </div>
-
-            {best && (
-              <aside class="sku-hero-price">
-                <div class="sku-hero-price-label">Best value · in stock</div>
-                <div class="sku-hero-price-big">{formatPrice(best.snap.price, best.snap.currency)}</div>
-                <div class="sku-hero-price-eur">≈ €{Math.round(best.eur).toLocaleString()}</div>
-                <div class="sku-hero-price-per">€{best.perCigarEur.toFixed(2)} per cigar · box of {sku.boxSize}</div>
-                <div class="sku-hero-price-at">
-                  at <strong>{best.retailer.name}</strong> · {best.country.flag} {best.country.name}
-                </div>
-                <a
-                  href={best.link.url}
-                  class="sku-hero-cta"
-                  target="_blank"
-                  rel="noopener noreferrer sponsored"
-                  data-hover
-                  title={best.link.isExact
-                    ? "Opens the retailer product page in a new tab"
-                    : `We don't have a direct link yet — this opens ${best.retailer.name}'s site search for ${sku.brand} ${sku.vitola}.`}
-                >
-                  {best.link.isExact ? `Shop at ${best.retailer.name} →` : `Search ${best.retailer.name} for this →`}
-                </a>
-                <SaveAlertButton
-                  sku={sku.slug}
-                  productName={`${sku.brand} ${sku.vitola}`}
-                  baselineEur={Math.round(best.eur)}
-                  baselineLabel={`€${Math.round(best.eur).toLocaleString("en-US")}`}
-                  variant="ghost"
-                />
-                <p class="sku-hero-note">
-                  Affiliate disclosure — clicking through earns The Next Cigar a referral commission. Your price is unchanged.
-                </p>
-              </aside>
-            )}
-          </div>
-
-          {inStockOffers.length > 1 && (
-            <p class="sku-hero-tracker">
-              Tracking <strong>{offers.length}</strong> offers across <strong>{allCountries.length}</strong> countries · range €{Math.round(minEur).toLocaleString()}–€{Math.round(maxEur).toLocaleString()} · spread <strong>{spread}%</strong>
-            </p>
-          )}
-        </div>
-      </section>
-
-      {offers.length > 0 && (
-        <section class="sku-table-band">
-          <div class="sku-table-head">
-            <div class="sku-table-flag">Every offer we're tracking</div>
-            <h2>{offers.length} offers <em>· sorted by EUR</em></h2>
-          </div>
-          <table class="ticker">
-            <thead>
-              <tr>
-                <th>Retailer</th>
-                <th>Country</th>
-                <th class="num">Price</th>
-                <th class="num">EUR eq.</th>
-                <th class="num">Per cigar</th>
-                <th>Stock</th>
-                <th class="num">Verified</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {offers.map((o) => (
-                <tr class:list={[!o.snap.inStock && "out-of-stock"]}>
-                  <td>
-                    <a href={o.retailer.url} target="_blank" rel="noopener" data-hover>
-                      <span class="name">{o.retailer.name}</span>
-                      {o.retailer.city && <span class="brand">{o.retailer.city}</span>}
-                    </a>
-                  </td>
-                  <td class="country">{o.country.flag} {o.country.name}</td>
-                  <td class="num">{formatPrice(o.snap.price, o.snap.currency)}</td>
-                  <td class="num eur">€{Math.round(o.eur).toLocaleString()}</td>
-                  <td class="num">€{o.perCigarEur.toFixed(2)}</td>
-                  <td>
-                    <span class:list={["stock-dot", o.snap.inStock ? "in" : "out"]}>
-                      {o.snap.inStock ? "In stock" : "Sold out"}
-                    </span>
-                  </td>
-                  <td class="num">{o.verifiedDate}</td>
-                  <td class="num">
-                    <a
-                      href={o.link.url}
-                      target="_blank"
-                      rel="noopener sponsored"
-                      class="row-cta"
-                      data-hover
-                      title={o.link.isExact ? "Opens the retailer product page" : `Opens ${o.retailer.name}'s search for this cigar`}
-                    >
-                      {o.link.isExact ? "Shop →" : "Search →"}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      {sku.editorial && (
-        <section class="sku-editorial">
-          <div class="sku-editorial-eyebrow">From the tasting notes</div>
-          <div class="sku-editorial-body" set:html={
-            sku.editorial.split("\n\n").map(p => `<p>${p.replace(/\n/g, "<br/>")}</p>`).join("")
-          }></div>
-        </section>
-      )}
-
-      {siblings.length > 0 && (
-        <section class="siblings-band">
-          <div class="siblings-head">
-            <div class="siblings-flag">Other {sku.brand} vitolas</div>
-            <h2>Same brand <em>— different smoke.</em></h2>
-          </div>
-          <div class="siblings-grid">
-            {siblings.map((s) => (
-              <a href={`/finder/sku/${s.slug}/`} class="sibling" data-hover>
-                <div class="sibling-brand">{s.brand}</div>
-                <div class="sibling-vitola">{s.vitola}</div>
-                <div class="sibling-blurb">{s.blurb}</div>
-                <div class="sibling-cta">Open on the Finder →</div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section class="footer-strip">
-        <div class="footer-strip-inner">
-          <div>
-            <a href="/" class="footer-strip-mark" data-hover>The Next Cigar</a>
-            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
-          </div>
-          <div class="footer-strip-links">
-            <a href="/finder/" data-hover>Finder</a>
-            <a href="/lounge/" data-hover>Lounge</a>
-            <a href="/blog/" data-hover>Magazine</a>
-            <a href="/shop/" data-hover>Shop</a>
-            <a href="/about/" data-hover>About</a>
-            <a href="/contact/" data-hover>Contact</a>
-          </div>
-        </div>
-        <div class="footer-strip-copy">
-          <span>© 2025–2026 The Next Cigar</span>
-          <a href="https://turquinostudios.com" target="_blank" rel="noopener" class="footer-turquino" data-hover>
-            <img src="/cinematic/turquino-mark.jpg" alt="" />
-            <span>Designed by <em>Turquino Studios</em></span>
-          </a>
-        </div>
-      </section>
-    </main>
+<PaperLayout title={title} description={description} section="markets" compact={true} jsonLd={jsonLd}>
+  <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Markets · <a href="/finder/">the board</a> · {sku.brand}</p>
+  <div class="dateline">
+    <h1>{sku.brand} {sku.vitola} <em>— box of {sku.boxSize}, compared.</em></h1>
+    <p class="st">
+      {offers.length} retailers in {countries.length} countries · {inStock.length} in stock
+      {spread > 0 && <> · <b>{spread}% spread</b> between cheapest and dearest</>}
+      {liveCount > 0 && <> · <b style="color:var(--live)">{liveCount} live</b></>}
+    </p>
   </div>
 
+  <div class="front">
+    <!-- LEFT: the file + the quote -->
+    <aside>
+      {best ? (
+        <div class="quote">
+          <p class="t">Cheapest in stock</p>
+          <p class="big">{formatPrice(best.snap.price, best.snap.currency)}</p>
+          <p class="sub">≈ €{Math.round(best.eur).toLocaleString("en-GB")} · €{best.per.toFixed(2)} per cigar</p>
+          <p class="sub" style="margin-top:6px">at <b style="color:var(--ink)">{best.retailer.name}</b>, {best.country.name} · {checkedLabel(best.snap)}</p>
+          <a class="cta" href={best.link.url} target="_blank" rel="noopener nofollow sponsored">{best.link.isExact ? `Buy at ${best.retailer.name}` : `Search ${best.retailer.name}`} →</a>
+          <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="ghost" />
+          <p class="note" style="margin-top:10px">Clicking through may earn us a commission. Your price is unchanged.</p>
+        </div>
+      ) : (
+        <div class="quote"><p class="t">No in-stock listing</p><p class="sub">Every retailer we track is sold out. Save an alert and we'll email when one comes back.</p><SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} variant="ghost" /></div>
+      )}
+
+      <div class="rulehead"><h2>The file</h2></div>
+      <dl class="file">
+        <dt>Line</dt><dd>{sku.line}</dd>
+        <dt>Shape</dt><dd>{sku.shape} · ring {sku.ring} · {sku.lengthMm} mm</dd>
+        <dt>Canonical box</dt><dd>{sku.boxSize} cigars</dd>
+        <dt>Strength</dt><dd style="text-transform:capitalize">{sku.strength.replace("_", " ")}</dd>
+        {sku.flavorNotes?.length > 0 && <><dt>Notes</dt><dd style="font-size:14px">{sku.flavorNotes.join(", ")}</dd></>}
+        <dt>Tier</dt><dd style="text-transform:capitalize">{sku.prestige}</dd>
+      </dl>
+
+      {siblings.length > 0 && (
+        <>
+          <div class="rulehead"><h2>Also by {sku.brand}</h2></div>
+          <ul class="eds">
+            {siblings.map((s) => (<li><a href={`/finder/sku/${s.slug}/`}>{s.vitola}</a><span>box of {s.boxSize}</span></li>))}
+          </ul>
+        </>
+      )}
+    </aside>
+
+    <!-- CENTRE: the offers, the chart, the piece -->
+    <section>
+      <div class="rulehead"><h2>Every listing <em>· cheapest first</em></h2><span class="more">{offers.length} retailers</span></div>
+      <table class="mk wide offers">
+        <thead><tr><th>Retailer</th><th class="num">Box</th><th class="num">Per cigar</th><th></th></tr></thead>
+        <tbody>
+          {offers.map((o) => (
+            <tr class:list={{ oos: !o.snap.inStock }}>
+              <td class="v">
+                {o.retailer.name} <span class="tag">{o.country.code.toUpperCase()}</span>
+                {dutyPaidCountries(o.retailer).length > 1 && <span class="tag ok">duty paid EU</span>}
+                <small>{o.retailer.status === "lcdh" ? "La Casa del Habano" : o.retailer.status === "habanos-specialist" ? "Habanos Specialist" : o.retailer.city ?? o.country.name} · {checkedLabel(o.snap)}{o.snap.inStock ? "" : " · sold out"}{o.snap.originalPrice && o.snap.originalPrice > o.snap.price ? ` · was ${formatPrice(o.snap.originalPrice, o.snap.currency)}` : ""}</small>
+              </td>
+              <td class="num p">{formatPrice(o.snap.price, o.snap.currency)}<small>≈ €{Math.round(o.eur)}</small></td>
+              <td class="num p">€{o.per.toFixed(2)}</td>
+              <td class="num"><a class="go" href={o.link.url} target="_blank" rel="noopener nofollow sponsored">{o.link.isExact ? "Buy" : "Search"} →</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="note">Listed price for the box of {sku.boxSize} in the retailer's own currency, their own tax included. A box crossing a border picks up destination duty and VAT on top — the "duty paid EU" mark shows the few retailers whose price is all-in beyond their home market.</p>
+
+      {chart && (
+        <div class="spark">
+          <div class="rulehead"><h2>Ninety days <em>· cheapest in-stock box in Europe, in euros</em></h2></div>
+          <svg viewBox="0 0 600 150" role="img" aria-label={`Cheapest European price for ${sku.brand} ${sku.vitola}, ${fmtDay(chart.first)} to ${fmtDay(chart.lastDay)}: low €${Math.round(chart.lo)}, high €${Math.round(chart.hi)}, now €${Math.round(chart.last)}.`}>
+            <line class="grid" x1="44" x2="590" y1="10" y2="10" /><line class="grid" x1="44" x2="590" y1="69" y2="69" /><line class="grid" x1="44" x2="590" y1="128" y2="128" />
+            <text class="l" x="40" y="14" text-anchor="end">€{Math.round(chart.hi)}</text>
+            <text class="l" x="40" y="132" text-anchor="end">€{Math.round(chart.lo)}</text>
+            {chart.ticks.map((t, i) => (<text class="l" x={t.x} y="146" text-anchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}>{t.label}</text>))}
+            <path class="area" d={chart.area} /><path class="line" d={chart.path} />
+            <circle class="dot" cx={chart.dot.x} cy={chart.dot.y} r="3.5" />
+          </svg>
+          <p class="spark-legend"><span>Now <b>€{Math.round(chart.last)}</b></span><span>90-day low <b>€{Math.round(chart.lo)}</b></span><span>90-day high <b>€{Math.round(chart.hi)}</b></span><span>{hist.length} readings</span></p>
+        </div>
+      )}
+
+      <div class="rulehead"><h2>The piece</h2></div>
+      <div class="prose cap" style="max-width:none">
+        <p><b>{sku.blurb}</b></p>
+        {sku.editorial.split(/\n\s*\n/).map((para) => <p>{para}</p>)}
+      </div>
+
+      {faq.length > 0 && (
+        <>
+          <div class="rulehead" style="margin-top:26px"><h2>Questions</h2></div>
+          <ul class="faq">
+            {faq.map((f) => (<li><h3>{f.q}</h3><div set:html={f.a} /></li>))}
+          </ul>
+        </>
+      )}
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="rail">
+      <div class="rulehead"><h2>Where it's cheapest</h2></div>
+      <ul class="eds">
+        {countries.map((c) => {
+          const o = inStock.find((x) => x.country.code === c);
+          return (<li><a href={`/finder/${c}/`}>{COUNTRY_BY_CODE[c].name}</a><span>{o ? `€${Math.round(o.eur)}` : "sold out"}</span></li>);
+        })}
+      </ul>
+      <div class="box">
+        <span class="kick">Watchlist · free</span>
+        <h3 class="head">Tell me when it drops.</h3>
+        <p>One email when this vitola falls below your price or comes back in stock. No charge, no newsletter unless you ask.</p>
+        {best && <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="primary" />}
+      </div>
+      <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">What a cross-border box really costs</p></div></li>
+        <li><div><a class="head" href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/">The European retailer map</a><p class="by">Who ships where</p></div></li>
+      </ul>
+    </aside>
+  </div>
   <PriceAlertModal />
-</BaseLayout>
-
-<style>
-  .site-body { padding-bottom: 40px; }
-
-  /* Hero — brand + vitola + best price side by side */
-  .sku-hero { max-width: 1400px; margin: 0 auto; padding: 32px 40px 48px; border-bottom: 1px solid var(--news-rule); }
-  .sku-hero-inner { max-width: 100%; }
-  .sku-back {
-    display: inline-block;
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--news-oxblood);
-    padding-bottom: 3px; border-bottom: 1px solid transparent; transition: all 0.2s;
-    margin-bottom: 28px;
-  }
-  .sku-back:hover { border-bottom-color: var(--news-oxblood); }
-  .sku-hero-grid {
-    display: grid; grid-template-columns: 7fr 5fr; gap: 56px; align-items: start;
-  }
-  .sku-hero-brand {
-    font-family: var(--news-mono); font-size: 12px; letter-spacing: 0.24em;
-    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 12px;
-  }
-  .sku-hero-title {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(2.6rem, 5.6vw, 5.4rem); line-height: 0.96;
-    letter-spacing: -0.03em; color: var(--news-ink); margin: 0 0 24px;
-  }
-  .sku-hero-blurb {
-    font-family: var(--news-serif); font-style: italic;
-    font-size: clamp(1.05rem, 1.5vw, 1.35rem); line-height: 1.55;
-    color: var(--news-ink-soft); margin: 0 0 32px;
-  }
-  .sku-hero-specs {
-    display: grid; grid-template-columns: repeat(3, auto); gap: 20px 32px;
-    padding: 20px 0; border-top: 1px solid var(--news-rule); border-bottom: 1px solid var(--news-rule);
-  }
-  .sku-hero-specs > div { display: flex; flex-direction: column; gap: 4px; }
-  .sku-hero-specs .k {
-    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--news-oxblood);
-  }
-  .sku-hero-specs .v {
-    font-family: var(--news-serif); font-size: 15px; color: var(--news-ink); text-transform: capitalize;
-  }
-
-  /* Best-value price card */
-  .sku-hero-price {
-    padding: 28px 28px 32px;
-    border: 3px double var(--news-oxblood);
-    background: var(--news-paper-cream);
-    display: flex; flex-direction: column;
-  }
-  .sku-hero-price-label {
-    font-family: var(--news-mono); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase; color: var(--news-oxblood);
-    margin-bottom: 12px;
-  }
-  .sku-hero-price-big {
-    font-family: var(--news-serif); font-weight: 600;
-    font-size: clamp(2.4rem, 4vw, 3.4rem); line-height: 1;
-    letter-spacing: -0.028em; color: var(--news-ink); margin-bottom: 4px;
-  }
-  .sku-hero-price-eur {
-    font-family: var(--news-mono); font-size: 12px; color: var(--news-ink-mute);
-    margin-bottom: 12px;
-  }
-  .sku-hero-price-per {
-    font-family: var(--news-serif); font-size: 13px; color: var(--news-ink-soft);
-    padding-bottom: 12px; border-bottom: 1px solid var(--news-rule); margin-bottom: 14px;
-  }
-  .sku-hero-price-at {
-    font-family: var(--news-serif); font-size: 14px; line-height: 1.4; color: var(--news-ink);
-    margin-bottom: 20px;
-  }
-  .sku-hero-price-at strong { font-weight: 600; }
-  .sku-hero-cta {
-    display: inline-flex; align-items: center; justify-content: center;
-    padding: 14px 20px; margin-bottom: 12px;
-    font-family: var(--news-sans); font-weight: 600; font-size: 12px;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    background: var(--news-ink); color: var(--news-paper);
-    transition: background 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .sku-hero-cta:hover { background: var(--news-oxblood); }
-  .sku-hero-note {
-    font-family: var(--news-serif); font-style: italic; font-size: 11.5px;
-    color: var(--news-ink-mute); margin: 12px 0 0; line-height: 1.4;
-  }
-  .sku-hero-tracker {
-    margin-top: 28px; padding-top: 20px; border-top: 4px double var(--news-ink);
-    font-family: var(--news-serif); font-size: 15px; color: var(--news-ink-soft);
-  }
-  .sku-hero-tracker strong { font-weight: 600; color: var(--news-oxblood); }
-
-  /* Offers table — reuses ticker styling from /finder/ */
-  .sku-table-band { max-width: 1400px; margin: 0 auto; padding: 40px 40px; border-bottom: 1px solid var(--news-rule); }
-  .sku-table-head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 24px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink);
-    flex-wrap: wrap; gap: 12px;
-  }
-  .sku-table-flag {
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-oxblood); color: var(--news-paper); padding: 6px 12px;
-  }
-  .sku-table-head h2 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.4rem, 2.2vw, 1.85rem); letter-spacing: -0.016em; margin: 0;
-  }
-  .sku-table-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-
-  .ticker { width: 100%; border-collapse: collapse; border-top: 2px solid var(--news-ink); border-bottom: 2px solid var(--news-ink); font-family: var(--news-serif); font-size: 14px; }
-  .ticker thead th {
-    font-family: var(--news-mono); font-weight: 500; font-size: 9px;
-    letter-spacing: 0.22em; text-transform: uppercase; color: var(--news-ink);
-    text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--news-ink); background: var(--news-paper-dark);
-  }
-  .ticker thead th.num { text-align: right; }
-  .ticker tbody tr { border-bottom: 1px solid var(--news-rule); transition: background 0.2s; }
-  .ticker tbody tr:hover { background: rgba(138, 43, 30, 0.06); }
-  .ticker tbody tr.out-of-stock { opacity: 0.55; }
-  .ticker td { padding: 12px 8px; vertical-align: middle; }
-  .ticker td.num { text-align: right; font-family: var(--news-mono); font-size: 13px; font-weight: 500; }
-  .ticker td.num.eur { color: var(--news-oxblood); }
-  .ticker .brand {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--news-ink-mute); display: block; margin-top: 2px;
-  }
-  .ticker .name { font-family: var(--news-serif); font-weight: 500; font-size: 15px; color: var(--news-ink); }
-  .ticker .country { font-family: var(--news-mono); font-size: 12px; }
-  .stock-dot {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-  }
-  .stock-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
-  .stock-dot.in::before  { background: var(--news-pine); }
-  .stock-dot.in         { color: var(--news-pine); }
-  .stock-dot.out::before { background: var(--news-ink-mute); }
-  .stock-dot.out        { color: var(--news-ink-mute); }
-  .row-cta {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
-    color: var(--news-oxblood); text-transform: uppercase;
-  }
-  .row-cta:hover { color: var(--news-ember); }
-
-  /* Editorial writeup */
-  .sku-editorial { max-width: 780px; margin: 0 auto; padding: 56px 40px; border-bottom: 1px solid var(--news-rule); }
-  .sku-editorial-eyebrow {
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 20px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .sku-editorial-eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--news-oxblood); }
-  .sku-editorial-body { font-family: var(--news-serif); font-size: 18px; line-height: 1.68; color: var(--news-ink); }
-  .sku-editorial-body :global(p) { margin: 0 0 1.35em; }
-  .sku-editorial-body :global(p:first-child::first-letter) {
-    font-family: var(--news-serif); font-weight: 700; font-size: 5em; line-height: 0.85;
-    float: left; margin: 0.05em 10px -0.05em 0; color: var(--news-oxblood);
-  }
-
-  /* Siblings */
-  .siblings-band { max-width: 1400px; margin: 0 auto; padding: 48px 40px; border-bottom: 1px solid var(--news-rule); }
-  .siblings-head {
-    display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: baseline;
-    margin-bottom: 28px; padding-bottom: 12px; border-bottom: 4px double var(--news-ink);
-  }
-  .siblings-flag {
-    font-family: var(--news-sans); font-weight: 700; font-size: 10px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-mahogany); color: var(--news-paper); padding: 6px 12px; align-self: start;
-  }
-  .siblings-head h2 { font-family: var(--news-serif); font-weight: 500; font-size: clamp(1.4rem, 2.2vw, 1.85rem); margin: 0; letter-spacing: -0.016em; }
-  .siblings-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .siblings-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .sibling {
-    display: flex; flex-direction: column; gap: 6px;
-    padding: 18px 20px 20px; border: 1px solid var(--news-ink); background: var(--news-paper);
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .sibling:hover { transform: translateY(-2px); }
-  .sibling-brand { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--news-oxblood); }
-  .sibling-vitola { font-family: var(--news-serif); font-weight: 500; font-size: 18px; letter-spacing: -0.012em; color: var(--news-ink); }
-  .sibling-blurb {
-    font-family: var(--news-serif); font-style: italic; font-size: 13px; line-height: 1.5;
-    color: var(--news-ink-soft); flex: 1; margin: 4px 0 12px;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .sibling-cta { font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--news-oxblood); }
-
-  /* Footer strip */
-  .footer-strip { max-width: 1400px; margin: 0 auto; padding: 40px 40px 24px; }
-  .footer-strip-inner { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--news-rule); }
-  .footer-strip-mark { font-family: var(--news-serif); font-weight: 600; font-size: 22px; letter-spacing: -0.008em; color: var(--news-ink); display: block; }
-  .footer-strip-tag { font-family: var(--news-serif); font-style: italic; font-size: 13px; color: var(--news-ink-mute); margin-top: 2px; }
-  .footer-strip-links { display: flex; gap: 24px; flex-wrap: wrap; font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--news-ink-mute); }
-  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
-  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
-
-  @media (max-width: 900px) {
-    .sku-hero-grid { grid-template-columns: 1fr; gap: 24px; }
-    .sku-hero-specs { grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
-    .siblings-grid { grid-template-columns: 1fr 1fr; }
-    .siblings-head { grid-template-columns: 1fr; gap: 12px; }
-    .sku-hero, .sku-table-band, .sku-editorial, .siblings-band, .footer-strip { padding: 24px 20px; }
-    .ticker { font-size: 12px; }
-    .ticker td { padding: 8px 4px; }
-    .ticker thead th { font-size: 8px; padding: 8px 4px; }
-    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
-  }
-  @media (max-width: 620px) {
-    .siblings-grid { grid-template-columns: 1fr; }
-    /* Hide less-critical table columns on very narrow */
-    .ticker thead th:nth-child(4), .ticker tbody td:nth-child(4),
-    .ticker thead th:nth-child(5), .ticker tbody td:nth-child(5),
-    .ticker thead th:nth-child(7), .ticker tbody td:nth-child(7) { display: none; }
-  }
-</style>
+</PaperLayout>

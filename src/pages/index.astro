@@ -1,504 +1,229 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "../layouts/BaseLayout.astro";
-import "../styles/newspaper.css";
-import CigarCursor from "../components/newspaper/CigarCursor.astro";
-import NewspaperMasthead from "../components/newspaper/NewspaperMasthead.astro";
-import SectionFlag from "../components/newspaper/SectionFlag.astro";
-import { MASTHEAD as masthead } from "../data/masthead";
+import PaperLayout from "../layouts/PaperLayout.astro";
+import { SKUS, RETAILERS, COUNTRIES, PRICE_SNAPSHOTS, bestPriceForSku, formatPrice, checkedLabel } from "../data/finder-live";
+import { events } from "../data/cigar-events";
 
 /**
- * TNC homepage — cinematic newspaper edition.
- *
- * Structure: video intro → fades out → newspaper masthead + section flag
- * + lead cover story + six-card feature grid + four-rooms pillars. All
- * copy pulls from the live blog collection so this stays evergreen.
- *
- * Uses BaseLayout with bareChrome so we keep SEO/PWA/analytics/cookie
- * banner but skip the old public Header + Footer — the newspaper
- * masthead IS the header now.
+ * Front page — the broadsheet.
+ * Left rail: Markets (live prices) + country editions. Centre: lead report +
+ * two secondaries. Right rail: Accessories · tested, Diary, the Lounge box.
+ * Then Magazine long reads, Classifieds (shop) and Guatabey.
+ * Everything comes from the collections and the Finder; nothing hand-typed.
  */
 
-const allPosts = (await getCollection("blog")).sort(
-  (a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
-);
-const categories = await getCollection("categories");
+const posts = (await getCollection("blog"))
+  .filter((p) => !(p.data as any).draft)
+  .sort((a, b) => new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime());
 const authors = await getCollection("authors");
-/** Bylines: the blog frontmatter stores the author *slug*; show the person's name. */
+const products = (await getCollection("products")).filter((p) => !p.data.isArchived);
+
 function authorName(slug?: string) {
-  if (!slug) return "TNC editorial";
   const a = authors.find((x) => x.id === slug || (x.data as any).slug === slug);
-  return (a?.data as any)?.name || "TNC editorial";
+  return (a?.data as any)?.name || "The Next Cigar";
 }
-const categoryByslug = new Map(categories.map((c) => [c.data.slug, c.data]));
-
-// Lead — featured post if any, otherwise most recent
-const lead = allPosts.find((p) => p.data.featured) ?? allPosts[0];
-
-// Feature grid — six most recent, excluding the lead
-const usedIds = new Set([lead?.id]);
-const features = allPosts.filter((p) => !usedIds.has(p.id)).slice(0, 6);
-
-function coverOf(post: typeof allPosts[number]): string {
-  const c = post.data.cover;
-  if (!c) return "/og-default.svg";
-  if (typeof c === "string") return c;
-  return (c as { src: string }).src;
+function cover(p: (typeof posts)[number]): string | undefined {
+  const c: any = p.data.cover;
+  if (!c) return undefined;
+  return typeof c === "string" ? c : c.src;
 }
+const fmtDate = (d: string | Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 
-function excerptOf(post: typeof allPosts[number]): string {
-  return post.data.excerpt || `Read this feature on ${post.data.title}.`;
+// Lead: the featured post, else the newest.
+const lead = posts.find((p) => p.data.featured) ?? posts[0];
+const used = new Set<string>([lead.id]);
+const take = (n: number, pred: (p: (typeof posts)[number]) => boolean = () => true) => {
+  const out: typeof posts = [];
+  for (const p of posts) { if (out.length >= n) break; if (!used.has(p.id) && pred(p)) { out.push(p); used.add(p.id); } }
+  return out;
+};
+const secondaries = take(2, (p) => ["cubans", "latest-news"].includes(String(p.data.category)));
+const accessories = take(4, (p) => String(p.data.category) === "cigar-accessories" || /cutter|lighter|humidor|gift|gear|travel kit/i.test(p.data.title));
+const isMarketPiece = (p: (typeof posts)[number]) => /cheapest|price|prices|duty|spread|retailer map/i.test(p.data.title);
+const longReads = take(4, (p) => ["cigar-101", "cigar-culture", "havana-cigar-life", "cubans"].includes(String(p.data.category)) && !isMarketPiece(p));
+
+// Markets rail: cheapest in-stock price per SKU, flagship/premium first, live first.
+const RET = Object.fromEntries(RETAILERS.map((r) => [r.id, r]));
+const ranked = SKUS
+  .map((sku) => ({ sku, best: bestPriceForSku(sku.id) }))
+  .filter((r) => r.best)
+  .sort((a, b) => {
+    const la = a.best!.snap.live ? 0 : 1, lb = b.best!.snap.live ? 0 : 1;
+    if (la !== lb) return la - lb;
+    const rank = (p: string) => (p === "flagship" ? 0 : p === "premium" ? 1 : 2);
+    return rank(a.sku.prestige) - rank(b.sku.prestige);
+  });
+// A front-page table of seven Cohibas reads like a catalogue, not a market.
+// Cap each brand at two so the rail shows the spread of the market.
+const perBrand = new Map<string, number>();
+const market: typeof ranked = [];
+for (const row of ranked) {
+  const n = perBrand.get(row.sku.brand) ?? 0;
+  if (n >= 2) continue;
+  perBrand.set(row.sku.brand, n + 1);
+  market.push(row);
+  if (market.length === 7) break;
 }
+const covered = new Map<string, { skus: Set<string>; shops: number }>();
+for (const c of COUNTRIES) covered.set(c.code, { skus: new Set(), shops: RETAILERS.filter((r) => r.country === c.code).length });
+for (const s of PRICE_SNAPSHOTS) { const c = RET[s.retailerId]?.country; if (c && s.inStock) covered.get(c)?.skus.add(s.skuId); }
+const editions = COUNTRIES
+  .map((c) => ({ c, n: covered.get(c.code)!.skus.size, shops: covered.get(c.code)!.shops }))
+  .filter((e) => e.n > 0 || e.shops > 4)
+  .sort((a, b) => b.n - a.n)
+  .slice(0, 6);
 
-function categoryLabel(post: typeof allPosts[number]): string {
-  const cat = post.data.category ? categoryByslug.get(post.data.category) : null;
-  return cat?.data?.name ?? "Editorial";
-}
+// Diary: next four events from today.
+const today = new Date().toISOString().slice(0, 10);
+const diary = events
+  .filter((e) => e.endDate >= today)
+  .sort((a, b) => a.startDate.localeCompare(b.startDate))
+  .slice(0, 4)
+  .map((e) => {
+    const d = new Date(e.startDate);
+    return { ...e, day: d.toLocaleDateString("en-GB", { day: "numeric" }), mon: d.toLocaleDateString("en-GB", { month: "short" }), when: `${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${e.endDate !== e.startDate ? "–" + new Date(e.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}` };
+  });
 
-// Map category slug → flag colour class
-function categoryFlag(slug: string | null): string {
-  if (!slug) return "";
-  const s = slug.toLowerCase();
-  if (s.includes("finder") || s.includes("price")) return "finder";
-  if (s.includes("leaf") || s.includes("cigar-101") || s.includes("vitola")) return "leaf";
-  if (s.includes("people") || s.includes("culture") || s.includes("havana")) return "people";
-  if (s.includes("shop") || s.includes("gear") || s.includes("accessor")) return "shop";
-  if (s.includes("news") || s.includes("market")) return "market";
-  return "";
-}
+// Classifieds: four products, in-stock and buyable first.
+const tiles = products
+  .sort((a, b) => Number(b.data.inStock && !b.data.comingSoon) - Number(a.data.inStock && !a.data.comingSoon))
+  .slice(0, 4);
+const money = (n: number, cur: string) => new Intl.NumberFormat("en-GB", { style: "currency", currency: cur || "USD", maximumFractionDigits: 0 }).format(n);
 
-
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "NewsMediaOrganization", "@id": "https://thenextcigar.com/#org", name: "The Next Cigar", url: "https://thenextcigar.com/", logo: "https://thenextcigar.com/logo.png", sameAs: [] },
+    { "@type": "WebSite", url: "https://thenextcigar.com/", name: "The Next Cigar", publisher: { "@id": "https://thenextcigar.com/#org" } },
+  ],
+};
 ---
 
-<BaseLayout
-  title="The Next Cigar — Cuban cigar magazine, live prices, private lounge"
-  description="A cinematic Cuban-cigar magazine for Europe — live retailer prices, private member lounge, long reads on the leaf, and a small shop under our own name."
-  bareChrome={true}
+<PaperLayout
+  title="The Next Cigar — Cuban cigar prices across Europe, and the magazine"
+  description="An independent paper on Cuban cigars: box prices compared across European retailers four times a day, long reads on the leaf, honest accessory reviews and a diary of the season."
+  section="front"
+  jsonLd={jsonLd}
 >
-  <link
-    is:inline
-    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap"
-    rel="stylesheet"
-  />
+  <div class="front">
 
-  <div class="tnc-cinema">
-    <CigarCursor />
+    <!-- LEFT RAIL · MARKETS -->
+    <aside aria-label="Markets">
+      <div class="rulehead"><h2>Markets <em>· box prices, live</em></h2><a class="more" href="/finder/">The Finder →</a></div>
+      <table class="mk">
+        <thead><tr><th>Vitola · canonical box</th><th class="num">Cheapest</th></tr></thead>
+        <tbody>
+          {market.map(({ sku, best }) => {
+            const s = best!.snap; const r = RET[s.retailerId];
+            return (
+              <tr>
+                <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>{r?.name} · {String(r?.country).toUpperCase()} · box of {sku.boxSize}</small></td>
+                <td class="p">{formatPrice(s.price, s.currency)}<small class:list={{ old: !s.live }}>{checkedLabel(s)}</small></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p class="note">Live = re-read from the retailer's own page by our scraper within 14 days; the rest carry the date we last checked by hand. Confirm on the retailer before you order; duty applies across borders.</p>
 
-    <main class="site-body">
-      <NewspaperMasthead
-        volume={masthead.volume}
-        issue={masthead.issue}
-        date={masthead.date}
-      />
+      <div class="rulehead" style="margin-top:26px"><h2>Country editions</h2></div>
+      <ul class="eds">
+        {editions.map(({ c, n, shops }) => (
+          <li><a href={`/finder/${c.code}/`}>{c.name}</a><span>{n > 0 ? `${n} SKUs · ` : ""}{shops} shops</span></li>
+        ))}
+      </ul>
+    </aside>
 
-      {/* Section flag removed on the homepage — the masthead itself is
-          the cover. Individual sections (/blog/, /finder/, etc) still
-          announce themselves. */}
-
-      {lead && (
-        <section class="lead-wrap">
-          <div class="lead-eyebrow">This issue's lead</div>
-          <div class="lead-grid">
-            <a
-              href={`/blog/${lead.data.slug}/`}
-              class="lead-photo"
-              data-hover
-              aria-label={`Read: ${lead.data.title}`}
-            >
-              <img src={coverOf(lead)} alt={lead.data.title} loading="eager" />
-              <span class="cutline">
-                <strong>Above &middot;</strong> {lead.data.title}
-              </span>
-            </a>
-            <div class="lead-copy">
-              <div class="byline">
-                Report · <em>by {authorName(lead.data.author)} · {lead.data.publishedAt.toLocaleDateString("en-GB", { month: "long", day: "numeric" })}</em>
-              </div>
-              <h1>{lead.data.title}</h1>
-              <p class="standfirst">{excerptOf(lead)}</p>
-              <a href={`/blog/${lead.data.slug}/`} class="lead-cta" data-hover>
-                Read the full report <span class="arrow">→</span>
-              </a>
-            </div>
-          </div>
-        </section>
+    <!-- CENTRE · LEAD -->
+    <section class="lead" aria-label="Lead story">
+      <span class="kick">{String(lead.data.category || "report").replace(/-/g, " ")} · Report</span>
+      <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
+      {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
+      <p class="by">By {authorName(lead.data.author)} · {fmtDate(lead.data.updatedAt || lead.data.publishedAt)}</p>
+      {cover(lead) && (
+        <figure>
+          <a href={`/blog/${lead.data.slug}/`}><img class="foto" src={cover(lead)} alt="" width="1200" height="675" fetchpriority="high" /></a>
+        </figure>
       )}
+      <div class="twin">
+        {secondaries.map((p) => (
+          <article>
+            <span class="kick">{String(p.data.category).replace(/-/g, " ")}</span>
+            <h3 class="head"><a href={`/blog/${p.data.slug}/`}>{p.data.title}</a></h3>
+            {p.data.excerpt && <p class="t">{p.data.excerpt}</p>}
+          </article>
+        ))}
+      </div>
+    </section>
 
-      {features.length > 0 && (
-        <section class="features">
-          <div class="features-head">
-            <div>
-              <div class="eyebrow">Also in this issue</div>
-              <h2>{features.length} more <em>for the pocket.</em></h2>
-            </div>
-            <a href="/blog/" data-hover class="see-all">Every article →</a>
-          </div>
-          <div class="features-grid">
-            {features.map((post) => (
-              <a href={`/blog/${post.data.slug}/`} class="feature" data-hover>
-                <div
-                  class="feature-photo"
-                  style={`background-image: url("${coverOf(post)}")`}
-                ></div>
-                <span class={`feature-flag ${categoryFlag(post.data.category)}`}>
-                  {categoryLabel(post)}
-                </span>
-                <h3>{post.data.title}</h3>
-                <p>{excerptOf(post)}</p>
-                <div class="meta">
-                  <span>{post.data.publishedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section class="rooms">
-        <div class="rooms-head">
-          <div>
-            <div class="rooms-eyebrow">The architecture</div>
-            <h2>Four rooms.<br/><em>One masthead.</em></h2>
-          </div>
-          <p class="rooms-lede">A price engine for the buyer, a private network for the traveler, an editorial desk for the curious, and — new this year — a small shop under our own name.</p>
-        </div>
-        <div class="rooms-grid">
-          <a href="/finder/" class="room" data-hover>
-            <div class="room-num"><span>/01</span><span class="arrow">→</span></div>
-            <div>
-              <h3>The Finder</h3>
-              <p>Live prices for every Cuban vitola across every licensed European retailer. Free, no signup, click straight through to the cheapest verified box in your country.</p>
-            </div>
-            <div class="stat">
-              <span class="val">162</span>
-              <span class="lab">Live prices · 18 countries</span>
-            </div>
-          </a>
-          <a href="/lounge/" class="room" data-hover>
-            <div class="room-num"><span>/02</span><span class="arrow">→</span></div>
-            <div>
-              <h3>The Lounge</h3>
-              <p>The private network of European Cuban smokers. Every Casa del Habano mapped, check-ins by city, member messaging, travel mode.</p>
-            </div>
-            <div class="stat">
-              <span class="val">89</span>
-              <span class="lab">Casa pins · 24 cities</span>
-            </div>
-          </a>
-          <a href="/blog/" class="room" data-hover>
-            <div class="room-num"><span>/03</span><span class="arrow">→</span></div>
-            <div>
-              <h3>The Magazine</h3>
-              <p>Vitola explainers, retailer histories, the cross-border duty math, the people who shape the European Habanos market.</p>
-            </div>
-            <div class="stat">
-              <span class="val">{allPosts.length}</span>
-              <span class="lab">Long reads · Monthly</span>
-            </div>
-          </a>
-          <a href="/shop/" class="room" data-hover>
-            <div class="room-num"><span>/04</span><span class="arrow">→</span></div>
-            <div>
-              <h3>The Shop <em>+ Guatabey</em></h3>
-              <p>Cutters, lighters, humidor gear and the pieces we actually use — chosen for the magazine, stocked in small numbers. And Guatabey, our guayabera, in the making.</p>
-            </div>
-            <div class="stat">
-              <span class="val">/04</span>
-              <span class="lab">Accessories · opening soon</span>
-            </div>
-          </a>
-        </div>
+    <!-- RIGHT RAIL -->
+    <aside class="rail" aria-label="Accessories and diary">
+      <section>
+        <div class="rulehead"><h2>Accessories <em>· tested</em></h2><a class="more" href="/category/cigar-accessories/">All reviews →</a></div>
+        <ul class="list">
+          {accessories.map((p) => (
+            <li>
+              <div><a class="head" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>{p.data.excerpt && <p class="by">{p.data.excerpt.slice(0, 90)}{p.data.excerpt.length > 90 ? "…" : ""}</p>}</div>
+              {cover(p) && <img class="foto" src={cover(p)} alt="" width="54" height="54" loading="lazy" />}
+            </li>
+          ))}
+        </ul>
       </section>
 
-      <section class="footer-strip">
-        <div class="footer-strip-inner">
-          <div>
-            <div class="footer-strip-mark">The Next Cigar</div>
-            <div class="footer-strip-tag">The Anthology of the Leaf &middot; Malmö · Lisbon</div>
-          </div>
-          <div class="footer-strip-links">
-            <a href="/finder/" data-hover>Finder</a>
-            <a href="/lounge/" data-hover>Lounge</a>
-            <a href="/blog/" data-hover>Magazine</a>
-            <a href="/shop/" data-hover>Shop</a>
-            <a href="/about/" data-hover>About</a>
-            <a href="/contact/" data-hover>Contact</a>
-          </div>
-        </div>
-        <div class="footer-strip-copy">
-          <span>© 2025–2026 The Next Cigar</span>
-          <a href="https://turquinostudios.com" target="_blank" rel="noopener" class="footer-turquino" data-hover>
-            <img src="/cinematic/turquino-mark.jpg" alt="" />
-            <span>Designed by <em>Turquino Studios</em></span>
-          </a>
-        </div>
+      <section>
+        <div class="rulehead"><h2>Diary</h2><a class="more" href="/category/cigar-events/">Season →</a></div>
+        <ul class="list diary">
+          {diary.map((e) => (
+            <li>
+              <span class="d"><b>{e.day}</b>{e.mon}</span>
+              <div><a class="head" href={e.url} rel="noopener" target="_blank">{e.name}</a><p class="by">{e.location} · {e.when}</p></div>
+            </li>
+          ))}
+        </ul>
       </section>
-    </main>
+
+      <div class="box">
+        <span class="kick">The Lounge · members</span>
+        <h3 class="head">A map of the rooms, no cover charge.</h3>
+        <p>Casas del Habano and lounges mapped city by city, price watchlists on any vitola, and a check-in so you know who's around. Free.</p>
+        <a class="cta" href="/lounge/">Join the Lounge</a>
+      </div>
+    </aside>
   </div>
-</BaseLayout>
 
-<style>
-  /* Page-scoped styles. All tokens come from newspaper.css via .tnc-cinema. */
-  .site-body { padding-bottom: 40px; }
+  <!-- MAGAZINE -->
+  <section class="band" aria-label="Magazine">
+    <div class="rulehead flat"><h2>Magazine <em>· long reads</em></h2><a class="more" href="/blog/">{posts.length} essays in the archive →</a></div>
+    <div class="four">
+      {longReads.map((p) => (
+        <article>
+          <span class="kick mute">{String(p.data.category).replace(/-/g, " ")}</span>
+          {cover(p) && <a href={`/blog/${p.data.slug}/`}><img class="foto" src={cover(p)} alt="" width="640" height="480" loading="lazy" /></a>}
+          <a class="head" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>
+          {p.data.excerpt && <p class="t">{p.data.excerpt.slice(0, 140)}{p.data.excerpt.length > 140 ? "…" : ""}</p>}
+        </article>
+      ))}
+    </div>
+  </section>
 
-  .lead-wrap {
-    max-width: 1520px; margin: 0 auto; padding: 48px 40px 64px;
-    border-bottom: 1px solid var(--news-rule);
-  }
-  .lead-eyebrow {
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--news-oxblood); margin-bottom: 24px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .lead-eyebrow::before {
-    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
-  }
-  .lead-grid {
-    display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end;
-  }
-  /* Lead photo — <img>-first instead of background-image so it always
-     renders. Wrapper aspect ratio + object-fit cover keeps composition. */
-  .lead-photo {
-    display: block; position: relative;
-    aspect-ratio: 4 / 5; min-height: 320px;
-    background: var(--news-paper-dark);
-    overflow: hidden;
-  }
-  .lead-photo img {
-    display: block; width: 100%; height: 100%;
-    object-fit: cover; object-position: center;
-    filter: grayscale(0.85) sepia(0.35) contrast(1.06);
-  }
-  .lead-photo .cutline {
-    position: absolute; left: 0; right: 0; bottom: -32px;
-    font-family: var(--news-serif); font-style: italic; font-size: 12px;
-    color: var(--news-ink-mute); line-height: 1.4;
-  }
-  .lead-photo .cutline strong { font-style: normal; font-weight: 600; color: var(--news-ink-soft); }
-  .lead-copy .byline {
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--news-ink-mute); margin-bottom: 20px;
-  }
-  .lead-copy .byline em { font-style: italic; text-transform: none; letter-spacing: 0; color: var(--news-ink-soft); }
-  .lead-copy h1 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(2rem, 4vw, 4rem);
-    line-height: 1.0; letter-spacing: -0.028em;
-    color: var(--news-ink); margin: 0 0 24px;
-  }
-  .lead-copy h1 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .lead-copy .standfirst {
-    font-family: var(--news-serif); font-style: italic;
-    font-size: clamp(1.05rem, 1.5vw, 1.35rem); line-height: 1.55;
-    color: var(--news-ink-soft); margin: 0 0 32px;
-    padding-bottom: 32px; border-bottom: 1px solid var(--news-rule);
-    max-width: 560px;
-  }
-  .lead-cta {
-    display: inline-flex; align-items: center; gap: 12px;
-    padding: 16px 28px; background: var(--news-ink); color: var(--news-paper);
-    font-family: var(--news-sans); font-weight: 600; font-size: 13px; letter-spacing: 0.02em;
-    transition: background 0.25s var(--news-ease);
-  }
-  .lead-cta:hover { background: var(--news-oxblood); }
-  .lead-cta .arrow { font-family: var(--news-mono); }
-
-  .features {
-    max-width: 1520px; margin: 0 auto; padding: 64px 40px;
-    border-bottom: 1px solid var(--news-rule);
-  }
-  .features-head {
-    display: flex; justify-content: space-between; align-items: end;
-    margin-bottom: 48px; flex-wrap: wrap; gap: 24px;
-  }
-  .features-head .eyebrow {
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--news-oxblood);
-    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-  }
-  .features-head .eyebrow::before {
-    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
-  }
-  .features-head h2 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.0; letter-spacing: -0.024em;
-    margin: 0;
-  }
-  .features-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .features-head .see-all {
-    font-family: var(--news-sans); font-size: 13px; font-weight: 500;
-    color: var(--news-ink-soft); border-bottom: 1px solid var(--news-rule); padding-bottom: 4px;
-    transition: all 0.2s;
-  }
-  .features-head .see-all:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
-
-  .features-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
-  }
-  .feature {
-    display: flex; flex-direction: column;
-    transition: transform 0.3s var(--news-ease);
-  }
-  .feature:hover { transform: translateY(-2px); }
-  .feature-photo {
-    aspect-ratio: 4 / 3; margin-bottom: 20px;
-    background-size: cover; background-position: center;
-    background-color: var(--news-paper-dark);
-    filter: grayscale(0.75) sepia(0.28) contrast(1.06);
-    transition: filter 0.4s var(--news-ease);
-  }
-  .feature:hover .feature-photo { filter: grayscale(0.5) sepia(0.15) contrast(1.08); }
-  .feature-flag {
-    display: inline-block; align-self: flex-start;
-    font-family: var(--news-sans); font-size: 9px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    background: var(--news-ink); color: var(--news-paper);
-    padding: 4px 9px; margin-bottom: 12px;
-  }
-  .feature-flag.finder { background: var(--news-oxblood); }
-  .feature-flag.leaf   { background: var(--news-pine); }
-  .feature-flag.people { background: #3a2a1c; }
-  .feature-flag.shop   { background: var(--news-mahogany); }
-  .feature-flag.market { background: #4a3826; }
-  .feature h3 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.25rem, 1.8vw, 1.6rem); line-height: 1.12; letter-spacing: -0.014em;
-    color: var(--news-ink); margin: 0 0 10px;
-    transition: color 0.2s;
-  }
-  .feature:hover h3 { color: var(--news-oxblood); }
-  .feature p {
-    font-family: var(--news-serif); font-style: italic;
-    font-size: 15px; line-height: 1.55; color: var(--news-ink-soft);
-    margin: 0 0 14px;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .feature .meta {
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--news-ink-mute); margin-top: auto;
-  }
-
-  /* Four rooms */
-  .rooms {
-    max-width: 1520px; margin: 0 auto; padding: 64px 40px;
-    border-bottom: 1px solid var(--news-rule);
-  }
-  .rooms-head {
-    display: grid; grid-template-columns: 1fr 1.4fr; gap: 64px;
-    margin-bottom: 56px; align-items: end;
-  }
-  .rooms-eyebrow {
-    font-family: var(--news-mono); font-size: 11px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--news-oxblood);
-    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-  }
-  .rooms-eyebrow::before {
-    content: ""; width: 32px; height: 1px; background: var(--news-oxblood);
-  }
-  .rooms-head h2 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(2.2rem, 4vw, 3.6rem); line-height: 1.0; letter-spacing: -0.024em;
-    margin: 0;
-  }
-  .rooms-head h2 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .rooms-lede {
-    font-family: var(--news-serif); font-style: italic; font-size: 18px;
-    line-height: 1.55; color: var(--news-ink-soft); padding-bottom: 8px;
-    max-width: 520px; margin: 0;
-  }
-  .rooms-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
-    border-top: 1px solid var(--news-ink);
-  }
-  .room {
-    padding: 32px 24px 32px 0;
-    border-bottom: 1px solid var(--news-ink);
-    border-right: 1px solid var(--news-rule);
-    position: relative; transition: all 0.35s var(--news-ease);
-    display: flex; flex-direction: column; gap: 16px;
-    min-height: 280px;
-  }
-  .room:last-child { border-right: none; }
-  .room:hover { padding-left: 12px; }
-  .room::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: var(--news-ember); transform: scaleX(0); transform-origin: left;
-    transition: transform 0.5s var(--news-ease);
-  }
-  .room:hover::before { transform: scaleX(1); }
-  .room-num {
-    font-family: var(--news-mono); font-size: 12px; font-weight: 500;
-    letter-spacing: 0.18em; color: var(--news-oxblood);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .room-num .arrow {
-    font-family: var(--news-sans); font-size: 22px; color: var(--news-ink-mute);
-    transition: all 0.35s var(--news-ease);
-  }
-  .room:hover .room-num .arrow { color: var(--news-ember); transform: translateX(6px); }
-  .room h3 {
-    font-family: var(--news-serif); font-weight: 500;
-    font-size: clamp(1.4rem, 2vw, 1.85rem); line-height: 1.0; letter-spacing: -0.018em;
-    color: var(--news-ink); margin: 0 0 4px;
-  }
-  .room h3 :global(em) { font-style: italic; color: var(--news-oxblood); font-weight: 400; }
-  .room p {
-    font-family: var(--news-sans); font-size: 13.5px; line-height: 1.55;
-    color: var(--news-ink-soft); flex: 1; margin: 0;
-  }
-  .room .stat {
-    padding-top: 14px; border-top: 1px solid var(--news-rule);
-    display: flex; justify-content: space-between; align-items: baseline;
-    gap: 12px;
-  }
-  .room .stat .val {
-    font-family: var(--news-serif); font-weight: 500; font-size: 24px;
-    letter-spacing: -0.02em;
-  }
-  .room .stat .lab {
-    font-family: var(--news-mono); font-size: 9px; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--news-ink-mute); text-align: right;
-  }
-
-  /* Footer strip (very light — real footer is BaseLayout-less because of bareChrome) */
-  .footer-strip {
-    max-width: 1520px; margin: 0 auto; padding: 40px 40px 24px;
-  }
-  .footer-strip-inner {
-    display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;
-    padding-bottom: 20px; border-bottom: 1px solid var(--news-rule);
-  }
-  .footer-strip-mark {
-    font-family: var(--news-serif); font-weight: 600; font-size: 22px;
-    letter-spacing: -0.008em; color: var(--news-ink);
-  }
-  .footer-strip-tag {
-    font-family: var(--news-serif); font-style: italic; font-size: 13px;
-    color: var(--news-ink-mute); margin-top: 2px;
-  }
-  .footer-strip-links {
-    display: flex; gap: 24px; flex-wrap: wrap;
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.2em;
-    text-transform: uppercase; color: var(--news-ink-mute);
-  }
-  .footer-strip-links a { padding: 4px 0; border-bottom: 1px solid transparent; transition: all 0.2s; }
-  .footer-strip-links a:hover { color: var(--news-oxblood); border-bottom-color: var(--news-oxblood); }
-  .footer-strip-copy {
-    margin-top: 16px;
-    font-family: var(--news-mono); font-size: 10px; letter-spacing: 0.16em;
-    color: var(--news-ink-mute);
-  }
-
-  @media (max-width: 900px) {
-    .lead-grid, .rooms-head { grid-template-columns: 1fr; gap: 32px; }
-    .features-grid { grid-template-columns: 1fr; }
-    .rooms-grid { grid-template-columns: 1fr 1fr; }
-    .footer-strip-inner { grid-template-columns: 1fr; gap: 20px; }
-    .lead-wrap, .features, .rooms, .footer-strip { padding: 40px 20px; }
-  }
-  @media (max-width: 640px) {
-    .rooms-grid { grid-template-columns: 1fr; }
-    .room { border-right: none; }
-  }
-</style>
+  <!-- CLASSIFIEDS -->
+  <section class="class" aria-label="The shop">
+    <div class="rulehead flat"><h2>Classifieds <em>· the shop</em></h2><a class="more" href="/shop/">Opening soon · stocked in fives →</a></div>
+    <div class="tiles">
+      {tiles.map((p) => {
+        const buyable = p.data.inStock && !p.data.comingSoon;
+        return (
+          <a class="tile" href={`/shop/${p.data.slug}/`}>
+            <div><div class="n">{p.data.name}</div><div class="m">{p.data.excerpt}</div></div>
+            <div class="pr">{money(p.data.price, p.data.currency)} <span>{buyable ? "in stock" : "pending stock"}</span></div>
+          </a>
+        );
+      })}
+    </div>
+    <div class="gb">
+      <div class="mark">GB</div>
+      <div><span class="kick">Guatabey · in the making</span><h3 class="head" style="margin-top:4px">A guayabera, done properly.</h3><p>Our own four-pocket shirt in the Cuban cut. The first small run is being made now; you'll see the real shirts here, photographed, with the maker named — not before.</p></div>
+      <a class="cta" href="/lounge/signup/">Tell me when</a>
+    </div>
+  </section>
+</PaperLayout>
