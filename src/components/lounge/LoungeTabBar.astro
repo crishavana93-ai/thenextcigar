@@ -11,7 +11,7 @@
  * Inbox badge live-counts pending `introductions` rows where to_member_id = me.
  */
 interface Props {
-  active?: "home" | "map" | "members" | "finder" | "travel" | "inbox";
+  active?: "home" | "map" | "members" | "finder" | "humidor" | "travel" | "inbox";
 }
 const { active = "home" } = Astro.props as Props;
 ---
@@ -43,6 +43,13 @@ const { active = "home" } = Astro.props as Props;
       <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
     </svg>
     <span class="lounge-tab__label">Finder</span>
+  </a>
+
+  <a href="/lounge/app/humidor/" class:list={["lounge-tab", active === "humidor" && "is-active"]}>
+    <svg class="lounge-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="7" width="18" height="12" rx="1" /><path d="M3 11h18" /><path d="M7 4h10v3H7z" />
+    </svg>
+    <span class="lounge-tab__label">Humidor</span>
   </a>
 
   <a href="/lounge/app/travel/" class:list={["lounge-tab", active === "travel" && "is-active"]}>

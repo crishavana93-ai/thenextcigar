@@ -1,0 +1,374 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
+import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
+import { SKUS, bestPriceForSku, RETAILER_BY_ID, checkedLabel, historyForSku } from "../../../../data/finder-live";
+
+/**
+ * /lounge/app/humidor/ — the ledger.
+ *
+ * What a member owns, and what it would cost to replace today. The valuation
+ * table is baked into the page at build time from the Markets board (52
+ * vitolas, cheapest in-stock listing in Europe, plus the 90-day change where
+ * we have history). The member's own rows come from Supabase at runtime and
+ * are readable only by them — RLS is owner-only, migration 030.
+ *
+ * We store what they told us, never a computed value: if our price data moves,
+ * their record must not silently move with it.
+ */
+const priced = SKUS.map((s) => {
+  const best = bestPriceForSku(s.id);
+  if (!best) return null;
+  const hist = historyForSku(s.id);
+  const then = hist.length > 6 ? hist[0].eur / s.boxSize : null;
+  const now = best.eur / s.boxSize;
+  return {
+    id: s.id, slug: s.slug, brand: s.brand, vitola: s.vitola, boxSize: s.boxSize,
+    perCigar: Math.round(now * 100) / 100,
+    boxEur: Math.round(best.eur),
+    retailer: RETAILER_BY_ID[best.snap.retailerId]?.name ?? "",
+    checked: checkedLabel(best.snap as any),
+    changePct: then ? Math.round(((now - then) / then) * 1000) / 10 : null,
+  };
+}).filter((x): x is NonNullable<typeof x> => !!x);
+
+const board = { priced, skus: SKUS.map((s) => ({ id: s.id, name: `${s.brand} ${s.vitola}`, boxSize: s.boxSize })) };
+---
+
+<BaseLayout title="My humidor — The Lounge" description="What you own, and what it would cost to replace today." noIndex>
+  <LoungeHeader active="humidor" />
+
+  <main class="lounge-app hum">
+    <div id="hum-guard" class="lskel-page"><p class="lskel-kicker">Opening your humidor</p></div>
+
+    <div id="hum-app" hidden>
+      <header class="hum-head">
+        <div>
+          <p class="hum-kicker">The ledger · private to you</p>
+          <h1 class="hum-title">My humidor</h1>
+        </div>
+        <button type="button" id="hum-add-open" class="lbtn lbtn-primary">Log a cigar</button>
+      </header>
+
+      <section class="hum-figures" id="hum-figures" hidden>
+        <div class="hum-fig">
+          <p class="k">Worth today</p>
+          <p class="v" id="hum-value">—</p>
+          <p class="s" id="hum-value-sub">replacement cost at today's cheapest European price</p>
+        </div>
+        <div class="hum-fig">
+          <p class="k">You paid</p>
+          <p class="v" id="hum-paid">—</p>
+          <p class="s" id="hum-paid-sub">across the lines where you recorded a price</p>
+        </div>
+        <div class="hum-fig">
+          <p class="k">In the box</p>
+          <p class="v" id="hum-count">—</p>
+          <p class="s" id="hum-count-sub">cigars on the shelf</p>
+        </div>
+      </section>
+
+      <p class="hum-caveat" id="hum-caveat" hidden>
+        Replacement cost, not auction value. It's what the same cigars would cost you today at the cheapest
+        European retailer on <a href="/finder/">the board</a> — an aged box can be worth considerably more than that,
+        and we won't pretend to know how much.
+      </p>
+
+      <section id="hum-empty" class="hum-empty" hidden>
+        <h2>Nothing logged yet.</h2>
+        <p>Log what's on your shelf and the board will tell you what it's worth, what's had time, and when one of them drops in price. Only you can see it.</p>
+        <button type="button" class="lbtn lbtn-primary" id="hum-add-open-2">Log your first cigar</button>
+      </section>
+
+      <section id="hum-list-wrap" hidden>
+        <table class="hum-table">
+          <thead><tr><th>Cigar</th><th class="n">Qty</th><th class="n">Paid</th><th class="n">Worth now</th><th class="n">Age</th><th></th></tr></thead>
+          <tbody id="hum-list"></tbody>
+        </table>
+      </section>
+
+      <section id="hum-ready-wrap" hidden>
+        <h2 class="hum-h2">Had time</h2>
+        <ul class="hum-ready" id="hum-ready"></ul>
+      </section>
+    </div>
+
+    <!-- Add / edit -->
+    <div id="hum-dialog" class="hum-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="hum-dialog-title">
+      <div class="hum-dialog__card">
+        <button type="button" class="hum-dialog__x" id="hum-cancel" aria-label="Close">×</button>
+        <h2 id="hum-dialog-title">Log a cigar</h2>
+        <form id="hum-form">
+          <input type="hidden" name="id" />
+          <label>Cigar
+            <input type="text" name="search" id="hum-search" list="hum-skus" autocomplete="off" placeholder="Start typing — Cohiba Robustos…" />
+            <datalist id="hum-skus">{board.skus.map((s) => <option value={s.name}></option>)}</datalist>
+          </label>
+          <p class="hum-hint" id="hum-hint">Pick one of the 52 vitolas on the board and we can value it. Anything else is logged, but not priced.</p>
+          <div class="hum-row">
+            <label>How many<input type="number" name="quantity" min="0" max="10000" value="1" required /></label>
+            <label>Form
+              <select name="form"><option value="singles">Singles</option><option value="box">Sealed box</option></select>
+            </label>
+          </div>
+          <div class="hum-row">
+            <label>What you paid <small>optional</small><input type="number" name="paid" step="0.01" min="0" placeholder="—" /></label>
+            <label>Currency
+              <select name="currency"><option value="EUR">EUR</option><option value="SEK">SEK</option><option value="CHF">CHF</option><option value="GBP">GBP</option><option value="DKK">DKK</option><option value="NOK">NOK</option><option value="USD">USD</option></select>
+            </label>
+          </div>
+          <div class="hum-row">
+            <label>Bought <small>optional</small><input type="date" name="acquired_on" /></label>
+            <label>Box code <small>optional</small><input type="text" name="box_code" placeholder="MAY 24" autocapitalize="characters" /></label>
+          </div>
+          <p class="hum-hint" id="hum-code-hint"></p>
+          <label>Notes <small>optional</small><textarea name="notes" rows="2" maxlength="2000" placeholder="Where it came from, how it smoked…"></textarea></label>
+          <div class="hum-actions">
+            <button type="submit" class="lbtn lbtn-primary">Save</button>
+            <button type="button" class="lbtn lbtn-secondary" id="hum-delete" hidden>Remove</button>
+          </div>
+          <p class="hum-status" id="hum-status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <LoungeTabBar active="humidor" />
+
+  <script type="application/json" id="hum-board" set:html={JSON.stringify(board)} />
+  <script>
+    import { getSupabase, getCurrentUser } from "../../../../lib/supabase";
+    import { decodeBoxCode } from "../../../../lib/boxcode";
+
+    const board = JSON.parse(document.getElementById("hum-board")!.textContent || "{}");
+    const priceBySku = new Map<string, any>(board.priced.map((p: any) => [p.id, p]));
+    const skuByName = new Map<string, any>(board.skus.map((s: any) => [s.name.toLowerCase(), s]));
+    const nameBySku = new Map<string, string>(board.skus.map((s: any) => [s.id, s.name]));
+    const eur = (n: number) => "€" + Math.round(n).toLocaleString("en-GB");
+    const $ = (id: string) => document.getElementById(id)!;
+    let rows: any[] = [];
+
+    /** What one line is worth today, in euros, or null when we can't say. */
+    function worth(r: any): number | null {
+      const p = r.sku ? priceBySku.get(r.sku) : null;
+      if (!p) return null;
+      return r.form === "box" ? p.boxEur * r.quantity : p.perCigar * r.quantity;
+    }
+    function cigars(r: any): number {
+      const s = r.sku ? board.skus.find((x: any) => x.id === r.sku) : null;
+      return r.form === "box" && s ? r.quantity * s.boxSize : r.quantity;
+    }
+
+    function render() {
+      const live = rows.filter((r) => !r.archived_at);
+      $("hum-empty").hidden = live.length > 0;
+      $("hum-list-wrap").hidden = live.length === 0;
+      $("hum-figures").hidden = live.length === 0;
+      $("hum-caveat").hidden = live.length === 0;
+
+      let value = 0, valued = 0, paid = 0, paidLines = 0, count = 0;
+      for (const r of live) {
+        const w = worth(r);
+        if (w !== null) { value += w; valued++; }
+        if (r.paid) { paid += Number(r.paid); paidLines++; }
+        count += cigars(r);
+      }
+      $("hum-value").textContent = valued ? eur(value) : "—";
+      $("hum-value-sub").textContent = valued
+        ? `${valued} of ${live.length} line${live.length === 1 ? "" : "s"} priced from the board`
+        : "log something from the board and we can price it";
+      $("hum-paid").textContent = paidLines ? eur(paid) : "—";
+      $("hum-paid-sub").textContent = paidLines
+        ? (valued && paidLines === valued
+            ? `${value >= paid ? "+" : ""}${eur(value - paid)} against what you paid`
+            : `across ${paidLines} line${paidLines === 1 ? "" : "s"}`)
+        : "add what you paid to see the difference";
+      $("hum-count").textContent = String(count);
+
+      const fmtAge = (r: any) => {
+        if (!r.filled_on) return "—";
+        const d = new Date(r.filled_on);
+        const y = (Date.now() - d.getTime()) / 31557600000;
+        return y < 1 ? `${Math.round(y * 12)} mo` : `${y.toFixed(1)} yr`;
+      };
+
+      $("hum-list").innerHTML = live.map((r) => {
+        const p = r.sku ? priceBySku.get(r.sku) : null;
+        const w = worth(r);
+        const name = r.sku ? nameBySku.get(r.sku) ?? r.sku : r.label;
+        const move = p && p.changePct !== null
+          ? `<small class="${p.changePct >= 0 ? "up" : "down"}">${p.changePct >= 0 ? "+" : ""}${p.changePct}% in 90 days</small>` : "";
+        return `<tr data-id="${r.id}">
+          <td class="c"><b>${name}</b><small>${r.form === "box" ? "sealed box" : "singles"}${r.retailer ? " · " + r.retailer : ""}${p ? " · " + p.checked : ""}</small></td>
+          <td class="n">${cigars(r)}</td>
+          <td class="n">${r.paid ? `${r.currency} ${Number(r.paid).toFixed(0)}` : "—"}</td>
+          <td class="n">${w !== null ? `<b>${eur(w)}</b>${move}` : `<span class="muted">not on the board</span>`}</td>
+          <td class="n">${fmtAge(r)}</td>
+          <td class="n"><button type="button" class="hum-edit" data-id="${r.id}">Edit</button></td>
+        </tr>`;
+      }).join("");
+
+      const ready = live.filter((r) => r.filled_on && (Date.now() - Date.parse(r.filled_on)) / 31557600000 >= 3)
+        .sort((a, b) => Date.parse(a.filled_on) - Date.parse(b.filled_on));
+      $("hum-ready-wrap").hidden = ready.length === 0;
+      $("hum-ready").innerHTML = ready.map((r) => {
+        const name = r.sku ? nameBySku.get(r.sku) ?? r.sku : r.label;
+        return `<li><b>${name}</b> <span>filled ${new Date(r.filled_on).toLocaleDateString("en-GB", { month: "long", year: "numeric" })} · ${fmtAge(r)} in the box</span></li>`;
+      }).join("");
+
+      document.querySelectorAll<HTMLButtonElement>(".hum-edit").forEach((b) =>
+        b.addEventListener("click", () => openDialog(rows.find((r) => r.id === b.dataset.id))));
+    }
+
+    const dialog = $("hum-dialog") as HTMLElement;
+    const form = $("hum-form") as HTMLFormElement;
+    function openDialog(row?: any) {
+      form.reset();
+      (form.elements.namedItem("id") as HTMLInputElement).value = row?.id ?? "";
+      $("hum-dialog-title").textContent = row ? "Edit" : "Log a cigar";
+      ($("hum-delete") as HTMLElement).hidden = !row;
+      $("hum-status").textContent = "";
+      $("hum-code-hint").textContent = "";
+      if (row) {
+        ($("hum-search") as HTMLInputElement).value = row.sku ? nameBySku.get(row.sku) ?? "" : row.label ?? "";
+        (form.elements.namedItem("quantity") as HTMLInputElement).value = row.quantity;
+        (form.elements.namedItem("form") as HTMLSelectElement).value = row.form;
+        if (row.paid) (form.elements.namedItem("paid") as HTMLInputElement).value = row.paid;
+        if (row.currency) (form.elements.namedItem("currency") as HTMLSelectElement).value = row.currency;
+        if (row.acquired_on) (form.elements.namedItem("acquired_on") as HTMLInputElement).value = row.acquired_on;
+        if (row.box_code) (form.elements.namedItem("box_code") as HTMLInputElement).value = row.box_code;
+        if (row.notes) (form.elements.namedItem("notes") as HTMLTextAreaElement).value = row.notes;
+      }
+      dialog.hidden = false;
+      ($("hum-search") as HTMLInputElement).focus();
+    }
+    const closeDialog = () => { dialog.hidden = true; };
+    $("hum-add-open").addEventListener("click", () => openDialog());
+    $("hum-add-open-2").addEventListener("click", () => openDialog());
+    $("hum-cancel").addEventListener("click", closeDialog);
+    dialog.addEventListener("click", (e) => { if (e.target === dialog) closeDialog(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !dialog.hidden) closeDialog(); });
+
+    // Live feedback: is this cigar on the board, and what does the code say?
+    ($("hum-search") as HTMLInputElement).addEventListener("input", (e) => {
+      const v = (e.target as HTMLInputElement).value.trim().toLowerCase();
+      const hit = skuByName.get(v);
+      const p = hit ? priceBySku.get(hit.id) : null;
+      $("hum-hint").textContent = !v
+        ? "Pick one of the 52 vitolas on the board and we can value it. Anything else is logged, but not priced."
+        : hit && p ? `On the board — ${eur(p.perCigar)} a cigar, ${eur(p.boxEur)} the box of ${hit.boxSize}, ${p.checked}.`
+        : hit ? "On the board, but nobody has it in stock right now — we'll price it when someone does."
+        : "Not one we track. We'll keep the record; we just can't put a number on it.";
+    });
+    (form.elements.namedItem("box_code") as HTMLInputElement).addEventListener("input", (e) => {
+      const d = decodeBoxCode((e.target as HTMLInputElement).value);
+      $("hum-code-hint").textContent = d.date ? `Filled ${d.date.monthEn} ${d.date.year} — ${d.date.ageYears} years in the box.`
+        : d.cipher ? `${d.cipher.reading}.` : "";
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true; $("hum-status").textContent = "Saving…";
+      try {
+        const supabase = getSupabase();
+        const user = await getCurrentUser();
+        if (!user) { window.location.href = "/lounge/login/"; return; }
+        const fd = new FormData(form);
+        const typed = String(fd.get("search") || "").trim();
+        const hit = skuByName.get(typed.toLowerCase());
+        const code = String(fd.get("box_code") || "").trim();
+        const decoded = code ? decodeBoxCode(code) : null;
+        const payload: any = {
+          member_id: user.id,
+          sku: hit ? hit.id : null,
+          label: hit ? null : (typed || "Unnamed"),
+          quantity: Number(fd.get("quantity")) || 1,
+          form: String(fd.get("form") || "singles"),
+          paid: fd.get("paid") ? Number(fd.get("paid")) : null,
+          currency: fd.get("paid") ? String(fd.get("currency")) : null,
+          acquired_on: fd.get("acquired_on") || null,
+          box_code: code || null,
+          filled_on: decoded?.date ? `${decoded.date.iso}-01` : null,
+          notes: String(fd.get("notes") || "").trim() || null,
+        };
+        const id = String(fd.get("id") || "");
+        const res = id
+          ? await supabase.from("humidor_entries").update(payload).eq("id", id).select()
+          : await supabase.from("humidor_entries").insert(payload).select();
+        if (res.error) throw res.error;
+        await load();
+        closeDialog();
+      } catch (err: any) {
+        $("hum-status").textContent = err?.message || "Couldn't save. Try again.";
+      } finally { btn.disabled = false; }
+    });
+
+    $("hum-delete").addEventListener("click", async () => {
+      const id = (form.elements.namedItem("id") as HTMLInputElement).value;
+      if (!id) return closeDialog();
+      $("hum-status").textContent = "Removing…";
+      const supabase = getSupabase();
+      const { error } = await supabase.from("humidor_entries").delete().eq("id", id);
+      if (error) { $("hum-status").textContent = error.message; return; }
+      await load(); closeDialog();
+    });
+
+    async function load() {
+      const supabase = getSupabase();
+      const { data, error } = await supabase.from("humidor_entries")
+        .select("*").is("archived_at", null).order("created_at", { ascending: false });
+      if (error) { console.warn("[humidor]", error.message); rows = []; } else rows = data ?? [];
+      render();
+    }
+
+    (async function init() {
+      const user = await getCurrentUser();
+      if (!user) { window.location.href = "/lounge/login/"; return; }
+      await load();
+      $("hum-guard").hidden = true;
+      $("hum-app").hidden = false;
+    })();
+  </script>
+
+  <style>
+    .hum-head { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:22px 0 14px; border-bottom:2px solid var(--color-text); margin-bottom:20px; flex-wrap:wrap }
+    .hum-kicker { margin:0; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--color-gold) }
+    .hum-title { margin:4px 0 0; font-size:clamp(28px,4vw,42px); line-height:1 }
+    .hum-figures { display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--color-text); margin-bottom:12px }
+    .hum-fig { padding:16px 18px; border-right:1px solid var(--color-border) }
+    .hum-fig:last-child { border-right:0 }
+    .hum-fig .k { margin:0; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--color-text-muted) }
+    .hum-fig .v { margin:6px 0 2px; font-size:clamp(26px,3.4vw,38px); line-height:1; font-variant-numeric:tabular-nums }
+    .hum-fig .s { margin:0; font-size:12px; color:var(--color-text-muted) }
+    .hum-caveat { font-size:13px; color:var(--color-text-muted); font-style:italic; margin:0 0 24px; max-width:680px }
+    .hum-empty { border:1px solid var(--color-border); padding:26px; max-width:560px }
+    .hum-empty h2 { margin:0 0 8px; font-size:22px }
+    .hum-empty p { margin:0 0 16px; color:var(--color-text-soft) }
+    .hum-table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums }
+    .hum-table th { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--color-text-muted); border-bottom:1px solid var(--color-text); padding:8px 10px; text-align:left }
+    .hum-table th.n, .hum-table td.n { text-align:right }
+    .hum-table td { padding:11px 10px; border-bottom:1px solid var(--color-border); vertical-align:top }
+    .hum-table td.c small { display:block; font-size:11.5px; color:var(--color-text-muted); margin-top:2px }
+    .hum-table td.n small { display:block; font-size:11px; font-weight:400 }
+    .hum-table small.up { color:var(--color-gold) } .hum-table small.down { color:#2F6B3A }
+    .hum-table .muted { color:var(--color-text-muted); font-size:12px }
+    .hum-edit { background:none; border:0; border-bottom:1px solid var(--color-border); color:var(--color-gold); font-size:12px; cursor:pointer; padding:0 0 2px }
+    .hum-h2 { margin:30px 0 10px; font-size:20px }
+    .hum-ready { list-style:none; margin:0; padding:0 }
+    .hum-ready li { padding:9px 0; border-bottom:1px solid var(--color-border); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap }
+    .hum-ready span { color:var(--color-text-muted); font-size:13px }
+    .hum-dialog { position:fixed; inset:0; background:rgba(21,20,18,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:60 }
+    .hum-dialog__card { background:var(--color-bg); border:1px solid var(--color-text); padding:24px; width:min(520px,100%); max-height:90vh; overflow:auto; position:relative }
+    .hum-dialog__card h2 { margin:0 0 14px; font-size:22px }
+    .hum-dialog__x { position:absolute; top:10px; right:12px; background:none; border:0; font-size:22px; line-height:1; cursor:pointer; color:var(--color-text-muted) }
+    #hum-form label { display:block; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:12px }
+    #hum-form label small { text-transform:none; letter-spacing:0; font-style:italic; margin-left:5px }
+    #hum-form input, #hum-form select, #hum-form textarea { display:block; width:100%; margin-top:5px; padding:9px 10px; font:inherit; font-size:15px; box-sizing:border-box }
+    .hum-row { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+    .hum-hint { font-size:12px; color:var(--color-text-muted); margin:-6px 0 14px; font-style:italic; min-height:1em }
+    .hum-actions { display:flex; gap:10px; margin-top:6px }
+    .hum-status { font-size:12.5px; color:var(--color-text-muted); margin:10px 0 0; min-height:1em }
+    @media (max-width:720px){ .hum-figures{grid-template-columns:1fr} .hum-fig{border-right:0;border-bottom:1px solid var(--color-border)} .hum-table th:nth-child(3),.hum-table td:nth-child(3){display:none} }
+  </style>
+</BaseLayout>
