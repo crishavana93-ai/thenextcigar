@@ -204,3 +204,30 @@ export function checkedLabel(s: LiveSnapshot): string {
   const d = new Date(s.scrapedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   return s.live ? `live · ${d}` : `checked ${d}`;
 }
+
+// ----------------------------------------------------------------------------
+// Newly listed — product pages that appeared on a tracked retailer's Cuban
+// listing in the last 30 days (finder_listings, migration 029). A retailer's
+// bootstrap crawl is excluded: only rows first seen at least a day after that
+// retailer's earliest row count as "new".
+// ----------------------------------------------------------------------------
+export interface NewListing { retailerId: string; url: string; title: string; brand: string | null; country: string; price: number | null; currency: string | null; firstSeen: string }
+
+async function fetchNewListings(): Promise<NewListing[]> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+  const since = new Date(Date.now() - 30 * 86400e3).toISOString();
+  try {
+    const H = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+    const [recent, oldest] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/finder_listings?select=retailer_id,url,title,brand,country_code,price,currency,first_seen&first_seen=gte.${since}&brand=not.is.null&order=first_seen.desc&limit=200`, { headers: H }),
+      fetch(`${SUPABASE_URL}/rest/v1/finder_listings?select=retailer_id,first_seen&order=first_seen.asc&limit=1000`, { headers: H }),
+    ]);
+    if (!recent.ok || !oldest.ok) return [];
+    const floor = new Map<string, number>();
+    for (const r of (await oldest.json()) as any[]) if (!floor.has(r.retailer_id)) floor.set(r.retailer_id, Date.parse(r.first_seen) + 86400e3);
+    return ((await recent.json()) as any[])
+      .filter((r) => Date.parse(r.first_seen) > (floor.get(r.retailer_id) ?? 0))
+      .map((r) => ({ retailerId: r.retailer_id, url: r.url, title: r.title, brand: r.brand, country: r.country_code, price: r.price != null ? Number(r.price) : null, currency: r.currency, firstSeen: r.first_seen }));
+  } catch { return []; }
+}
+export const NEW_LISTINGS: NewListing[] = await fetchNewListings();

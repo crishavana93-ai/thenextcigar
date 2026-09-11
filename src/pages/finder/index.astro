@@ -2,7 +2,7 @@
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import {
   COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
-  bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl,
+  bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl, NEW_LISTINGS, RETAILER_BY_ID,
 } from "../../data/finder-live";
 
 /**
@@ -57,6 +57,10 @@ const skusIn = (code: string) => new Set(
 const status = LIVE_COUNT > 0
   ? `${SKUS.length} vitolas · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · <b>${LIVE_COUNT} live</b> · latest ${newest}`
   : `${SKUS.length} vitolas · ${pricedRetailers} retailers with prices · ${RETAILERS.length} in the directory · checked ${newest}`;
+
+const newest20 = NEW_LISTINGS.slice(0, 12);
+const fmtSeen = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const releaseCountries = COUNTRIES.filter((c) => c.status === "open").sort((a, b) => a.name.localeCompare(b.name));
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -166,6 +170,32 @@ const jsonLd = {
         <p>Members get an email when any vitola on the board falls or comes back in stock. No charge.</p>
         <a class="cta" href="/lounge/signup/">Join the Lounge</a>
       </div>
+
+      <div class="rulehead" style="margin-top:24px"><h2>Newly listed</h2></div>
+      {newest20.length > 0 ? (
+        <ul class="list">
+          {newest20.map((n) => (<li><div><a class="head" style="font-size:17px" href={n.url} target="_blank" rel="noopener nofollow">{n.title}</a><p class="by">{RETAILER_BY_ID[n.retailerId]?.name ?? n.retailerId} · {n.country.toUpperCase()}{n.price ? ` · ${n.currency} ${n.price}` : ""} · seen {fmtSeen(n.firstSeen)}</p></div></li>))}
+        </ul>
+      ) : (
+        <p class="note">Product pages that appear on a tracked retailer's Cuban listing show up here within six hours. Nothing new since the crawler started.</p>
+      )}
+      <div class="box" id="release">
+        <span class="kick">Release watch · free</span>
+        <h3 class="head">One email when something new is listed.</h3>
+        <p>New size, restock or a fresh release — we say only what we saw: a product page that wasn't there before. Four crawls a day.</p>
+        <form id="release-form" class="rw">
+          <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+          <select name="country"><option value="">Every retailer we track</option>{releaseCountries.map((c) => <option value={c.code}>{c.name} only</option>)}</select>
+          <button type="submit" class="cta">Watch new listings</button>
+          <p class="note" id="release-status" aria-live="polite"></p>
+        </form>
+      </div>
+      <script is:inline>
+        (function(){var f=document.getElementById("release-form"),st=document.getElementById("release-status");if(!f)return;
+        f.addEventListener("submit",async function(e){e.preventDefault();var b=f.querySelector("button");b.disabled=true;st.textContent="Saving…";
+        try{var r=await fetch("/api/watchlist/release",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email:f.email.value,country:f.country.value})});var d=await r.json();st.textContent=d.ok?d.message:(d.error||"That didn't work — try again.");if(d.ok)f.email.value="";}
+        catch(_){st.textContent="Network error — try again.";}b.disabled=false;});})();
+      </script>
       <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
       <ul class="list">
         <li><div><a class="head" href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/">The European retailer map</a><p class="by">Who ships where, and whose price is all-in</p></div></li>

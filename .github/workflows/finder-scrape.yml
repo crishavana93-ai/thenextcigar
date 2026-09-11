@@ -200,8 +200,43 @@ jobs:
   # so a scrape only becomes visible after a rebuild. Fire the Cloudflare Pages
   # deploy hook once the scrape matrix has finished (even if a retailer failed —
   # partial fresh data beats none).
-  rebuild:
+  # Listings crawl: which product pages appeared on each retailer's Cuban
+  # listing since last time. Feeds "Newly listed" on /finder/ and the
+  # release-watch emails. Runs alongside the alert engine.
+  listings:
     needs: scrape
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crawl retailer listings (one retailer per call)
+        env:
+          SCRAPER_ADMIN_TOKEN: ${{ secrets.SCRAPER_ADMIN_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo "## Listings"
+            echo ""
+            echo "| Retailer | pages | cuban | new | emails | errors |"
+            echo "|---|---|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for r in de-noblego de-cigarmaxx de-cigarworld ch-cigarmust ch-egmcigars; do
+            response=$(curl -sS -w "\n%{http_code}" \
+              -X POST "https://thenextcigar.com/api/scraper/listings?retailer=$r" \
+              -H "X-Scraper-Token: ${SCRAPER_ADMIN_TOKEN}" \
+              --max-time 120)
+            http_code=$(echo "$response" | tail -n1)
+            body=$(echo "$response" | sed '$d')
+            echo "== $r → HTTP $http_code"
+            echo "$body" | head -c 3000; echo ""
+            if [ "$http_code" != "200" ]; then
+              echo "| $r | – | – | – | – | HTTP $http_code |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            echo "$body" | jq -r '.retailers[] as $x | "| \($x.retailer) | \($x.pages) | \($x.cuban) | \($x.new) | \(.emails) | \($x.errors | length) |"' >> "$GITHUB_STEP_SUMMARY"
+          done
+
+  rebuild:
+    needs: [scrape, listings]
     if: always() && needs.scrape.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 2

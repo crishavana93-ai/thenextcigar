@@ -341,3 +341,7 @@ table.mk td.door small{color:var(--mute);font-weight:400}
 .bill td:last-child{text-align:right;white-space:nowrap}
 .bill tr.tot td{font-family:var(--serif);font-size:17px;font-weight:600;border-bottom:0;padding-top:10px}
 @media (max-width:860px){.landed-grid{grid-template-columns:1fr}}
+.rw{display:grid;gap:8px;margin-top:10px}
+.rw input,.rw select{font-family:var(--sans);font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:9px 10px;border-radius:0;width:100%;box-sizing:border-box}
+.rw button.cta{border:0;background:var(--ink);color:var(--paper);font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:12px;cursor:pointer;text-align:center}
+.rw button[disabled]{opacity:.6}
