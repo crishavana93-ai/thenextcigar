@@ -46,6 +46,10 @@ const isLoungeApp =
   path.startsWith("/lounge/login") ||
   path.startsWith("/lounge/signup");
 const skipPublicChrome = bareChrome || isLoungeApp;
+// The member app wears the paper's skin: src/styles/lounge-paper.css remaps
+// the design tokens the app already reads, so the screens keep their markup
+// and come out in newsprint. Auth pages render their own PaperLayout.
+const loungeSkin = path.startsWith("/lounge/app");
 ---
 
 <!doctype html>
@@ -175,6 +179,7 @@ const skipPublicChrome = bareChrome || isLoungeApp;
     </script>
 
     {/* <ClientRouter /> — disabled, see frontmatter comment */}
+    {loungeSkin && <link rel="stylesheet" href="/lounge-paper.css" />}
   </head>
   <body class="min-h-screen bg-bg text-text antialiased">
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:text-bg focus:px-4 focus:py-2 focus:rounded">
