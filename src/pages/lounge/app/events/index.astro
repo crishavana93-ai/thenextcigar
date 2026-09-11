@@ -226,7 +226,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
   .evt-card__pill {
     display: inline-block;
-    background: rgba(201, 169, 97, 0.15);
+    background: color-mix(in srgb, var(--color-gold) 15%, transparent);
     color: var(--color-gold, #c9a961);
     padding: 2px 8px;
     border-radius: 999px;
@@ -399,7 +399,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     margin-bottom: 2px;
     color: var(--color-text-muted);
   }
-  .evt-chat__msg--mine .evt-chat__msg__author { color: rgba(26, 29, 46, 0.65); }
+  .evt-chat__msg--mine .evt-chat__msg__author { color: color-mix(in srgb, var(--color-charcoal) 65%, transparent); }
   .evt-chat__empty {
     text-align: center;
     color: var(--color-text-muted);
@@ -416,7 +416,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     padding: 8px 12px;
     border: 1px solid var(--color-border, #e0d8c4);
     border-radius: 8px;
-    background: #fff;
+    background: var(--color-surface, #fff);
     font-family: inherit;
     font-size: 0.92rem;
     resize: none;

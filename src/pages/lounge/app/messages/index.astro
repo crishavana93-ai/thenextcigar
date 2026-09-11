@@ -137,8 +137,8 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     transition: background 0.15s ease;
   }
   .conv-row:last-child { border-bottom: none; }
-  .conv-row:hover { background: rgba(201, 169, 97, 0.06); }
-  .conv-row.is-unread { background: rgba(201, 169, 97, 0.08); }
+  .conv-row:hover { background: color-mix(in srgb, var(--color-gold) 6%, transparent); }
+  .conv-row.is-unread { background: color-mix(in srgb, var(--color-gold) 8%, transparent); }
 
   .conv-row__avatar {
     width: 48px; height: 48px; border-radius: 50%;
@@ -228,7 +228,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     color: var(--color-text-muted);
     text-decoration: none;
   }
-  .thread-back:hover { background: rgba(201, 169, 97, 0.1); color: var(--color-text); }
+  .thread-back:hover { background: color-mix(in srgb, var(--color-gold) 10%, transparent); color: var(--color-text); }
   .thread-head__avatar {
     width: 44px; height: 44px; border-radius: 50%;
     background: var(--color-bg-soft);
@@ -316,7 +316,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     display: inline-block;
     margin-left: 6px;
     font-weight: 700;
-    color: rgba(26, 29, 46, 0.6);
+    color: color-mix(in srgb, var(--color-charcoal) 60%, transparent);
     animation: msg-pending-pulse 1.1s ease-in-out infinite;
   }
   @keyframes msg-pending-pulse {
@@ -370,7 +370,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     padding: 10px 14px;
     border: 1px solid var(--color-border);
     border-radius: 20px;
-    background: #fff;
+    background: var(--color-surface, #fff);
     font-family: inherit;
     font-size: 14px;
     line-height: 1.4;

@@ -181,34 +181,34 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     font-weight: 700;
     color: var(--color-gold, #c9a961);
     text-decoration: none;
-    border: 1px solid rgba(201, 169, 97, 0.4);
+    border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
     padding: 4px 9px;
     border-radius: 999px;
     transition: background 0.12s ease;
   }
   .pl-card__action:hover {
-    background: rgba(201, 169, 97, 0.14);
+    background: color-mix(in srgb, var(--color-gold) 14%, transparent);
   }
   .pl-contrib {
     display: flex; align-items: center; gap: 14px;
     padding: 14px 16px;
     margin: 0 0 18px;
     border-radius: 12px;
-    background: rgba(201, 169, 97, 0.08);
-    border: 1px dashed rgba(201, 169, 97, 0.45);
+    background: color-mix(in srgb, var(--color-gold) 8%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--color-gold) 45%, transparent);
     text-decoration: none;
     color: inherit;
     transition: background 0.14s ease, border-color 0.14s ease;
   }
   .pl-contrib:hover {
-    background: rgba(201, 169, 97, 0.14);
-    border-color: rgba(201, 169, 97, 0.7);
+    background: color-mix(in srgb, var(--color-gold) 14%, transparent);
+    border-color: color-mix(in srgb, var(--color-gold) 70%, transparent);
   }
   .pl-contrib__icon {
     flex-shrink: 0;
     width: 36px; height: 36px;
     border-radius: 50%;
-    background: rgba(201, 169, 97, 0.18);
+    background: color-mix(in srgb, var(--color-gold) 18%, transparent);
     color: var(--color-gold, #c9a961);
     display: flex; align-items: center; justify-content: center;
   }

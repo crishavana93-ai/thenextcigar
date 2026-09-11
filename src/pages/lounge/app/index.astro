@@ -256,7 +256,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
   }
   .lounge-dash-meta__badge {
     background: var(--color-accent);
-    color: #fff;
+    color: var(--color-text-inverse, #fff);
     font-size: 0.65rem;
     font-weight: 800;
     letter-spacing: 0.14em;
@@ -358,8 +358,8 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     align-items: center;
     gap: 14px;
     padding: 16px 18px;
-    background: linear-gradient(135deg, rgba(201, 169, 97, 0.16), rgba(201, 169, 97, 0.06));
-    border: 1px solid rgba(201, 169, 97, 0.45);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-gold) 16%, transparent), color-mix(in srgb, var(--color-gold) 6%, transparent));
+    border: 1px solid color-mix(in srgb, var(--color-gold) 45%, transparent);
     border-radius: 12px;
     text-decoration: none;
     color: var(--color-text);
@@ -616,8 +616,8 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     transition: background 0.15s ease;
   }
   .feed-row:last-child { border-bottom: none; }
-  .feed-row:hover { background: rgba(201, 169, 97, 0.04); }
-  .feed-row--intro { background: rgba(201, 169, 97, 0.06); padding-left: 12px; padding-right: 12px; border-left: 3px solid var(--color-gold); border-radius: 6px; margin-bottom: 6px; }
+  .feed-row:hover { background: color-mix(in srgb, var(--color-gold) 4%, transparent); }
+  .feed-row--intro { background: color-mix(in srgb, var(--color-gold) 6%, transparent); padding-left: 12px; padding-right: 12px; border-left: 3px solid var(--color-gold); border-radius: 6px; margin-bottom: 6px; }
 
   .feed-row__avatar {
     width: 40px; height: 40px;
@@ -1352,9 +1352,9 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
 
     // Prepend the "start a watchlist" CTA card so the empty state has a path.
     strip.innerHTML =
-      `<a class="events-strip__card" href="/lounge/app/finder/" style="background:linear-gradient(135deg,#1a1612 0%,#3a2e22 100%);color:#f5e6c5;border:1px solid #c9a961;">
-         <p class="events-strip__date" style="color:#c9a961;">START</p>
-         <h3 class="events-strip__title" style="color:#f5e6c5;">Your watchlist</h3>
+      `<a class="events-strip__card" href="/lounge/app/finder/" style="background:linear-gradient(135deg,var(--color-charcoal, #1a1d2e) 0%,#3a2e22 100%);color:var(--color-cream, #f5efe0);border:1px solid var(--color-gold, #c9a961);">
+         <p class="events-strip__date" style="color:var(--color-gold, #c9a961);">START</p>
+         <h3 class="events-strip__title" style="color:var(--color-cream, #f5efe0);">Your watchlist</h3>
          <p class="events-strip__venue" style="color:#d0c2a0;">Save a cigar to get drop alerts</p>
        </a>` + strip.innerHTML;
 

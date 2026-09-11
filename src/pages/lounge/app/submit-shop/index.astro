@@ -176,7 +176,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   .ss-row input:focus, .ss-row textarea:focus {
     outline: none;
     border-color: var(--color-gold, #c9a961);
-    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold) 15%, transparent);
   }
   .ss-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 480px) { .ss-cols { grid-template-columns: 1fr; } }
@@ -195,14 +195,14 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     transition: background 0.12s ease, border-color 0.12s ease;
     font-size: 14px;
   }
-  .ss-radio:hover { background: rgba(201, 169, 97, 0.06); }
+  .ss-radio:hover { background: color-mix(in srgb, var(--color-gold) 6%, transparent); }
   .ss-radio input[type="radio"] { margin-top: 3px; accent-color: var(--color-gold, #c9a961); }
   .ss-radio input[type="radio"]:checked + span {
     color: var(--color-text, #1a1d2e);
   }
   .ss-radio:has(input:checked) {
-    background: rgba(201, 169, 97, 0.10);
-    border-color: rgba(201, 169, 97, 0.4);
+    background: color-mix(in srgb, var(--color-gold) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-gold) 40%, transparent);
   }
   .lbtn-block { width: 100%; justify-content: center; }
   .ss-status {
@@ -223,7 +223,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
   }
   .ss-success__art {
     width: 64px; height: 64px; margin: 0 auto 16px;
-    background: rgba(201, 169, 97, 0.16);
+    background: color-mix(in srgb, var(--color-gold) 16%, transparent);
     color: var(--color-gold, #c9a961);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;

@@ -54,3 +54,6 @@ Gemini_Generated_Image_*.png
 /5.png
 _bak/
 functions/api/shop/catalogue.json
+
+# local screenshot staging, not part of the site
+_preview/

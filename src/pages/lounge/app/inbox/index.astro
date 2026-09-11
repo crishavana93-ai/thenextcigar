@@ -138,7 +138,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     letter-spacing: 0;
   }
   .lounge-tab.is-active .lounge-tab__count {
-    background: var(--color-accent); color: #fff; border-color: var(--color-accent);
+    background: var(--color-accent); color: var(--color-surface, #fff); border-color: var(--color-accent);
   }
 
   /* Inbox list + rows */
@@ -205,7 +205,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     transition: opacity 0.15s ease, background 0.15s ease;
     white-space: nowrap;
   }
-  .lounge-inbox-btn--accept { background: var(--color-accent); color: #fff; }
+  .lounge-inbox-btn--accept { background: var(--color-accent); color: var(--color-surface, #fff); }
   .lounge-inbox-btn--accept:hover { background: var(--color-accent-hover); }
   .lounge-inbox-btn--decline {
     background: transparent;
@@ -222,7 +222,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     text-transform: uppercase; letter-spacing: 0.1em;
     white-space: nowrap;
   }
-  .lounge-inbox-pill--accepted { background: #2d6a4f; color: #fff; }
+  .lounge-inbox-pill--accepted { background: #2d6a4f; color: var(--color-surface, #fff); }
   .lounge-inbox-pill--declined { background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
   .lounge-inbox-pill--pending { background: var(--color-cream); color: var(--color-burgundy); border: 1px solid var(--color-border); }
 

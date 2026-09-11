@@ -169,7 +169,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     gap: 8px;
     padding: 32px 16px 8px;
     background:
-      radial-gradient(ellipse at top, rgba(201, 169, 97, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at top, color-mix(in srgb, var(--color-gold) 8%, transparent) 0%, transparent 60%),
       var(--color-bg);
     border-radius: 12px;
   }
@@ -222,7 +222,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     gap: 6px;
     margin-top: 14px;
     padding-top: 14px;
-    border-top: 1px solid rgba(201, 169, 97, 0.22);
+    border-top: 1px solid color-mix(in srgb, var(--color-gold) 22%, transparent);
     width: 100%;
     max-width: 32rem;
   }
@@ -231,7 +231,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     align-items: center;
     gap: 6px;
     background: var(--color-gold-soft, rgba(201, 169, 97, 0.18));
-    border: 1px solid rgba(201, 169, 97, 0.4);
+    border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
     color: var(--color-charcoal, #1a1d2e);
     padding: 6px 12px;
     border-radius: 999px;
@@ -282,8 +282,8 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     line-height: 1.2;
   }
   .lounge-mem-flavor__chip--strength {
-    background: rgba(201, 169, 97, 0.16);
-    border-color: rgba(201, 169, 97, 0.45);
+    background: color-mix(in srgb, var(--color-gold) 16%, transparent);
+    border-color: color-mix(in srgb, var(--color-gold) 45%, transparent);
     color: var(--color-text);
   }
 
@@ -339,12 +339,12 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
   }
   .lounge-mem-head__badge--founding {
     background: var(--color-accent);
-    color: #fff;
+    color: var(--color-text-inverse, #fff);
     border-color: var(--color-accent);
   }
   .lounge-mem-head__badge--host {
     background: var(--color-burgundy);
-    color: #fff;
+    color: var(--color-text-inverse, #fff);
     border-color: var(--color-burgundy);
   }
 
@@ -419,7 +419,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
 
   .lounge-mem-cta {
     background: var(--color-accent);
-    color: #fff;
+    color: var(--color-text-inverse, #fff);
     border: none;
     border-radius: 999px;
     padding: 0.65rem 1.3rem;
@@ -459,7 +459,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
     padding: 0.7rem 0.85rem;
     border: 1px solid var(--color-border);
     border-radius: 3px;
-    background: #fff;
+    background: var(--color-surface, #fff);
     font-size: 0.95rem;
     color: var(--color-text);
     text-transform: none;
@@ -491,7 +491,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
   }
   .lounge-mem-intro-form__submit {
     background: var(--color-accent);
-    color: #fff;
+    color: var(--color-text-inverse, #fff);
     border: none;
     border-radius: 999px;
     padding: 0.6rem 1.2rem;

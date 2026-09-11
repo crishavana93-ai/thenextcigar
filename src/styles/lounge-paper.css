@@ -139,3 +139,19 @@ td{border-bottom:1px solid var(--rule-2)}
 
 /* Maps keep their own tiles but lose the app's rounding. */
 .leaflet-container,[id*="map"],[class*="map-canvas"]{border-radius:0!important}
+
+/* ---- named furniture the token remap reaches but the shape rules miss ----- */
+/* These blocks carry their own radii and glows from the app's old dark theme.
+   Avatars, pins and anything circular are left alone on purpose. */
+[class*="-strip"]:not([class*="strip__"]),[class*="-rail"]:not([class*="rail__"]),
+[class*="-banner"]:not([class*="banner__"]),[class*="-sheet"]:not([class*="sheet__"]),
+[class*="-row"]:not([class*="row__"]),[class*="-grid"]:not([class*="grid__"]),
+.chip,.btn-pill,.flavor-chip,.welcome-tile,.lounge-country,.cruiser-card{
+  border-radius:0!important;box-shadow:none!important
+}
+[class*="avatar"],[class*="__dot"],[class*="-pin"],[class*="initials"]{border-radius:50%!important}
+
+/* The Finder's hero strip was a navy slab; on paper it is a ruled panel. */
+.finder-strip{border:1px solid var(--ink)!important;background:var(--paper-2)!important}
+.finder-strip__art{background:var(--paper)!important;border:1px solid var(--rule)}
+

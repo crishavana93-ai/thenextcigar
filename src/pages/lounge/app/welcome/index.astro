@@ -145,7 +145,7 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
 
 <style>
   /* Skip the global skip-to-content padding from BaseLayout — welcome is its own surface. */
-  html, body { background: #1a1d2e; }
+  html, body { background: #151412; }
 
   .welcome-app {
     min-height: 100vh;
@@ -153,10 +153,10 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1a1d2e;
+    background: #151412;
   }
   .welcome-guard {
-    color: rgba(245, 239, 224, 0.6);
+    color: rgba(242, 240, 234, 0.6);
     font-size: 12px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -180,13 +180,13 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
   }
   .welcome-step--dark {
     background:
-      radial-gradient(ellipse at 50% 30%, rgba(201, 169, 97, 0.14) 0%, transparent 55%),
-      #1a1d2e;
-    color: #f5efe0;
+      radial-gradient(ellipse at 50% 30%, rgba(123, 38, 34, 0.22) 0%, transparent 55%),
+      #151412;
+    color: #F2F0EA;
   }
   .welcome-step--cream {
-    background: #f5efe0;
-    color: #1a1d2e;
+    background: #F2F0EA;
+    color: #151412;
   }
   .welcome-step__inner {
     width: 100%;
@@ -208,17 +208,17 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     font-weight: 700;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #c9a961;
+    color: #EAE7E0;
   }
-  .welcome-eyebrow--burgundy { color: #6e2620; }
+  .welcome-eyebrow--burgundy { color: #7B2622; }
 
   .welcome-hero-title {
     margin: 0;
-    font-family: Georgia, 'Playfair Display', serif;
+    font-family: 'Newsreader', Georgia, serif;
     font-size: 44px;
     font-weight: 800;
     line-height: 1.05;
-    color: #f5efe0;
+    color: #F2F0EA;
   }
   @media (min-width: 768px) {
     .welcome-hero-title { font-size: 56px; }
@@ -226,7 +226,7 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
   .welcome-rule {
     width: 60px;
     height: 2px;
-    background: #c9a961;
+    background: #F2F0EA;
     margin: 22px auto;
     opacity: 0.8;
   }
@@ -235,32 +235,41 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     max-width: 380px;
     font-size: 15px;
     line-height: 1.6;
-    color: rgba(245, 239, 224, 0.78);
+    color: rgba(242, 240, 234, 0.78);
   }
-  .welcome-hero-sub strong { color: #c9a961; font-weight: 700; }
+  .welcome-hero-sub strong { color: #F2F0EA; font-weight: 700; }
   .welcome-hero-line {
     margin: 18px 0 36px 0;
-    font-family: Georgia, serif;
+    font-family: 'Newsreader', Georgia, serif;
     font-size: 18px;
     font-style: italic;
-    color: rgba(245, 239, 224, 0.92);
+    color: rgba(242, 240, 234, 0.92);
   }
+
+  /* On the ink steps the skin's ink button would vanish: invert it. */
+  .welcome-step--dark .lbtn-primary {
+    background: #F2F0EA;
+    color: #151412;
+    border: 1px solid #F2F0EA;
+  }
+  .welcome-step--dark .lbtn-primary:hover { background: #7B2622; border-color: #7B2622; color: #F2F0EA; }
+  .welcome-step--dark .lbtn-ghost { color: #F2F0EA; border-color: rgba(242, 240, 234, 0.5); }
 
   /* Cream step titles */
   .welcome-step-title {
     margin: 0;
-    font-family: Georgia, 'Playfair Display', serif;
+    font-family: 'Newsreader', Georgia, serif;
     font-size: 32px;
     font-weight: 800;
     line-height: 1.15;
-    color: #1a1d2e;
+    color: #151412;
   }
   .welcome-step-body {
     margin: 12px auto 28px;
     max-width: 420px;
     font-size: 15px;
     line-height: 1.6;
-    color: rgba(26, 29, 46, 0.72);
+    color: rgba(21, 20, 18, 0.72);
   }
 
   /* Form */
@@ -277,25 +286,25 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(26, 29, 46, 0.66);
+    color: rgba(21, 20, 18, 0.66);
   }
   .welcome-field input {
     padding: 14px 16px;
-    border: 1px solid rgba(0, 0, 0, 0.14);
-    border-radius: 8px;
-    background: #fff;
+    border: 1px solid rgba(21, 20, 18, 0.4);
+    border-radius: 0;
+    background: #F7F6F2;
     font-family: inherit;
     font-size: 16px;
-    color: #1a1d2e;
+    color: #151412;
   }
   .welcome-field input:focus {
-    outline: 2px solid #c9a961;
+    outline: 2px solid #7B2622;
     outline-offset: 1px;
-    border-color: #c9a961;
+    border-color: #7B2622;
   }
   .welcome-field__hint {
     font-size: 12px;
-    color: rgba(26, 29, 46, 0.55);
+    color: rgba(21, 20, 18, 0.55);
     line-height: 1.4;
   }
   .welcome-form .lbtn-lg { margin-top: 6px; align-self: center; }
@@ -316,36 +325,36 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     display: flex;
     flex-direction: column;
     gap: 8px;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    background: #F7F6F2;
+    border: 1px solid rgba(21, 20, 18, 0.3);
+    border-radius: 0;
     padding: 22px 18px;
     text-align: left;
     cursor: pointer;
     font-family: inherit;
-    color: #1a1d2e;
+    color: #151412;
     transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
   }
   .welcome-tile:hover {
-    border-color: #c9a961;
+    border-color: #7B2622;
     transform: translateY(-1px);
   }
   .welcome-tile:disabled { opacity: 0.6; cursor: wait; }
   .welcome-tile__icon {
     font-size: 22px;
-    color: #c9a961;
+    color: #7B2622;
     line-height: 1;
   }
-  .welcome-tile__icon--muted { color: rgba(26, 29, 46, 0.3); }
+  .welcome-tile__icon--muted { color: rgba(21, 20, 18, 0.3); }
   .welcome-tile__title {
-    font-family: Georgia, serif;
+    font-family: 'Newsreader', Georgia, serif;
     font-size: 18px;
     font-weight: 800;
   }
   .welcome-tile__body {
     font-size: 13px;
     line-height: 1.5;
-    color: rgba(26, 29, 46, 0.66);
+    color: rgba(21, 20, 18, 0.66);
   }
 
   /* Footer + status */
@@ -357,16 +366,16 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     text-transform: uppercase;
     opacity: 0.5;
   }
-  .welcome-step--dark .welcome-progress { color: #c9a961; }
-  .welcome-step--cream .welcome-progress { color: rgba(26, 29, 46, 0.5); }
+  .welcome-step--dark .welcome-progress { color: rgba(242, 240, 234, 0.6); }
+  .welcome-step--cream .welcome-progress { color: rgba(21, 20, 18, 0.5); }
   .welcome-status {
     margin: 12px 0 0 0;
     padding: 10px 12px;
     border-radius: 6px;
-    background: rgba(255, 46, 46, 0.08);
+    background: rgba(123, 38, 34, 0.08);
     border-left: 3px solid #c62828;
     font-size: 13px;
-    color: #1a1d2e;
+    color: #151412;
     text-align: left;
   }
 
@@ -381,7 +390,7 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(26, 29, 46, 0.7);
+    color: rgba(21, 20, 18, 0.7);
   }
   .flavor-chips {
     display: flex;
@@ -391,22 +400,22 @@ import BaseLayout from "../../../../layouts/BaseLayout.astro";
   }
   .flavor-chip {
     appearance: none;
-    background: rgba(26, 29, 46, 0.04);
-    border: 1px solid rgba(26, 29, 46, 0.18);
-    color: #1a1d2e;
+    background: rgba(21, 20, 18, 0.04);
+    border: 1px solid rgba(21, 20, 18, 0.18);
+    color: #151412;
     padding: 6px 12px;
-    border-radius: 999px;
+    border-radius: 0;
     font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     line-height: 1.2;
     transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
-  .flavor-chip:hover { border-color: #c9a961; }
+  .flavor-chip:hover { border-color: #7B2622; }
   .flavor-chip.is-on {
-    background: #c9a961;
-    border-color: #c9a961;
-    color: #1a1d2e;
+    background: #7B2622;
+    border-color: #7B2622;
+    color: #F2F0EA;
   }
   .welcome-flavor-actions {
     display: flex;

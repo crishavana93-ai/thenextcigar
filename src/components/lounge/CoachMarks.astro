@@ -59,9 +59,9 @@
     left: 50%;
     transform: translateX(-50%);
     width: min(360px, calc(100% - 32px));
-    background: #f5efe0;
-    color: #1a1d2e;
-    border: 1px solid rgba(201, 169, 97, 0.4);
+    background: #F2F0EA;
+    color: #151412;
+    border: 1px solid rgba(123, 38, 34, 0.4);
     border-radius: 12px;
     padding: 18px 20px;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
@@ -96,8 +96,8 @@
     justify-content: center;
     width: 28px; height: 28px;
     border-radius: 50%;
-    background: rgba(201, 169, 97, 0.18);
-    color: #c9a961;
+    background: rgba(123, 38, 34, 0.18);
+    color: #7B2622;
     font-size: 14px;
   }
   .coach-card__icon svg { width: 16px; height: 16px; display: block; }
@@ -106,7 +106,7 @@
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #6b6663;
+    color: #6E6A62;
   }
   .coach-card__title {
     margin: 0 0 6px 0;
@@ -114,13 +114,13 @@
     font-size: 18px;
     font-weight: 800;
     line-height: 1.25;
-    color: #1a1d2e;
+    color: #151412;
   }
   .coach-card__body {
     margin: 0 0 14px 0;
     font-size: 14px;
     line-height: 1.55;
-    color: #1a1d2e;
+    color: #151412;
   }
   .coach-card__actions {
     display: flex;
@@ -131,26 +131,26 @@
   .coach-card__skip {
     background: transparent;
     border: none;
-    color: #6b6663;
+    color: #6E6A62;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     padding: 8px 4px;
     font-family: inherit;
   }
-  .coach-card__skip:hover { color: #1a1d2e; }
+  .coach-card__skip:hover { color: #151412; }
   .coach-card__next {
-    background: #c9a961;
-    color: #1a1d2e;
-    border: 1px solid #c9a961;
-    border-radius: 6px;
+    background: #7B2622;
+    color: #F2F0EA;
+    border: 1px solid #7B2622;
+    border-radius: 0;
     padding: 9px 16px;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
   }
-  .coach-card__next:hover { background: #b69649; border-color: #b69649; }
+  .coach-card__next:hover { background: #5E1D1A; border-color: #5E1D1A; }
 
   /* Halo applied to the targeted UI region while a step is showing.
      Defined :global so the parent map page's elements pick it up. */
@@ -158,15 +158,15 @@
     position: relative;
     z-index: 201; /* above the backdrop */
     box-shadow:
-      0 0 0 2px rgba(201, 169, 97, 0.9),
-      0 0 0 8px rgba(201, 169, 97, 0.25),
-      0 0 40px 8px rgba(201, 169, 97, 0.3) !important;
+      0 0 0 2px rgba(123, 38, 34, 0.9),
+      0 0 0 8px rgba(123, 38, 34, 0.25),
+      0 0 40px 8px rgba(123, 38, 34, 0.3) !important;
     border-radius: 12px !important;
     animation: coachPulse 1.8s ease-in-out infinite;
   }
   @keyframes coachPulse {
-    0%, 100% { box-shadow: 0 0 0 2px rgba(201, 169, 97, 0.9), 0 0 0 8px rgba(201, 169, 97, 0.25), 0 0 40px 8px rgba(201, 169, 97, 0.3); }
-    50%      { box-shadow: 0 0 0 2px rgba(201, 169, 97, 1),   0 0 0 12px rgba(201, 169, 97, 0.18), 0 0 60px 12px rgba(201, 169, 97, 0.45); }
+    0%, 100% { box-shadow: 0 0 0 2px rgba(123, 38, 34, 0.9), 0 0 0 8px rgba(123, 38, 34, 0.25), 0 0 40px 8px rgba(123, 38, 34, 0.3); }
+    50%      { box-shadow: 0 0 0 2px rgba(123, 38, 34, 1),   0 0 0 12px rgba(123, 38, 34, 0.18), 0 0 60px 12px rgba(123, 38, 34, 0.45); }
   }
 </style>
 
