@@ -149,12 +149,14 @@ const products = defineCollection({
       currency: z.string().default("USD"),
       // Type — drives fulfillment / shipping
       type: z.enum(["digital", "merch", "accessory"]).default("accessory"),
-      // Imagery
+      // Imagery. Optional on purpose: a product with no honest photograph
+      // shows the "Photographed when it lands" stamp, which is truer than a
+      // stock picture of something else. See the covers cleared in Sept 2026.
       cover: z.union([
         z.string().regex(/^(https?:\/\/|\/)/),
         image(),
         z.string(),
-      ]),
+      ]).optional().nullable(),
       gallery: z.array(
         z.union([
           z.string().regex(/^(https?:\/\/|\/)/),

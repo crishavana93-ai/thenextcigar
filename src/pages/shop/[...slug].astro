@@ -51,7 +51,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
   <p class="miga">Shop · <a href="/shop/">all goods</a>{d.category && <> · {d.category}</>}</p>
   <div class="product">
     <div class="gal">
-      {cover ? <img src={cover} alt={d.name} width="900" height="900" fetchpriority="high" /> : <div class="ph" style="aspect-ratio:1;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center"><span class="stamp">Photographed when it lands</span></div>}
+      {cover ? <img src={cover} alt={d.name} width="900" height="900" fetchpriority="high" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'stamp',textContent:'Photographed when it lands'}))" /> : <div class="ph" style="aspect-ratio:1;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center"><span class="stamp">Photographed when it lands</span></div>}
       {gallery.length > 1 && <div class="thumbs">{gallery.slice(1, 6).map((g) => <img src={g} alt="" width="200" height="200" loading="lazy" />)}</div>}
     </div>
     <div>
