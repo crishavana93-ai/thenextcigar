@@ -2,6 +2,7 @@
 import { getCollection, getEntry, render } from "astro:content";
 import { srcFor, srcsetFor } from "../../lib/img";
 import { toolsFor, metaDescription, pageTitle } from "../../lib/seo";
+import BuyBox from "../../components/paper/BuyBox.astro";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
 
@@ -163,6 +164,8 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
         <Content />
       </div>
     </div>
+
+    <BuyBox slug={d.slug} />
 
     <section class="band">
       <div class="rulehead flat"><h2>From the tools</h2><a class="more" href="/tools/">All of them →</a></div>

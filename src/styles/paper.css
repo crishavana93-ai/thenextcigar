@@ -426,3 +426,16 @@ table.mk td.door small{color:var(--mute);font-weight:400}
 .toolstrip__label{display:block;font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ox);font-weight:600}
 .toolstrip__blurb{display:block;margin-top:5px;font-family:var(--serif);font-size:16px;line-height:1.35;color:var(--ink)}
 
+/* ---- the affiliate panel ---------------------------------------------------
+   Set as a ruled classified column, not a merchandising block. The disclosure
+   is body copy at full contrast, not grey small print — a disclosure a reader
+   has to hunt for is not a disclosure. */
+.affil-note{font-family:var(--sans);font-size:12.5px;line-height:1.5;color:var(--ink-2);
+  border-left:3px solid var(--ox);padding:2px 0 2px 12px;margin:0 0 14px}
+.affil-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.affil-item{padding:11px 0;border-bottom:1px solid var(--rule-2)}
+.affil-link{font-family:var(--serif);font-size:19px;line-height:1.25;color:var(--ink);text-decoration:none}
+.affil-link:hover{color:var(--ox);text-decoration:underline;text-underline-offset:3px}
+.affil-arrow{font-family:var(--sans);font-size:14px;color:var(--ox)}
+.affil-why{margin:4px 0 0;font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--mute)}
+

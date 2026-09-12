@@ -1,0 +1,44 @@
+---
+/**
+ * "Where to buy" — the affiliate panel under a buying guide.
+ *
+ * Renders nothing at all unless the article has picks that resolve to tagged
+ * links, so the day before Associates approves the account this component is
+ * invisible, and the day after it appears by itself.
+ *
+ * The disclosure sits at the top of the panel, above the links rather than in
+ * a footer. Sweden's marknadsföringslag bans hidden advertising, and the FTC
+ * asks for a disclosure a reader meets before the recommendation, in words an
+ * ordinary person understands. "Affiliate link" on its own does not qualify.
+ *
+ * Every link carries rel="sponsored" — Google's required marking for a paid
+ * link — plus nofollow and noopener, and opens in a new tab so the reader does
+ * not lose the article.
+ */
+import { picksFor } from "../../data/affiliate";
+
+interface Props { slug: string }
+const { slug } = Astro.props;
+const picks = picksFor(slug);
+---
+
+{picks.length > 0 && (
+  <section class="band">
+    <div class="rulehead flat"><h2>Where to buy</h2></div>
+    <p class="affil-note">
+      We earn a small commission if you buy through these links. It costs you nothing and
+      it does not decide what we recommend — we say plainly when we sell something ourselves,
+      and plainly when we do not.
+    </p>
+    <ul class="affil-list">
+      {picks.map((p) => (
+        <li class="affil-item">
+          <a class="affil-link" href={p.url} rel="sponsored nofollow noopener" target="_blank">
+            {p.label} <span class="affil-arrow" aria-hidden="true">→</span>
+          </a>
+          {p.note && <p class="affil-why">{p.note}</p>}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
