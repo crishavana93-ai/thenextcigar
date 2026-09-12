@@ -39,7 +39,11 @@ export const AMAZON_TAGS: Record<string, string> = {
   se: "thenextcigar-21",  // amazon.se — approved 12 September 2026
   uk: "thenextciga0a-21", // amazon.co.uk — approved 12 September 2026. 329 clicks a quarter.
   de: "",                 // amazon.de — not joined yet
-  com: "thenextciga08-20", // amazon.com — approved 12 September 2026. 660 clicks a quarter.
+  com: "thenextcigar-20", // amazon.com — the ORIGINAL id, live since at least
+                          // August 2026 and the one carrying the account's
+                          // earnings history. Do not swap this for a newer id
+                          // without a reason: reporting continuity is worth
+                          // more than a tidier string.
 };
 
 /**
