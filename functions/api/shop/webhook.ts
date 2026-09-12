@@ -178,9 +178,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       status:               "paid",
     };
 
-    await supaInsert(env, "shop_orders", row);
-
-    // ── Notify Cris to forward the order ──
+    // ── Notify Cris FIRST, before anything that can fail ──
+    //
+    // This used to run after the Supabase insert, and that ordering silently
+    // broke the whole shop. The shop_orders table did not exist in production
+    // (migration 027 was written but never applied), so supaInsert threw, the
+    // catch below returned 500, and NEITHER email was ever sent. Stripe took
+    // the money and nobody was told — not Cris, not the customer. Stripe then
+    // retried on a schedule and failed identically every time.
+    //
+    // The order of operations now reflects what actually matters. In a manual
+    // drop-shipping shop the notification email IS the fulfilment system; the
+    // database row is bookkeeping. Bookkeeping must never be able to stop a
+    // parcel from being sent. So: email Cris, email the customer, and only
+    // then try to record it — with the recording failure isolated so it cannot
+    // take the rest down with it.
     const notifyTo = env.ORDER_NOTIFY_EMAIL || "guatabeycigars@gmail.com";
     const orderSummary = `
       <h2>New order — ${row.product_name}</h2>
@@ -224,6 +236,31 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       );
     }
 
+    // ── Record it last, and never let a failure here lose the order ──
+    try {
+      await supaInsert(env, "shop_orders", row);
+    } catch (dbErr) {
+      console.error("[shop/webhook] order emailed but NOT recorded", dbErr);
+      // Tell Cris in a separate message. He already has everything he needs to
+      // fulfil from the email above; this one exists so the gap in the ledger
+      // is visible rather than silent.
+      try {
+        await sendEmail(
+          env,
+          notifyTo,
+          `[TNC Shop] Order NOT recorded in database · ${row.product_name}`,
+          `<p>The order email you just received went out fine and the order is real —
+           fulfil it as normal.</p>
+           <p>What failed is writing it to <code>shop_orders</code>, so it will not
+           appear in any report until you add it by hand.</p>
+           <p><strong>Stripe session:</strong> ${row.stripe_session_id}<br/>
+           <strong>Error:</strong> ${dbErr instanceof Error ? dbErr.message : String(dbErr)}</p>`
+        );
+      } catch { /* if even this fails, the console log is what is left */ }
+    }
+
+    // 200 regardless: the customer has paid and both parties have been told.
+    // Returning 500 here would make Stripe retry and send duplicate emails.
     return new Response("ok", { status: 200 });
   } catch (err) {
     // Log to Cloudflare console. Return 500 so Stripe retries.
