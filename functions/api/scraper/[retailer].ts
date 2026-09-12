@@ -42,7 +42,7 @@ function currencyForCountry(country: string): string {
 }
 
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations";
 
 interface PdpUrl {
   url: string;
@@ -313,6 +313,46 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       { url: "https://cigarmust.com/en/partagas/367-85-partagas-serie-d-no4-7612907062994.html",             skuHint: "partagas-serie-d-no-4" },
       { url: "https://cigarmust.com/en/hoyo-de-monterrey/273-18-hoyo-de-monterrey-epicure-no-2-7612907061461.html", skuHint: "hoyo-de-monterrey-epicure-no-2" },
       { url: "https://cigarmust.com/en/trinidad/448-121-trinidad-reyes-7612907060389.html",                  skuHint: "trinidad-reyes" },
+    ],
+  },
+  "se-cigarrummet": {
+    country: "se",
+    // Cigarrummet (Stockholm) — WooCommerce. The whole variation table is in
+    // the page HTML as JSON, so one GET returns every pack size with its own
+    // price and stock state. Slugs verified against their product sitemap on
+    // 12 September 2026; 21 of our 52 vitolas are listed there.
+    //
+    // Note what this retailer is for. On the day it was added every Cuban SKU
+    // on the site was out of stock, which is what the Habanos supply crisis
+    // looks like from a Swedish shelf. So it adds almost nothing to "cheapest
+    // in Europe" today — it adds Sweden to the board at all, and it adds price
+    // history for a market we had none of.
+    //
+    // Cohiba Robustos is deliberately absent: their page sells only 1- and
+    // 3-packs, no box, so there is no box price to record.
+    stack: "woocommerce_variations",
+    preferredPackSize: 25,
+    pdps: [
+      { url: "https://www.cigarrummet.com/produkt/cohiba-siglo-iv/", skuHint: "cohiba-siglo-iv" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/cohiba-siglo-ii/", skuHint: "cohiba-siglo-ii" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/cohiba-esplendidos/", skuHint: "cohiba-esplendidos" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/montecristo-no-2/", skuHint: "montecristo-no-2" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/montecristo-no-4/", skuHint: "montecristo-no-4" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/montecristo-no-5/", skuHint: "montecristo-no-5" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/montecristo-petit-edmundo/", skuHint: "montecristo-petit-edmundo" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/montecristo-open-junior/", skuHint: "montecristo-open-junior" }, // box of 20
+      { url: "https://www.cigarrummet.com/produkt/partagas-serie-d-no-4/", skuHint: "partagas-serie-d-no-4" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/partagas-serie-d-no-6/", skuHint: "partagas-serie-d-no-6" }, // box of 20
+      { url: "https://www.cigarrummet.com/produkt/partagas-serie-e-no-2/", skuHint: "partagas-serie-e-no-2" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/romeo-y-julieta-short-churchills/", skuHint: "romeo-y-julieta-short-churchills" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/romeo-y-julieta-romeo-no-1-tubos/", skuHint: "romeo-y-julieta-no-1-tubos" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/hoyo-de-monterrey-epicure-no-2/", skuHint: "hoyo-de-monterrey-epicure-no-2" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/hoyo-de-monterrey-le-hoyo-rio-seco/", skuHint: "hoyo-de-monterrey-le-hoyo-de-rio-seco" }, // box of 10
+      { url: "https://www.cigarrummet.com/produkt/bolivar-royal-corona/", skuHint: "bolivar-royal-coronas" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/trinidad-vigia/", skuHint: "trinidad-vigia" }, // box of 12
+      { url: "https://www.cigarrummet.com/produkt/ramon-allones-specially-selected/", skuHint: "ramon-allones-specially-selected" }, // box of 25
+      { url: "https://www.cigarrummet.com/produkt/quai-d-orsay-no-50/", skuHint: "quai-d-orsay-no-50" }, // box of 10
+      { url: "https://www.cigarrummet.com/produkt/diplomaticos-no-2/", skuHint: "diplomaticos-no-2" }, // box of 25
     ],
   },
   "uk-havanahouse": {
@@ -617,6 +657,55 @@ function parseHavanaHouseHtml(html: string): ParsedOffer[] {
 //
 // Stock state isn't in OG, so we look for the "In Stock" / "Out of Stock"
 // text and the addtocart button's data-available attribute.
+// ─── WooCommerce variations parser ─────────────────────────────────────────
+// Used by Cigarrummet (SE). WooCommerce variable products embed every variant
+// as JSON in a data-product_variations attribute on the variations form, in
+// the server-rendered HTML — no JS needed:
+//
+//   data-product_variations="[{&quot;attributes&quot;:{&quot;attribute_pa_antal&quot;:
+//     &quot;25-st-lada&quot;},&quot;display_price&quot;:7125,&quot;is_in_stock&quot;:false,
+//     &quot;sku&quot;:&quot;C416&quot;}, …]"
+//
+// The pack size lives in the attribute slug and is NOT uniform. Observed on
+// 12 Sep 2026: "1-st", "25-st-lada", "12-st-lada", "10-st-lada", "1p-i-ask",
+// "3p-i-ask". A leading integer is present in every one of those forms.
+//
+// This matters more here than anywhere else on the board. Bolívar Royal
+// Coronas lists a single at 234 SEK beside the box of 25 at 5,100, so a parser
+// that took the first variation and called it a box would be out by a factor
+// of twenty-two. Cohiba Robustos is worse: that page has no box at all, only a
+// 1-pack at 867 and a 3-pack at 2,601 — the honest answer for that SKU here is
+// no box price, not a cheap one. Every variation is emitted with the pack it
+// actually states; the caller drops the ones that are not the SKU's box.
+function parseWooVariations(html: string, currency: string): ParsedOffer[] {
+  const ATTR = 'data-product_variations="';
+  const start = html.indexOf(ATTR);
+  if (start < 0) return [];                       // simple product, or no form
+  const rest = html.slice(start + ATTR.length);
+  const end = rest.indexOf('"');
+  if (end < 0) return [];
+  const decoded = rest.slice(0, end)
+    .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+  let rows: any[];
+  try { rows = JSON.parse(decoded); } catch { return []; }   // malformed → nothing
+  if (!Array.isArray(rows)) return [];
+
+  const out: ParsedOffer[] = [];
+  for (const r of rows) {
+    let pack = 0;
+    for (const v of Object.values(r?.attributes ?? {})) {
+      const m = String(v).match(/^(\d+)/);
+      if (m) { pack = Number(m[1]); break; }
+    }
+    const price = Number(r?.display_price);
+    if (!pack || !Number.isFinite(price) || price <= 0) continue;
+    out.push({ packSize: pack, price, currency, inStock: !!r?.is_in_stock });
+  }
+  return out;
+}
+
 /**
  * Cigarmust runs PrestaShop, where a product's pack sizes are "combinations"
  * of one product id. A PDP URL of the form /{id}-{combination}-{slug}.html
@@ -1077,6 +1166,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       case "noblego_html":     parsed = parseNoblegoHtml(html); break;
       case "havanahouse_html": parsed = parseHavanaHouseHtml(html); break;
       case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
+      case "woocommerce_variations": parsed = parseWooVariations(html, currencyForCountry(config.country)); break;
       case "shopify_json":     parsed = parseShopifyJson(html, currencyForCountry(config.country)); break;
       default:                 parsed = parseSchemaOrg(html);
     }
@@ -1225,6 +1315,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         case "noblego_html":     parsed = parseNoblegoHtml(html); break;
         case "havanahouse_html": parsed = parseHavanaHouseHtml(html); break;
         case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
+      case "woocommerce_variations": parsed = parseWooVariations(html, currencyForCountry(config.country)); break;
         case "cigarworld_html":  parsed = parseSchemaOrg(html); break; // currently same as schema.org
         case "shopify_json":     parsed = parseShopifyJson(html, currencyForCountry(config.country)); break;
         case "schema_org_jsonld":
