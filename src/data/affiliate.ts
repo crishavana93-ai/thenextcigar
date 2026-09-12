@@ -36,20 +36,30 @@ export interface Pick {
 
 /** Associates tags per storefront. Empty string = not approved yet. */
 export const AMAZON_TAGS: Record<string, string> = {
-  se: "",   // amazon.se — the home programme for a Swedish publisher
-  uk: "",   // amazon.co.uk
-  de: "",   // amazon.de
-  com: "",  // amazon.com
+  se: "thenextcigar-21",  // amazon.se — approved 12 September 2026
+  uk: "",                 // amazon.co.uk — not joined yet. 329 clicks a quarter.
+  de: "",                 // amazon.de — not joined yet
+  com: "",                // amazon.com — not joined yet. 660 clicks a quarter.
 };
 
 /**
- * The storefront links point at. A static site cannot know a visitor's country
- * at build time, so links are built once against this store and Amazon's
- * OneLink script redirects a reader to their own. Set it to wherever most of
- * the traffic is — currently the United States, at 660 clicks a quarter
- * against the United Kingdom's 329.
+ * The storefront links point at.
+ *
+ * This is NOT "wherever the traffic is". A tracking ID only earns on the
+ * marketplaces whose Associates programme you have actually joined —
+ * marketplaces you have not joined are not monetised, and a .com link carrying
+ * a Swedish -21 tag pays nothing at all. So this must name a store we hold an
+ * approved account for, and today that is exactly one: amazon.se.
+ *
+ * That is uncomfortable, because it is the wrong store for most of the
+ * readership: 660 clicks a quarter come from the United States and 329 from
+ * the United Kingdom, against 69 from Sweden. Fixing it is an application, not
+ * a code change — join the US and UK programmes, put those tags above, and
+ * then OneLink can send each reader to their own store and actually pay for
+ * it. Until then, pointing at .se earns a little; pointing at .com earns
+ * nothing.
  */
-export const PRIMARY_STORE: keyof typeof AMAZON_TAGS = "com";
+export const PRIMARY_STORE: keyof typeof AMAZON_TAGS = "se";
 
 const DOMAIN: Record<string, string> = {
   se: "amazon.se", uk: "amazon.co.uk", de: "amazon.de", com: "amazon.com",
