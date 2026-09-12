@@ -31,6 +31,9 @@ const url = `https://thenextcigar.com/shop/${d.slug}/`;
 // an expired price. A year out, recomputed at every build, is honest for a
 // list price we review rather than schedule.
 const priceValidUntil = new Date(Date.now() + 365 * 86400e3).toISOString().slice(0, 10);
+// The countries checkout.ts will accept a shipping address for. Kept here so
+// the structured data cannot drift away from what the shop actually does.
+const SHIP_TO = ["SE","PT","DE","FR","IT","ES","NL","BE","DK","FI","IE","AT","GB","CH","US","CA","NO"];
 const jsonLd = { "@context": "https://schema.org", "@graph": [
   { "@type": "Product", name: d.name, description: d.excerpt || d.name, image: galleryAbs, url,
     sku: d.sku,
@@ -42,6 +45,36 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       priceValidUntil, url,
+      // Google marks an item ineligible for merchant listings without both of
+      // these. They are not decoration: every figure below is the policy on
+      // /shipping-and-returns/, and if that page changes these change with it.
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: { "@type": "MonetaryAmount", value: 0, currency: d.currency || "USD" },
+        // Exactly the countries checkout.ts accepts a shipping address for.
+        // If that list changes, this one changes — a schema that promises
+        // delivery somewhere the checkout refuses is a lie Google indexes.
+        shippingDestination: SHIP_TO.map((c) => ({ "@type": "DefinedRegion", addressCountry: c })),
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          // The supplier dispatches within a couple of days; the long pole is
+          // the freight, which is the 1-2 weeks the product pages state.
+          handlingTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 3, unitCode: "DAY" },
+          transitTime: { "@type": "QuantitativeValue", minValue: 7, maxValue: 14, unitCode: "DAY" },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: SHIP_TO,
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 14,
+        returnMethod: "https://schema.org/ReturnByMail",
+        // The customer pays return postage unless the item was faulty, which is
+        // lawful in the EU only because /shipping-and-returns/ says so before
+        // the sale. Do not change one without the other.
+        returnFees: "https://schema.org/ReturnShippingFees",
+        merchantReturnLink: "https://thenextcigar.com/shipping-and-returns/",
+      },
     } }) },
   { "@type": "BreadcrumbList", itemListElement: [ { "@type": "ListItem", position: 1, name: "Shop", item: "https://thenextcigar.com/shop/" }, { "@type": "ListItem", position: 2, name: d.name, item: url } ] },
 ] };
@@ -63,7 +96,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
           <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
           <button type="button" class="buy" id="buy" data-slug={d.slug}>Buy — {sym}{d.price}</button>
           <p class="fine" id="buy-status" aria-live="polite"></p>
-          <p class="fine">Card checkout by Stripe. Delivery country and shipping cost are shown before you pay. {d.type === "digital" ? "Instant download after payment." : "Dispatch and delivery times are confirmed in your order email."}</p>
+          <p class="fine">Card checkout by Stripe. Free tracked delivery. {d.type === "digital" ? "Instant download after payment; digital goods are non-refundable once downloaded." : "Ships direct from our supplier, one to two weeks. You have 14 days from delivery to send it back for any reason — you pay return postage unless it arrived faulty."} <a href="/shipping-and-returns/">Shipping and returns</a>.</p>
         </>
       ) : (
         <>

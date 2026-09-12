@@ -1,0 +1,114 @@
+---
+import PaperLayout from "../layouts/PaperLayout.astro";
+/**
+ * /shipping-and-returns/
+ *
+ * Written 12 September 2026, because the shop was live and taking cards with
+ * no stated returns policy at all. Selling at distance to consumers in the
+ * EU/EEA from Sweden carries a mandatory 14-day right of withdrawal, and the
+ * customer only bears the cost of returning goods if the seller says so
+ * BEFORE the purchase. Saying nothing does not mean the customer pays — it
+ * means we do. This page is where that is said.
+ *
+ * Nothing on this page is a promise we cannot keep. Delivery windows are the
+ * supplier's real quoted windows, not marketing numbers.
+ */
+const lastUpdated = "September 12, 2026";
+---
+
+<PaperLayout
+  title="Shipping and Returns · The Next Cigar"
+  description="How long delivery takes, where things ship from, and how to send something back. Fourteen-day right of withdrawal, stated plainly."
+  section="legal"
+  compact={true}
+>
+  <div class="dateline">
+    <h1>Shipping and Returns</h1>
+    <p class="st">Legal · last updated {lastUpdated}</p>
+  </div>
+  <article class="art">
+    <div class="prose" style="max-width:720px">
+      <h2>Where things ship from</h2>
+      <p>
+        We sell cigar accessories — cutters, lighters, cases, humidification. We do not sell
+        tobacco and never have.
+      </p>
+      <p>
+        Most accessories ship <strong>direct from our supplier</strong> rather than from a
+        warehouse of ours. That is how a small shop can carry a range without holding thousands
+        of kronor of stock, and we would rather say so than let you assume there is a building
+        in Malmö with your cutter in it. It means delivery takes longer than Amazon. It also
+        means the price is lower than it would otherwise be.
+      </p>
+
+      <h2>How long it takes</h2>
+      <p>
+        <strong>One to two weeks</strong> to most of Europe and North America, tracked. Each
+        product page states its own window where it differs. If something is going to take
+        longer than that, we email you rather than let you wonder.
+      </p>
+      <p>
+        Orders outside the EU may attract import duty and local tax on arrival. Those are set by
+        your own country and are not ours to collect or waive.
+      </p>
+
+      <h2>Lighters arrive without gas</h2>
+      <p>
+        Every lighter ships empty. A lighter containing butane is classified as dangerous goods
+        (UN 1057, class 2.1) and cannot travel by ordinary air freight; purged and empty, it is
+        an ordinary metal object. Fill it with any refined butane refill — a few euros in any
+        tobacconist. This is not a defect and it is not us cutting a corner. It is how every
+        lighter bought online crosses a border.
+      </p>
+
+      <h2>Changing your mind — 14 days</h2>
+      <p>
+        You have <strong>14 days from the day the goods reach you</strong> to withdraw from the
+        purchase, for any reason or none. You do not have to explain yourself and we will not
+        ask you to.
+      </p>
+      <p>
+        To withdraw, email <a href="mailto:orders@thenextcigar.com">orders@thenextcigar.com</a>
+        with your order number and say you are cancelling. Anything unambiguous counts — you do
+        not need a form.
+      </p>
+      <p>
+        Send the goods back within 14 days of telling us. <strong>You pay the cost of return
+        postage</strong> unless the item arrived faulty, damaged or not as described, in which
+        case we pay it. Use a tracked service; until it reaches us it is still your parcel.
+      </p>
+      <p>
+        We refund within <strong>14 days</strong> of receiving the goods back, to the card you
+        paid with. That includes the original standard delivery charge. We may reduce the refund
+        if the item has been handled more than you would handle it in a shop — trying a cutter
+        is fine, using it for a fortnight is not.
+      </p>
+
+      <h2>If something arrives faulty</h2>
+      <p>
+        Email us with a photograph. We replace it or refund it, your choice, and we pay the
+        postage both ways. This right is separate from the 14 days above and lasts far longer —
+        under Swedish law you can complain about a faulty product for up to three years.
+      </p>
+
+      <h2>What cannot be returned</h2>
+      <p>
+        Digital products — guides, PDFs — are non-refundable once downloaded, because there is
+        nothing to send back. Everything physical can be returned.
+      </p>
+
+      <h2>Who you are dealing with</h2>
+      <p>
+        The Next Cigar is owned and operated by Cristian Ortiz Suárez, Malmö, Sweden. For
+        anything to do with an order, email
+        <a href="mailto:orders@thenextcigar.com">orders@thenextcigar.com</a>. We answer.
+      </p>
+      <p>
+        If we cannot resolve a complaint between us, consumers in the EU can take it to the
+        <a href="https://www.arn.se/" rel="noopener" target="_blank">Allmänna reklamationsnämnden</a>
+        (the Swedish National Board for Consumer Disputes) or the EU's online dispute resolution
+        platform. We will follow their decision.
+      </p>
+    </div>
+  </article>
+</PaperLayout>
