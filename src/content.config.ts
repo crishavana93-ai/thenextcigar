@@ -134,6 +134,14 @@ const products = defineCollection({
       name: z.string(),
       slug: z.string(),
       sku: z.string(),                    // Snipcart's data-item-id
+      // Google needs an identifier on a merchant listing: a GTIN, or a brand
+      // paired with an MPN. Most of what we sell is unbranded factory stock we
+      // put our own name on, so brand + mpn is the honest pair — a GTIN is a
+      // registered number and is only ever set here when the product really
+      // has one. Third-party goods carry the maker's brand, not ours.
+      brand: z.string().default("The Next Cigar"),
+      mpn: z.string().optional().nullable(),   // defaults to sku when absent
+      gtin: z.string().optional().nullable(),  // real registered barcode only
       excerpt: z.string().optional().nullable(),
       // Pricing
       price: z.number(),                  // USD
