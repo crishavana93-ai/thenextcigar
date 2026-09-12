@@ -246,27 +246,26 @@ footer.paper a:hover{text-decoration:underline}
   .ear .l{display:none}
   .mast .ed span:nth-child(2){display:none}
   .mast .ed{font-size:10px}
-  /* The section rail on a phone.
-     It used to be the whole nav that scrolled, account links included, so at
-     390px four of eleven destinations sat past the right edge with nothing to
-     say so — and the four were The Lounge, the Shop, Sign in and Join. Every
-     page that earns anything was hidden behind an undiscoverable swipe.
-     Now only the sections scroll, Sign in and Join are pinned where a thumb
-     can always reach them, and the rail fades at its edge so it reads as
-     scrollable. "Front page" is dropped here because the masthead above it is
-     already a link home. */
-  nav.sec{gap:12px}
-  nav.sec ul{
-    flex:1 1 auto;min-width:0;gap:16px;
-    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
-    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent);
-    mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent);
-  }
-  nav.sec ul::-webkit-scrollbar{display:none}
+  /* The section bar on a phone.
+     It was a horizontal scroller, and a scroller is the wrong answer here.
+     With 127px of overflow and no snap it stops wherever the thumb leaves it,
+     every page reloads it somewhere else, and the destination you tapped last
+     time is no longer where you left it — Cris's "it moves too much".
+     So nothing scrolls now. The account links take their own line, which frees
+     the full width for the sections, and the sections fit on one line without
+     scrolling, a fade, or a swipe. Every destination is visible and still.
+     "Front page" stays hidden because the masthead above it links home. */
+  nav.sec{flex-wrap:wrap;gap:4px 12px;padding:7px 0}
+  nav.sec .acct{order:-1;flex:1 1 100%;justify-content:flex-end;gap:16px}
+  nav.sec ul{flex:1 1 100%;justify-content:space-between;gap:8px;flex-wrap:nowrap}
   nav.sec ul li.home{display:none}
-  nav.sec ul li a{padding:9px 0}          /* a thumb needs more than 22px */
-  nav.sec ul li a .the{display:none}      /* "Lounge" — the 22px "The" costs us Shop */
-  nav.sec .acct{flex:0 0 auto;gap:14px}
+  nav.sec ul li a{padding:7px 0}          /* a thumb needs more than 22px */
+  nav.sec ul li a .the{display:none}      /* "Lounge" — "The" costs us the fit */
+}
+/* On a 320px phone the seven sections do not fit one line, so they wrap onto
+   two rather than clipping "Tools" off the end. Still nothing scrolls. */
+@media (max-width:360px){
+  nav.sec ul{flex-wrap:wrap;justify-content:flex-start;gap:0 14px}
   .dateline{flex-direction:column;align-items:flex-start}
   .dateline .st{text-align:left;white-space:normal}
 }
