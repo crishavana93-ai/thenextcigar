@@ -246,9 +246,26 @@ footer.paper a:hover{text-decoration:underline}
   .ear .l{display:none}
   .mast .ed span:nth-child(2){display:none}
   .mast .ed{font-size:10px}
-  nav.sec{gap:12px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  nav.sec::-webkit-scrollbar{display:none}
-  nav.sec ul{gap:16px;flex:0 0 auto}
+  /* The section rail on a phone.
+     It used to be the whole nav that scrolled, account links included, so at
+     390px four of eleven destinations sat past the right edge with nothing to
+     say so — and the four were The Lounge, the Shop, Sign in and Join. Every
+     page that earns anything was hidden behind an undiscoverable swipe.
+     Now only the sections scroll, Sign in and Join are pinned where a thumb
+     can always reach them, and the rail fades at its edge so it reads as
+     scrollable. "Front page" is dropped here because the masthead above it is
+     already a link home. */
+  nav.sec{gap:12px}
+  nav.sec ul{
+    flex:1 1 auto;min-width:0;gap:16px;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent);
+    mask-image:linear-gradient(to right,#000 calc(100% - 24px),transparent);
+  }
+  nav.sec ul::-webkit-scrollbar{display:none}
+  nav.sec ul li.home{display:none}
+  nav.sec ul li a{padding:9px 0}          /* a thumb needs more than 22px */
+  nav.sec ul li a .the{display:none}      /* "Lounge" — the 22px "The" costs us Shop */
   nav.sec .acct{flex:0 0 auto;gap:14px}
   .dateline{flex-direction:column;align-items:flex-start}
   .dateline .st{text-align:left;white-space:normal}

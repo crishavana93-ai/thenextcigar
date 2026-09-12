@@ -9,14 +9,17 @@ const { section = "none", compact = false } = Astro.props;
 const isHome = Astro.url.pathname === "/";
 
 const items: [string, string, string][] = [
+  // Order matters on a phone. The rail scrolls, and whatever sits past the
+  // fold is found only by a swipe nobody is told about — so the destinations
+  // that earn (the Lounge, the Shop) come before the ones that don't.
   ["front", "/", "Front page"],
   ["markets", "/finder/", "Markets"],
   ["magazine", "/blog/", "Magazine"],
+  ["lounge", "/lounge/", "The Lounge"],
+  ["shop", "/shop/", "Shop"],
   ["diary", "/category/cigar-events/", "Diary"],
   ["watch", "/watch/", "Watch"],
   ["tools", "/tools/", "Tools"],
-  ["lounge", "/lounge/", "The Lounge"],
-  ["shop", "/shop/", "Shop"],
 ];
 ---
 
@@ -33,7 +36,11 @@ const items: [string, string, string][] = [
   <nav class="sec" aria-label="Sections">
     <ul>
       {items.map(([key, href, label]) => (
-        <li><a href={href} class:list={{ on: key === section }}>{label}</a></li>
+        <li class:list={{ home: key === "front" }}>
+          <a href={href} class:list={{ on: key === section }}>
+            {label === "The Lounge" ? <><span class="the">The </span>Lounge</> : label}
+          </a>
+        </li>
       ))}
     </ul>
     <div class="acct">
