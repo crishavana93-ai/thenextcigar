@@ -19,6 +19,10 @@ for (const f of readdirSync(dir)) {
   const slug = fm.slug || f.replace(/\.mdx?$/, "");
   const price = Number(fm.price);
   if (!Number.isFinite(price)) continue;
+  // An archived product is off sale, not merely hidden. Leaving it in the
+  // catalogue means the checkout function will still price and sell it to
+  // anyone who POSTs the slug, even though no page links to it any more.
+  if (fm.isArchived === "true") continue;
   cat[slug] = {
     name: fm.name || slug,
     sku: fm.sku || "",
