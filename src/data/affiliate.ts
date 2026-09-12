@@ -96,15 +96,44 @@ export function amazonUrl(asin: string | null): string | null {
  */
 export const PICKS: Record<string, Pick[]> = {
   "best-cigar-lighters-2026": [
-    // The page the affiliate plan exists for. Butane lighters are UN 1057,
-    // dangerous goods class 2.1, and cannot travel by ordinary air post — so
-    // this guide is the one we will never stock ourselves, and pointing the
-    // reader somewhere honest is the whole point.
-    // { label: "Single-jet, for a windless evening", asin: "B0…", note: "…" },
+    // We sell a jet lighter of our own at $49-55. These are the tier above it —
+    // brands with a service department, which is the only thing that matters in
+    // a category where the failure mode is "it stops lighting".
+    //
+    // Ratings checked on amazon.com, 12 September 2026. Read them before you
+    // get excited: premium cigar lighters rate 4.0-4.6, not 4.8. Colibri's
+    // lighters sit between 3.3 and 4.5 despite the brand's reputation, which is
+    // why none of them are here. Jet lighters are simply the least reliable
+    // object in this hobby and the guide should say so rather than pretend a
+    // $150 torch is a solved problem.
+    {
+      label: "XIKAR ELX double-jet with 9mm punch",
+      asin: "B01MRLC3R2",
+      note: "4.4 from Amazon buyers, which is about as good as this category gets. The reason to pay $85 for a lighter that does the same job as a $20 one is Xikar's warranty department — they repair rather than replace, and they have been doing it for thirty years. Buy this instead of ours if you want a lighter you will still own in ten years.",
+    },
   ],
   "best-cigar-cutters-2026": [
-    // Our own cutters go in the shop, not here. If a cutter is worth
-    // recommending and we do not sell it, it belongs in this list.
+    // The shop sells cutters at $38-99, so these deliberately are not competing
+    // with them: they are the branded tier we cannot source and would not try
+    // to. If a reader wants a lifetime-warranty cutter, the honest answer is
+    // that we do not sell one.
+    //
+    // All three verified on amazon.com, 12 September 2026, all rated 4.8.
+    {
+      label: "Xikar Xi1 — the lifetime-warranty benchmark",
+      asin: "B003SJXFSE",
+      note: "440C steel at Rockwell 57, and a warranty that outlives most marriages. Ninety-two dollars is a lot for a cutter and we are not going to pretend it cuts three times better than a twenty-dollar one. What it does is never need replacing, and Xikar fix it when it eventually does.",
+    },
+    {
+      label: "Colibri Premium V-Cut",
+      asin: "B00H85QXPG",
+      note: "The V-cut most people mean when they say V-cut. Spring-loaded, deep enough for a tight draw without taking too much cap off. Worth it if you smoke figurados or fight tight draws; pointless if you only smoke robustos, where a straight cut is better.",
+    },
+    {
+      label: "Case Elegance Classic — the sensible one",
+      asin: "B081268GTS",
+      note: "Twenty-three dollars, same 4.8 rating as the ninety-dollar Xikar. If you are buying your first proper cutter and the Xikar feels absurd, this is the one we would actually hand a friend.",
+    },
   ],
   "best-cigar-gifts-under-100": [],
   "the-cigar-travel-kit-what-to-pack-for-a-weekend-abroad": [],
