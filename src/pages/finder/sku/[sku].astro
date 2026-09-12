@@ -78,28 +78,36 @@ const fmtDay = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "nu
 
 const url = `https://thenextcigar.com/finder/sku/${sku.slug}/`;
 const graph: any[] = [
+  // Was "Product" with an AggregateOffer. Dropped 12 September 2026, for the
+  // same reason as the Finder list pages: Google requires an "image" on any
+  // Product, no photograph of these cigars exists anywhere in finder-data.ts,
+  // and we will not invent one or hotlink a retailer's. Every one of these 52
+  // was invalid, so nothing was being earned from them to lose.
+  //
+  // "ItemPage" with a "mainEntity" describes what this page honestly is: an
+  // editorial page ABOUT a cigar sold by other people, not a listing of a
+  // product we sell. The FAQ and breadcrumb blocks below are the parts that
+  // actually earn rich results, and they are untouched.
+  //
+  // The way back, if you ever want it, is photographs: add an image field to
+  // Sku, fill it for the ones you have shot yourself, and restore "@type":
+  // "Product" for those only.
   {
-    "@type": "Product",
+    "@type": "ItemPage",
+    name: `${sku.brand} ${sku.vitola} — box price compared across Europe`,
+    url,
+    mainEntity: {
+    "@type": "Thing",
     name: `${sku.brand} ${sku.vitola}`,
-    brand: { "@type": "Brand", name: sku.brand },
     description: sku.blurb,
-    category: "Premium Cuban Cigar",
     additionalProperty: [
       { "@type": "PropertyValue", name: "Vitola", value: sku.shape },
       { "@type": "PropertyValue", name: "Ring gauge", value: String(sku.ring) },
       { "@type": "PropertyValue", name: "Length", value: `${sku.lengthMm} mm` },
       { "@type": "PropertyValue", name: "Box size", value: String(sku.boxSize) },
+      { "@type": "PropertyValue", name: "Brand", value: sku.brand },
     ],
-    ...(inStock.length > 0 && {
-      offers: {
-        "@type": "AggregateOffer", priceCurrency: "EUR", lowPrice: minEur.toFixed(2), highPrice: maxEur.toFixed(2),
-        offerCount: String(inStock.length), availability: "https://schema.org/InStock",
-        offers: inStock.map((o) => ({
-          "@type": "Offer", url: o.snap.sourceUrl, price: o.snap.price.toFixed(2), priceCurrency: o.snap.currency,
-          availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: o.retailer.name, url: o.retailer.url }, areaServed: o.country.name,
-        })),
-      },
-    }),
+    },
   },
   {
     "@type": "BreadcrumbList",
