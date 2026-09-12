@@ -62,6 +62,13 @@ const newest20 = NEW_LISTINGS.slice(0, 12);
 const fmtSeen = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 const releaseCountries = COUNTRIES.filter((c) => c.status === "open").sort((a, b) => a.name.localeCompare(b.name));
 
+// The rows used to nest a full Product with an Offer inside every ListItem.
+// That did two wrong things at once. It duplicated markup the SKU page already
+// carries properly, and it declared 94 Cuban cigars as products of this domain
+// — which we do not sell, and for which no photograph exists, so Google marked
+// every one of them invalid for a missing "image". A list page's job in
+// structured data is to name its items and point at them; the item pages carry
+// the item markup. That is all this does now.
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "ItemList",
@@ -69,11 +76,8 @@ const jsonLd = {
   numberOfItems: board.length,
   itemListElement: board.slice(0, 25).map((r, i) => ({
     "@type": "ListItem", position: i + 1,
-    item: {
-      "@type": "Product", name: `${r.sku.brand} ${r.sku.vitola} — box of ${r.sku.boxSize}`,
-      url: `https://thenextcigar.com/finder/sku/${r.sku.slug}/`,
-      offers: { "@type": "Offer", price: r.snap.price, priceCurrency: r.snap.currency, availability: r.snap.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", seller: { "@type": "Organization", name: r.retailer.name } },
-    },
+    name: `${r.sku.brand} ${r.sku.vitola} — box of ${r.sku.boxSize}`,
+    url: `https://thenextcigar.com/finder/sku/${r.sku.slug}/`,
   })),
 };
 ---
