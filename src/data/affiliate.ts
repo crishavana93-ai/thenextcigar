@@ -37,7 +37,7 @@ export interface Pick {
 /** Associates tags per storefront. Empty string = not approved yet. */
 export const AMAZON_TAGS: Record<string, string> = {
   se: "thenextcigar-21",  // amazon.se — approved 12 September 2026
-  uk: "",                 // amazon.co.uk — not joined yet. 329 clicks a quarter.
+  uk: "thenextciga0a-21", // amazon.co.uk — approved 12 September 2026. 329 clicks a quarter.
   de: "",                 // amazon.de — not joined yet
   com: "thenextciga08-20", // amazon.com — approved 12 September 2026. 660 clicks a quarter.
 };
@@ -55,11 +55,14 @@ export const AMAZON_TAGS: Record<string, string> = {
  * at .com, because that is where the readership is — 660 clicks a quarter from
  * the United States against 69 from Sweden.
  *
- * Still missing is the United Kingdom, worth 329 clicks a quarter and the
- * second-largest audience by a distance. One application at
- * affiliate-program.amazon.co.uk covers it and lets Germany, France, Italy and
- * Spain be added in the same flow. Until that tag exists, British readers
- * clicking these links buy on amazon.com and we earn nothing on them.
+ * The UK came in the same evening, so the three biggest audiences — 660 US,
+ * 329 UK, 69 SE — are all covered. Germany is the next one worth having at 65
+ * clicks a quarter, and it is a single click from the UK signup confirmation
+ * page rather than a fresh application.
+ *
+ * Until OneLink is live these links all point at .com regardless of who is
+ * reading, so the UK and SE tags earn nothing yet. They are here so that
+ * switching OneLink on is a configuration step and not a code change.
  *
  * Once OneLink is configured in Associates Central, it will route each reader
  * to their own store using whichever of these tags applies. It only monetises
