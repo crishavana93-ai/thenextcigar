@@ -39,7 +39,7 @@ export const AMAZON_TAGS: Record<string, string> = {
   se: "thenextcigar-21",  // amazon.se — approved 12 September 2026
   uk: "",                 // amazon.co.uk — not joined yet. 329 clicks a quarter.
   de: "",                 // amazon.de — not joined yet
-  com: "",                // amazon.com — not joined yet. 660 clicks a quarter.
+  com: "thenextciga08-20", // amazon.com — approved 12 September 2026. 660 clicks a quarter.
 };
 
 /**
@@ -51,15 +51,22 @@ export const AMAZON_TAGS: Record<string, string> = {
  * a Swedish -21 tag pays nothing at all. So this must name a store we hold an
  * approved account for, and today that is exactly one: amazon.se.
  *
- * That is uncomfortable, because it is the wrong store for most of the
- * readership: 660 clicks a quarter come from the United States and 329 from
- * the United Kingdom, against 69 from Sweden. Fixing it is an application, not
- * a code change — join the US and UK programmes, put those tags above, and
- * then OneLink can send each reader to their own store and actually pay for
- * it. Until then, pointing at .se earns a little; pointing at .com earns
- * nothing.
+ * As of 12 September 2026 we hold two: amazon.se and amazon.com. This points
+ * at .com, because that is where the readership is — 660 clicks a quarter from
+ * the United States against 69 from Sweden.
+ *
+ * Still missing is the United Kingdom, worth 329 clicks a quarter and the
+ * second-largest audience by a distance. One application at
+ * affiliate-program.amazon.co.uk covers it and lets Germany, France, Italy and
+ * Spain be added in the same flow. Until that tag exists, British readers
+ * clicking these links buy on amazon.com and we earn nothing on them.
+ *
+ * Once OneLink is configured in Associates Central, it will route each reader
+ * to their own store using whichever of these tags applies. It only monetises
+ * marketplaces we hold an account for, so it is a multiplier on this list, not
+ * a substitute for extending it.
  */
-export const PRIMARY_STORE: keyof typeof AMAZON_TAGS = "se";
+export const PRIMARY_STORE: keyof typeof AMAZON_TAGS = "com";
 
 const DOMAIN: Record<string, string> = {
   se: "amazon.se", uk: "amazon.co.uk", de: "amazon.de", com: "amazon.com",
