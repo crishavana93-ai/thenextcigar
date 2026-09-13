@@ -15,7 +15,41 @@ const range = (e: (typeof events)[number]) => {
   return a.toDateString() === b.toDateString() ? `${d(a)} ${a.getFullYear()}` : a.getMonth() === b.getMonth() ? `${d(a, false)}–${d(b)} ${a.getFullYear()}` : `${d(a)} – ${d(b)} ${a.getFullYear()}`;
 };
 const typeLabel = { festival: "Festival", "trade-show": "Trade fair", gala: "Gala", regional: "Regional" };
-const jsonLd = { "@context": "https://schema.org", "@graph": upcoming.map((e) => ({ "@type": "Event", name: e.name, startDate: e.startDate, endDate: e.endDate, url: e.url, description: e.tagline, location: { "@type": "Place", name: e.location, geo: { "@type": "GeoCoordinates", latitude: e.lat, longitude: e.lng } }, ...(e.host && { organizer: { "@type": "Organization", name: e.host } }) })) };
+// Search Console (13 Sep 2026) flagged the Event markup for missing offers,
+// image, performer, organizer.url and location.address. Four are fixable from
+// data we already hold; two are not and stay out rather than be invented:
+//   image     — no event has a photograph in cigar-events.ts. Leave it off.
+//   performer — a cigar fair has no performer in the schema sense.
+// The location string is "City, Country", which is a real PostalAddress.
+const splitPlace = (loc: string) => {
+  const parts = loc.split(",").map((x) => x.trim()).filter(Boolean);
+  return { addressLocality: parts[0] || loc, addressCountry: parts[parts.length - 1] || undefined };
+};
+const jsonLd = { "@context": "https://schema.org", "@graph": upcoming.map((e) => ({
+  "@type": "Event",
+  name: e.name,
+  startDate: e.startDate,
+  endDate: e.endDate,
+  url: e.url,
+  description: e.tagline,
+  eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+  eventStatus: "https://schema.org/EventScheduled",
+  location: {
+    "@type": "Place",
+    name: e.location,
+    address: { "@type": "PostalAddress", ...splitPlace(e.location) },
+    geo: { "@type": "GeoCoordinates", latitude: e.lat, longitude: e.lng },
+  },
+  ...(e.host && { organizer: { "@type": "Organization", name: e.host, url: e.url } }),
+  ...(e.priceFrom && { offers: {
+    "@type": "Offer",
+    url: e.url,
+    price: e.priceFrom,
+    priceCurrency: e.priceCurrency ?? "EUR",
+    availability: "https://schema.org/InStock",
+    validFrom: e.startDate,
+  } }),
+})) };
 ---
 
 <PaperLayout title="The Diary — cigar festivals, fairs and galas in Europe and Cuba · The Next Cigar" description={`${upcoming.length} upcoming cigar events, dated and located, from the Festival del Habano to the regional evenings worth a train ticket.`} section="diary" compact={true} jsonLd={jsonLd}>
