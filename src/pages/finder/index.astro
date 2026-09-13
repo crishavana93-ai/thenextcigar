@@ -3,6 +3,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
 import {
   COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
   bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl, NEW_LISTINGS, RETAILER_BY_ID,
+  historyForSku,
 } from "../../data/finder-live";
 import { FX_TO_EUR } from "../../data/finder-data";
 import { DUTY_RATES } from "../../data/duty-rates";
@@ -40,6 +41,49 @@ const mover = PRICE_SNAPSHOTS
   })
   .filter((m): m is NonNullable<typeof m> => m !== null)
   .sort((a, b) => b.pct - a.pct)[0];
+
+// ── Is this a good price right now? ────────────────────────────────────────
+// PRICE_HISTORY holds 90 days of the cheapest daily EUR box price per SKU. A
+// price list tells you what something costs; only history tells you whether
+// that is a number to act on. Two signals, both derived, both silent unless
+// they are true:
+//   "90-day low"   — today's cheapest box is at or below the lowest we have
+//                    recorded in the window (needs 14+ days of data to mean
+//                    anything).
+//   "above usual"  — today's cheapest is 10%+ over the 90-day median.
+// Nothing is shown for rows in between, because "about normal" is noise.
+type Signal = { kind: "low" | "high"; label: string; title: string } | null;
+function priceSignal(skuId: string, nowEur: number): Signal {
+  const h = historyForSku(skuId).filter((x) => x.eur > 0);
+  if (h.length < 14) return null;
+  const eurs = h.map((x) => x.eur).sort((a, b) => a - b);
+  const min = eurs[0];
+  const median = eurs[Math.floor(eurs.length / 2)];
+  const days = h.length;
+  if (nowEur <= min * 1.005) {
+    return { kind: "low", label: `${days}-day low`, title: `Cheapest box price we have recorded in the last ${days} days.` };
+  }
+  // "above usual" is HELD BACK, deliberately. On the live board it fired on 21
+  // of 52 rows, and the medians it was comparing against are impossible: a
+  // 44-day median of EUR 53 for a box of 25 Jose L. Piedra Brevas, EUR 87 for
+  // Quintero Brevas, EUR 144 for Quai d'Orsay No.50. Those are the cigarmust
+  // PrestaShop rows from before cigarmustUrlHasCombination() — pack prices
+  // recorded as box prices — still sitting in the history table after the
+  // snapshot rows were purged. A fake-low history cannot produce a false
+  // "low" (it only hides real ones), but it produces a false "high" on every
+  // honest price, which would tell readers 21 cigars are overpriced when the
+  // truth is our own data is dirty.
+  //
+  // Re-enable once finder_price_history has been audited: delete points
+  // whose eur is under ~55% of that SKU's median across other retailers, or
+  // any point sourced from cigarmust before 12 Sep 2026.
+  const HIGH_SIGNAL_ENABLED = false;
+  if (HIGH_SIGNAL_ENABLED && median > 0 && nowEur >= median * 1.10) {
+    const pct = Math.round(((nowEur - median) / median) * 100);
+    return { kind: "high", label: `+${pct}% vs usual`, title: `Today's cheapest listing is ${pct}% above its ${days}-day median of €${median.toFixed(0)}.` };
+  }
+  return null;
+}
 
 // The full board, alphabetical by brand then vitola.
 const board = priced.slice().sort((a, b) =>
@@ -195,7 +239,11 @@ const jsonLd = {
         <tbody id="board-body">
           {board.map(({ sku, snap, retailer, eur }) => (
             <tr class:list={{ oos: !snap.inStock }} data-slug={sku.slug}>
-              <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>box of {sku.boxSize} · {sku.shape}</small></td>
+              <td class="v">
+                <a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a>
+                {(() => { const sig = priceSignal(sku.id, eur); return sig ? <span class:list={["sig", sig.kind]} title={sig.title}>{sig.label}</span> : null; })()}
+                <small>box of {sku.boxSize} · {sku.shape}</small>
+              </td>
               <td class="v" style="font-size:14px">
                 <a href={effectiveShopUrl(snap.sourceUrl, sku, retailer).url} rel="nofollow noopener" target="_blank">{retailer.name}</a>
                 <small>{String(retailer.country).toUpperCase()} · {checkedLabel(snap)}{snap.inStock ? "" : " · sold out"}</small>
@@ -366,6 +414,11 @@ const jsonLd = {
       background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px}
     .landed-bar__hint{flex:1 1 260px;font-size:13px;line-height:1.4;color:var(--mute)}
     .landed-val{color:var(--ox);font-variant-numeric:tabular-nums}
+    .sig{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:2px;
+      font:600 10.5px/1.5 var(--sans,system-ui);letter-spacing:.04em;text-transform:uppercase;
+      vertical-align:2px;border:1px solid currentColor;cursor:help}
+    .sig.low{color:var(--live)}
+    .sig.high{color:var(--ox)}
     @media (max-width:600px){
       .landed-bar{gap:8px}
       .landed-bar select{flex:1 1 100%}
