@@ -4,6 +4,8 @@ import {
   COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
   bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl, NEW_LISTINGS, RETAILER_BY_ID,
 } from "../../data/finder-live";
+import { FX_TO_EUR } from "../../data/finder-data";
+import { DUTY_RATES } from "../../data/duty-rates";
 
 /**
  * /finder/ — "Markets", the stock page of the paper.
@@ -61,6 +63,39 @@ const status = LIVE_COUNT > 0
 const newest20 = NEW_LISTINGS.slice(0, 12);
 const fmtSeen = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 const releaseCountries = COUNTRIES.filter((c) => c.status === "open").sort((a, b) => a.name.localeCompare(b.name));
+
+// ── Landed cost on the board ───────────────────────────────────────────────
+// The board has always ranked by the retailer's sticker price, and the note in
+// the rail has always admitted that is not what you pay: "a box crossing a
+// border picks up destination duty and VAT." Saying so is not the same as
+// fixing it. Cigars carry tobacco excise, which is most of the bill and which
+// no general duty calculator models, so the cheapest listing is regularly not
+// the cheapest box to actually receive.
+//
+// landedCost() already existed and was already correct — it was just only
+// wired into the 52 SKU detail pages, not into the board that the traffic
+// lands on. This ships the numbers the browser needs to re-rank the whole
+// board against wherever the reader actually lives.
+//
+// Default stays sticker price. We do not know where anyone is, and guessing
+// from an IP would make every number on the page a guess too.
+const landedCountries = COUNTRIES
+  .filter((c) => DUTY_RATES[c.code])
+  .map((c) => ({ code: c.code, name: c.name, flag: c.flag }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const boardData = {
+  fx: FX_TO_EUR,
+  rows: board.map(({ sku, snap, retailer }) => ({
+    slug: sku.slug,
+    price: snap.price,
+    currency: snap.currency,
+    from: retailer.country,
+    boxSize: sku.boxSize,
+    ring: sku.ring,
+    lengthMm: sku.lengthMm,
+  })),
+};
 
 // The rows used to nest a full Product with an Offer inside every ListItem.
 // That did two wrong things at once. It duplicated markup the SKU page already
@@ -139,21 +174,34 @@ const jsonLd = {
         </article>
       )}
 
-      <div class="rulehead"><h2>The board <em>· {board.length} vitolas, cheapest listing</em></h2><span class="more">{brands.length} brands</span></div>
-      <table class="mk wide">
+      <div class="rulehead">
+        <h2>The board <em id="board-sub">· {board.length} vitolas, cheapest listing</em></h2>
+        <span class="more">{brands.length} brands</span>
+      </div>
+
+      <div class="landed-bar">
+        <label for="board-ship">Ship it to</label>
+        <select id="board-ship">
+          <option value="">— nowhere yet, show listed prices —</option>
+          {landedCountries.map((c) => <option value={c.code}>{c.flag} {c.name}</option>)}
+        </select>
+        <span class="landed-bar__hint" id="board-hint">Pick a country and the board re-ranks by what a box actually costs at your door — duty, tobacco excise and VAT included.</span>
+      </div>
+
+      <table class="mk wide" id="board-table">
         <thead>
-          <tr><th>Vitola</th><th>Cheapest at</th><th class="num">Box</th><th class="num">Per cigar</th></tr>
+          <tr><th>Vitola</th><th>Cheapest at</th><th class="num" id="th-box">Box</th><th class="num" id="th-each">Per cigar</th></tr>
         </thead>
-        <tbody>
+        <tbody id="board-body">
           {board.map(({ sku, snap, retailer, eur }) => (
-            <tr class:list={{ oos: !snap.inStock }}>
+            <tr class:list={{ oos: !snap.inStock }} data-slug={sku.slug}>
               <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>box of {sku.boxSize} · {sku.shape}</small></td>
               <td class="v" style="font-size:14px">
                 <a href={effectiveShopUrl(snap.sourceUrl, sku, retailer).url} rel="nofollow noopener" target="_blank">{retailer.name}</a>
                 <small>{String(retailer.country).toUpperCase()} · {checkedLabel(snap)}{snap.inStock ? "" : " · sold out"}</small>
               </td>
-              <td class="num p">{formatPrice(snap.price, snap.currency)}</td>
-              <td class="num p">€{(eur / sku.boxSize).toFixed(0)}</td>
+              <td class="num p" data-box data-sticker={formatPrice(snap.price, snap.currency)}>{formatPrice(snap.price, snap.currency)}</td>
+              <td class="num p" data-each data-sticker={`€${(eur / sku.boxSize).toFixed(0)}`}>€{(eur / sku.boxSize).toFixed(0)}</td>
             </tr>
           ))}
         </tbody>
@@ -209,4 +257,118 @@ const jsonLd = {
       </ul>
     </aside>
   </div>
+
+  <script type="application/json" id="board-data" set:html={JSON.stringify(boardData)} />
+  <script>
+    // Re-rank the board by what a box actually costs at the reader's door.
+    //
+    // landedCost() is the same pure function the SKU pages use, so the board
+    // and the detail page can never disagree. Everything runs client-side from
+    // a JSON payload: the page stays static, and nobody's location is sent
+    // anywhere or guessed from an IP.
+    import { landedCost } from "../../lib/finder/landed";
+
+    const el = (id: string) => document.getElementById(id);
+    const dataEl = el("board-data");
+    const sel = el("board-ship") as HTMLSelectElement | null;
+    const body = el("board-body");
+    if (dataEl && sel && body) {
+      const data = JSON.parse(dataEl.textContent || "{}");
+      const byslug: Record<string, any> = {};
+      for (const r of data.rows) byslug[r.slug] = r;
+
+      const rows = Array.from(body.querySelectorAll("tr")) as HTMLTableRowElement[];
+      const stickerOrder = rows.map((r) => r.dataset.slug || "");
+
+      function reset() {
+        for (const tr of rows) {
+          for (const key of ["box", "each"]) {
+            const td = tr.querySelector(`[data-${key}]`) as HTMLElement | null;
+            if (td) { td.textContent = td.dataset.sticker || ""; td.classList.remove("landed-val"); }
+          }
+          body!.appendChild(tr);
+        }
+        // Restore the original alphabetical order.
+        const pos: Record<string, number> = {};
+        stickerOrder.forEach((sl, i) => { pos[sl] = i; });
+        rows.slice().sort((a, b) => pos[a.dataset.slug || ""] - pos[b.dataset.slug || ""])
+            .forEach((tr) => body!.appendChild(tr));
+        el("th-box")!.textContent = "Box";
+        el("th-each")!.textContent = "Per cigar";
+        el("board-sub")!.textContent = `· ${rows.length} vitolas, cheapest listing`;
+        el("board-hint")!.textContent =
+          "Pick a country and the board re-ranks by what a box actually costs at your door — duty, tobacco excise and VAT included.";
+      }
+
+      function apply(code: string) {
+        const priced: { tr: HTMLTableRowElement; total: number; each: number }[] = [];
+        for (const tr of rows) {
+          const src = byslug[tr.dataset.slug || ""];
+          if (!src) continue;
+          let r;
+          try {
+            r = landedCost({
+              price: src.price, currency: src.currency,
+              fromCountry: src.from, toCountry: code,
+              boxSize: src.boxSize, ring: src.ring, lengthMm: src.lengthMm,
+              fx: data.fx,
+            });
+          } catch { continue; }
+          priced.push({ tr, total: r.totalEur, each: r.perCigarEur });
+        }
+        if (!priced.length) { reset(); return; }
+
+        priced.sort((a, b) => a.each - b.each);
+
+        for (const { tr, total, each } of priced) {
+          const box = tr.querySelector("[data-box]") as HTMLElement | null;
+          const per = tr.querySelector("[data-each]") as HTMLElement | null;
+          if (box) { box.textContent = "€" + Math.round(total); box.classList.add("landed-val"); }
+          if (per) { per.textContent = "€" + each.toFixed(0); per.classList.add("landed-val"); }
+          body!.appendChild(tr);
+        }
+
+        el("th-box")!.textContent = "At your door";
+        el("th-each")!.textContent = "Per cigar";
+        const name = sel!.options[sel!.selectedIndex].text.replace(/^\S+\s/, "");
+        el("board-sub")!.textContent = `· ${priced.length} vitolas, delivered to ${name}`;
+
+        // The point of the whole exercise: say plainly when the ranking moved.
+        const wasFirst = stickerOrder.length ? stickerOrder[0] : "";
+        const nowFirst = priced[0].tr.dataset.slug || "";
+        const moved = priced.filter((p, i) => stickerOrder.indexOf(p.tr.dataset.slug || "") !== i).length;
+        el("board-hint")!.textContent = moved > 0
+          ? `Re-ranked by landed cost to ${name}. ${moved} of ${priced.length} rows are not where the sticker price put them — excise and VAT do not respect a price list.`
+          : `Landed cost to ${name}. The order happens to be unchanged.`;
+        void wasFirst; void nowFirst;
+      }
+
+      let saved = "";
+      try { saved = localStorage.getItem("tnc:ship-to") || ""; } catch {}
+      if (saved && Array.from(sel.options).some((o) => o.value === saved)) {
+        sel.value = saved; apply(saved);
+      }
+
+      sel.addEventListener("change", () => {
+        const code = sel.value;
+        try { localStorage.setItem("tnc:ship-to", code); } catch {}
+        if (code) apply(code); else reset();
+      });
+    }
+  </script>
+
+  <style>
+    .landed-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      padding:10px 0 14px;border-bottom:1px solid var(--rule);margin-bottom:10px}
+    .landed-bar label{font:600 13px/1 var(--sans,system-ui);letter-spacing:.06em;
+      text-transform:uppercase;color:var(--mute)}
+    .landed-bar select{font:inherit;font-size:15px;padding:6px 8px;
+      background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px}
+    .landed-bar__hint{flex:1 1 260px;font-size:13px;line-height:1.4;color:var(--mute)}
+    .landed-val{color:var(--ox);font-variant-numeric:tabular-nums}
+    @media (max-width:600px){
+      .landed-bar{gap:8px}
+      .landed-bar select{flex:1 1 100%}
+    }
+  </style>
 </PaperLayout>
