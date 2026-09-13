@@ -223,6 +223,11 @@ const jsonLd = {
         <span class="more">{brands.length} brands</span>
       </div>
 
+      <p class="firstvisit" id="firstvisit" hidden>
+        <b>New here?</b> Pick where you live and the board re-prices every box to your door —
+        duty, tobacco excise and VAT included. The cheapest listing is often not the cheapest box.
+        <button type="button" class="firstvisit__x" id="firstvisit-x" aria-label="Dismiss">×</button>
+      </p>
       <div class="landed-bar">
         <label for="board-ship">Ship it to</label>
         <select id="board-ship">
@@ -397,15 +402,38 @@ const jsonLd = {
         sel.value = saved; apply(saved);
       }
 
+      // First-visit nudge. Not a tour: one inline sentence pointing at the
+      // one control that matters on this page, shown only to someone who has
+      // neither chosen a country nor dismissed it before. Either action ends
+      // it for good. Readers arrive here from Google, not from the front page,
+      // so this is the only place an introduction can actually reach them.
+      const nudge = el("firstvisit");
+      const nudgeX = el("firstvisit-x");
+      let seen = false;
+      try { seen = localStorage.getItem("tnc:finder-intro") === "1"; } catch {}
+      const dismissNudge = () => {
+        if (nudge) nudge.hidden = true;
+        try { localStorage.setItem("tnc:finder-intro", "1"); } catch {}
+      };
+      if (nudge && !seen && !saved) nudge.hidden = false;
+      nudgeX?.addEventListener("click", dismissNudge);
+
       sel.addEventListener("change", () => {
         const code = sel.value;
         try { localStorage.setItem("tnc:ship-to", code); } catch {}
-        if (code) apply(code); else reset();
+        if (code) { apply(code); dismissNudge(); } else reset();
       });
     }
   </script>
 
   <style>
+    .firstvisit{position:relative;margin:0 0 10px;padding:10px 34px 10px 12px;
+      border:1px solid var(--rule);border-left:3px solid var(--ox);background:var(--paper-2);
+      font-size:14px;line-height:1.45;color:var(--ink-2)}
+    .firstvisit b{color:var(--ink)}
+    .firstvisit__x{position:absolute;top:6px;right:8px;border:0;background:none;
+      font:20px/1 var(--sans,system-ui);color:var(--mute);cursor:pointer;padding:2px 6px}
+    .firstvisit__x:hover{color:var(--ink)}
     .landed-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
       padding:10px 0 14px;border-bottom:1px solid var(--rule);margin-bottom:10px}
     .landed-bar label{font:600 13px/1 var(--sans,system-ui);letter-spacing:.06em;
