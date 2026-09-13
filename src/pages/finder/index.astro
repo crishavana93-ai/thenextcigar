@@ -63,24 +63,23 @@ function priceSignal(skuId: string, nowEur: number): Signal {
   if (nowEur <= min * 1.005) {
     return { kind: "low", label: `${days}-day low`, title: `Cheapest box price we have recorded in the last ${days} days.` };
   }
-  // "above usual" is HELD BACK, deliberately. On the live board it fired on 21
-  // of 52 rows, and the medians it was comparing against are impossible: a
-  // 44-day median of EUR 53 for a box of 25 Jose L. Piedra Brevas, EUR 87 for
-  // Quintero Brevas, EUR 144 for Quai d'Orsay No.50. Those are the cigarmust
-  // PrestaShop rows from before cigarmustUrlHasCombination() — pack prices
-  // recorded as box prices — still sitting in the history table after the
-  // snapshot rows were purged. A fake-low history cannot produce a false
-  // "low" (it only hides real ones), but it produces a false "high" on every
-  // honest price, which would tell readers 21 cigars are overpriced when the
-  // truth is our own data is dirty.
+  // "above usual" — enabled 13 September, after being held back for a day on
+  // a wrong diagnosis. I assumed a 44-day median of EUR 53 for a box of 25
+  // Jose L. Piedra Brevas had to be pack-priced-as-box contamination. It is
+  // not: Noblego and Cigarmaxx sold that box at EUR 53.35 for 250 days, then
+  // went out of stock on 10 September, leaving EGM in Switzerland at EUR 120
+  // as the cheapest available. "124% above usual" is exactly true, and it is
+  // the most useful thing the board can say — the cheap source is gone and
+  // you are about to pay double. The cleanup SQL correctly deleted nothing.
   //
-  // Re-enable once finder_price_history has been audited: delete points
-  // whose eur is under ~55% of that SKU's median across other retailers, or
-  // any point sourced from cigarmust before 12 Sep 2026.
-  const HIGH_SIGNAL_ENABLED = false;
+  // The signal compares today's cheapest IN-STOCK box against the 90-day
+  // median of the cheapest box each day, in-stock only, same pack size. A
+  // high reading therefore usually means "the usual source is sold out",
+  // which the tooltip now says.
+  const HIGH_SIGNAL_ENABLED = true;
   if (HIGH_SIGNAL_ENABLED && median > 0 && nowEur >= median * 1.10) {
     const pct = Math.round(((nowEur - median) / median) * 100);
-    return { kind: "high", label: `+${pct}% vs usual`, title: `Today's cheapest listing is ${pct}% above its ${days}-day median of €${median.toFixed(0)}.` };
+    return { kind: "high", label: `+${pct}% vs usual`, title: `Today's cheapest available box is ${pct}% above its ${days}-day median of €${median.toFixed(0)} — the usual cheapest source is most likely sold out.` };
   }
   return null;
 }
