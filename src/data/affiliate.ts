@@ -64,9 +64,21 @@ export const AMAZON_TAGS: Record<string, string> = {
  * clicks a quarter, and it is a single click from the UK signup confirmation
  * page rather than a fresh application.
  *
- * Until OneLink is live these links all point at .com regardless of who is
- * reading, so the UK and SE tags earn nothing yet. They are here so that
- * switching OneLink on is a configuration step and not a code change.
+ * ON INTERNATIONAL READERS (checked 13 September 2026): OneLink no longer
+ * exists — it is not in Associates Central's menu and its resource pages 404.
+ * Amazon replaced it in August 2026 with "Global Earning", which localises a
+ * .com link automatically for every US Associate: a reader in the UK is sent
+ * to amazon.co.uk, a reader in Sweden to amazon.se, with the click still
+ * credited to the .com account. No script, no account linking. This matches
+ * what we observed — following one of our own .com links as a Swedish visitor
+ * landed on amazon.se. So pointing every link at .com is now the RIGHT
+ * choice, not a compromise, and the uk/se tags below are belt-and-braces
+ * rather than load-bearing.
+ *
+ * What Global Earning still needs: a payment method per country (done — the
+ * Revolut account is assigned to all ten), and the .com tax interview
+ * completed. That interview is the one real blocker, and it is with Amazon
+ * support over the citizenship dropdown.
  *
  * Once OneLink is configured in Associates Central, it will route each reader
  * to their own store using whichever of these tags applies. It only monetises
