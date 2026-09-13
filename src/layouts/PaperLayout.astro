@@ -101,5 +101,32 @@ const ogImage = new URL(image, Astro.site).toString();
       </main>
       <PaperFooter />
     </div>
+    <script is:inline>
+      // Outbound-click counter. One delegated listener for the whole site, so
+      // every link to a retailer — on the Finder, a country page, a SKU page,
+      // or inside an article like the retailer map — is counted without
+      // touching the links themselves. Fires a sendBeacon to /api/out, which
+      // bumps one integer per (day, retailer host, our page). Nothing about
+      // the reader is sent or stored. The list of hosts is enforced server
+      // side; this only avoids pointless requests for links we do not count.
+      (function () {
+        var HOSTS = /(^|\.)(cigarmust\.com|noblego\.de|cigarworld\.de|sigarietabacchi\.it|lacasadelhabano\.brussels|cigarsmokerclub\.com|cgarsltd\.co\.uk|cigarrspecialisten\.se|cigarrummet\.com|hajenius\.com|jamesfox\.ie|siglomundo\.ch|jjfox\.co\.uk|sauttercigars\.com|havanahouse\.co\.uk|egmcigars\.com|cigarrhyllan\.se|lcdhantwerp\.com|cigarsmoke\.gr|cigarmaxx\.de|cigarone\.com|puros\.se|houseofcigars\.it|bottegadelfumatore\.com|cigarsgalaxy\.gr|danishpipeshop\.com|turmeaus\.co\.uk)$/i;
+        document.addEventListener("click", function (e) {
+          var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+          if (!a) return;
+          var host;
+          try { host = new URL(a.href, location.href).hostname; } catch (_) { return; }
+          if (host === location.hostname || !HOSTS.test(host)) return;
+          var payload = JSON.stringify({ host: host, page: location.pathname });
+          try {
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon("/api/out", new Blob([payload], { type: "application/json" }));
+            } else {
+              fetch("/api/out", { method: "POST", body: payload, keepalive: true, headers: { "content-type": "application/json" } });
+            }
+          } catch (_) {}
+        }, true);
+      })();
+    </script>
   </body>
 </html>
