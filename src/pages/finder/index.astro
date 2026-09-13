@@ -130,8 +130,9 @@ const landedCountries = COUNTRIES
 
 const boardData = {
   fx: FX_TO_EUR,
-  rows: board.map(({ sku, snap, retailer }) => ({
+  rows: board.map(({ sku, snap, retailer, eur }) => ({
     slug: sku.slug,
+    stickerEachEur: eur / sku.boxSize,
     price: snap.price,
     currency: snap.currency,
     from: retailer.country,
@@ -331,7 +332,13 @@ const jsonLd = {
       for (const r of data.rows) byslug[r.slug] = r;
 
       const rows = Array.from(body.querySelectorAll("tr")) as HTMLTableRowElement[];
-      const stickerOrder = rows.map((r) => r.dataset.slug || "");
+      // The board's default display is alphabetical. The comparison that
+      // matters is against the order the STICKER PRICE would give, or else
+      // every row "moves" and the hint becomes noise.
+      const alphaOrder = rows.map((r) => r.dataset.slug || "");
+      const stickerOrder = rows.slice()
+        .sort((a, b) => (byslug[a.dataset.slug || ""]?.stickerEachEur ?? 1e9) - (byslug[b.dataset.slug || ""]?.stickerEachEur ?? 1e9))
+        .map((r) => r.dataset.slug || "");
 
       function reset() {
         for (const tr of rows) {
@@ -343,7 +350,7 @@ const jsonLd = {
         }
         // Restore the original alphabetical order.
         const pos: Record<string, number> = {};
-        stickerOrder.forEach((sl, i) => { pos[sl] = i; });
+        alphaOrder.forEach((sl, i) => { pos[sl] = i; });
         rows.slice().sort((a, b) => pos[a.dataset.slug || ""] - pos[b.dataset.slug || ""])
             .forEach((tr) => body!.appendChild(tr));
         el("th-box")!.textContent = "Box";
@@ -387,13 +394,18 @@ const jsonLd = {
         el("board-sub")!.textContent = `· ${priced.length} vitolas, delivered to ${name}`;
 
         // The point of the whole exercise: say plainly when the ranking moved.
-        const wasFirst = stickerOrder.length ? stickerOrder[0] : "";
-        const nowFirst = priced[0].tr.dataset.slug || "";
-        const moved = priced.filter((p, i) => stickerOrder.indexOf(p.tr.dataset.slug || "") !== i).length;
+        // "Moved" is measured by rank-by-value, not by list position: a row is
+        // counted only if the number of rows strictly cheaper than it differs
+        // between sticker and landed. Two boxes tied at EUR 7 a cigar swapping
+        // seats is not movement, and counting it would make the hint a lie.
+        const stickerEach = (tr: HTMLTableRowElement) => byslug[tr.dataset.slug || ""]?.stickerEachEur ?? 1e9;
+        const rankBy = (vals: number[]) => vals.map((v) => vals.filter((w) => w < v - 1e-9).length);
+        const sRank = rankBy(priced.map((p) => stickerEach(p.tr)));
+        const lRank = rankBy(priced.map((p) => p.each));
+        const moved = priced.filter((_, i) => sRank[i] !== lRank[i]).length;
         el("board-hint")!.textContent = moved > 0
           ? `Re-ranked by landed cost to ${name}. ${moved} of ${priced.length} rows are not where the sticker price put them — excise and VAT do not respect a price list.`
           : `Landed cost to ${name}. The order happens to be unchanged.`;
-        void wasFirst; void nowFirst;
       }
 
       let saved = "";
