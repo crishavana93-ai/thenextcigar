@@ -30,9 +30,12 @@ const priced = SKUS
 
 const cheapest = priced.slice().sort((a, b) => a.eur / a.sku.boxSize - b.eur / b.sku.boxSize).slice(0, 6);
 
-// The mover: the biggest live discount on the board.
+// The mover: the biggest discount on the board among prices read within
+// the fortnight. A May seed row can't be "this week's" anything, so a
+// discount that is not live is not a mover; if nothing live is discounted
+// the block simply doesn't render.
 const mover = PRICE_SNAPSHOTS
-  .filter((s) => s.originalPrice && s.inStock && s.originalPrice > s.price)
+  .filter((s) => s.live && s.originalPrice && s.inStock && s.originalPrice > s.price)
   .map((s) => {
     const sku = SKUS.find((k) => k.id === s.skuId);
     const retailer = RET[s.retailerId];
@@ -41,6 +44,24 @@ const mover = PRICE_SNAPSHOTS
   })
   .filter((m): m is NonNullable<typeof m> => m !== null)
   .sort((a, b) => b.pct - a.pct)[0];
+
+// When no retailer is advertising a discount, the mover is the vitola whose
+// cheapest live box has fallen most against its own 90-day median — a real
+// movement in the market rather than a sticker a shop chose to print.
+const fallen = !mover ? priced
+  .filter((row) => row.snap.live && row.snap.inStock)
+  .map((row) => {
+    const h = historyForSku(row.sku.id).filter((x) => x.eur > 0);
+    if (h.length < 14) return null;
+    const eurs = h.map((x) => x.eur).sort((a, b) => a - b);
+    const median = eurs[Math.floor(eurs.length / 2)];
+    const pct = Math.round(((median - row.eur) / median) * 100);
+    // A fall of 5%+ or a rise of 10%+ against the median; the rise is the
+    // more common story on this board (the usual cheap source sells out).
+    return pct >= 5 || pct <= -10 ? { ...row, pct, median, days: h.length } : null;
+  })
+  .filter((m): m is NonNullable<typeof m> => m !== null)
+  .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct))[0] : undefined;
 
 // ── Is this a good price right now? ────────────────────────────────────────
 // PRICE_HISTORY holds 90 days of the cheapest daily EUR box price per SKU. A
@@ -214,6 +235,20 @@ const jsonLd = {
           </p>
           <p class="by" style="margin-top:8px">
             <a href={`/finder/sku/${mover.sku.slug}/`}>Compare every retailer for this vitola →</a>
+          </p>
+        </article>
+      )}
+      {!mover && fallen && (
+        <article style="padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:18px">
+          <span class="kick">This week's mover</span>
+          <h2 class="head" style="font-size:clamp(28px,3vw,42px);margin-top:8px">
+            {fallen.sku.brand} {fallen.sku.vitola} is {Math.abs(fallen.pct)}% {fallen.pct > 0 ? "under" : "over"} its usual price.
+          </h2>
+          <p class="deck" style="margin-top:10px">
+            €{fallen.eur.toFixed(0)} for the box of {fallen.sku.boxSize} is the cheapest live listing, at {fallen.retailer.name}, against a {fallen.days}-day median of €{fallen.median.toFixed(0)} — {checkedLabel(fallen.snap)}.{fallen.pct < 0 ? " A rise on this board usually means the usual cheapest source has sold out." : ""} {fallen.sku.blurb}
+          </p>
+          <p class="by" style="margin-top:8px">
+            <a href={`/finder/sku/${fallen.sku.slug}/`}>Compare every retailer for this vitola →</a>
           </p>
         </article>
       )}
