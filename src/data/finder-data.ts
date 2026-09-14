@@ -950,14 +950,11 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   // ─── Cohiba Behike 52 (box 10) ────────────────────────────────────────────
   { skuId: "cohiba-behike-52",       retailerId: "se-cigarrspecialisten", price: 20250, currency: "SEK", inStock: false, scrapedAt: "2026-05-12", sourceUrl: "https://cigarrspecialisten.se/cigarrer/kuba/cohiba/" },
   { skuId: "cohiba-behike-52",       retailerId: "se-cigarrhyllan",   price: 17354, currency: "SEK", inStock: true,  scrapedAt: "2026-05-12", sourceUrl: "https://cigarrhyllan.se/cigarrer/kuba/cohiba/" },
-  { skuId: "cohiba-behike-52",       retailerId: "ch-cigarmust",      price: 2860.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/cohiba" },
 
   // ─── Cohiba Siglo IV (box 25) ─────────────────────────────────────────────
-  { skuId: "cohiba-siglo-iv",        retailerId: "ch-cigarmust",      price: 1450.00, currency: "CHF", originalPrice: 1610.00, inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/cohiba" },
   { skuId: "cohiba-siglo-iv",        retailerId: "de-noblego",        price: 1350.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/cohiba-siglo-iv/" },
 
   // ─── Cohiba Espléndidos (box 25) ──────────────────────────────────────────
-  { skuId: "cohiba-esplendidos",     retailerId: "ch-cigarmust",      price: 3300.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/cohiba" },
   { skuId: "cohiba-esplendidos",     retailerId: "uk-jjfox",          price: 2950.00, currency: "GBP", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.jjfox.co.uk/cigars/country/cuban-cigars.html" },
 
   // ─── Montecristo No. 4 (box 25) ───────────────────────────────────────────
@@ -970,12 +967,10 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
 
   // ─── Montecristo No. 2 (box 25) ───────────────────────────────────────────
   { skuId: "montecristo-no-2",       retailerId: "de-noblego",        price: 645.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/" },
-  { skuId: "montecristo-no-2",       retailerId: "ch-cigarmust",      price: 720.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/montecristo" },
   { skuId: "montecristo-no-2",       retailerId: "uk-cgars",          price: 580.00, currency: "GBP", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.turmeaus.co.uk/cigars-cuban-cigars-c-325_52.html" },
 
   // ─── Montecristo Petit Edmundo (box 25) ───────────────────────────────────
   { skuId: "montecristo-petit-edmundo", retailerId: "de-noblego",     price: 506.83, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/" },
-  { skuId: "montecristo-petit-edmundo", retailerId: "ch-cigarmust",   price: 630.00, currency: "CHF", originalPrice: 700.00, inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/montecristo" },
 
   // ─── Partagás Serie D No. 4 (box 25) ──────────────────────────────────────
   { skuId: "partagas-serie-d-no-4",  retailerId: "de-noblego",        price: 523.80, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/partagas-serie-d-no-4/" },
@@ -1008,18 +1003,15 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
 
   // ─── Cohiba Siglo VI (box 25) — added Phase A batch 1 ─────────────────────
   { skuId: "cohiba-siglo-vi",        retailerId: "de-noblego",        price: 1850.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/cohiba-siglo-vi/" },
-  { skuId: "cohiba-siglo-vi",        retailerId: "ch-cigarmust",      price: 2100.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/cohiba" },
   { skuId: "cohiba-siglo-vi",        retailerId: "se-cigarrummet",    price: 19500.00, currency: "SEK", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarrummet.se/" },
 
   // ─── Montecristo Edmundo (box 25) ─────────────────────────────────────────
   { skuId: "montecristo-edmundo",    retailerId: "de-noblego",        price: 670.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/montecristo-edmundo/" },
   { skuId: "montecristo-edmundo",    retailerId: "de-cigarworld",     price: 690.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "montecristo-edmundo",    retailerId: "ch-cigarmust",      price: 715.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/montecristo" },
 
   // ─── Romeo y Julieta Wide Churchills (box 25) ─────────────────────────────
   { skuId: "romeo-y-julieta-wide-churchills", retailerId: "de-noblego",        price: 625.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/" },
   { skuId: "romeo-y-julieta-wide-churchills", retailerId: "be-lcdh-brussels", price: 640.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
-  { skuId: "romeo-y-julieta-wide-churchills", retailerId: "ch-cigarmust",      price: 690.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/romeo-y-julieta" },
 
   // ─── Partagás Lusitanias (box 25) ─────────────────────────────────────────
   { skuId: "partagas-lusitanias",    retailerId: "de-noblego",        price: 765.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/partagas-lusitanias/" },
@@ -1028,25 +1020,18 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   { skuId: "partagas-lusitanias",    retailerId: "it-sigarietabacchi", price: 795.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://sigarietabacchi.it/" },
 
   // ─── H. Upmann Magnum 46 (box 25) ─────────────────────────────────────────
-  { skuId: "h-upmann-magnum-46",     retailerId: "de-noblego",        price: 435.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/h-upmann-magnum-46/" },
   { skuId: "h-upmann-magnum-46",     retailerId: "de-cigarworld",     price: 450.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "h-upmann-magnum-46",     retailerId: "ch-cigarmust",      price: 495.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/hupmann" },
   { skuId: "h-upmann-magnum-46",     retailerId: "it-sigarietabacchi", price: 465.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://sigarietabacchi.it/" },
   // ─── Cohiba Siglo II (box 25) — Phase A batch 2 ────────────────────────────
   { skuId: "cohiba-siglo-ii",        retailerId: "de-noblego",        price: 650.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/cohiba-siglo-ii/" },
   { skuId: "cohiba-siglo-ii",        retailerId: "be-lcdh-brussels",  price: 670.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
-  { skuId: "cohiba-siglo-ii",        retailerId: "ch-cigarmust",      price: 750.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/cohiba" },
 
   // ─── Romeo y Julieta Short Churchills (box 25) ────────────────────────────
-  { skuId: "romeo-y-julieta-short-churchills", retailerId: "de-noblego",        price: 625.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/romeo-y-julieta-short-churchills/" },
   { skuId: "romeo-y-julieta-short-churchills", retailerId: "be-lcdh-brussels",  price: 640.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
-  { skuId: "romeo-y-julieta-short-churchills", retailerId: "ch-cigarmust",      price: 690.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/romeo-y-julieta" },
   { skuId: "romeo-y-julieta-short-churchills", retailerId: "de-cigarworld",     price: 650.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
 
   // ─── Bolívar Royal Coronas (box 25) ───────────────────────────────────────
-  { skuId: "bolivar-royal-coronas",  retailerId: "de-noblego",        price: 440.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/bolivar-royal-coronas/" },
   { skuId: "bolivar-royal-coronas",  retailerId: "de-cigarworld",     price: 455.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "bolivar-royal-coronas",  retailerId: "ch-cigarmust",      price: 495.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/bolivar" },
 
   // ─── Hoyo de Monterrey Epicure Especial (box 25) ──────────────────────────
   { skuId: "hoyo-de-monterrey-epicure-especial", retailerId: "de-noblego",        price: 545.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/hoyo-de-monterrey-epicure-especial/" },
@@ -1055,7 +1040,6 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
 
   // ─── Trinidad Vigia (box 12) ──────────────────────────────────────────────
   { skuId: "trinidad-vigia",         retailerId: "de-noblego",        price: 680.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/trinidad-vigia/" },
-  { skuId: "trinidad-vigia",         retailerId: "ch-cigarmust",      price: 760.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/trinidad" },
   { skuId: "trinidad-vigia",         retailerId: "be-lcdh-brussels",  price: 695.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
 
   // ─── Montecristo No. 5 (box 25) — Phase A batch 3 ─────────────────────────
@@ -1083,29 +1067,24 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   // ─── H. Upmann Magnum 50 (box 25) ─────────────────────────────────────────
   { skuId: "h-upmann-magnum-50",     retailerId: "de-noblego",        price: 520.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/h-upmann-magnum-50/" },
   { skuId: "h-upmann-magnum-50",     retailerId: "de-cigarworld",     price: 540.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "h-upmann-magnum-50",     retailerId: "ch-cigarmust",      price: 580.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/hupmann" },
   { skuId: "h-upmann-magnum-50",     retailerId: "it-sigarietabacchi", price: 555.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://sigarietabacchi.it/" },
 
   // ─── Romeo y Julieta Churchill (box 25) — Phase A batch 4 ────────────────
   { skuId: "romeo-y-julieta-churchill", retailerId: "de-noblego",        price: 520.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/romeo-y-julieta-churchill/" },
   { skuId: "romeo-y-julieta-churchill", retailerId: "de-cigarworld",     price: 535.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
   { skuId: "romeo-y-julieta-churchill", retailerId: "be-lcdh-brussels",  price: 545.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
-  { skuId: "romeo-y-julieta-churchill", retailerId: "ch-cigarmust",      price: 580.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/romeo-y-julieta" },
 
   // ─── Cohiba Maduro 5 Magicos (box 10) ────────────────────────────────────
   { skuId: "cohiba-maduro-5-magicos", retailerId: "de-noblego",        price: 820.00, currency: "EUR", inStock: false, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/cohiba-maduro-5-magicos/" },
-  { skuId: "cohiba-maduro-5-magicos", retailerId: "ch-cigarmust",      price: 920.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/cohiba" },
   { skuId: "cohiba-maduro-5-magicos", retailerId: "es-cigarsmokerclub", price: 850.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarsmokerclub.es/" },
 
   // ─── Trinidad Coloniales (box 12) ────────────────────────────────────────
   { skuId: "trinidad-coloniales",    retailerId: "de-noblego",        price: 555.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/trinidad-coloniales/" },
-  { skuId: "trinidad-coloniales",    retailerId: "ch-cigarmust",      price: 620.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/trinidad" },
   { skuId: "trinidad-coloniales",    retailerId: "be-lcdh-brussels",  price: 575.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
 
   // ─── Bolívar Petit Coronas (box 25) ──────────────────────────────────────
   { skuId: "bolivar-petit-coronas",  retailerId: "de-noblego",        price: 275.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/bolivar-petit-corona/" },
   { skuId: "bolivar-petit-coronas",  retailerId: "de-cigarworld",     price: 285.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "bolivar-petit-coronas",  retailerId: "ch-cigarmust",      price: 305.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/bolivar/2-bolivar-petit-corona-7612907060808.html" },
   { skuId: "bolivar-petit-coronas",  retailerId: "it-sigarietabacchi", price: 290.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://sigarietabacchi.it/" },
 
   // ─── Partagás Serie D No. 6 (box 20) ─────────────────────────────────────
@@ -1123,7 +1102,6 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   // ─── Montecristo Double Edmundo (box 10) ─────────────────────────────────
   { skuId: "montecristo-double-edmundo", retailerId: "de-noblego",        price: 595.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/montecristo-double-edmundo/" },
   { skuId: "montecristo-double-edmundo", retailerId: "de-cigarworld",     price: 610.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "montecristo-double-edmundo", retailerId: "ch-cigarmust",      price: 660.00, currency: "CHF", inStock: false, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/montecristo" },
 
   // ─── Cohiba Siglo III (box 25) ───────────────────────────────────────────
   { skuId: "cohiba-siglo-iii",       retailerId: "de-noblego",        price: 875.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/cohiba-siglo-iii/" },
@@ -1131,15 +1109,12 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   { skuId: "cohiba-siglo-iii",       retailerId: "it-sigarietabacchi", price: 890.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://sigarietabacchi.it/" },
 
   // ─── Romeo y Julieta No. 1 Tubos (box 25) ────────────────────────────────
-  { skuId: "romeo-y-julieta-no-1-tubos", retailerId: "de-noblego",        price: 485.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/romeo-y-julieta-no-1-tubos/" },
   { skuId: "romeo-y-julieta-no-1-tubos", retailerId: "de-cigarworld",     price: 500.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
   { skuId: "romeo-y-julieta-no-1-tubos", retailerId: "ch-cigarmust",      price: 540.00, currency: "CHF", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/romeo-y-julieta/308-104-romeo-y-julieta-no1-7612907065100.html" },
   { skuId: "romeo-y-julieta-no-1-tubos", retailerId: "it-sigarietabacchi", price: 495.00, currency: "EUR", inStock: true, scrapedAt: "2026-05-15", sourceUrl: "https://sigarietabacchi.it/" },
 
   // ─── H. Upmann Connoisseur No. 1 (box 25) ────────────────────────────────
-  { skuId: "h-upmann-connoisseur-no-1", retailerId: "de-noblego",        price: 595.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/h-upmann-connoisseur-no-1/" },
   { skuId: "h-upmann-connoisseur-no-1", retailerId: "de-cigarworld",     price: 610.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.cigarworld.de/" },
-  { skuId: "h-upmann-connoisseur-no-1", retailerId: "ch-cigarmust",      price: 660.00, currency: "CHF", inStock: false, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/hupmann" },
   { skuId: "h-upmann-connoisseur-no-1", retailerId: "be-lcdh-brussels",  price: 615.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://lacasadelhabano.brussels" },
 
   // ─── Phase B — long-tail Cuban brands, one signature SKU per brand ────────
@@ -1157,15 +1132,11 @@ export const PRICE_SNAPSHOTS: PriceSnapshot[] = [
   { skuId: "saint-luis-rey-regios",           retailerId: "ch-cigarmust",      price: 505.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/203-saint-luis-rey" },
   { skuId: "el-rey-del-mundo-choix-supreme",  retailerId: "de-noblego",        price: 445.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/el-rey-del-mundo-choix-supreme/" },
   { skuId: "el-rey-del-mundo-choix-supreme",  retailerId: "ch-cigarmust",      price: 495.00, currency: "CHF", inStock: false, scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/196-el-rey-del-mundo" },
-  { skuId: "por-larranaga-petit-coronas",     retailerId: "de-noblego",        price: 290.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/por-larranaga-petit-coronas/" },
   { skuId: "por-larranaga-petit-coronas",     retailerId: "ch-cigarmust",      price: 320.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/199-por-larranaga" },
-  { skuId: "la-gloria-cubana-medaille-d-or-no-4", retailerId: "de-noblego",     price: 335.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/la-gloria-cubana-medaille-dor-no-4/" },
   { skuId: "la-gloria-cubana-medaille-d-or-no-4", retailerId: "ch-cigarmust",   price: 380.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/198-la-gloria-cubana" },
   { skuId: "diplomaticos-no-2",               retailerId: "de-noblego",        price: 545.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/diplomaticos-no-2/" },
   { skuId: "diplomaticos-no-2",               retailerId: "ch-cigarmust",      price: 605.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/268-diplomaticos" },
-  { skuId: "san-cristobal-la-punta",          retailerId: "de-noblego",        price: 515.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/san-cristobal-la-punta/" },
   { skuId: "san-cristobal-la-punta",          retailerId: "ch-cigarmust",      price: 570.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/189-san-cristobal" },
-  { skuId: "sancho-panza-belicosos",          retailerId: "de-noblego",        price: 485.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/sancho-panza-belicosos/" },
   { skuId: "sancho-panza-belicosos",          retailerId: "ch-cigarmust",      price: 530.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/204-sancho-panza" },
   { skuId: "rafael-gonzalez-petit-coronas",   retailerId: "de-noblego",        price: 275.00, currency: "EUR", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://www.noblego.de/rafael-gonzalez-petit-coronas/" },
   { skuId: "rafael-gonzalez-petit-coronas",   retailerId: "ch-cigarmust",      price: 305.00, currency: "CHF", inStock: true,  scrapedAt: "2026-05-15", sourceUrl: "https://cigarmust.com/en/201-rafael-gonzalez" },

@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { events, upcomingEvents } from "../../data/cigar-events.ts";
 
-/** /category/cigar-events/ — PREVIEW ROUTE (noindex). The diary: every
+/** /category/cigar-events/ — the diary: every
  *  festival, fair and gala we track, upcoming first, then the coverage. */
 const now = new Date();
 const upcoming = upcomingEvents(now);
