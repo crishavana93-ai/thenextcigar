@@ -1,7 +1,7 @@
 {
   "name": "The Next Cigar",
   "short_name": "The Next Cigar",
-  "description": "Modern editorial for the cigar aficionado \u2014 culture, craft, and The Lounge, a vetted IRL network for cigar travelers.",
+  "description": "Modern editorial for the cigar aficionado — culture, craft, and The Lounge, a vetted IRL network for cigar travelers.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -17,13 +17,13 @@
   ],
   "icons": [
     {
-      "src": "/favicon.png",
-      "sizes": "96x96",
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo-mark.png",
+      "src": "/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

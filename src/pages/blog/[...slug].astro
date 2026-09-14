@@ -78,7 +78,7 @@ const graph: any[] = [
     datePublished: published.toISOString(),
     dateModified: (modified ?? published).toISOString(),
     author: { "@type": author ? "Person" : "Organization", name: (author?.data as any)?.name ?? "The Next Cigar" },
-    publisher: { "@type": "Organization", name: "The Next Cigar", logo: { "@type": "ImageObject", url: "https://thenextcigar.com/logo.png" } },
+    publisher: { "@type": "Organization", name: "The Next Cigar", logo: { "@type": "ImageObject", url: "https://thenextcigar.com/favicon-512.png", width: 512, height: 512 } },
     mainEntityOfPage: url,
     inLanguage: "en",
     wordCount: words,
