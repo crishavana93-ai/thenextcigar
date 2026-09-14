@@ -723,7 +723,28 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     verified_at: string | null;
     perks: string | null;
     website: string | null;
+    address: string | null;
+    lat: number | null;
+    lng: number | null;
   };
+
+  /** Nominatim (OpenStreetMap) forward geocode — one request, no key.
+   *  Returns null when nothing matches; never throws. */
+  async function geocode(parts: (string | null | undefined)[]): Promise<{ lat: number; lng: number; label: string } | null> {
+    const q = parts.filter(Boolean).join(", ");
+    if (!q) return null;
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!r.ok) return null;
+      const rows = (await r.json()) as any[];
+      if (!rows?.length) return null;
+      return { lat: parseFloat(rows[0].lat), lng: parseFloat(rows[0].lon), label: String(rows[0].display_name || "") };
+    } catch {
+      return null;
+    }
+  }
 
   function escapeHtml(s: string): string {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -864,7 +885,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
     const supabase = getSupabase();
     const { data } = await supabase
       .from("partner_lounges")
-      .select("id, slug, name, city, country, type, verified_at, perks, website")
+      .select("id, slug, name, city, country, type, verified_at, perks, website, address, lat, lng")
       .order("city", { ascending: true });
     allVenues = (data as Venue[]) || [];
     renderVenues();
@@ -900,10 +921,36 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
             <p class="admin-row__meta">${escapeHtml(v.city)} · ${escapeHtml(v.country)} · ${typeLabel.toLowerCase()}${v.website ? ` · <a href="${escapeHtml(v.website)}" target="_blank" style="color:var(--color-gold);">site →</a>` : ""}</p>
           </div>
           <div class="admin-row__actions">
+            ${v.lat == null || v.lng == null ? `<button class="admin-flag" data-action="locate" data-id="${v.id}" title="No coordinates — not on the map yet">Locate</button>` : ""}
             <button class="admin-flag ${v.verified_at ? "is-on" : ""}" data-action="toggle-verified" data-id="${v.id}">${verifiedLabel}</button>
           </div>
         </div>`;
     }).join("");
+
+    list.querySelectorAll<HTMLButtonElement>('.admin-flag[data-action="locate"]').forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const venue = allVenues.find((v) => v.id === btn.dataset.id);
+        if (!venue) return;
+        btn.disabled = true;
+        btn.textContent = "Looking…";
+        const hit = (await geocode([venue.name, venue.address, venue.city, venue.country]))
+          ?? (await geocode([venue.address, venue.city, venue.country]))
+          ?? (await geocode([venue.city, venue.country]));
+        if (!hit) {
+          alert("Nothing found for that address. Paste coordinates by hand in Supabase for now.");
+          btn.disabled = false; btn.textContent = "Locate";
+          return;
+        }
+        if (!window.confirm(`Found: ${hit.label}\n\n${hit.lat.toFixed(5)}, ${hit.lng.toFixed(5)}\n\nPut ${venue.name} there?`)) {
+          btn.disabled = false; btn.textContent = "Locate";
+          return;
+        }
+        const { error } = await getSupabase().from("partner_lounges").update({ lat: hit.lat, lng: hit.lng }).eq("id", venue.id);
+        if (error) { alert(error.message); btn.disabled = false; btn.textContent = "Locate"; return; }
+        venue.lat = hit.lat; venue.lng = hit.lng;
+        renderVenues();
+      });
+    });
 
     list.querySelectorAll<HTMLButtonElement>('.admin-flag[data-action="toggle-verified"]').forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -1085,10 +1132,10 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           : "";
 
       return `
-        <article class="submission-row">
+        <article class="submission-row" data-address="${escapeHtmlSubmission(s.address || "")}" data-city="${escapeHtmlSubmission(s.city)}" data-country="${escapeHtmlSubmission(s.country)}">
           <header class="submission-row__head">
             <div>
-              <h3 class="submission-row__name">${escapeHtmlSubmission(s.shop_name)}</h3>
+              <h3 class="submission-row__name" data-shop-name>${escapeHtmlSubmission(s.shop_name)}</h3>
               <p class="submission-row__loc">${escapeHtmlSubmission(s.city)}, ${escapeHtmlSubmission(s.country)} · ${smokeLabel} · ${date}</p>
             </div>
             ${statusBadge}
@@ -1120,6 +1167,14 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
             btn.disabled = false;
             btn.textContent = originalText;
             return;
+          }
+          // Put it on the map straight away if the address resolves; otherwise
+          // it waits in Venues with a "Locate" button.
+          if (newId) {
+            const card = btn.closest("article");
+            const sub = { name: card?.querySelector("[data-shop-name]")?.textContent, address: card?.dataset.address, city: card?.dataset.city, country: card?.dataset.country };
+            const hit = (await geocode([sub.name, sub.address, sub.city, sub.country])) ?? (await geocode([sub.address, sub.city, sub.country]));
+            if (hit) await supabase.from("partner_lounges").update({ lat: hit.lat, lng: hit.lng }).eq("id", newId);
           }
           // Reload list + venue stats + badge
           await loadSubmissions();
