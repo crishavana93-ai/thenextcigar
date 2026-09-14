@@ -42,7 +42,7 @@ function currencyForCountry(country: string): string {
 }
 
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations" | "cigarone_brand";
 
 interface PdpUrl {
   url: string;
@@ -71,6 +71,10 @@ interface ScraperConfig {
   // box-of-25 costs < €20, so anything below catches accessory upsells,
   // sample items, or VAT/shipping notices that match the price regex.
   minPriceEur?: number;
+  // Politeness. Default is 4 fetches in flight and no pause; a retailer whose
+  // robots.txt asks for a crawl delay gets one at a time with a pause between.
+  concurrency?: number;
+  delayMs?: number;
   // PDPs to scrape. One product page per canonical SKU we want priced.
   pdps: PdpUrl[];
 }
@@ -355,6 +359,28 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       { url: "https://www.cigarrummet.com/produkt/diplomaticos-no-2/", skuHint: "diplomaticos-no-2" }, // box of 25
     ],
   },
+  // ── CigarOne (Geneva) ─────────────────────────────────────────────────
+  // Custom platform, no JSON-LD, but every brand page carries the brand's
+  // whole shelf as a server-rendered table: one row per product unit
+  // ("Cabinet of 25", "Box of 10", "Pack of 3", "Stick") with its own price,
+  // href and an in_stock class. One GET per brand, no product URL guessing —
+  // which matters here because an unknown product URL returns HTTP 200 with
+  // a "not found" page, so a guessed PDP list would never fail loudly.
+  "ch-cigarone": {
+    country: "ch",
+    stack: "cigarone_brand",
+    preferredPackSize: 25,
+    concurrency: 1,   // robots.txt: Crawl-delay 10. We fetch one brand at a
+    delayMs: 4000,    // time with a pause — 23 pages, four times a day.
+    pdps: [
+      "bolivar", "cohiba", "diplomaticos", "el-rey-del-mundo", "fonseca", "h-upmann",
+      "hoyo-de-monterrey", "jose-l-piedra", "juan-lopez", "la-gloria-cubana", "montecristo",
+      "partagas", "por-larranaga", "quai-d-orsay", "quintero", "rafael-gonzalez", "ramon-allones",
+      "romeo-y-julieta", "saint-luis-rey", "san-cristobal-de-la-habana", "sancho-panza",
+      "trinidad", "vegas-robaina",
+    ].map((b) => ({ url: `https://www.cigarone.com/cuba/${b}` })),
+  },
+
   "uk-havanahouse": {
     country: "uk",
     // ⚠️ DISABLED — Havana House declares product pages as og:type='article'
@@ -966,6 +992,55 @@ function parseShopifyCollection(body: string, currency: string, origin: string):
   return out;
 }
 
+/**
+ * CigarOne brand page → per-unit offers. Each product-table block is one
+ * sellable unit; the brand comes from the URL because the row title omits it
+ * ("Linea 1492 - Siglo IV"). Prices use the Swiss thousands apostrophe.
+ */
+export function parseCigaroneBrand(html: string, brandUrl: string): CollectionOffer[] {
+  const brandSlug = brandUrl.replace(/\/+$/, "").split("/").pop() || "";
+  const brandName = brandSlug.replace(/-/g, " ");
+  // Anything that is a different release from the regular-production vitola,
+  // even when the words we match on are all present.
+  const NOT_REGULAR = /\b(tubos?|limited|edition|edicion|reserva|cosecha|aniversario|supremos|especial(?:es)?|casa|gift|humidor|set|jar|coleccion|colección|regional|exclusiv[oa]|anejados|añejados|19\d\d|20\d\d|[a-z]{3}-[a-z]{3}\.?\d\d)\b/i;
+
+  // The GA4 view_item_list push lists every unit in table order, with a price
+  // and stock flag even for units the table shows without a price.
+  const ga: { price: number; inStock: boolean }[] = [];
+  const list = html.match(/event:\s*"view_item_list"[\s\S]*?items:\s*\[([\s\S]*?)\]\s*\}\s*\}\)/);
+  if (list) {
+    for (const m of list[1].matchAll(/price:\s*([\d.]+)[\s\S]*?in_stock:\s*"(\d)"/g)) {
+      ga.push({ price: parseFloat(m[1]), inStock: m[2] === "1" });
+    }
+  }
+
+  const out: CollectionOffer[] = [];
+  const blocks = html.split('class="product-table columns');
+  const usable = ga.length === blocks.length - 1 ? ga : null;
+  for (let i = 1; i < blocks.length; i++) {
+    const b = blocks[i];
+    const cls = b.slice(0, b.indexOf('"'));
+    const href = b.match(/<a\s+href="(https?:\/\/www\.cigarone\.com\/[^"]+)"/)?.[1];
+    const name = b.match(/<a\s+href="[^"]+">\s*([^<]+?)\s*<\/a>/)?.[1];
+    // In-stock rows are bold; out-of-stock rows drop the class and show
+    // "Out of stock" where the price would be.
+    const unit = b.match(/<div class="column(?: is-bold)?\s*">\s*([^<]+?)\s*<\/div>/)?.[1];
+    if (!href || !name || !unit) continue;
+    if (NOT_REGULAR.test(name)) continue;
+    const priceRaw = b.match(/<strong>\s*([\d'’.,]+)\s*<span>&nbsp;CHF/)?.[1];
+    const htmlPrice = priceRaw ? parseFloat(priceRaw.replace(/['’,]/g, "")) : NaN;
+    const price = usable ? usable[i - 1].price : htmlPrice;
+    const inStock = usable ? usable[i - 1].inStock : /\bin_stock\b/.test(cls);
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const packSize = parsePackSizeFromTitle(unit);
+    if (!packSize) continue;
+    const sku = matchCanonSku(`${brandName} ${name}`);
+    if (!sku) continue;
+    out.push({ skuId: sku.id, packSize, price, currency: "CHF", inStock, url: href });
+  }
+  return out;
+}
+
 function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[] {
   let data: Record<string, unknown>;
   try { data = JSON.parse(body); } catch { return []; }
@@ -1240,7 +1315,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   // timeout. We now fetch in batches of CONCURRENCY at a time using Promise.all
   // so 52 URLs complete in ~12s instead of ~100s. CPU work (parsing) still
   // happens inline per response, well under the 30s CPU limit.
-  const CONCURRENCY = 4;
+  const CONCURRENCY = config.concurrency ?? 4;
 
   async function processPdp(pdp: PdpUrl): Promise<void> {
     try {
@@ -1271,10 +1346,12 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       // A Shopify collection is one fetch that yields many vitolas, so it
       // writes its own rows and returns — the per-PDP path below assumes one
       // SKU per URL.
-      if (config.stack === "shopify_collection") {
+      if (config.stack === "shopify_collection" || config.stack === "cigarone_brand") {
         const currency = currencyForCountry(config.country);
         const origin = new URL(pdp.url).origin;
-        const found = parseShopifyCollection(html, currency, origin);
+        const found = config.stack === "cigarone_brand"
+          ? parseCigaroneBrand(html, pdp.url)
+          : parseShopifyCollection(html, currency, origin);
         const minEurC = config.minPriceEur ?? 20;
         let kept = 0, floored = 0;
         const seen = new Set<string>();
@@ -1388,6 +1465,7 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
   for (let i = 0; i < pdpsToProcess.length; i += CONCURRENCY) {
     const batch = pdpsToProcess.slice(i, i + CONCURRENCY);
     await Promise.all(batch.map(processPdp));
+    if (config.delayMs && i + CONCURRENCY < pdpsToProcess.length) await new Promise((r) => setTimeout(r, config.delayMs));
   }
 
   // Insert into Supabase in chunks of 50 to avoid hitting body-size limits
