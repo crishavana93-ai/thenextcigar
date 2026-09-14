@@ -106,6 +106,7 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
           <button id="tab-events" class="admin-tab" type="button">Events</button>
           <button id="tab-partners" class="admin-tab" type="button">Partners</button>
           <button id="tab-activity" class="admin-tab" type="button">Activity</button>
+          <button id="tab-clicks" class="admin-tab" type="button">Clicks</button>
         </div>
       </section>
 
@@ -334,6 +335,32 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       </section>
 
       {/* Activity pane */}
+      {/* Clicks pane — where readers go when they leave a page */}
+      <section id="pane-clicks" class="container-wide pb-24" hidden>
+        <div class="admin-filter-row">
+          <label class="admin-toggle"><span>Window</span>
+            <select id="clicks-days" class="admin-search" style="width:auto">
+              <option value="7">7 days</option>
+              <option value="28" selected>28 days</option>
+              <option value="90">90 days</option>
+            </select>
+          </label>
+          <p class="admin-clicks__note">Outbound clicks to retailers and Amazon, plus clicks from articles into our shop. Counted per day, per page, per destination — nothing about the reader is stored. Each column compares the window with the one before it.</p>
+        </div>
+        <div class="admin-clicks__grid">
+          <div>
+            <p class="lounge-label">By destination</p>
+            <div id="clicks-by-host" class="admin-table"></div>
+          </div>
+          <div>
+            <p class="lounge-label">By page</p>
+            <div id="clicks-by-page" class="admin-table"></div>
+          </div>
+        </div>
+        <p class="lounge-label" style="margin-top:24px">Page → destination</p>
+        <div id="clicks-by-pair" class="admin-table"></div>
+      </section>
+
       <section id="pane-activity" class="container-wide pb-24" hidden>
         <div class="admin-activity-grid">
           <div>
@@ -608,6 +635,14 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 
   /* Table */
   .admin-table { display: flex; flex-direction: column; }
+  .admin-clicks__note { font-size: 13px; color: var(--color-text-muted); max-width: 60ch; margin: 0; }
+  .admin-clicks__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 720px) { .admin-clicks__grid { grid-template-columns: 1fr; } }
+  .admin-clicks__row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: baseline; padding: 10px 12px; border-bottom: 1px solid var(--color-border); font-size: 14px; }
+  .admin-clicks__row .n { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .admin-clicks__row .d { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--color-text-muted); min-width: 4.5em; text-align: right; }
+  .admin-clicks__row .d.up { color: #2F6B3A; } .admin-clicks__row .d.down { color: #7B2622; }
+  .admin-clicks__row .k { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .admin-row {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -1016,8 +1051,53 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       `<strong>${escapeHtml(r.display_name || "Member")}</strong>${r.is_founding ? ' <span style="color:var(--color-gold);font-size:10px;font-weight:800;letter-spacing:0.1em;">★ FOUNDING</span>' : ""}<div class="admin-activity-row__meta">${r.city || "no city"} · ${r.joined_at ? timeAgo(r.joined_at) : "—"}</div>`);
   }
 
+  // ── Clicks tab ──────────────────────────────────────────────────────────
+  // Reads retailer_clicks (admin-only select, migration 032) for this window
+  // and the one before it, and shows three rollups with the change.
+  const HOST_LABEL: Record<string, string> = { shop: "Our shop (from articles)" };
+  function hostLabel(h: string): string {
+    if (HOST_LABEL[h]) return HOST_LABEL[h];
+    if (/(^|\.)amazon\.|^amzn\.to$/.test(h)) return `Amazon (${h.replace(/^www\./, "")})`;
+    return h.replace(/^www\./, "");
+  }
+  async function loadClicks() {
+    const supabase = getSupabase();
+    const days = Number((document.getElementById("clicks-days") as HTMLSelectElement).value) || 28;
+    const since = new Date(); since.setUTCDate(since.getUTCDate() - 2 * days);
+    const { data, error } = await supabase
+      .from("retailer_clicks")
+      .select("day, host, page, n")
+      .gte("day", since.toISOString().slice(0, 10))
+      .limit(5000);
+    const els = ["clicks-by-host", "clicks-by-page", "clicks-by-pair"].map((id) => document.getElementById(id) as HTMLElement);
+    if (error) { els[0].innerHTML = `<p class="admin-activity-empty">Couldn't load: ${escapeHtml(error.message)} — has migration 032 been run?</p>`; return; }
+    const rows = (data as { day: string; host: string; page: string; n: number }[]) || [];
+    const cut = new Date(); cut.setUTCDate(cut.getUTCDate() - days);
+    const cutStr = cut.toISOString().slice(0, 10);
+    type Agg = { now: number; before: number };
+    const bump = (m: Map<string, Agg>, k: string, r: { day: string; n: number }) => {
+      const a = m.get(k) || { now: 0, before: 0 };
+      if (r.day >= cutStr) a.now += r.n; else a.before += r.n;
+      m.set(k, a);
+    };
+    const byHost = new Map<string, Agg>(), byPage = new Map<string, Agg>(), byPair = new Map<string, Agg>();
+    for (const r of rows) { bump(byHost, r.host, r); bump(byPage, r.page, r); bump(byPair, `${r.page} → ${r.host}`, r); }
+    const render = (el: HTMLElement, m: Map<string, Agg>, label: (k: string) => string, limit: number) => {
+      const list = [...m.entries()].filter(([, a]) => a.now > 0 || a.before > 0).sort((x, y) => y[1].now - x[1].now).slice(0, limit);
+      if (!list.length) { el.innerHTML = `<p class="admin-activity-empty">Nothing counted yet. The counter starts with the first deploy that carries it.</p>`; return; }
+      el.innerHTML = list.map(([k, a]) => {
+        const d = a.before === 0 ? (a.now ? "new" : "") : `${a.now >= a.before ? "+" : ""}${Math.round(((a.now - a.before) / a.before) * 100)}%`;
+        const cls = a.before === 0 ? "" : a.now > a.before ? "up" : a.now < a.before ? "down" : "";
+        return `<div class="admin-clicks__row"><span class="k" title="${escapeHtml(k)}">${escapeHtml(label(k))}</span><span class="n">${a.now}</span><span class="d ${cls}">${d}</span></div>`;
+      }).join("");
+    };
+    render(els[0], byHost, hostLabel, 40);
+    render(els[1], byPage, (k) => k, 40);
+    render(els[2], byPair, (k) => { const [p, h] = k.split(" → "); return `${p} → ${hostLabel(h)}`; }, 60);
+  }
+
   function wireTabs() {
-    const tabs = ["members", "venues", "submissions", "events", "partners", "activity"];
+    const tabs = ["members", "venues", "submissions", "events", "partners", "activity", "clicks"];
     const tabEls = tabs.map((t) => document.getElementById(`tab-${t}`) as HTMLButtonElement);
     const paneEls = tabs.map((t) => document.getElementById(`pane-${t}`) as HTMLElement);
     tabEls.forEach((btn, idx) => {
@@ -1029,8 +1109,10 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
         if (tabs[idx] === "events") loadEvents();
         if (tabs[idx] === "partners") loadPartners();
         if (tabs[idx] === "submissions") loadSubmissions();
+        if (tabs[idx] === "clicks") loadClicks();
       });
     });
+    document.getElementById("clicks-days")?.addEventListener("change", loadClicks);
 
     // Auto-open submissions tab if ?tab=submissions in URL (from email link)
     const urlTab = new URLSearchParams(window.location.search).get("tab");

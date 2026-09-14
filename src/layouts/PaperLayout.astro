@@ -111,13 +111,18 @@ const ogImage = new URL(image, Astro.site).toString();
       // the reader is sent or stored. The list of hosts is enforced server
       // side; this only avoids pointless requests for links we do not count.
       (function () {
-        var HOSTS = /(^|\.)(cigarmust\.com|noblego\.de|cigarworld\.de|sigarietabacchi\.it|lacasadelhabano\.brussels|cigarsmokerclub\.com|cgarsltd\.co\.uk|cigarrspecialisten\.se|cigarrummet\.com|hajenius\.com|jamesfox\.ie|siglomundo\.ch|jjfox\.co\.uk|sauttercigars\.com|havanahouse\.co\.uk|egmcigars\.com|cigarrhyllan\.se|lcdhantwerp\.com|cigarsmoke\.gr|cigarmaxx\.de|cigarone\.com|puros\.se|houseofcigars\.it|bottegadelfumatore\.com|cigarsgalaxy\.gr|danishpipeshop\.com|turmeaus\.co\.uk)$/i;
+        var HOSTS = /(^|\.)(cigarmust\.com|noblego\.de|cigarworld\.de|sigarietabacchi\.it|lacasadelhabano\.brussels|cigarsmokerclub\.com|cgarsltd\.co\.uk|cigarrspecialisten\.se|cigarrummet\.com|hajenius\.com|jamesfox\.ie|siglomundo\.ch|jjfox\.co\.uk|sauttercigars\.com|havanahouse\.co\.uk|egmcigars\.com|cigarrhyllan\.se|lcdhantwerp\.com|cigarsmoke\.gr|cigarmaxx\.de|cigarone\.com|puros\.se|houseofcigars\.it|bottegadelfumatore\.com|cigarsgalaxy\.gr|danishpipeshop\.com|turmeaus\.co\.uk|amazon\.com|amazon\.co\.uk|amazon\.de|amazon\.se|amazon\.fr|amazon\.it|amazon\.es|amazon\.nl|amazon\.ca|amzn\.to)$/i;
         document.addEventListener("click", function (e) {
           var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
           if (!a) return;
-          var host;
-          try { host = new URL(a.href, location.href).hostname; } catch (_) { return; }
-          if (host === location.hostname || !HOSTS.test(host)) return;
+          var host, u;
+          try { u = new URL(a.href, location.href); host = u.hostname; } catch (_) { return; }
+          if (host === location.hostname) {
+            // A click from an article into our own shop is the one internal
+            // link worth counting: it is the shop's whole funnel.
+            if (!/^\/shop\/.+/.test(u.pathname) || /^\/shop\//.test(location.pathname)) return;
+            host = "shop";
+          } else if (!HOSTS.test(host)) return;
           var payload = JSON.stringify({ host: host, page: location.pathname });
           try {
             if (navigator.sendBeacon) {

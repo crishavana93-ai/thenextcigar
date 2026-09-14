@@ -32,7 +32,14 @@ const ALLOWED_APEX = [
   // send readers to, so still worth counting.
   "cigarone.com", "puros.se", "houseofcigars.it", "bottegadelfumatore.com",
   "cigarsgalaxy.gr", "danishpipeshop.com", "turmeaus.co.uk",
+  // Amazon Associates links in the accessory guides — the only affiliate
+  // money on the site, so the one outbound click we most need to see.
+  "amazon.com", "amazon.co.uk", "amazon.de", "amazon.se", "amazon.fr", "amazon.it",
+  "amazon.es", "amazon.nl", "amazon.ca", "amzn.to",
 ];
+// The page sends host "shop" for a click from an article into /shop/… — the
+// only internal link counted, because it is the shop's entire funnel.
+const INTERNAL = new Set(["shop"]);
 function allowed(host: string): boolean {
   return ALLOWED_APEX.some((apex) => host === apex || host.endsWith("." + apex));
 }
@@ -43,7 +50,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const host = typeof body.host === "string" ? body.host.toLowerCase().slice(0, 100) : "";
   const page = typeof body.page === "string" ? body.page.slice(0, 200) : "";
-  if (!allowed(host) || !page.startsWith("/")) {
+  if (!(INTERNAL.has(host) || allowed(host)) || !page.startsWith("/")) {
     return new Response(null, { status: 204 }); // not ours to count; say nothing
   }
 
