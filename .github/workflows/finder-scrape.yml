@@ -49,6 +49,7 @@ jobs:
           - ie-jamesfox
           - se-cigarrummet
           - ch-cigarone
+          - uk-turmeaus
       # Don't kill the matrix if one retailer fails — we want partial success.
       fail-fast: false
     steps:

@@ -42,7 +42,7 @@ function currencyForCountry(country: string): string {
 }
 
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations" | "cigarone_brand";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations" | "cigarone_brand" | "turmeaus_category";
 
 interface PdpUrl {
   url: string;
@@ -379,6 +379,25 @@ const SCRAPERS: Record<string, ScraperConfig> = {
       "romeo-y-julieta", "saint-luis-rey", "san-cristobal-de-la-habana", "sancho-panza",
       "trinidad", "vegas-robaina",
     ].map((b) => ({ url: `https://www.cigarone.com/cuba/${b}` })),
+  },
+
+  // ── Turmeaus / C.Gars (UK) ────────────────────────────────────────────
+  // osCommerce-style catalogue. Each pack size is its own product with an
+  // unguessable -p-NNNN id, so we read the brand category page instead:
+  // with ?display=all on the full c-325_52_NN path (the short c-NN path
+  // silently caps at 24) it lists every product with name, pack, price and
+  // an out-of-stock tag. Out-of-stock rows carry no price and are skipped.
+  "uk-turmeaus": {
+    country: "uk",
+    stack: "turmeaus_category",
+    preferredPackSize: 25,
+    pdps: [
+      ["bolivar", 57], ["cohiba", 56], ["diplomaticos", 145], ["fonseca", 77], ["gloria-cubana", 406],
+      ["hoyo-monterrey", 64], ["jose-piedra", 81], ["juan-lopez", 74], ["montecristo", 60], ["partagas", 66],
+      ["por-larranaga", 305], ["quai-dorsay", 487], ["quintero", 71], ["rafael-gonzalez", 75], ["ramon-allones", 76],
+      ["rey-del-mundo", 73], ["romeo-julieta", 62], ["saint-luis-rey", 67], ["san-cristobal", 63], ["sancho-panza", 72],
+      ["trinidad", 58], ["upmann", 65], ["vegas-robaina", 79],
+    ].map(([slug, id]) => ({ url: `https://www.turmeaus.co.uk/cuban-cigars-${slug}-cigars-c-325_52_${id}.html?display=all&sort=2a` })),
   },
 
   "uk-havanahouse": {
@@ -1041,6 +1060,32 @@ export function parseCigaroneBrand(html: string, brandUrl: string): CollectionOf
   return out;
 }
 
+/**
+ * Turmeaus brand category (?display=all) → per-product offers. Titles carry
+ * brand, vitola and pack ("Bolivar Royal Corona Cigar - Box of 25"); the
+ * category page shows a price only for products in stock.
+ */
+export function parseTurmeausCategory(html: string): CollectionOffer[] {
+  const NOT_REGULAR = /\b(tubed|tubos?|EMS|LCDH|limited|edition|reserva|gran|aniversario|anejados|añejados|regional|sampler|gift|selection|christmas|band|jar|humidor|19\d\d|20\d\d)\b/i;
+  const out: CollectionOffer[] = [];
+  for (const b of html.split('<div class="product-listing-box">').slice(1)) {
+    const m = b.match(/<div class="product-name"><a href="(https?:\/\/www\.turmeaus\.co\.uk\/[^"]+)">([^<]+)<\/a>/);
+    if (!m) continue;
+    const [, url, name] = m;
+    if (NOT_REGULAR.test(name)) continue;
+    const priceRaw = b.match(/new_price">£\s*([\d,]+(?:\.\d+)?)/)?.[1];
+    if (!priceRaw) continue;                       // out of stock, or not priced
+    const price = parseFloat(priceRaw.replace(/,/g, ""));
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const packSize = parsePackSizeFromTitle(name);
+    if (!packSize) continue;
+    const sku = matchCanonSku(name.replace(/\s+-\s+.*$/, ""));
+    if (!sku) continue;
+    out.push({ skuId: sku.id, packSize, price, currency: "GBP", inStock: !/tag-out-of-stock/.test(b), url });
+  }
+  return out;
+}
+
 function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[] {
   let data: Record<string, unknown>;
   try { data = JSON.parse(body); } catch { return []; }
@@ -1346,11 +1391,11 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       // A Shopify collection is one fetch that yields many vitolas, so it
       // writes its own rows and returns — the per-PDP path below assumes one
       // SKU per URL.
-      if (config.stack === "shopify_collection" || config.stack === "cigarone_brand") {
+      if (config.stack === "shopify_collection" || config.stack === "cigarone_brand" || config.stack === "turmeaus_category") {
         const currency = currencyForCountry(config.country);
         const origin = new URL(pdp.url).origin;
-        const found = config.stack === "cigarone_brand"
-          ? parseCigaroneBrand(html, pdp.url)
+        const found = config.stack === "cigarone_brand" ? parseCigaroneBrand(html, pdp.url)
+          : config.stack === "turmeaus_category" ? parseTurmeausCategory(html)
           : parseShopifyCollection(html, currency, origin);
         const minEurC = config.minPriceEur ?? 20;
         let kept = 0, floored = 0;
