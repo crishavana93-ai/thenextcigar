@@ -104,6 +104,9 @@ export function effectiveShopUrl(
   retailer: Retailer,
 ): { url: string; isExact: boolean } {
   let isExact = false;
+  // The EGM scraper reads Shopify's /products/<handle>.json; that is the
+  // machine's address, not the reader's. Send people to the product page.
+  sourceUrl = sourceUrl.replace(/\.json(?=$|[?#])/, "");
   try {
     const u = new URL(sourceUrl);
     const segments = u.pathname.split("/").filter(Boolean);
@@ -128,6 +131,20 @@ export function effectiveShopUrl(
       }
     } else {
       isExact = looksLikePdp;
+    }
+    // A product page names the product. A URL that passes the shape test
+    // but never mentions the vitola — /sigari-cubani/, /shop/cuban-cigars/
+    // cohiba/, /collections/cuban-cigars-selection — is a category page,
+    // and a "Buy" button that lands on a category is a broken promise.
+    if (isExact) {
+      const path = u.pathname.toLowerCase();
+      const vit = sku.vitola.toLowerCase().replace(/[.'’]/g, "");
+      const tokens = vit.split(/[\s-]+/).filter((t) => t.length >= 3 && !/^(no|de|del|la|el|the|los|las)$/.test(t));
+      const numbered = vit.match(/\bno\s*(\d+)\b/);
+      const mentionsVitola =
+        tokens.some((t) => path.includes(t)) ||
+        (!!numbered && new RegExp(`n[o]?[-_]?${numbered[1]}(?!\\d)`).test(path));
+      if (!mentionsVitola) isExact = false;
     }
   } catch {
     isExact = false;

@@ -38,7 +38,11 @@ const offers = snapshotsForSku(sku.id)
   .sort((a, b) => (a.snap.inStock !== b.snap.inStock ? (a.snap.inStock ? -1 : 1) : a.eur - b.eur));
 
 const inStock = offers.filter((o) => o.snap.inStock);
-const best = inStock[0];
+// The headline price must be one we read recently. A May row can sit in the
+// table with its date on it, but it is not "cheapest in stock" in September.
+const bestLive = inStock.find((o) => o.snap.live);
+const best = bestLive ?? inStock[0];
+const bestIsStale = !!best && !bestLive;
 const minEur = inStock[0]?.eur ?? 0;
 const maxEur = inStock.at(-1)?.eur ?? 0;
 const spread = minEur && maxEur ? Math.round(((maxEur - minEur) / minEur) * 100) : 0;
@@ -142,7 +146,7 @@ const description = best
     <aside>
       {best ? (
         <div class="quote">
-          <p class="t">Cheapest in stock</p>
+          <p class="t">{bestIsStale ? "Cheapest listing · not re-read recently" : "Cheapest in stock"}</p>
           <p class="big">{formatPrice(best.snap.price, best.snap.currency)}</p>
           <p class="sub">≈ €{Math.round(best.eur).toLocaleString("en-GB")} · €{best.per.toFixed(2)} per cigar</p>
           <p class="sub" style="margin-top:6px">at <b style="color:var(--ink)">{best.retailer.name}</b>, {best.country.name} · {checkedLabel(best.snap)}</p>
