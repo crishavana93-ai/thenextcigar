@@ -1,54 +1,48 @@
 ---
 import PaperLayout from "../layouts/PaperLayout.astro";
 /** /privacy/ */
-const lastUpdated = "May 6, 2026";
+const lastUpdated = "September 15, 2026";
 ---
 
 <PaperLayout title="Privacy Policy · The Next Cigar" description="Privacy Policy for thenextcigar.com." section="legal" compact={true}>
   <div class="dateline"><h1>Privacy Policy</h1><p class="st">Legal · last updated {lastUpdated}</p></div>
   <article class="art">
     <div class="prose" style="max-width:720px">
-      <p>
-        The Next Cigar ("we", "us", "our") publishes editorial content about cigars at <a href="https://thenextcigar.com">thenextcigar.com</a>. This policy explains what we collect, why, and what your rights are.
-      </p>
+      <p>The Next Cigar is published by Cristian Ortiz Suárez, a sole trader in Malmö, Sweden, at <a href="https://thenextcigar.com">thenextcigar.com</a>. This page says what we keep about you, where it lives, why, and how to make us stop. It is written from the code, not from a template, and it changes when the code does.</p>
 
-      <h2>What we collect</h2>
-      <p><strong>Newsletter subscribers:</strong> if you sign up, we collect your email address. That's it. We use it to send the newsletter and nothing else. Our newsletter platform (Beehiiv) processes the email on our behalf under their own privacy terms.</p>
-      <p><strong>Contact form submissions:</strong> if you email us via the contact page, we receive your name, email, and message. We use these to reply to you. We don't add you to mailing lists without consent.</p>
-      <p><strong>Analytics:</strong> we use privacy-respecting analytics (Cloudflare Web Analytics) that does not set cookies and does not identify individual visitors. We see aggregate numbers — page views, referrers, country — never personal data.</p>
-      <p><strong>Advertising cookies:</strong> if you accept the cookie banner and we have ad networks running (Google AdSense, Ezoic, Mediavine, etc.), those networks may set their own cookies for ad personalization. You can decline these in the banner.</p>
+      <h2>Reading the paper</h2>
+      <p>You can read every article, the price board and the tools without an account. We set no analytics or advertising cookies. When you click from the board or an article to a retailer, to Amazon, or into our own shop, we add one to a counter for that day, that destination and that page — nothing about you: no address, no cookie, no device, no identifier. It exists so we can tell a retailer how many readers we sent them.</p>
 
-      <h2>What we don't collect</h2>
-      <ul>
-        <li>We don't sell your data. Ever.</li>
-        <li>We don't track you across sites.</li>
-        <li>We don't use Facebook Pixel, Google Analytics, or session-replay tools.</li>
-        <li>We don't ask for your name, location, or any data beyond what's necessary for the service you're requesting (subscribing, contacting, buying).</li>
-      </ul>
+      <h2>Price alerts</h2>
+      <p>Saving a price alert stores your email address, the cigar you chose, your target price if you set one, and the dates alerts were sent. We use it to send you that alert and a receipt when you save it, nothing else. Emails go out through Resend. Every alert email carries an unsubscribe link, which deletes the subscription. The same applies to the release watch and the "newly listed" mail.</p>
+
+      <h2>The newsletter</h2>
+      <p>Subscribing stores your email with MailerLite, which sends the newsletter on our behalf under its own terms. Every issue has an unsubscribe link.</p>
+
+      <h2>The Lounge</h2>
+      <p>A Lounge account is a Supabase account. We hold your email, the display name and city you give, an avatar if you upload one, and what you do in the Lounge: check-ins, travel plans, introductions and messages to other members, event RSVPs, your humidor entries, watchlist, and any shop you submit to the map. Other members see your display name, city, avatar and check-ins; they never see your email. We do not sell or share any of it.</p>
+      <p>You can delete your account yourself, at any time, from your profile page: "Delete my account" removes the account and everything listed above. Shops you submitted to the map stay on the map; a shop's address is a public fact, not personal data.</p>
+
+      <h2>The shop</h2>
+      <p>Payment is taken by Stripe on Stripe's pages; we never see your card. Stripe sends us your name, email and shipping address for the order, which we store to fulfil it, to answer you about it, and for the seven years Swedish accounting law requires for the transaction record. Because goods ship from our supplier, your name and shipping address are passed to that supplier to deliver the parcel and for nothing else.</p>
+
+      <h2>Writing to us</h2>
+      <p>Email to hello@ or contact@thenextcigar.com sits in our mailbox at Zoho. We use it to reply.</p>
 
       <h2>Affiliate links</h2>
-      <p>
-        Some links in our editorial point to licensed cigar retailers (Famous Smoke Shop, JR Cigar, Cigars International, Atlantic Cigar, etc.). If you click through and buy, those retailers may pay us a small commission. This never affects what we cover or what we say about it. Where a piece contains affiliate links, we disclose it at the top of the article.
-      </p>
+      <p>Some links in the accessory guides go to Amazon and are tagged so that Amazon pays us a commission if you buy. Your price is unchanged. Amazon's own cookies apply on Amazon's site, not on ours. Those links are marked on the page.</p>
+
+      <h2>Where it lives</h2>
+      <p>Supabase (accounts, Lounge data, alerts, orders, the click counter), Cloudflare (hosting; it sees requests as any host does), Stripe (payments), Resend (alert email), MailerLite (newsletter), Zoho (mailbox). Each processes data under its own agreement with us.</p>
 
       <h2>Your rights</h2>
-      <p>You can:</p>
-      <ul>
-        <li>Unsubscribe from the newsletter at any time (link in every email)</li>
-        <li>Request a copy of any data we hold on you (email <a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a>)</li>
-        <li>Request deletion of any data we hold on you (same email)</li>
-        <li>Opt out of advertising cookies via the cookie banner or your browser settings</li>
-      </ul>
-      <p>If you're in the EU/UK, you have additional rights under GDPR including the right to lodge a complaint with your data protection authority.</p>
+      <p>Under the GDPR you can ask for a copy of what we hold, have it corrected, or have it deleted. Deletion of a Lounge account is self-service above; for anything else, email <a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a> from the address in question and we answer within a week. The exception is the order record we are required to keep for accounting. You can also complain to the Swedish Authority for Privacy Protection, IMY.</p>
 
-      <h2>Age requirement</h2>
-      <p>This site covers cigars and is intended for adults aged 21+ (or the legal age in your jurisdiction). We don't knowingly collect data from minors. If you're under 21, please leave the site.</p>
+      <h2>Age</h2>
+      <p>The site is for people of legal age to buy tobacco where they live. We do not knowingly keep data on anyone younger; tell us and we remove it.</p>
 
       <h2>Changes</h2>
-      <p>We update this policy as the site evolves. The "Last updated" date at the top is the source of truth. Material changes will be announced in the newsletter.</p>
-
-      <h2>Contact</h2>
-      <p>Questions about this policy? Email <a href="mailto:contact@thenextcigar.com">contact@thenextcigar.com</a>.</p>
+      <p>When what we keep changes, this page changes, with the date above.</p>
     </div>
   </article>
 </PaperLayout>

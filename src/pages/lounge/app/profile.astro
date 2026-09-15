@@ -161,6 +161,13 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
           <button type="submit" class="profile-form__submit">Save profile</button>
           <p id="profile-status" class="profile-form__status" hidden></p>
         </form>
+
+        <div class="profile-leave">
+          <p class="lounge-label">Leave the Lounge</p>
+          <p>Deleting your account removes your profile, check-ins, messages, introductions, travel plans, humidor entries and price alerts. It cannot be undone. Shops you submitted to the map stay on the map.</p>
+          <button type="button" id="profile-delete" class="profile-leave__btn">Delete my account</button>
+          <p id="profile-delete-status" class="profile-form__status" hidden></p>
+        </div>
       </section>
     </div>
   </main>
@@ -393,6 +400,10 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     color: var(--color-text-soft);
     line-height: 1.55;
   }
+  .profile-leave { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--color-border); max-width: 60ch; }
+  .profile-leave p { font-size: 14px; color: var(--color-text-muted); margin: 6px 0 14px; }
+  .profile-leave__btn { font: 600 12px/1 var(--font-sans, "IBM Plex Sans", sans-serif); letter-spacing: .08em; text-transform: uppercase; padding: 10px 14px; background: transparent; border: 1px solid #7B2622; color: #7B2622; cursor: pointer; }
+  .profile-leave__btn:hover { background: #7B2622; color: #fff; }
 </style>
 
 <script>
@@ -564,6 +575,25 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
       await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
       avatarPreview.src = DEFAULT_AVATAR;
       removeBtn.hidden = true;
+    });
+
+    // Leave: two confirmations, then the RPC (migration 033) deletes the
+    // auth user and everything cascades. Sign out client-side afterwards.
+    const delBtn = document.getElementById("profile-delete") as HTMLButtonElement | null;
+    delBtn?.addEventListener("click", async () => {
+      const status = document.getElementById("profile-delete-status") as HTMLParagraphElement;
+      if (!window.confirm("Delete your Lounge account and everything in it? This cannot be undone.")) return;
+      const typed = window.prompt('Type DELETE to confirm.');
+      if (typed !== "DELETE") return;
+      delBtn.disabled = true; delBtn.textContent = "Deleting…";
+      const { error } = await getSupabase().rpc("delete_my_account");
+      if (error) {
+        status.hidden = false; status.textContent = "Couldn't delete: " + error.message + " — email contact@thenextcigar.com and we will do it by hand.";
+        delBtn.disabled = false; delBtn.textContent = "Delete my account";
+        return;
+      }
+      await getSupabase().auth.signOut().catch(() => {});
+      window.location.href = "/lounge/?left=1";
     });
 
     // Save handler
