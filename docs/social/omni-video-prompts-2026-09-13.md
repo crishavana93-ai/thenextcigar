@@ -84,3 +84,13 @@ Metrics to watch, in order: completion rate, then saves/reach, then shares/reach
 ## If Omni can't hold the text
 
 It may not — no model is reliable with type yet. Then generate **only the photograph** (same prompts, drop the newspaper sentences, ask for a 4:5 black-and-white halftone clip) and I composite it into the slide with ffmpeg. The result is the same on screen and the text is guaranteed, because it never went through the model.
+
+---
+
+## Cover — travel-case guide (still image, Gemini)
+
+16:9, 1600×900 or larger. Same four rejection rules as above.
+
+> Editorial still-life photograph, overhead, on a dark walnut table: three kinds of cigar travel case laid side by side with space between them — a plain brown leather three-finger case with three unbanded cigars standing in it, one brushed aluminium cigar tube with its cap resting beside it, and a small black hard-shell travel humidor open to show an empty foam tray. Soft north window light from the left, muted warm tones, faint film grain, shallow depth of field. No text, no logos, no cigar bands, no labels, no hands, no glassware.
+
+If any band or lettering appears: *"Remove every band, label and mark. Plain cigars, plain leather, plain metal."* Save as `src/assets/blog/cigar-travel-cases-which-to-buy-2026/cover.png` (or drop it in the chat and I place it).
