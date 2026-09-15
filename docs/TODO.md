@@ -30,10 +30,7 @@ Kept in the repo so it survives sessions. Newest at the top of each list. Strike
 
 ## Lounge (QA addendum, 15 Sep evening)
 
-- Humidor: Remove needs an Undo toast or a confirm (L1); modal clipped on short viewports (L2).
-- Directory: hide profiles with no display name/city; normalise city spelling (L3).
-- Admin restricted page: replace the Gmail address with hello@ (L4).
-- Copy: "Had time" → "Time in the box" (L5).
+- L1–L7 fixed 15 Sep. Still yours: reject "QA TEST 15 Sep — reject me" in Submissions; ask the six "New Member" accounts (now hidden from Discover until they finish) to add a name and city — or leave them.
 
 ## Finder coverage (15 Sep audit)
 

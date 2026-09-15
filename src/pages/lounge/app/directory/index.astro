@@ -581,7 +581,11 @@ import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
       console.error("[Lounge directory] failed to load profiles:", error);
       all = [];
     } else {
-      all = (data as ProfileRow[]) || [];
+      // A profile with no display name or no city is not finished; the
+      // directory shows finished profiles only. The member still exists and
+      // appears the moment they save a name and a city.
+      const done = (p: ProfileRow) => !!(p.display_name && p.display_name.trim() && p.display_name.trim() !== "New Member" && p.city && p.city.trim());
+      all = ((data as ProfileRow[]) || []).filter(done);
     }
 
     renderGrid(all);

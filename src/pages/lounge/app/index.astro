@@ -1143,13 +1143,18 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     for (const c of (candidates as any[]) || []) {
       const sharedBrands = (c.favorite_brands || []).filter((b: string) => myBrands.includes(b));
       const sharedNotes = (c.flavor_notes || []).filter((n: string) => myNotes.includes(n));
+      // Say what you'd actually talk about: shared notes first ("cedar & leather,
+      // like you"), then a shared brand, then strength — a brand alone reads
+      // like a label, and the paper doesn't cover half of them.
       let overlap = "";
-      if (sharedBrands.length > 0) {
-        overlap = `Loves ${sharedBrands.slice(0, 2).join(" & ")}`;
-      } else if (sharedNotes.length >= 2) {
-        overlap = `${sharedNotes.slice(0, 2).join(" & ").toLowerCase()} notes`;
+      if (sharedNotes.length >= 2) {
+        overlap = `${sharedNotes.slice(0, 2).join(" & ").toLowerCase()}, like you`;
+      } else if (sharedNotes.length === 1 && sharedBrands.length > 0) {
+        overlap = `${sharedNotes[0].toLowerCase()} notes · ${sharedBrands[0]}`;
+      } else if (sharedBrands.length > 0) {
+        overlap = `Smokes ${sharedBrands.slice(0, 2).join(" & ")} too`;
       } else if (sharedNotes.length === 1) {
-        overlap = `${sharedNotes[0].toLowerCase()} notes`;
+        overlap = `${sharedNotes[0].toLowerCase()} notes, like you`;
       }
       if (overlap) matches.push({ id: c.id, display_name: c.display_name, avatar_url: c.avatar_url, city: c.city, overlap });
     }

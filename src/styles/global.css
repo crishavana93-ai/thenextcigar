@@ -538,6 +538,10 @@ header { z-index: 40; }
     transform 700ms var(--ease-out-expo);
 }
 .reveal.is-visible { opacity: 1; transform: translateY(0); }
+/* A tab that was in the background when the fade started keeps a frozen
+   half-faded page; once it is visible again, or after 1.5 s regardless, the
+   fade is finished for it. */
+.reveal-settle .reveal.is-visible { transition: none; }
 .reveal[data-reveal-delay="1"] { transition-delay: 60ms; }
 .reveal[data-reveal-delay="2"] { transition-delay: 120ms; }
 .reveal[data-reveal-delay="3"] { transition-delay: 180ms; }
