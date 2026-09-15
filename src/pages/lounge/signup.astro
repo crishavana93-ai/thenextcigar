@@ -1,7 +1,7 @@
 ---
 import PaperLayout from "../../layouts/PaperLayout.astro";
 /** /lounge/signup/ — join the Lounge. Free; an email and a display name.
- *  Magic link by Supabase OTP; the referral code (creator links) is optional. */
+ *  Email + password (Supabase signUp); the referral code (creator links) is optional. */
 ---
 <PaperLayout title="Join the Lounge — free · The Next Cigar" description="Join the members' room of The Next Cigar: the map, the watchlist, the members. Free. An email and a name." section="lounge" compact={true} noIndex>
   <div class="dateline"><h1>Join the Lounge <em>— free.</em></h1><p class="st">The members' room</p></div>
@@ -9,14 +9,15 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
     <div class="auth-card">
       <span class="kick">No card · no fee · nothing to cancel</span>
       <h2 class="head" style="margin:8px 0 6px">An email and a name.</h2>
-      <p class="t">We send you a link; open it and you're in. No password unless you want one later.</p>
+      <p class="t">Pick a password and you're in. Forgot it later? One email resets it.</p>
       <form id="signup-form" class="rw" style="margin-top:18px">
         <label>Email<input type="email" name="email" required autocomplete="email" placeholder="you@example.com" /></label>
+        <label>Password <small>8 characters or more</small><input type="password" name="password" required minlength="8" autocomplete="new-password" /></label>
         <label>Name, as other members see it<input type="text" name="display_name" required maxlength="40" autocomplete="nickname" placeholder="Cris O." /></label>
         <label>Referral code <small>optional</small><input type="text" id="signup-ref-code" name="referral_code" maxlength="32" autocomplete="off" placeholder="From a creator's link" /></label>
         <p class="note" id="ref-code-applied" hidden>Code applied — you'll be counted to that creator.</p>
         <label class="chk"><input type="checkbox" name="newsletter" value="1" /> <span>Also send me the paper's newsletter — the board's movers and the week's pieces, about twice a month. Unsubscribe in one click.</span></label>
-        <button type="submit" class="cta">Email me the link →</button>
+        <button type="submit" class="cta">Join the Lounge →</button>
       </form>
       <p id="signup-status" class="note auth-status" hidden aria-live="polite"></p>
       <p class="note" style="margin-top:16px">Already a member? <a href="/lounge/login/">Sign in</a>. By joining you accept the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>. Legal age to buy tobacco where you live.</p>
@@ -88,11 +89,12 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
       const data = new FormData(form);
       const email = String(data.get("email") || "").trim();
       const display_name = String(data.get("display_name") || "").trim();
-      if (!email || !display_name) return;
+      const password = String(data.get("password") || "");
+      if (!email || !display_name || password.length < 8) return;
 
       const btn = form.querySelector("button[type=submit]") as HTMLButtonElement;
       btn.disabled = true;
-      btn.textContent = "Sending…";
+      btn.textContent = "Joining…";
 
       // Capture the entered ref code (already in localStorage, but include it
       // in user metadata too so the welcome flow has redundancy)
@@ -103,10 +105,11 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
 
       try {
         const supabase = getSupabase();
-        const { error } = await supabase.auth.signInWithOtp({
+        const { data: res, error } = await supabase.auth.signUp({
           email,
+          password,
           options: {
-            emailRedirectTo: `${window.location.origin}/lounge/app/`,
+            emailRedirectTo: `${window.location.origin}/lounge/login/?confirmed=1`,
             data: {
               display_name,
               ...(refCode ? { referral_code: refCode } : {}),
@@ -115,11 +118,20 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
           },
         });
         if (error) throw error;
-
+        // Supabase returns a user with no identities when the email is already
+        // registered (it hides that from the caller on purpose).
+        if (res?.user && Array.isArray((res.user as any).identities) && (res.user as any).identities.length === 0) {
+          throw new Error("That email is already a member. Sign in instead — or use \"Forgot / no password?\" on the sign-in page to set a password.");
+        }
+        if (res?.session) {
+          // Email confirmation is off: signed in already.
+          window.location.href = "/lounge/app/";
+          return;
+        }
         if (status) {
           status.hidden = false;
           status.classList.remove("is-error");
-          status.innerHTML = `Magic link sent to <strong>${email}</strong>. Check your inbox (and spam folder). Click the link to land inside the Lounge.`;
+          status.innerHTML = `One more step: we sent an email to <strong>${email}</strong>. Tap the link inside to confirm it, then sign in with your password.`;
         }
         form.style.display = "none";
       } catch (err: any) {
@@ -129,7 +141,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
           status.textContent = err.message || "Something went wrong. Try again, or email contact@thenextcigar.com if it persists.";
         }
         btn.disabled = false;
-        btn.textContent = "Email me the link →";
+        btn.textContent = "Join the Lounge →";
       }
     });
   }

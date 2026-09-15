@@ -51,8 +51,8 @@ h1,h2,h3,h4{margin:0;font-weight:500}
 .mast.small{padding-top:18px}
 .mast.small .tagline{display:none}
 .mast .tagline{margin:12px 0 0;font-style:italic;font-size:19px;color:var(--ink-2)}
-/* Phone strip: hidden on desktop, one marquee line under the ed row on phones */
-.mast .strip{display:none}
+/* Phone strip: hidden on desktop, one marquee line under the hero on phones */
+.strip{display:none}
 .mast .ed{margin:14px 0 0;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--ink);border-bottom:3px double var(--ink);padding:7px 0;font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
 .mast.small .ed{margin-top:10px}
 .mast .ed span:nth-child(2){font-weight:600}
@@ -280,12 +280,21 @@ footer.paper a:hover{text-decoration:underline}
      saw a headline and nothing that said what the paper is. One line, front
      page only, phone only. */
   .mast .tagline{display:none}
-  .mast .strip{display:block;overflow:hidden;border-bottom:1px solid var(--rule);margin:0;padding:7px 0;font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
-  .mast .strip-in{display:inline-block;animation:strip 38s linear infinite}
-  .mast .strip-in span{display:inline-block;padding-right:48px}
-  .mast .strip-in span::after{content:"·";padding-left:48px;color:var(--ox)}
+  /* Hero on a phone: chip, headline, picture, then the deck — the picture is the hook. */
+  .lead{display:flex;flex-direction:column}
+  .lead .chip{order:0;align-self:flex-start}
+  .lead .head{order:1}
+  .lead figure{order:2;margin:12px 0 0}
+  .lead .deck{order:3;margin-top:12px}
+  .lead .by{order:4}
+  .lead .strip{order:5}
+  .lead .twin{order:6}
+  .strip{display:block;overflow:hidden;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);margin:18px 0 4px;padding:8px 0;font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+  .strip-in{display:inline-block;animation:strip 38s linear infinite}
+  .strip-in span{display:inline-block;padding-right:48px}
+  .strip-in span::after{content:"·";padding-left:48px;color:var(--ox)}
   @keyframes strip{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  @media (prefers-reduced-motion:reduce){.mast .strip-in{animation:none}}
+  @media (prefers-reduced-motion:reduce){.strip-in{animation:none}}
   /* The section bar on a phone.
      It was a horizontal scroller, and a scroller is the wrong answer here.
      With 127px of overflow and no snap it stops wherever the thumb leaves it,

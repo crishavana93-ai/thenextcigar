@@ -1,6 +1,6 @@
 ---
 import PaperLayout from "../../layouts/PaperLayout.astro";
-/** /lounge/login/ — sign in with a password, or by emailed link / 6-digit code. */
+/** /lounge/login/ — email + password. Forgot it: one reset email. */
 ---
 <PaperLayout title="Sign in · The Lounge · The Next Cigar" description="Sign in to the Lounge." section="lounge" compact={true} noIndex>
   <div class="dateline"><h1>Sign in <em>— the Lounge.</em></h1><p class="st">Members</p></div>
@@ -13,22 +13,12 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
         <button type="submit" class="cta">Sign in →</button>
         <button type="button" id="login-forgot" class="ghost">Forgot / no password? Email me a reset link</button>
       </form>
-      <div class="rulehead" style="margin-top:26px"><h2>Or by email</h2></div>
-      <form id="login-magic-form" class="rw">
-        <label>Email<input type="email" name="email" required autocomplete="email" placeholder="you@example.com" /></label>
-        <button type="submit" class="cta">Email me a sign-in link</button>
-      </form>
-      <form id="login-code-form" class="rw" hidden style="margin-top:10px">
-        <label>The 6-digit code from that email<input type="text" name="token" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" /></label>
-        <button type="submit" class="cta">Use the code →</button>
-        <button type="button" id="login-resend" class="ghost">Resend the code</button>
-      </form>
       <p id="login-status" class="note auth-status" hidden aria-live="polite"></p>
       <p class="note" style="margin-top:16px">Not a member? <a href="/lounge/signup/">Join free</a>.</p>
     </div>
     <aside class="auth-side">
       <div class="rulehead"><h2>Trouble?</h2></div>
-      <p class="t">Links expire after an hour and work once. If yours has, ask for a new one above. Still stuck: <a href="mailto:contact@thenextcigar.com?subject=Lounge%20sign-in">write to the desk</a>.</p>
+      <p class="t">No password yet, or forgot it? Tap "Forgot / no password?" and we email a reset link; it works once and expires after an hour. Still stuck: <a href="mailto:contact@thenextcigar.com?subject=Lounge%20sign-in">write to the desk</a>.</p>
     </aside>
   </div>
 </PaperLayout>
@@ -135,77 +125,10 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
       }
     });
 
-    // ── Fallback: magic-link / OTP code ─────────────────────────────────
-    const magicForm = document.getElementById("login-magic-form") as HTMLFormElement | null;
-    const codeForm = document.getElementById("login-code-form") as HTMLFormElement | null;
-    let lastEmailSent = "";
-
-    async function sendMagicLink(email: string) {
-      const supabase = getSupabase();
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/lounge/app/` },
-      });
-      if (error) throw error;
-      lastEmailSent = email;
-      try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
+    // Arriving from the signup confirmation email.
+    if (new URLSearchParams(location.search).get("confirmed") === "1") {
+      showStatus("Email confirmed. Sign in with your password.", false, pwForm);
     }
-
-    magicForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(magicForm);
-      const email = String(fd.get("email") || "").trim();
-      if (!email) return;
-      const btn = magicForm.querySelector("button[type=submit]") as HTMLButtonElement;
-      btn.disabled = true;
-      btn.textContent = "Sending…";
-      try {
-        await sendMagicLink(email);
-        showStatus(`Sent. Open the email from <strong>The Lounge</strong>. On a phone, the quickest way is the <strong>6-digit code</strong>: type it below and you stay in this app. The link works too, but opens in the browser.`, false, magicForm);
-        if (codeForm) {
-          codeForm.hidden = false;
-          (codeForm.querySelector("input[name=token]") as HTMLInputElement).focus();
-        }
-      } catch (err: any) {
-        showStatus(err?.message || "Couldn't send. Try again.", true, magicForm);
-        btn.disabled = false;
-        btn.textContent = "Email me a sign-in link";
-      }
-    });
-
-    codeForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const token = (codeForm.querySelector("input[name=token]") as HTMLInputElement).value.trim();
-      if (!/^\d{6}$/.test(token)) return;
-      const btn = codeForm.querySelector("button[type=submit]") as HTMLButtonElement;
-      btn.disabled = true;
-      btn.textContent = "Signing in…";
-      try {
-        const supabase = getSupabase();
-        const { error } = await supabase.auth.verifyOtp({
-          email: lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "",
-          token,
-          type: "email",
-        });
-        if (error) throw error;
-        window.location.href = "/lounge/app/";
-      } catch (err: any) {
-        showStatus(err?.message || "Invalid or expired code. Tap Resend below.", true, codeForm);
-        btn.disabled = false;
-        btn.textContent = "Sign in →";
-      }
-    });
-
-    document.getElementById("login-resend")?.addEventListener("click", async () => {
-      const email = lastEmailSent || localStorage.getItem(LAST_EMAIL_KEY) || "";
-      if (!email) return;
-      try {
-        await sendMagicLink(email);
-        showStatus(`Resent. Check your inbox.`, false, codeForm);
-      } catch (err: any) {
-        showStatus(err?.message || "Couldn't resend.", true);
-      }
-    });
   }
 
   document.addEventListener("astro:page-load", setup);

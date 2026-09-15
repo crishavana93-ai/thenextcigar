@@ -147,6 +147,13 @@ const jsonLd = {
           <a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(lead), 1024)} srcset={srcsetFor(cover(lead))} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a>
         </figure>
       )}
+      {/* Phone only: the tagline and the premise as one slow strip, below the hero. */}
+      <div class="strip" aria-hidden="true"><div class="strip-in">
+        <span>The anthology of the leaf — Cuban cigars, the European market, and the things worth owning</span>
+        <span>An independent paper · No tobacco sold · Box prices at European retailers, compared live</span>
+        <span>The anthology of the leaf — Cuban cigars, the European market, and the things worth owning</span>
+        <span>An independent paper · No tobacco sold · Box prices at European retailers, compared live</span>
+      </div></div>
       <div class="twin">
         {secondaries.map((p) => (
           <article>
