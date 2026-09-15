@@ -102,8 +102,8 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 ---
 
 <PaperLayout
-  title={pageTitle(d.title)}
-  description={metaDescription(d.excerpt || d.title)}
+  title={pageTitle((d as any).seo?.metaTitle || d.title)}
+  description={metaDescription((d as any).seo?.metaDescription || d.excerpt || d.title)}
   image={coverUrl}
   section="magazine"
   compact={true}
