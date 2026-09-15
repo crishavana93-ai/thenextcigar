@@ -74,6 +74,20 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
         </a>
       </section>
 
+      {/* Install strip — only in the browser, never inside the installed app.
+          Dismissable; comes back after 14 days. */}
+      <section id="install-strip" class="container-wide pb-3" hidden>
+        <div class="install-strip">
+          <img src="/lounge-app-icon-192.png" width="44" height="44" alt="" class="install-strip__icon" />
+          <div class="install-strip__body">
+            <p class="install-strip__title">Put the Lounge on your home screen</p>
+            <p class="install-strip__sub">Full screen, one tap, you stay signed in.</p>
+          </div>
+          <a href="/lounge/download/" class="lbtn lbtn-primary lbtn-sm">Download</a>
+          <button id="install-strip-dismiss" class="install-strip__x" type="button" aria-label="Not now">×</button>
+        </div>
+      </section>
+
       {/* Region B — Live now horizontal strip of currently-checked-in members */}
       <section class="container-wide pb-3">
         <div class="feed-section-head">
@@ -683,10 +697,32 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     font-size: 14px;
     color: var(--color-text-soft);
   }
+  /* Install strip */
+  .install-strip { display: flex; align-items: center; gap: 12px; border: 1px solid #151412; background: #F2F0EA; padding: 10px 12px; position: relative; }
+  .install-strip__icon { width: 44px; height: 44px; border-radius: 11px; flex: none; }
+  .install-strip__body { flex: 1; min-width: 0; }
+  .install-strip__title { margin: 0; font-family: var(--font-serif); font-size: 16px; line-height: 1.2; color: #151412; }
+  .install-strip__sub { margin: 2px 0 0; font-size: 12px; color: #6A665E; }
+  .install-strip__x { position: absolute; top: 2px; right: 6px; background: none; border: 0; font-size: 18px; line-height: 1; color: #6A665E; cursor: pointer; padding: 4px; }
+  .install-strip .lbtn { flex: none; }
 </style>
 
 <script>
   import { getCurrentUser, getCurrentProfile, getSupabase, touchActive } from "../../../lib/supabase";
+  // Install strip: hide inside the installed app; respect a 14-day dismissal.
+  (() => {
+    const strip = document.getElementById("install-strip");
+    if (!strip) return;
+    const standalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as any).standalone === true;
+    let dismissed = 0;
+    try { dismissed = Number(localStorage.getItem("lounge_install_dismissed") || 0); } catch {}
+    if (!standalone && Date.now() - dismissed > 14 * 86400e3) strip.hidden = false;
+    document.getElementById("install-strip-dismiss")?.addEventListener("click", () => {
+      strip.hidden = true;
+      try { localStorage.setItem("lounge_install_dismissed", String(Date.now())); } catch {}
+    });
+  })();
+
 
   function escapeHtml(s: string): string {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

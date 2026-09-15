@@ -123,7 +123,14 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       </aside>
 
       {/* Map */}
-      <div id="lounge-map" class="lounge-map"></div>
+      <div class="lounge-map-wrap">
+        <div id="lounge-map" class="lounge-map"></div>
+        <div class="pin-legend" aria-hidden="true">
+          <span><i class="pl pl--cdh">C</i>Casa del Habano</span>
+          <span><i class="pl pl--lounge">L</i>Lounge</span>
+          <span><i class="pl pl--shop">S</i>Shop</span>
+        </div>
+      </div>
 
       {/* Bottom sheet */}
       <aside id="bottom-sheet" class="lounge-sheet" hidden>
@@ -533,11 +540,34 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
   .cruiser-empty__hint { margin: 0; font-size: 11px; color: #635F58; }
 
   /* Map itself */
+  .lounge-map-wrap { position: relative; }
   .lounge-map {
     height: calc(100vh - 70px - 60px); /* roughly: navbar + filter bar */
     width: 100%;
     background: #EAE7E0;
   }
+  /* Legend for the letter pins — top-left (bottom is taken by the cruiser strip) */
+  .pin-legend {
+    position: absolute; left: 10px; top: 10px; z-index: 400;
+    display: flex; gap: 12px; align-items: center;
+    padding: 6px 10px;
+    background: rgba(242, 240, 234, 0.94);
+    border: 1px solid #151412;
+    font-family: var(--font-display);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #151412;
+    pointer-events: none;
+  }
+  .pin-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .pl {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    font-family: var(--font-serif, Georgia, serif); font-style: normal; font-size: 11px; font-weight: 500;
+    border: 1px solid #F2F0EA; box-shadow: 0 1px 3px rgba(0,0,0,.35);
+  }
+  .pl--cdh { background: #7B2622; color: #F2F0EA; }
+  .pl--lounge { background: #151412; color: #F2F0EA; }
+  .pl--shop { background: #F2F0EA; color: #151412; border-color: #151412; }
+  @media (max-width: 560px) { .pin-legend { gap: 9px; padding: 5px 8px; font-size: 10px; } }
   :global(.leaflet-control-zoom) {
     border: none !important;
     box-shadow: none !important;
@@ -595,21 +625,27 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     object-fit: cover;
     border-radius: 50%;
   }
-  :global(.tnc-venue-pin svg) {
-    width: 18px; height: 18px;
-    stroke: #fff;
-    stroke-width: 2;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  :global(.tnc-venue-pin .mono) {
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    padding-top: 1px; /* optical centre for caps */
   }
-  /* Type-tinted ring around the photo/glyph */
-  :global(.tnc-venue-pin--lounge) { border-color: #d4b876; background: #c8a052; }
-  :global(.tnc-venue-pin--retailer) { border-color: #6fa37e; background: #4d7a5c; }
-  :global(.tnc-venue-pin--casadelhabano) { border-color: #e87968; background: #c0392b; }
-  :global(.tnc-venue-pin--house) { border-color: #7196c5; background: #4a6fa5; }
-  :global(.tnc-venue-pin--pub) { border-color: #cf9a59; background: #b07a3a; }
-  :global(.tnc-venue-pin--club) { border-color: #b287cc; background: #8e5da7; }
+  /* Paper palette. Face colour says the type; the ring is always cream so
+     pins sit on the map like ink stamps rather than app badges.
+     Casa del Habano = oxblood · lounge = ink · shop = paper with ink letter
+     house / pub / club = muted stone. */
+  :global(.tnc-venue-pin) { border-color: #F2F0EA; }
+  :global(.tnc-venue-pin--lounge) { background: #151412; color: #F2F0EA; }
+  :global(.tnc-venue-pin--retailer) { background: #F2F0EA; color: #151412; border-color: #151412; }
+  :global(.tnc-venue-pin--casadelhabano) { background: #7B2622; color: #F2F0EA; }
+  :global(.tnc-venue-pin--house) { background: #6A665E; color: #F2F0EA; }
+  :global(.tnc-venue-pin--pub) { background: #8C7A5B; color: #F2F0EA; }
+  :global(.tnc-venue-pin--club) { background: #4A463F; color: #F2F0EA; }
+  :global(.tnc-venue-pin.has-photo) { border-color: #F2F0EA; }
+  :global(.tnc-venue-pin--casadelhabano.has-photo) { border-color: #7B2622; }
   /* When a photo is present, hide the colored bg so the image shows clean */
   :global(.tnc-venue-pin.has-photo) { background: transparent; }
   :global(.tnc-venue-pin--has-active) {
@@ -939,30 +975,13 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
   }
-  function venueGlyph(type: string): string {
-    // Compact 16x16 SVG glyphs matching venue type. Stroke-only, white inherited.
-    switch (type) {
-      case "lounge":
-        // Smoke curl / leaf
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 14c0-3 4-3 4-6s-4-3-4-6"/><path d="M14 18c0-3 4-3 4-6"/></svg>`;
-      case "retailer":
-        // Storefront / shopping bag
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>`;
-      case "casadelhabano":
-        // Star (premium / certified)
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.5 6 .9-4.3 4.3 1 6L12 17l-5.3 2.7 1-6L3.4 9.4l6-.9L12 3Z"/></svg>`;
-      case "house":
-        // Home
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`;
-      case "pub":
-        // Beer mug
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h10v13H6z"/><path d="M16 10h3v6h-3"/><path d="M9 11v6"/><path d="M12 11v6"/></svg>`;
-      case "club":
-        // Music note
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>`;
-      default:
-        return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/></svg>`;
-    }
+  // Pin face: the venue's initial set in the paper's serif. A letter reads at
+  // 36px where a stroke glyph turns into a smudge (the old "shopping bag"
+  // looked like a bin). Type is carried by the ring colour instead.
+  function venueMonogram(name: string): string {
+    const clean = (name || "").replace(/^(the|la|le|el|casa del habano|lcdh)\s+/i, "").trim();
+    const ch = (clean.match(/[A-Za-zÀ-ÿ0-9]/) || ["·"])[0].toUpperCase();
+    return `<span class="mono">${escapeHtml(ch)}</span>`;
   }
 
   function fmtRemaining(iso: string): string {
@@ -1333,7 +1352,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         const hasActive = (activeByLoungeId[l.id]?.length || 0) > 0;
         const inner = l.photo_url
           ? `<img src="${escapeHtml(l.photo_url)}" alt="" loading="lazy" onerror="this.parentElement.classList.remove('has-photo'); this.replaceWith();" />`
-          : venueGlyph(l.type);
+          : venueMonogram(l.name);
         const photoClass = l.photo_url ? " has-photo" : "";
         const icon = L.divIcon({
           className: "",

@@ -309,6 +309,8 @@ footer.paper a:hover{text-decoration:underline}
   .rw.cols-3{grid-template-columns:1fr!important}
   .ticker a{padding:8px 0}
   .mast .ed,.mast .ed span,.ear,.ear *,.kick{font-size:11px}
+  .mast .ed span{white-space:nowrap}
+  .mast .ed .pfs{display:none}
   .dateline,.dateline .st{font-size:11.5px}
   table.mk small,table.mk .tag{font-size:11px}
   table.mk td{padding-top:10px;padding-bottom:10px}

@@ -338,6 +338,18 @@ const loungeSkin = path.startsWith("/lounge/app");
             console.warn("[Lounge] version-stamp reset failed:", err);
           }
 
+          function showUpdateBar() {
+            if (document.getElementById("lounge-update-bar")) return;
+            const bar = document.createElement("div");
+            bar.id = "lounge-update-bar";
+            bar.setAttribute("role", "status");
+            bar.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:95;background:#151412;color:#F2F0EA;border:1px solid #F2F0EA;padding:10px 14px;display:flex;align-items:center;gap:12px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.35)";
+            bar.innerHTML = '<span style="flex:1">A new edition of the Lounge is ready.</span><button type="button" style="background:#7B2622;color:#F2F0EA;border:0;padding:8px 12px;font:inherit;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:11px;cursor:pointer">Refresh</button>';
+            bar.querySelector("button").addEventListener("click", () => location.reload());
+            document.body.appendChild(bar);
+            document.addEventListener("visibilitychange", () => { if (document.hidden) location.reload(); }, { once: true });
+          }
+
           if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
               navigator.serviceWorker
@@ -350,7 +362,12 @@ const loungeSkin = path.startsWith("/lounge/app");
                     if (!nw) return;
                     nw.addEventListener("statechange", () => {
                       if (nw.state === "installed" && navigator.serviceWorker.controller) {
-                        location.reload();
+                        // A new build is ready. Never yank the page out from
+                        // under someone mid-message: show a quiet bar, and
+                        // reload on tap or the next time the app is backgrounded.
+                        // Sign-in is untouched either way — the Supabase session
+                        // lives in localStorage, which no update clears.
+                        showUpdateBar();
                       }
                     });
                   });
