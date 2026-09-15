@@ -3,7 +3,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
 import {
   COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
   bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl, NEW_LISTINGS, RETAILER_BY_ID,
-  historyForSku,
+  historyForSku, STALE_DAYS,
 } from "../../data/finder-live";
 import { FX_TO_EUR } from "../../data/finder-data";
 import { DUTY_RATES } from "../../data/duty-rates";
@@ -108,6 +108,10 @@ function priceSignal(skuId: string, nowEur: number): Signal {
 // The full board, alphabetical by brand then vitola.
 const board = priced.slice().sort((a, b) =>
   a.sku.brand.localeCompare(b.sku.brand) || a.sku.vitola.localeCompare(b.sku.vitola));
+// Vitolas with no in-stock price younger than STALE_DAYS. They are not on the
+// board — a May row is not a price — but they are not hidden either.
+const unpriced = SKUS.filter((s) => !priced.some((r) => r.sku.id === s.id))
+  .sort((a, b) => a.brand.localeCompare(b.brand) || a.vitola.localeCompare(b.vitola));
 const brands = [...new Set(board.map((r) => r.sku.brand))];
 
 const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
@@ -294,6 +298,9 @@ const jsonLd = {
           ))}
         </tbody>
       </table>
+      {unpriced.length > 0 && (
+        <p class="note" style="margin-top:14px"><b>Not priced this fortnight ({unpriced.length}):</b> {unpriced.map((s, i) => (<><a href={`/finder/sku/${s.slug}/`}>{s.brand} {s.vitola}</a>{i < unpriced.length - 1 ? ", " : ""}</>))}. No retailer we re-read has these in stock, and we don't headline a price older than {STALE_DAYS} days. Their pages keep the last price seen, dated.</p>
+      )}
     </section>
 
     <!-- RIGHT: how it works -->

@@ -7,7 +7,7 @@ import {
   effectiveShopUrl, dutyPaidCountries, checkedLabel, historyForSku,
 } from "../../../data/finder-live";
 import { buildSkuFaq } from "../../../lib/finder/skuFaq.ts";
-import { COUNTRIES, FX_TO_EUR } from "../../../data/finder-live";
+import { COUNTRIES, FX_TO_EUR, isStale, STALE_DAYS } from "../../../data/finder-live";
 import { DUTY_RATES } from "../../../data/duty-rates";
 
 /**
@@ -35,14 +35,21 @@ const offers = snapshotsForSku(sku.id)
     return { snap, retailer, country, eur, per: eur / sku.boxSize, link: effectiveShopUrl(snap.sourceUrl, sku, retailer) };
   })
   .filter((o): o is NonNullable<typeof o> => !!o)
-  .sort((a, b) => (a.snap.inStock !== b.snap.inStock ? (a.snap.inStock ? -1 : 1) : a.eur - b.eur));
+  // Fresh in-stock rows first, then stale in-stock rows, then sold out; by
+  // price inside each group. A May row belongs at the bottom, not the top.
+  .sort((a, b) => {
+    const ga = a.snap.inStock ? (isStale(a.snap) ? 1 : 0) : 2, gb = b.snap.inStock ? (isStale(b.snap) ? 1 : 0) : 2;
+    return ga !== gb ? ga - gb : a.eur - b.eur;
+  });
 
 const inStock = offers.filter((o) => o.snap.inStock);
 // The headline price must be one we read recently. A May row can sit in the
 // table with its date on it, but it is not "cheapest in stock" in September.
-const bestLive = inStock.find((o) => o.snap.live);
-const best = bestLive ?? inStock[0];
-const bestIsStale = !!best && !bestLive;
+// Rule (15 Sep): a price older than STALE_DAYS never headlines the page and
+// never gets a Buy button. If nothing fresh is in stock we say so and show
+// the last price we saw, greyed, with its date.
+const best = inStock.find((o) => !isStale(o.snap));
+const lastSeen = best ? null : inStock[0] ?? null;
 const minEur = inStock[0]?.eur ?? 0;
 const maxEur = inStock.at(-1)?.eur ?? 0;
 const spread = minEur && maxEur ? Math.round(((maxEur - minEur) / minEur) * 100) : 0;
@@ -146,13 +153,19 @@ const description = best
     <aside>
       {best ? (
         <div class="quote">
-          <p class="t">{bestIsStale ? "Cheapest listing · not re-read recently" : "Cheapest in stock"}</p>
+          <p class="t">Cheapest in stock</p>
           <p class="big">{formatPrice(best.snap.price, best.snap.currency)}</p>
           <p class="sub">≈ €{Math.round(best.eur).toLocaleString("en-GB")} · €{best.per.toFixed(2)} per cigar</p>
           <p class="sub" style="margin-top:6px">at <b style="color:var(--ink)">{best.retailer.name}</b>, {best.country.name} · {checkedLabel(best.snap)}</p>
           <a class="cta" href={best.link.url} target="_blank" rel="noopener nofollow sponsored">{best.link.isExact ? `Buy at ${best.retailer.name}` : `Search ${best.retailer.name}`} →</a>
           <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="ghost" />
           <p class="note" style="margin-top:10px">Clicking through may earn us a commission. Your price is unchanged.</p>
+        </div>
+      ) : lastSeen ? (
+        <div class="quote">
+          <p class="t" style="color:var(--mute)">No live in-stock price</p>
+          <p class="sub">None of the retailers we re-read has this box in stock this fortnight. The last price we saw was <b style="color:var(--ink)">{formatPrice(lastSeen.snap.price, lastSeen.snap.currency)}</b> at {lastSeen.retailer.name}, {lastSeen.country.name} — {checkedLabel(lastSeen.snap)}. Treat it as history, not a quote.</p>
+          <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(lastSeen.eur)} baselineLabel={`€${Math.round(lastSeen.eur).toLocaleString("en-GB")}`} variant="ghost" />
         </div>
       ) : (
         <div class="quote"><p class="t">No in-stock listing</p><p class="sub">Every retailer we track is sold out. Save an alert and we'll email when one comes back.</p><SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} variant="ghost" /></div>
@@ -190,7 +203,7 @@ const description = best
         <thead><tr><th>Retailer</th><th class="num">Box</th><th class="num">Per cigar</th><th class="num door" hidden>At your door</th><th></th></tr></thead>
         <tbody>
           {offers.map((o) => (
-            <tr class:list={{ oos: !o.snap.inStock }}>
+            <tr class:list={{ oos: !o.snap.inStock, old: o.snap.inStock && isStale(o.snap) }}>
               <td class="v">
                 {o.retailer.name} <span class="tag">{o.country.code.toUpperCase()}</span>
                 {dutyPaidCountries(o.retailer).length > 1 && <span class="tag ok">duty paid EU</span>}
@@ -199,12 +212,12 @@ const description = best
               <td class="num p">{formatPrice(o.snap.price, o.snap.currency)}<small>≈ €{Math.round(o.eur)}</small></td>
               <td class="num p">€{o.per.toFixed(2)}</td>
               <td class="num p door" hidden data-idx={offers.indexOf(o)}></td>
-              <td class="num"><a class="go" href={o.link.url} target="_blank" rel="noopener nofollow sponsored">{o.link.isExact ? "Buy" : "Search"} →</a></td>
+              <td class="num"><a class="go" href={o.link.url} target="_blank" rel="noopener nofollow sponsored">{isStale(o.snap) ? "Check" : o.link.isExact ? "Buy" : "Search"} →</a></td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p class="note">Listed price for the box of {sku.boxSize} in the retailer's own currency, their own tax included. A box crossing a border picks up destination duty and VAT on top — the "duty paid EU" mark shows the few retailers whose price is all-in beyond their home market.</p>
+      <p class="note">Rows in grey were last read more than {STALE_DAYS} days ago: they are history, not quotes, and never count as the cheapest. Listed price for the box of {sku.boxSize} in the retailer's own currency, their own tax included. A box crossing a border picks up destination duty and VAT on top — the "duty paid EU" mark shows the few retailers whose price is all-in beyond their home market.</p>
       <div class="landed" id="landed" hidden>
         <div class="rulehead"><h2>At your door <em id="landed-title"></em></h2></div>
         <div class="landed-grid">

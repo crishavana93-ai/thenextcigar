@@ -32,6 +32,15 @@ export interface LiveSnapshot extends PriceSnapshot {
 }
 
 const FRESH_DAYS = 14;
+/** A price older than this is not offered as "the cheapest" anywhere: it can
+ *  sit in a table with its date on it, but it never headlines a page, never
+ *  gets a Buy button and never ranks a board. Sixty days is generous — most
+ *  of the seed rows are from May and the scrapers re-read four times a day. */
+export const STALE_DAYS = 60;
+export function isStale(s: { scrapedAt: string; live?: boolean }): boolean {
+  if (s.live) return false;
+  return Date.now() - Date.parse(s.scrapedAt) > STALE_DAYS * 86400e3;
+}
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
 const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string | undefined;
 
@@ -193,7 +202,7 @@ export function snapshotsForCountry(country: CountryCode): LiveSnapshot[] {
 }
 
 export function bestPriceForSku(skuId: string): { snap: LiveSnapshot; eur: number } | undefined {
-  const candidates = snapshotsForSku(skuId).filter((s) => s.inStock);
+  const candidates = snapshotsForSku(skuId).filter((s) => s.inStock && !isStale(s));
   if (!candidates.length) return undefined;
   let best = candidates[0];
   let bestEur = seed.toEUR(best.price, best.currency);
@@ -206,7 +215,7 @@ export function bestPriceForSku(skuId: string): { snap: LiveSnapshot; eur: numbe
 
 export function bestPriceInCountry(skuId: string, country: CountryCode): LiveSnapshot | undefined {
   const ids = new Set(seed.RETAILERS.filter((r) => r.country === country).map((r) => r.id));
-  const candidates = snapshotsForSku(skuId).filter((s) => ids.has(s.retailerId) && s.inStock);
+  const candidates = snapshotsForSku(skuId).filter((s) => ids.has(s.retailerId) && s.inStock && !isStale(s));
   if (!candidates.length) return undefined;
   return candidates.reduce((a, b) => (seed.toEUR(b.price, b.currency) < seed.toEUR(a.price, a.currency) ? b : a));
 }

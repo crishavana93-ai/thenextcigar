@@ -114,7 +114,8 @@ table.mk td.p small.dn{color:var(--ox)}
 table.mk.wide td{padding:9px 6px 9px 0}
 table.mk.wide td.v{font-size:17px}
 table.mk.wide td.num{text-align:right;white-space:nowrap}
-table.mk tr.oos td{color:var(--mute)}
+table.mk tr.oos td,table.mk tr.old td{color:var(--mute)}
+table.mk tr.old td.p{text-decoration:none;font-weight:400}
 .eds{margin:18px 0 0;padding:0;list-style:none;font-family:var(--sans);font-size:12.5px}
 .eds li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule-2)}
 .eds li span:last-child{color:var(--mute);font-variant-numeric:tabular-nums;text-align:right}

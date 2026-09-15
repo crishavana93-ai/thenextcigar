@@ -28,6 +28,12 @@ Kept in the repo so it survives sessions. Newest at the top of each list. Strike
 12. Subscribers: the Lounge signup now asks for newsletter consent (migration 034). The 31 existing members have not consented — send them one in-app/service note inviting them to tick the box, then export the consenting ones with the query in 034 and import to MailerLite. First mailing when photos exist.
 13. Instagram bio link with UTM; post carousel 02 first (`docs/social/`).
 
+## Finder coverage (15 Sep audit)
+
+- 72 live in-stock prices across the board; 40 of 52 vitolas have one. Rows older than 60 days no longer headline a page, rank a board or carry a Buy button (`isStale`, `STALE_DAYS`).
+- Noblego/Cigarmaxx report everything sold out — verified by hand on 15 Sep: the site says "Momentan ausverkauft, Liefertermin unbekannt" on every pack size. Parser is right; Cuban supply in Germany is short.
+- Coverage: Cigarworld.de reads only 12 PDPs; the PDP lists for the German shops and the UK/IE shops cover a fraction of the 52 vitolas. Extend to brand/category pages where the shop has them (the CigarOne pattern) rather than one URL per vitola.
+
 ## Watching
 
 - Click ledger: Lounge admin → Clicks. Read after 22 September, not before.
