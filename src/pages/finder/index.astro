@@ -233,7 +233,7 @@ const jsonLd = {
     <section class="board-first" data-fold-wrap>
       {mover && (
         <article style="padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:18px">
-          <span class="kick">This week's mover</span>
+          <span class="kick">Box of the week</span>
           <h2 class="head" style="font-size:clamp(28px,3vw,42px);margin-top:8px">
             {mover.retailer.name} cut the {mover.sku.brand} {mover.sku.vitola} by {mover.pct}%.
           </h2>
@@ -247,7 +247,7 @@ const jsonLd = {
       )}
       {!mover && fallen && (
         <article style="padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:18px">
-          <span class="kick">This week's mover</span>
+          <span class="kick">Box of the week</span>
           <h2 class="head" style="font-size:clamp(28px,3vw,42px);margin-top:8px">
             {fallen.sku.brand} {fallen.sku.vitola} is {Math.abs(fallen.pct)}% {fallen.pct > 0 ? "under" : "over"} its usual price.
           </h2>

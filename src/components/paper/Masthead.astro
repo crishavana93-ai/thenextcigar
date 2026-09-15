@@ -27,15 +27,20 @@ const items: [string, string, string][] = [
   {isHome
     ? <h1><a href="/">The Next Cigar</a></h1>
     : <p class="h1"><a href="/">The Next Cigar</a></p>}
-  <p class="tag">The anthology of the leaf — Cuban cigars, the European market, and the things worth owning.</p>
+  <p class="tagline">The anthology of the leaf — Cuban cigars, the European market, and the things worth owning.</p>
   <div class="ed">
     <span>{MASTHEAD.volume} · {MASTHEAD.issue.replace("Issue", "No.")}</span>
     <span>Independent · Reader-supported · No tobacco sold here</span>
     <span>{MASTHEAD.date}<span class="pfs"> · Published from Sweden</span></span>
   </div>
-  {isHome && (
-    <p class="phone-lede">An independent paper on Cuban cigars. No tobacco sold. Box prices at European retailers, compared live — <a href="/finder/">see the board →</a></p>
-  )}
+  {/* Phone only: the tagline and the premise as one slow-moving strip, so the
+      lead story starts within the first screen instead of after a wall of text. */}
+  <div class="strip" aria-hidden="true"><div class="strip-in">
+    <span>The anthology of the leaf — Cuban cigars, the European market, and the things worth owning</span>
+    <span>An independent paper · No tobacco sold · Box prices at European retailers, compared live</span>
+    <span>The anthology of the leaf — Cuban cigars, the European market, and the things worth owning</span>
+    <span>An independent paper · No tobacco sold · Box prices at European retailers, compared live</span>
+  </div></div>
   <nav class="sec" aria-label="Sections">
     <ul>
       {items.map(([key, href, label]) => (

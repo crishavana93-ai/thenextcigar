@@ -68,8 +68,10 @@ const ogImage = new URL(image, Astro.site).toString();
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href={manifest.includes("lounge") ? "/lounge-app-icon-192.png" : "/apple-touch-icon.png"} />
     <link rel="manifest" href={manifest} />
+    {manifest.includes("lounge") && <meta name="apple-mobile-web-app-title" content="The Lounge" />}
+    {manifest.includes("lounge") && <meta name="apple-mobile-web-app-capable" content="yes" />}
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={siteName} href="/rss.xml" />
 

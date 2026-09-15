@@ -11,7 +11,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
         <label>Email<input type="email" name="email" required autocomplete="email" placeholder="you@example.com" /></label>
         <label>Password<input type="password" name="password" required autocomplete="current-password" minlength="8" /></label>
         <button type="submit" class="cta">Sign in →</button>
-        <button type="button" id="login-forgot" class="ghost">No password yet? Set one</button>
+        <button type="button" id="login-forgot" class="ghost">Forgot / no password? Email me a reset link</button>
       </form>
       <div class="rulehead" style="margin-top:26px"><h2>Or by email</h2></div>
       <form id="login-magic-form" class="rw">
@@ -37,12 +37,16 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
 
   const LAST_EMAIL_KEY = "lounge_last_email";
 
-  function showStatus(msg: string, isError = false) {
+  // The message lands directly under the form that produced it (not at the
+  // bottom of the card, where a phone keyboard hides it) and scrolls into view.
+  function showStatus(msg: string, isError = false, near?: HTMLElement | null) {
     const status = document.getElementById("login-status") as HTMLParagraphElement | null;
     if (!status) return;
+    if (near) near.insertAdjacentElement("afterend", status);
     status.hidden = false;
     status.classList.toggle("is-error", isError);
     status.innerHTML = msg;
+    status.scrollIntoView({ block: "center", behavior: "smooth" });
   }
 
   async function setup() {
@@ -89,11 +93,11 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
           /invalid login credentials/i.test(msg) || /invalid_grant/i.test(msg);
         if (looksLikeNoPassword) {
           showStatus(
-            `That email exists but no password is set yet. Tap <strong>"No password yet? Set one"</strong> below to get a reset email — takes 30 seconds.`,
-            true,
+            `<strong>Wrong password — or no password set for this email yet.</strong> Try again, or tap <strong>"Forgot / no password? Email me a reset link"</strong> and set one in 30 seconds.`,
+            true, pwForm,
           );
         } else {
-          showStatus(err?.message || "Sign-in failed. Try again.", true);
+          showStatus(err?.message || "Sign-in failed. Try again.", true, pwForm);
         }
         btn.disabled = false;
         btn.textContent = "Sign in →";
@@ -106,7 +110,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
       const email = emailInput.value.trim();
       if (!email) {
         emailInput.focus();
-        showStatus("Enter your email first, then tap this again.", true);
+        showStatus("Enter your email first, then tap this again.", true, pwForm);
         return;
       }
       const btn = document.getElementById("login-forgot") as HTMLButtonElement;
@@ -121,12 +125,13 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
         try { localStorage.setItem(LAST_EMAIL_KEY, email); } catch {}
         showStatus(
           `Email sent to <strong>${email}</strong>. Click the "Set password" link inside — works from any device, any browser. After you set the password, come back here and sign in.`,
+          false, pwForm,
         );
       } catch (err: any) {
-        showStatus(err?.message || "Couldn't send reset email. Try again.", true);
+        showStatus(err?.message || "Couldn't send reset email. Try again.", true, pwForm);
       } finally {
         btn.disabled = false;
-        btn.textContent = "No password yet? Set one";
+        btn.textContent = "Forgot / no password? Email me a reset link";
       }
     });
 
@@ -156,13 +161,13 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
       btn.textContent = "Sending…";
       try {
         await sendMagicLink(email);
-        showStatus(`Sent. Open the email from <strong>The Lounge</strong> and tap the link, OR copy the 6-digit code into the form below.`);
+        showStatus(`Sent. Open the email from <strong>The Lounge</strong>. On a phone, the quickest way is the <strong>6-digit code</strong>: type it below and you stay in this app. The link works too, but opens in the browser.`, false, magicForm);
         if (codeForm) {
           codeForm.hidden = false;
           (codeForm.querySelector("input[name=token]") as HTMLInputElement).focus();
         }
       } catch (err: any) {
-        showStatus(err?.message || "Couldn't send. Try again.", true);
+        showStatus(err?.message || "Couldn't send. Try again.", true, magicForm);
         btn.disabled = false;
         btn.textContent = "Email me a sign-in link";
       }
@@ -185,7 +190,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
         if (error) throw error;
         window.location.href = "/lounge/app/";
       } catch (err: any) {
-        showStatus(err?.message || "Invalid or expired code. Tap Resend below.", true);
+        showStatus(err?.message || "Invalid or expired code. Tap Resend below.", true, codeForm);
         btn.disabled = false;
         btn.textContent = "Sign in →";
       }
@@ -196,7 +201,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
       if (!email) return;
       try {
         await sendMagicLink(email);
-        showStatus(`Resent. Check your inbox.`);
+        showStatus(`Resent. Check your inbox.`, false, codeForm);
       } catch (err: any) {
         showStatus(err?.message || "Couldn't resend.", true);
       }

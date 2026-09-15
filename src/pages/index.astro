@@ -94,7 +94,7 @@ const money = (n: number, cur: string) => new Intl.NumberFormat("en-GB", { style
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "NewsMediaOrganization", "@id": "https://thenextcigar.com/#org", name: "The Next Cigar", url: "https://thenextcigar.com/", logo: { "@type": "ImageObject", url: "https://thenextcigar.com/favicon-512.png", width: 512, height: 512 }, sameAs: [] },
+    { "@type": "NewsMediaOrganization", "@id": "https://thenextcigar.com/#org", name: "The Next Cigar", url: "https://thenextcigar.com/", logo: { "@type": "ImageObject", url: "https://thenextcigar.com/favicon-512.png", width: 512, height: 512 }, image: { "@type": "ImageObject", url: "https://thenextcigar.com/og-default.jpg", width: 1200, height: 630 }, sameAs: [] },
     { "@type": "WebSite", url: "https://thenextcigar.com/", name: "The Next Cigar", publisher: { "@id": "https://thenextcigar.com/#org" } },
   ],
 };
