@@ -266,6 +266,14 @@ footer.paper a:hover{text-decoration:underline}
    two rather than clipping "Tools" off the end. Still nothing scrolls. */
 @media (max-width:360px){
   nav.sec ul{flex-wrap:wrap;justify-content:flex-start;gap:0 14px}
+}
+/* The dateline's stat line ("52 vitolas · 23 retailers with prices · …") is
+   nowrap on desktop. On a phone that single line was 745–841px wide, and a
+   mobile browser answers overflow by widening the layout viewport, so the
+   Finder, every SKU and country page and the shop index rendered zoomed out
+   at ~40% on an iPhone 13. Found by the 15 Sept QA pass; the old breakpoint
+   only caught 360px phones. Wrap below 700px. */
+@media (max-width:700px){
   .dateline{flex-direction:column;align-items:flex-start}
   .dateline .st{text-align:left;white-space:normal}
 }
