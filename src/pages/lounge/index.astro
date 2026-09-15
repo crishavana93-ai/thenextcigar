@@ -1,6 +1,6 @@
 ---
 import PaperLayout from "../../layouts/PaperLayout.astro";
-import { places } from "../../data/cigar-places.ts";
+import { VENUES as places } from "../../data/lounge-venues";
 import { SKUS, RETAILERS, COUNTRIES } from "../../data/finder-live";
 import { upcomingEvents } from "../../data/cigar-events.ts";
 
@@ -26,7 +26,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: "Th
     <aside>
       <div class="rulehead"><h2>What a member gets</h2></div>
       <ul class="list">
-        <li><div><a class="head" href="/lounge/signup/">The map</a><p class="by">{places.length} rooms worth walking into, in {cities.length} cities: {byType("casadelhabano")} Casas del Habano, {byType("lounge")} lounges, {byType("retailer")} shops, {byType("pub")} bars that let you light up.</p></div></li>
+        <li><div><a class="head" href="/lounge/map/">The map</a><p class="by">{places.length} rooms worth walking into, in {cities.length} cities: {byType("casadelhabano")} Casas del Habano, {byType("lounge")} lounges, {byType("retailer")} shops, {byType("pub")} bars that let you light up.</p></div></li>
         <li><div><a class="head" href="/lounge/signup/">The watchlist</a><p class="by">An email when any of the {SKUS.length} vitolas on the board drops below your price or comes back in stock — scoped to countries that can deliver to you.</p></div></li>
         <li><div><a class="head" href="/lounge/signup/">Check-ins &amp; messages</a><p class="by">Say where you're smoking tonight; find members in the same city; message them directly.</p></div></li>
         <li><div><a class="head" href="/lounge/signup/">First access</a><p class="by">The Guatabey run and every Shop arrival go to members first.</p></div></li>
@@ -57,7 +57,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: "Th
           </article>
         ))}
       </div>
-      <p class="note">The full map, with opening hours, walk-in policy and members' notes, is inside the Lounge.</p>
+      <p class="note"><a href="/lounge/map/">See the whole map →</a> Opening hours, walk-in policy and members' notes are inside the Lounge.</p>
     </section>
 
     <aside class="rail">

@@ -1,0 +1,155 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import { VENUES, VENUE_CITIES, VENUE_COUNTRIES, TYPE_LABEL } from "../../../data/lounge-venues";
+
+/** /lounge/map/ — the Lounge map, read-only, for people who are not members.
+ *  Same venues a member sees; what a member gets on top is who is there
+ *  tonight, check-ins and the humidor. Every pin sells that, quietly. */
+const counts = {
+  casadelhabano: VENUES.filter((v) => v.type === "casadelhabano").length,
+  lounge: VENUES.filter((v) => v.type === "lounge").length,
+  retailer: VENUES.filter((v) => v.type === "retailer").length,
+};
+const byCity = new Map<string, number>();
+for (const v of VENUES) byCity.set(v.city, (byCity.get(v.city) || 0) + 1);
+const topCities = [...byCity.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+const payload = VENUES.map((v) => [v.slug, v.name, v.city, v.country, v.address || "", v.lat, v.lng, v.type, v.website || ""]);
+const jsonLd = {
+  "@context": "https://schema.org", "@type": "WebPage", name: "The Lounge map",
+  description: `${VENUES.length} cigar lounges, Casas del Habano and shops in ${VENUE_CITIES.length} cities.`,
+  url: "https://thenextcigar.com/lounge/map/", isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" },
+};
+---
+
+<PaperLayout
+  title={`The Lounge map — ${VENUES.length} cigar lounges, Casas del Habano and shops in ${VENUE_CITIES.length} cities · The Next Cigar`}
+  description={`Where to smoke and where to buy: ${counts.casadelhabano} Casas del Habano, ${counts.lounge} lounges and ${counts.retailer} shops in ${VENUE_CITIES.length} cities, on one map. Free. Members see who is there tonight.`}
+  section="lounge"
+  image="/og-lounge.jpg"
+  compact={true}
+  jsonLd={jsonLd}
+>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <div class="dateline">
+    <h1>The map <em>— where to smoke, where to buy.</em></h1>
+    <p class="st">{VENUES.length} rooms · {VENUE_CITIES.length} cities · {VENUE_COUNTRIES.length} countries</p>
+  </div>
+
+  <div class="mapbar">
+    <label for="map-city">City</label>
+    <select id="map-city"><option value="">Everywhere</option>{VENUE_CITIES.map((c) => <option value={c}>{c} · {byCity.get(c)}</option>)}</select>
+    <button type="button" id="map-near" class="near">Near me</button>
+    <span class="legend" aria-hidden="true"><i class="pl pl--cdh">C</i>Casa del Habano <i class="pl pl--lounge">L</i>Lounge <i class="pl pl--shop">S</i>Shop</span>
+  </div>
+
+  <div class="mapwrap">
+    <div id="pubmap" class="pubmap" role="region" aria-label="Map of cigar venues"></div>
+    <aside class="card" id="map-card" hidden>
+      <button type="button" class="x" id="map-card-x" aria-label="Close">×</button>
+      <span class="kick" id="mc-type">—</span>
+      <h2 class="head" id="mc-name">—</h2>
+      <p class="by" id="mc-addr">—</p>
+      <p class="mc-links"><a id="mc-site" href="#" target="_blank" rel="noopener" hidden>Website →</a> <a id="mc-dir" href="#" target="_blank" rel="noopener">Directions →</a></p>
+      <div class="box" style="margin-top:12px">
+        <span class="kick">Members only</span>
+        <p style="margin-top:4px">See who is smoking here tonight, check in, and get an email when a box you want drops.</p>
+        <a class="cta" href="/lounge/signup/">Join free →</a>
+      </div>
+    </aside>
+  </div>
+  <p class="note">Every room here is one we would send a reader to: official Casas del Habano, licensed shops, lounges with a real humidor. Know one we've missed? <a href="/lounge/signup/">Join</a> and add it from the app; it goes on the map after we check it.</p>
+
+  <div class="rulehead" style="margin-top:28px"><h2>Cities with the most rooms</h2></div>
+  <ul class="eds cities">
+    {topCities.map(([c, n]) => (<li><a href={`#city=${encodeURIComponent(c)}`} data-city={c}>{c}</a><span>{n} rooms</span></li>))}
+  </ul>
+
+  <script type="application/json" id="venues-data" set:html={JSON.stringify(payload)} />
+</PaperLayout>
+
+<style>
+  .mapbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 12px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+  .mapbar select{font-family:var(--sans);font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:8px 10px;max-width:260px}
+  .near{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--ink);color:var(--ink);padding:9px 12px;cursor:pointer}
+  .legend{margin-left:auto;display:inline-flex;align-items:center;gap:6px 8px;flex-wrap:wrap;text-transform:none;letter-spacing:.02em;font-size:12px;color:var(--ink-2)}
+  .pl{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-family:var(--serif);font-style:normal;font-size:11px;font-weight:500;border:1px solid var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.35);margin-left:8px}
+  .pl--cdh{background:var(--ox);color:var(--paper)}.pl--lounge{background:var(--ink);color:var(--paper)}.pl--shop{background:var(--paper);color:var(--ink);border-color:var(--ink)}
+  .mapwrap{position:relative;border:1px solid var(--ink)}
+  .pubmap{height:min(72vh,720px);min-height:420px;background:#EAE7E0}
+  .card{position:absolute;left:12px;bottom:12px;z-index:500;width:min(360px,calc(100% - 24px));background:var(--paper);border:1px solid var(--ink);padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .card .x{position:absolute;top:4px;right:8px;background:none;border:0;font-size:20px;color:var(--mute);cursor:pointer}
+  .card .head{font-size:22px;margin-top:4px}
+  .card .by{margin-top:4px}
+  .mc-links{margin-top:8px;font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .mc-links a{margin-right:14px;border-bottom:1px solid var(--ox)}
+  .cities{columns:2;column-gap:28px}
+  @media (min-width:760px){.cities{columns:3}}
+  @media (max-width:560px){.pubmap{height:64vh}.legend{margin-left:0}.card{left:8px;right:8px;bottom:8px;width:auto}}
+  :global(.leaflet-control-zoom){border:1px solid var(--ink)!important;box-shadow:none!important;border-radius:0!important}
+  :global(.leaflet-control-zoom a){background:var(--paper)!important;color:var(--ink)!important;border-radius:0!important;border-bottom:1px solid var(--ink)!important}
+  :global(.leaflet-control-attribution){background:rgba(242,240,234,.92)!important;color:#635F58!important;font-size:9px!important}
+  :global(.tnc-pin){width:30px;height:30px;border-radius:50%;border:2px solid #F2F0EA;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px;font-weight:500;box-shadow:0 3px 10px rgba(0,0,0,.45);cursor:pointer;transition:transform .12s}
+  :global(.tnc-pin:hover){transform:scale(1.1)}
+  :global(.tnc-pin--lounge){background:#151412;color:#F2F0EA}
+  :global(.tnc-pin--retailer){background:#F2F0EA;color:#151412;border-color:#151412}
+  :global(.tnc-pin--casadelhabano){background:#7B2622;color:#F2F0EA}
+  :global(.tnc-pin--house){background:#6A665E;color:#F2F0EA}
+  :global(.tnc-pin--pub){background:#8C7A5B;color:#F2F0EA}
+  :global(.tnc-pin--club){background:#4A463F;color:#F2F0EA}
+  :global(.leaflet-marker-icon){background:none;border:0}
+</style>
+
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script is:inline>
+  (function () {
+    var L = window.L; if (!L) return;
+    var rows = JSON.parse(document.getElementById("venues-data").textContent || "[]");
+    var TYPE = { casadelhabano: "Casa del Habano", lounge: "Lounge", retailer: "Shop", house: "Brand house", club: "Private club", pub: "Cigar-friendly bar" };
+    var map = L.map("pubmap", { scrollWheelZoom: false, worldCopyJump: true }).setView([48, 8], 4);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19,
+    }).addTo(map);
+
+    var card = document.getElementById("map-card");
+    var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+    function initial(name) {
+      var clean = name.replace(/^(the|la|le|el|casa del habano|lcdh)\s+/i, "").trim();
+      var m = clean.match(/[A-Za-zÀ-ÿ0-9]/); return (m ? m[0] : "·").toUpperCase();
+    }
+    function show(v) {
+      document.getElementById("mc-type").textContent = (TYPE[v[7]] || v[7]) + " · " + v[2] + ", " + v[3];
+      document.getElementById("mc-name").textContent = v[1];
+      document.getElementById("mc-addr").textContent = v[4] || "";
+      var site = document.getElementById("mc-site"); site.hidden = !v[8]; if (v[8]) site.href = v[8];
+      document.getElementById("mc-dir").href = "https://www.google.com/maps/dir/?api=1&destination=" + v[5] + "," + v[6];
+      card.hidden = false;
+    }
+    document.getElementById("map-card-x").addEventListener("click", function () { card.hidden = true; });
+
+    var layer = L.layerGroup().addTo(map);
+    var markers = [];
+    function render(city) {
+      layer.clearLayers(); markers = [];
+      rows.forEach(function (v) {
+        if (city && v[2] !== city) return;
+        var icon = L.divIcon({ className: "", html: '<div class="tnc-pin tnc-pin--' + esc(v[7]) + '" title="' + esc(v[1]) + '">' + initial(v[1]) + "</div>", iconSize: [30, 30], iconAnchor: [15, 15] });
+        var m = L.marker([v[5], v[6]], { icon: icon }).addTo(layer); m.on("click", function () { show(v); }); markers.push(m);
+      });
+      if (city && markers.length) { map.fitBounds(L.featureGroup(markers).getBounds().pad(0.25), { maxZoom: 14 }); }
+    }
+    var sel = document.getElementById("map-city");
+    sel.addEventListener("change", function () { render(sel.value); card.hidden = true; });
+    document.querySelectorAll("[data-city]").forEach(function (a) {
+      a.addEventListener("click", function (e) { e.preventDefault(); sel.value = a.getAttribute("data-city"); render(sel.value); document.getElementById("pubmap").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    });
+    document.getElementById("map-near").addEventListener("click", function () {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(function (pos) { sel.value = ""; render(""); map.setView([pos.coords.latitude, pos.coords.longitude], 12); }, function () {});
+    });
+    var hash = new URLSearchParams(location.hash.replace(/^#/, "")).get("city");
+    if (hash) sel.value = hash;
+    render(sel.value);
+    map.on("click", function () { card.hidden = true; });
+  })();
+</script>
