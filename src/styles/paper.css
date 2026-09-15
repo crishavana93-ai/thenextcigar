@@ -310,6 +310,9 @@ footer.paper a:hover{text-decoration:underline}
   .ticker a{padding:8px 0}
   .mast .ed,.mast .ed span,.ear,.ear *,.kick{font-size:11px}
   .dateline,.dateline .st{font-size:11.5px}
+  table.mk small,table.mk .tag{font-size:11px}
+  table.mk td{padding-top:10px;padding-bottom:10px}
+  table.mk a.go{display:inline-block;padding:6px 0}
   .twin article + article{border:0;padding:0;margin-top:14px}
   .four,.tiles{grid-template-columns:1fr}
   .prose{font-size:17px}
