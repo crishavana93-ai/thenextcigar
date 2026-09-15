@@ -1,5 +1,6 @@
 ---
 import PaperLayout from "../../layouts/PaperLayout.astro";
+import PriceAlertModal from "../../components/finder/PriceAlertModal.astro";
 import {
   COUNTRIES, SKUS, RETAILERS, PRICE_SNAPSHOTS, LIVE_COUNT, NEWEST_SCRAPE,
   bestPriceForSku, formatPrice, toEUR, checkedLabel, effectiveShopUrl, NEW_LISTINGS, RETAILER_BY_ID,
@@ -201,9 +202,9 @@ const jsonLd = {
 
   <div class="front">
     <!-- LEFT: cheapest per cigar -->
-    <aside>
+    <aside data-fold-wrap>
       <div class="rulehead"><h2>Cheapest <em>per cigar</em></h2></div>
-      <table class="mk">
+      <table class="mk fold">
         <thead><tr><th>Vitola</th><th class="num">Per cigar</th></tr></thead>
         <tbody>
           {cheapest.map(({ sku, snap, retailer, eur }) => (
@@ -214,21 +215,22 @@ const jsonLd = {
           ))}
         </tbody>
       </table>
-      <p class="note">Per-cigar price is the box price divided by the canonical box size — the only honest way to compare a box of 10 against a box of 25.</p>
+      <p class="note fold">Per-cigar price is the box price divided by the canonical box size — the only honest way to compare a box of 10 against a box of 25.</p>
 
-      <div class="rulehead" style="margin-top:26px"><h2>Where you can buy</h2></div>
-      <ul class="eds">
+      <div class="rulehead fold" style="margin-top:26px"><h2>Where you can buy</h2></div>
+      <ul class="eds fold">
         {open.map((c) => (<li><a href={`/finder/${c.code}/`}>{c.name}</a><span>{skusIn(c.code)} in stock</span></li>))}
       </ul>
       {restricted.length > 0 && (
         <>
-          <p class="note" style="margin-top:14px"><b>Restricted markets.</b> {restricted.map((c) => c.name).join(", ")} — listed for reference; online sale to consumers is limited or in-country only.</p>
+          <p class="note fold" style="margin-top:14px"><b>Restricted markets.</b> {restricted.map((c) => c.name).join(", ")} — listed for reference; online sale to consumers is limited or in-country only.</p>
         </>
       )}
+      <button class="fold-btn" type="button" data-fold>Cheapest per cigar, and where to buy ▾</button>
     </aside>
 
     <!-- CENTRE: the mover + the board -->
-    <section>
+    <section class="board-first" data-fold-wrap>
       {mover && (
         <article style="padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:18px">
           <span class="kick">This week's mover</span>
@@ -288,6 +290,9 @@ const jsonLd = {
                 <a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a>
                 {(() => { const sig = priceSignal(sku.id, eur); return sig ? <span class:list={["sig", sig.kind]} title={sig.title}>{sig.label}</span> : null; })()}
                 <small>box of {sku.boxSize} · {sku.shape}</small>
+                <button type="button" class="bell" data-save-alert data-sku={sku.slug} data-product-name={`${sku.brand} ${sku.vitola}`} data-baseline-eur={Math.round(eur)} data-baseline-label={`€${Math.round(eur).toLocaleString("en-GB")}`} title="Email me when this box drops" aria-label={`Price alert for ${sku.brand} ${sku.vitola}`}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+                </button>
               </td>
               <td class="v" style="font-size:14px">
                 <a href={effectiveShopUrl(snap.sourceUrl, sku, retailer).url} rel="nofollow noopener" target="_blank">{retailer.name}</a>
@@ -299,20 +304,21 @@ const jsonLd = {
           ))}
         </tbody>
       </table>
+      {board.length > 15 && <button class="fold-btn" type="button" data-fold>Show all {board.length} vitolas ▾</button>}
       {unpriced.length > 0 && (
         <p class="note" style="margin-top:14px"><b>Not priced this fortnight ({unpriced.length}):</b> {unpriced.map((s, i) => (<><a href={`/finder/sku/${s.slug}/`}>{s.brand} {s.vitola}</a>{i < unpriced.length - 1 ? ", " : ""}</>))}. No retailer we re-read has these in stock, and we don't headline a price older than {STALE_DAYS} days. Their pages keep the last price seen, dated.</p>
       )}
     </section>
 
     <!-- RIGHT: how it works -->
-    <aside class="rail">
+    <aside class="rail" data-fold-wrap>
       <div class="rulehead"><h2>How the board works</h2></div>
-      <div class="prose" style="font-size:15px;max-width:none">
+      <div class="prose fold" style="font-size:15px;max-width:none">
         <p>We keep a directory of {RETAILERS.length} licensed Habanos retailers across {COUNTRIES.length} European countries and record box prices from the {pricedRetailers} that publish them, in {pricedCountries} countries.</p>
         <p>Prices marked <b style="color:var(--live)">live</b> were re-read from the retailer's own product page by our scraper within the last fortnight. The rest carry the date a person last checked them. Stock and price move constantly, so confirm on the retailer's page before you order.</p>
         <p>Every price is the retailer's listed price for the canonical box, in their own currency, with their own tax included. It is not what you will pay at your door: a box crossing a border picks up destination duty and VAT.</p>
       </div>
-      <div class="box">
+      <div class="box fold">
         <span class="kick">Watchlist · free</span>
         <h3 class="head">Tell me when it drops.</h3>
         <p>Members get an email when any vitola on the board falls or comes back in stock. No charge.</p>
@@ -344,13 +350,14 @@ const jsonLd = {
         try{var r=await fetch("/api/watchlist/release",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email:f.email.value,country:f.country.value})});var d=await r.json();st.textContent=d.ok?d.message:(d.error||"That didn't work — try again.");if(d.ok)f.email.value="";}
         catch(_){st.textContent="Network error — try again.";}b.disabled=false;});})();
       </script>
-      <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
-      <ul class="list">
+      <div class="rulehead fold" style="margin-top:24px"><h2>Read next</h2></div>
+      <ul class="list fold">
         <li><div><a class="head" href="/finder/index/">The Habanos Index</a><p class="by">What a Cuban cigar costs in Europe, day by day</p></div></li>
         <li><div><a class="head" href="/blog/where-to-buy-cuban-cigars-in-europe-the-2026-retailer-map/">The European retailer map</a><p class="by">Who ships where, and whose price is all-in</p></div></li>
         <li><div><a class="head" href="/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">What a cross-border box really costs</p></div></li>
         <li><div><a class="head" href="/blog/cuban-cigar-sizes-vitolas-explained-2026-guide/">Vitolas explained</a><p class="by">Why a box of 10 and a box of 25 aren't comparable</p></div></li>
       </ul>
+      <button class="fold-btn" type="button" data-fold>How the board works, and what to read next ▾</button>
     </aside>
   </div>
 
@@ -501,9 +508,26 @@ const jsonLd = {
       vertical-align:2px;border:1px solid currentColor;cursor:help}
     .sig.low{color:var(--live)}
     .sig.high{color:var(--ox)}
+    /* Bell on every row: the free alert, where the reader is already looking */
+    .bell{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin:4px 0 0;padding:0;border:1px solid var(--rule-2,#D9D5CC);border-radius:50%;background:transparent;color:var(--mute);cursor:pointer;vertical-align:middle}
+    .bell:hover{color:var(--ox);border-color:var(--ox)}
+    tr.oos .bell{color:var(--ox);border-color:var(--ox)}
+    @media (max-width:560px){.bell{width:32px;height:32px}}
     @media (max-width:600px){
       .landed-bar{gap:8px}
       .landed-bar select{flex:1 1 100%}
     }
   </style>
+  <PriceAlertModal />
+  <script>
+    // Row bells dispatch the same event the vitola page's Save-alert button does.
+    document.querySelectorAll<HTMLButtonElement>("[data-save-alert]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.dispatchEvent(new CustomEvent("open-price-alert", { detail: {
+          sku: btn.dataset.sku, productName: btn.dataset.productName,
+          baselineEur: Number(btn.dataset.baselineEur) || null, baselineLabel: btn.dataset.baselineLabel || null,
+        } }));
+      });
+    });
+  </script>
 </PaperLayout>

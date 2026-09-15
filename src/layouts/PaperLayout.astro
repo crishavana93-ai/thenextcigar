@@ -140,5 +140,16 @@ const ogImage = new URL(image, Astro.site).toString();
         }, true);
       })();
     </script>
+    <script>
+      // M6 phone folds: reveal the hidden parts of the nearest container, once.
+      document.querySelectorAll<HTMLButtonElement>("[data-fold]").forEach((b) => {
+        b.addEventListener("click", () => {
+          const w = b.closest("[data-fold-wrap]") || b.parentElement!;
+          w.querySelectorAll(".fold").forEach((e) => e.classList.remove("fold"));
+          w.classList.add("is-open");
+          b.remove();
+        });
+      });
+    </script>
   </body>
 </html>

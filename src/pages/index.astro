@@ -109,15 +109,15 @@ const jsonLd = {
   <div class="front">
 
     <!-- LEFT RAIL · MARKETS -->
-    <aside aria-label="Markets">
+    <aside aria-label="Markets" data-fold-wrap>
       <div class="rulehead"><h2>Markets <em>· box prices, live</em></h2><a class="more" href="/finder/">The Finder →</a></div>
       <table class="mk">
         <thead><tr><th>Vitola · canonical box</th><th class="num">Cheapest</th></tr></thead>
         <tbody>
-          {market.map(({ sku, best }) => {
+          {market.map(({ sku, best }, i) => {
             const s = best!.snap; const r = RET[s.retailerId];
             return (
-              <tr>
+              <tr class:list={{ fold: i >= 6 }}>
                 <td class="v"><a href={`/finder/sku/${sku.slug}/`}>{sku.brand} {sku.vitola}</a><small>{r?.name} · {String(r?.country).toUpperCase()} · box of {sku.boxSize}</small></td>
                 <td class="p">{formatPrice(s.price, s.currency)}<small class:list={{ old: !s.live }}>{checkedLabel(s)}</small></td>
               </tr>
@@ -125,14 +125,15 @@ const jsonLd = {
           })}
         </tbody>
       </table>
-      <p class="note">Live = re-read from the retailer's own page by our scraper within 14 days; the rest carry the date we last checked by hand. Confirm on the retailer before you order; duty applies across borders.</p>
+      <p class="note fold">Live = re-read from the retailer's own page by our scraper within 14 days; the rest carry the date we last checked by hand. Confirm on the retailer before you order; duty applies across borders.</p>
 
-      <div class="rulehead" style="margin-top:26px"><h2>Country editions</h2></div>
-      <ul class="eds">
+      <div class="rulehead fold" style="margin-top:26px"><h2>Country editions</h2></div>
+      <ul class="eds fold">
         {editions.map(({ c, n, shops }) => (
           <li><a href={`/finder/${c.code}/`}>{c.name}</a><span>{n > 0 ? `${n} SKUs · ` : ""}{shops} shops</span></li>
         ))}
       </ul>
+      <button class="fold-btn" type="button" data-fold>More from the board ▾</button>
     </aside>
 
     <!-- CENTRE · LEAD -->
@@ -158,7 +159,7 @@ const jsonLd = {
     </section>
 
     <!-- RIGHT RAIL -->
-    <aside class="rail" aria-label="Accessories and diary">
+    <aside class="rail" aria-label="Accessories and diary" data-fold-wrap>
       <section>
         <div class="rulehead"><h2>Accessories <em>· tested</em></h2><a class="more" href="/category/cigar-accessories/">All reviews →</a></div>
         <ul class="list">
@@ -171,7 +172,7 @@ const jsonLd = {
         </ul>
       </section>
 
-      <section>
+      <section class="fold">
         <div class="rulehead"><h2>Diary</h2><a class="more" href="/category/cigar-events/">Season →</a></div>
         <ul class="list diary">
           {diary.map((e) => (
@@ -183,12 +184,13 @@ const jsonLd = {
         </ul>
       </section>
 
-      <div class="box">
+      <div class="box fold">
         <span class="kick">The Lounge · members</span>
         <h3 class="head">A map of the rooms, no cover charge.</h3>
         <p>Casas del Habano and lounges mapped city by city, price watchlists on any vitola, and a check-in so you know who's around. Free.</p>
         <a class="cta" href="/lounge/">Join the Lounge</a>
       </div>
+      <button class="fold-btn" type="button" data-fold>Diary and the Lounge ▾</button>
     </aside>
   </div>
 

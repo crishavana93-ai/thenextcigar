@@ -250,7 +250,14 @@ footer.paper .legal{margin-top:18px;border-top:1px solid var(--rule);padding-top
 footer.paper a:hover{text-decoration:underline}
 
 /* ---- responsive --------------------------------------------------------- */
+/* Phone folds (M6): secondary columns collapse behind one button under 980px.
+   Mark the parts to hide with .fold and put a <button class="fold-btn" data-fold> after them. */
+.fold-btn{display:none}
 @media (max-width:980px){
+  .fold{display:none!important}
+  .fold-btn{display:block;width:100%;margin:14px 0 0;padding:11px 0;background:transparent;border:1px solid var(--ink);font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);cursor:pointer}
+  .front > .board-first{order:-1}
+  .board-first:not(.is-open) #board-body tr:nth-child(n+16){display:none}
   .front{grid-template-columns:1fr}
   .front > *{padding:0;border:0!important}
   .front > :first-child{order:2;margin-top:22px;border-top:1px solid var(--ink)!important;padding-top:12px}
@@ -316,7 +323,10 @@ footer.paper a:hover{text-decoration:underline}
   table.mk td{padding-top:10px;padding-bottom:10px}
   table.mk a.go{display:inline-block;padding:6px 0}
   .twin article + article{border:0;padding:0;margin-top:14px}
-  .four,.tiles{grid-template-columns:1fr}
+  .four{grid-template-columns:1fr}
+  .tiles{grid-template-columns:1fr 1fr;gap:10px}
+  .tile{padding:10px;min-height:0}
+  .tile .m{display:none}
   .prose{font-size:17px}
   .ear .r{display:none}
 }
