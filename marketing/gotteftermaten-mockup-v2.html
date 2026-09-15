@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gott Eftermaten — Förhandsvisning v2 / Anspråkslös Modern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT@9..144,400;9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ──────────────────────────────────────────────────────────
+     CONCEPT: "Anspråkslös Modern" — a humble Malmö cigar shop
+     built like a 2026 boutique. Not editorial, not magazine.
+     Direct. Photographs of cigars do the talking. Single
+     warm beige + a single deep cigar-band red. Sans-serif
+     dominant, serif used only for the shop's signature name.
+     Brand voice carries over from their real site:
+     "Den anspråkslösa Cigarraffären" — the unpretentious one.
+     ────────────────────────────────────────────────────── */
+  :root {
+    --paper:       #ede4dd;   /* warm linen — same family as OUTFIT */
+    --paper-soft:  #e5d9cc;
+    --paper-cream: #f5efe4;
+    --ink:         #1a1612;   /* warm near-black */
+    --ink-soft:    #5e544c;
+    --ink-mute:    #8a7d72;
+    --accent:      #b8392b;   /* deep cigar-band red */
+    --accent-deep: #8e2a20;
+    --rule:        rgba(26, 22, 18, 0.16);
+    --sans:        "Inter Tight", "Inter", system-ui, sans-serif;
+    --serif:       "Fraunces", "Times New Roman", serif;
+    --mono:        "JetBrains Mono", ui-monospace, monospace;
+    --ease:        cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  body { font-size: 15px; line-height: 1.5; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  button { font: inherit; cursor: pointer; }
+
+  /* Mockup banner */
+  .mockup-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    background: var(--ink); color: var(--paper);
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 9px 24px; text-align: center;
+  }
+  .mockup-banner strong { color: #e6b88a; }
+  body { padding-top: 38px; }
+
+  /* Top utility */
+  .util {
+    background: var(--ink); color: var(--paper);
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .util-inner {
+    max-width: 1440px; margin: 0 auto; padding: 8px 32px;
+    display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  }
+  .util-marquee { display: flex; gap: 32px; overflow: hidden; flex: 1; }
+  .util-marquee span { white-space: nowrap; opacity: 0.85; }
+  .util-marquee .dot { color: var(--accent); }
+  .util-lang { display: flex; gap: 10px; align-items: center; }
+  .util-lang button { background: none; border: none; color: var(--paper); padding: 0; font: inherit; letter-spacing: 0.1em; opacity: 0.55; }
+  .util-lang button.active { opacity: 1; }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    position: sticky; top: 38px; z-index: 50;
+  }
+  .header-inner {
+    max-width: 1440px; margin: 0 auto; padding: 18px 32px;
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: center; gap: 32px;
+  }
+  .nav { display: flex; gap: 36px; }
+  .nav a {
+    font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    position: relative; padding: 4px 0; transition: color 0.2s;
+  }
+  .nav a:hover { color: var(--accent); }
+  .nav a::after {
+    content: ""; position: absolute; bottom: 0; left: 0; height: 1px;
+    width: 0; background: var(--accent); transition: width 0.3s var(--ease);
+  }
+  .nav a:hover::after { width: 100%; }
+  .logo {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 24px; letter-spacing: -0.02em; line-height: 1;
+    text-align: center; font-style: italic;
+  }
+  .logo small {
+    display: block; font-family: var(--sans); font-style: normal;
+    font-weight: 500; font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--ink-mute); margin-top: 6px;
+  }
+  .actions {
+    display: flex; gap: 22px; justify-content: flex-end; align-items: center;
+    font-size: 13px; font-weight: 500;
+  }
+  .actions svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  .bag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border: 1px solid var(--ink);
+    transition: all 0.2s;
+  }
+  .bag:hover { background: var(--ink); color: var(--paper); }
+  .bag-count { font-family: var(--mono); font-size: 12px; }
+
+  /* Hero — REAL photo from their site */
+  .hero {
+    position: relative; overflow: hidden;
+    min-height: 84vh; max-height: 940px;
+    display: flex; align-items: flex-end;
+  }
+  .hero-bg { position: absolute; inset: 0; z-index: 0; }
+  .hero-bg img {
+    width: 100%; height: 100%; object-fit: cover;
+    object-position: 50% 55%;
+    filter: contrast(1.04) saturate(0.95) brightness(0.78);
+    animation: zoom 24s ease-out infinite alternate;
+  }
+  @keyframes zoom { from { transform: scale(1.0); } to { transform: scale(1.08); } }
+  .hero-grad {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(180deg,
+      rgba(26, 22, 18, 0.15) 0%,
+      rgba(26, 22, 18, 0.0)  35%,
+      rgba(26, 22, 18, 0.55) 80%,
+      rgba(26, 22, 18, 0.85) 100%);
+  }
+  .hero-inner {
+    position: relative; z-index: 10;
+    max-width: 1440px; width: 100%; margin: 0 auto; padding: 0 32px 80px;
+    color: var(--paper);
+  }
+  .hero-tag {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 22px; color: #f5b6a1; margin-bottom: 28px; letter-spacing: -0.01em;
+  }
+  .hero h1 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(3rem, 7.4vw, 7rem);
+    line-height: 0.94; letter-spacing: -0.035em;
+    max-width: 1100px;
+  }
+  .hero h1 .lead { color: var(--paper); }
+  .hero h1 .accent {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    color: #f5b6a1; letter-spacing: -0.02em;
+  }
+  .hero-meta {
+    margin-top: 48px; display: flex; gap: 36px; align-items: center; flex-wrap: wrap;
+  }
+  .btn-shop {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 18px 32px; background: var(--paper); color: var(--ink);
+    font-weight: 600; font-size: 14px; letter-spacing: -0.005em;
+    transition: all 0.25s var(--ease); border: none;
+  }
+  .btn-shop:hover { background: var(--accent); color: var(--paper); transform: translateX(2px); }
+  .btn-shop .arrow {
+    font-family: var(--mono); font-weight: 500; font-size: 14px;
+  }
+  .btn-text {
+    color: var(--paper); font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    border-bottom: 1px solid rgba(245, 239, 228, 0.4); padding-bottom: 4px;
+    transition: all 0.2s;
+  }
+  .btn-text:hover { color: #f5b6a1; border-bottom-color: #f5b6a1; }
+  .hero-scroll {
+    position: absolute; left: 32px; bottom: 80px; z-index: 11;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    color: rgba(245, 239, 228, 0.55); writing-mode: vertical-rl;
+    text-orientation: mixed; text-transform: uppercase;
+  }
+
+  /* Departments — big text-only band */
+  .dept {
+    background: var(--paper);
+    padding: 80px 32px 60px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dept-inner { max-width: 1440px; margin: 0 auto; }
+  .dept-eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--ink-mute); margin-bottom: 32px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .dept-eyebrow .count { color: var(--accent); }
+  .dept-list {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    border-top: 1px solid var(--ink);
+  }
+  .dept-item {
+    padding: 36px 24px 32px 0; border-bottom: 1px solid var(--ink);
+    position: relative; transition: all 0.3s var(--ease);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .dept-item:hover { padding-left: 12px; }
+  .dept-item:hover .dept-name { color: var(--accent); }
+  .dept-num {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    color: var(--ink-mute);
+  }
+  .dept-name {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem); line-height: 1.05;
+    letter-spacing: -0.02em; transition: color 0.3s; max-width: 80%;
+  }
+  .dept-name em {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    color: var(--ink-soft);
+  }
+  .dept-arrow {
+    position: absolute; right: 16px; top: 36px;
+    font-family: var(--mono); font-size: 14px; color: var(--ink-mute);
+    transition: all 0.3s var(--ease);
+  }
+  .dept-item:hover .dept-arrow { color: var(--accent); transform: translateX(6px); }
+  .dept-count {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+
+  /* Live arrivals — actual products from their site */
+  .arrivals { padding: 80px 32px 96px; }
+  .arrivals-head {
+    max-width: 1440px; margin: 0 auto 48px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 24px;
+  }
+  .arrivals-head h2 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(2.4rem, 4.2vw, 3.6rem); line-height: 1; letter-spacing: -0.03em;
+    max-width: 800px;
+  }
+  .arrivals-head h2 em {
+    font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--accent);
+  }
+  .arrivals-head .label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-mute); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .arrivals-head .label::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .arrivals-head .filters {
+    display: flex; gap: 16px; align-items: center;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-mute);
+  }
+  .arrivals-head .filters .active { color: var(--ink); border-bottom: 1px solid var(--ink); padding-bottom: 2px; }
+  .grid {
+    max-width: 1440px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px 20px;
+  }
+  .card {
+    background: var(--paper-cream);
+    padding: 0; transition: transform 0.4s var(--ease);
+    position: relative; cursor: pointer;
+  }
+  .card:hover { transform: translateY(-4px); }
+  .card-img {
+    aspect-ratio: 4 / 5;
+    background: var(--paper-cream);
+    overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-img img {
+    width: 80%; height: 80%; object-fit: contain;
+    transition: transform 0.5s var(--ease);
+    mix-blend-mode: multiply;
+  }
+  .card:hover .card-img img { transform: scale(1.04); }
+  .card-tag {
+    position: absolute; top: 12px; left: 12px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    background: var(--ink); color: var(--paper);
+    padding: 4px 8px;
+  }
+  .card-tag.new { background: var(--accent); }
+  .card-tag.out { background: var(--ink-mute); }
+  .card-fav {
+    position: absolute; top: 12px; right: 12px;
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(245, 239, 228, 0.85); backdrop-filter: blur(4px);
+    transition: all 0.2s; opacity: 0; pointer-events: auto;
+  }
+  .card:hover .card-fav { opacity: 1; }
+  .card-fav:hover { background: var(--paper); }
+  .card-fav svg { width: 14px; height: 14px; stroke: var(--ink); fill: none; stroke-width: 1.6; }
+  .card-info {
+    padding: 18px 4px 8px;
+  }
+  .card-brand {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-mute); margin-bottom: 6px;
+  }
+  .card-name {
+    font-family: var(--sans); font-weight: 600; font-size: 14px;
+    line-height: 1.2; letter-spacing: -0.005em; color: var(--ink); margin-bottom: 10px;
+  }
+  .card-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .card-spec {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+  .card-price {
+    font-family: var(--sans); font-weight: 600; font-size: 14px;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .card-price small { font-weight: 400; color: var(--ink-mute); font-size: 11px; }
+
+  /* "About the shop" — small editorial */
+  .about {
+    background: var(--paper-soft);
+    padding: 96px 32px;
+    border-top: 1px solid var(--rule);
+  }
+  .about-inner {
+    max-width: 1180px; margin: 0 auto;
+    display: grid; grid-template-columns: 5fr 7fr; gap: 80px; align-items: center;
+  }
+  .about-img-wrap {
+    aspect-ratio: 4 / 5; overflow: hidden; background: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .about-img-wrap img { width: 75%; height: auto; opacity: 0.95; }
+  .about-text .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 24px;
+  }
+  .about-text h2 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(2rem, 3.4vw, 2.8rem); line-height: 1.06; letter-spacing: -0.028em;
+    margin-bottom: 32px;
+  }
+  .about-text h2 em {
+    font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--accent);
+  }
+  .about-text p {
+    font-size: 17px; line-height: 1.6; color: var(--ink-soft); margin-bottom: 18px;
+    max-width: 520px;
+  }
+  .about-hours {
+    margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--rule);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 480px;
+  }
+  .about-hours .hkey {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-mute); margin-bottom: 6px;
+  }
+  .about-hours .hval {
+    font-family: var(--sans); font-weight: 500; font-size: 15px; color: var(--ink);
+  }
+  .about-link {
+    display: inline-flex; align-items: center; gap: 10px;
+    margin-top: 36px;
+    font-weight: 600; font-size: 14px;
+    border-bottom: 1px solid var(--ink); padding-bottom: 4px;
+    transition: all 0.2s;
+  }
+  .about-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Pipe section — second department callout */
+  .pipe-cta {
+    padding: 0; position: relative;
+    min-height: 60vh; display: flex; align-items: center;
+    overflow: hidden; background: var(--ink); color: var(--paper);
+  }
+  .pipe-cta-inner {
+    max-width: 1440px; margin: 0 auto; padding: 80px 32px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+    position: relative; z-index: 2; width: 100%;
+  }
+  .pipe-text .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #e6b88a; margin-bottom: 24px;
+  }
+  .pipe-text h2 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(2.4rem, 4.4vw, 3.8rem); line-height: 1; letter-spacing: -0.03em;
+    margin-bottom: 28px;
+  }
+  .pipe-text h2 em {
+    font-family: var(--serif); font-style: italic; font-weight: 400; color: #e6b88a;
+  }
+  .pipe-text p {
+    font-size: 16px; line-height: 1.55; color: rgba(245, 239, 228, 0.78); max-width: 460px;
+    margin-bottom: 36px;
+  }
+  .btn-shop.outline {
+    background: transparent; color: var(--paper); border: 1px solid var(--paper);
+  }
+  .btn-shop.outline:hover { background: var(--paper); color: var(--ink); }
+  .pipe-img {
+    aspect-ratio: 1 / 1; overflow: hidden;
+    border: 1px solid rgba(245, 239, 228, 0.18);
+  }
+  .pipe-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: saturate(0.85) contrast(1.04) brightness(0.94);
+  }
+
+  /* Delivery callout */
+  .delivery {
+    background: var(--paper);
+    padding: 96px 32px;
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  }
+  .delivery-inner { max-width: 1180px; margin: 0 auto; }
+  .delivery-head { text-align: center; max-width: 720px; margin: 0 auto 64px; }
+  .delivery-head .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 20px;
+  }
+  .delivery-head h2 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(2rem, 3.2vw, 2.6rem); line-height: 1.1; letter-spacing: -0.025em;
+  }
+  .delivery-head h2 em {
+    font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--accent);
+  }
+  .delivery-head p {
+    margin-top: 16px; font-size: 15px; color: var(--ink-soft); line-height: 1.55;
+  }
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    border-top: 1px solid var(--ink);
+  }
+  .step {
+    padding: 36px 0 0 0;
+    border-bottom: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    padding-right: 32px;
+    padding-bottom: 36px;
+  }
+  .step:last-child { border-right: none; padding-right: 0; }
+  .step-num {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em;
+    color: var(--accent); margin-bottom: 18px;
+  }
+  .step h4 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: 22px; line-height: 1.15; letter-spacing: -0.018em; margin-bottom: 14px;
+  }
+  .step p { font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+
+  /* Newsletter */
+  .news { background: var(--accent); color: var(--paper-cream); padding: 96px 32px; }
+  .news-inner { max-width: 980px; margin: 0 auto; text-align: center; }
+  .news .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: rgba(245, 239, 228, 0.6); margin-bottom: 24px;
+  }
+  .news h2 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: clamp(2.4rem, 4.6vw, 4rem); line-height: 1; letter-spacing: -0.03em;
+    margin-bottom: 28px;
+  }
+  .news h2 em {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    color: rgba(245, 239, 228, 0.78);
+  }
+  .news p {
+    font-size: 17px; line-height: 1.55; max-width: 540px; margin: 0 auto 40px;
+    color: rgba(245, 239, 228, 0.85);
+  }
+  .news form {
+    display: flex; gap: 0; max-width: 520px; margin: 0 auto;
+    border: 1px solid rgba(245, 239, 228, 0.4);
+  }
+  .news input {
+    flex: 1; padding: 18px 22px; font: inherit; font-size: 14px;
+    background: transparent; border: none; color: var(--paper);
+  }
+  .news input::placeholder { color: rgba(245, 239, 228, 0.5); }
+  .news input:focus { outline: none; background: rgba(0,0,0,0.1); }
+  .news button {
+    padding: 0 28px; background: var(--paper-cream); color: var(--accent);
+    border: none; font-weight: 600; font-size: 13px; letter-spacing: -0.005em;
+    transition: all 0.2s;
+  }
+  .news button:hover { background: var(--ink); color: var(--paper); }
+  .news small {
+    display: block; margin-top: 18px; font-size: 11px; letter-spacing: 0.08em;
+    color: rgba(245, 239, 228, 0.55); text-transform: uppercase;
+  }
+
+  /* Footer */
+  .foot { background: var(--ink); color: rgba(245, 239, 228, 0.7); padding: 80px 32px 32px; }
+  .foot a { color: rgba(245, 239, 228, 0.7); transition: color 0.2s; }
+  .foot a:hover { color: #e6b88a; }
+  .foot-inner { max-width: 1440px; margin: 0 auto; }
+  .foot-top {
+    display: grid; grid-template-columns: 3fr 1fr 1fr 1fr 1.5fr; gap: 48px;
+    padding-bottom: 56px; border-bottom: 1px solid rgba(245, 239, 228, 0.12);
+  }
+  .foot-brand .logo { color: var(--paper); text-align: left; margin-bottom: 18px; font-size: 28px; }
+  .foot-brand .logo small { color: var(--ink-mute); }
+  .foot-brand p { font-size: 14px; line-height: 1.55; max-width: 360px; }
+  .foot-brand .addr { margin-top: 16px; font-size: 13px; line-height: 1.7; color: rgba(245, 239, 228, 0.55); }
+  .foot-col h5 {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--paper); margin-bottom: 18px;
+  }
+  .foot-col ul { list-style: none; }
+  .foot-col li { margin-bottom: 10px; font-size: 13px; }
+  .foot-warn {
+    margin-top: 40px; padding: 18px 24px;
+    border: 1px solid rgba(245, 239, 228, 0.18);
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #e6b88a; text-align: center;
+  }
+  .foot-bot {
+    padding-top: 28px; display: flex; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px; font-size: 12px;
+  }
+  .pay { display: flex; gap: 10px; }
+  .pay span {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 4px 8px;
+    border: 1px solid rgba(245, 239, 228, 0.22);
+  }
+
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+    .dept-list { grid-template-columns: repeat(2, 1fr); }
+    .about-inner { grid-template-columns: 1fr; gap: 48px; }
+    .pipe-cta-inner { grid-template-columns: 1fr; }
+    .foot-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 720px) {
+    .header-inner { grid-template-columns: 1fr; }
+    .nav { justify-content: center; flex-wrap: wrap; gap: 18px; }
+    .actions { justify-content: center; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .dept-list { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .step { border-right: none; padding-right: 0; }
+    .hero { min-height: 70vh; padding: 0; }
+    .hero-inner { padding-bottom: 56px; }
+    .hero-scroll { display: none; }
+    .util-marquee span:nth-child(n+3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mockup banner -->
+<div class="mockup-banner">
+  <strong>v2 · ANSPRÅKSLÖS MODERN</strong> &nbsp; · &nbsp; Real photos from gotteftermaten.se &nbsp; · &nbsp; Different concept from TNC editorial direction &nbsp; · &nbsp; <strong>Not live</strong>
+</div>
+
+<!-- Top utility -->
+<div class="util">
+  <div class="util-inner">
+    <div class="util-marquee">
+      <span>Fri leverans över 1500 kr <span class="dot">●</span></span>
+      <span>BankID-verifierad leverans till dörren <span class="dot">●</span></span>
+      <span>Sedan 1987, Malmö <span class="dot">●</span></span>
+      <span>Tisdag–fredag 11–18 &nbsp;·&nbsp; Lördag 11–14</span>
+    </div>
+    <div class="util-lang">
+      <button class="active">SV</button>/<button>EN</button>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <nav class="nav">
+      <a href="#">Cigarrer</a>
+      <a href="#">Pipor</a>
+      <a href="#">Cigariller</a>
+      <a href="#">Tillbehör</a>
+    </nav>
+    <a href="#" class="logo">Gott Eftermaten<small>Den anspråkslösa Cigarraffären</small></a>
+    <div class="actions">
+      <a href="#" aria-label="Sök"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></a>
+      <a href="#" aria-label="Konto"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+      <a href="#" class="bag">Varukorg <span class="bag-count">0</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero — REAL cigar-band pile photo from gotteftermaten.se -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="https://www.gotteftermaten.se/modules/angarslider/views/img/images/e248da4f27564a1c0a7c9a50fc8c2717cc68f1df_topbild1.jpg"
+         alt="Cigarrband från brand efter brand — Trinidad, Romeo y Julieta, Bolivar, La Aurora" />
+  </div>
+  <div class="hero-grad"></div>
+  <div class="hero-scroll">SCROLL · NYHETER</div>
+  <div class="hero-inner">
+    <div class="hero-tag">Den anspråkslösa Cigarraffären</div>
+    <h1>
+      <span class="lead">Riktiga<br/>cigarrer.</span><br/>
+      <span class="accent">Plockade för hand i Malmö<br/>sedan 1987.</span>
+    </h1>
+    <div class="hero-meta">
+      <a href="#" class="btn-shop">Handla cigarrer <span class="arrow">→</span></a>
+      <a href="#" class="btn-text">Hitta butiken</a>
+    </div>
+  </div>
+</section>
+
+<!-- Departments — text-only band -->
+<section class="dept">
+  <div class="dept-inner">
+    <div class="dept-eyebrow">
+      <span>Avdelningar — fyra rum</span>
+      <span class="count">142 produkter i lager</span>
+    </div>
+    <div class="dept-list">
+      <a href="#" class="dept-item">
+        <span class="dept-num">/01</span>
+        <span class="dept-name">Cigarrer <em>· kubanskt &amp; nytt</em></span>
+        <span class="dept-count">142 produkter</span>
+        <span class="dept-arrow">→</span>
+      </a>
+      <a href="#" class="dept-item">
+        <span class="dept-num">/02</span>
+        <span class="dept-name">Pipor <em>· danska &amp; engelska</em></span>
+        <span class="dept-count">38 produkter</span>
+        <span class="dept-arrow">→</span>
+      </a>
+      <a href="#" class="dept-item">
+        <span class="dept-num">/03</span>
+        <span class="dept-name">Cigariller <em>· smaksatt</em></span>
+        <span class="dept-count">24 produkter</span>
+        <span class="dept-arrow">→</span>
+      </a>
+      <a href="#" class="dept-item">
+        <span class="dept-num">/04</span>
+        <span class="dept-name">Tillbehör <em>· skärare, tändare, humidorer</em></span>
+        <span class="dept-count">87 produkter</span>
+        <span class="dept-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Live arrivals — REAL products + real prices + real images -->
+<section class="arrivals">
+  <div class="arrivals-head">
+    <div>
+      <div class="label">Live nyheter</div>
+      <h2>Just inkommit. <em>Sju nya rullar.</em></h2>
+    </div>
+    <div class="filters">
+      <span class="active">Alla</span>
+      <span>Cigarrer</span>
+      <span>Pipor</span>
+      <span>Cigariller</span>
+    </div>
+  </div>
+  <div class="grid">
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4360-large_default/serie-v-malanio-petit-corona.jpg" alt="Serie V Melanio Petit Corona" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Oliva</div>
+        <div class="card-name">Serie V Melanio — Petit Corona</div>
+        <div class="card-meta">
+          <span class="card-spec">114 × 18</span>
+          <span class="card-price">239 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4359-large_default/serie-v-melanio-robusto.jpg" alt="Serie V Melanio Robusto" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Oliva</div>
+        <div class="card-name">Serie V Melanio — Robusto</div>
+        <div class="card-meta">
+          <span class="card-spec">127 × 21</span>
+          <span class="card-price">281 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4358-large_default/serie-v-melanio-figurado.jpg" alt="Serie V Melanio Figurado" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Oliva</div>
+        <div class="card-name">Serie V Melanio — Figurado</div>
+        <div class="card-meta">
+          <span class="card-spec">165 × 20</span>
+          <span class="card-price">406 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4357-large_default/oliva-serie-v-melanio-le-2019-diadema.jpg" alt="Oliva Mareva" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Oliva</div>
+        <div class="card-name">Mareva</div>
+        <div class="card-meta">
+          <span class="card-spec">147 × 16.7</span>
+          <span class="card-price">208 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4354-large_default/liga-privada-papas-fritas.jpg" alt="Liga Privada Papas Fritas" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Liga Privada</div>
+        <div class="card-name">Papas Fritas — Låda om 25</div>
+        <div class="card-meta">
+          <span class="card-spec">115 × 17.4</span>
+          <span class="card-price">2 295 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag out">Slut i lager</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4331-large_default/topes.jpg" alt="Topes — Låda om 12" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Bolivar</div>
+        <div class="card-name">Topes — Låda om 12</div>
+        <div class="card-meta">
+          <span class="card-spec">125 × 22.23</span>
+          <span class="card-price">8 391 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4329-large_default/petit-no2-aven-i-tub.jpg" alt="Petit No. 2" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Montecristo</div>
+        <div class="card-name">Petit No. 2 — Låda om 10</div>
+        <div class="card-meta">
+          <span class="card-spec">120 × 20.64</span>
+          <span class="card-price">2 405 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4344-large_default/short-corona.jpg" alt="Hoyo de Monterrey Short Corona" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Ramon Allones</div>
+        <div class="card-name">Absolutos LE 2024</div>
+        <div class="card-meta">
+          <span class="card-spec">156 × 18.65</span>
+          <span class="card-price">525 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4352-large_default/connecticut-corona.jpg" alt="Connecticut Corona" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Aliados</div>
+        <div class="card-name">Connecticut Corona</div>
+        <div class="card-meta">
+          <span class="card-spec">124 × 19.84</span>
+          <span class="card-price">867 kr</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-img">
+        <span class="card-tag new">Ny</span>
+        <button class="card-fav" aria-label="Spara"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="https://www.gotteftermaten.se/4351-large_default/connecticut-robusto.jpg" alt="Connecticut Robusto" />
+      </div>
+      <div class="card-info">
+        <div class="card-brand">Aliados</div>
+        <div class="card-name">Connecticut Robusto — 6-pack</div>
+        <div class="card-meta">
+          <span class="card-spec">Mixed pack</span>
+          <span class="card-price">563 kr</span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- About the shop — sedan 1987 -->
+<section class="about">
+  <div class="about-inner">
+    <div class="about-img-wrap">
+      <img src="https://www.gotteftermaten.se/img/my-shop-logo-1584463297.jpg" alt="Gott Eftermaten — den anspråkslösa figuren med bowler-hatt" />
+    </div>
+    <div class="about-text">
+      <div class="eyebrow">Sedan 1987 · Östra Förstadsgatan, Malmö</div>
+      <h2>Den anspråkslösa <em>kallar vi oss.</em></h2>
+      <p>Vi är Malmös enda renodlade cigarr- och pip-affär. Vi har stått här sedan -87, på Östra Förstadsgatan, och vår humidor är på 14 kvm.</p>
+      <p>Vi har handplockad tobak från Kuba, Dominikanska, Nicaragua, USA, Honduras. Inga e-cigaretter, inga snus-displayer, inget annat. Bara cigarrer, pipor och det som hör till.</p>
+      <div class="about-hours">
+        <div>
+          <div class="hkey">Tisdag–fredag</div>
+          <div class="hval">11.00 – 18.00</div>
+        </div>
+        <div>
+          <div class="hkey">Lördag</div>
+          <div class="hval">11.00 – 14.00</div>
+        </div>
+      </div>
+      <a href="#" class="about-link">Läs mer om oss <span style="font-family:var(--mono);">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- Pipe department -->
+<section class="pipe-cta">
+  <div class="pipe-cta-inner">
+    <div class="pipe-text">
+      <div class="eyebrow">Pipor &amp; piptobak</div>
+      <h2>För dig som <em>tar det ännu lugnare.</em></h2>
+      <p>Dunhill. Peterson. Mac Baren. Stanwell. Engelska, danska, virginiska blandningar. Vägt och förpackat så att aromen sitter kvar när du öppnar burken — inte bara på lagret.</p>
+      <a href="#" class="btn-shop outline">Bläddra pipor <span class="arrow">→</span></a>
+    </div>
+    <div class="pipe-img">
+      <img src="https://www.gotteftermaten.se/4344-large_default/short-corona.jpg"
+           alt="Pipor och piptobak"
+           onerror="this.src='https://images.pexels.com/photos/2917378/pexels-photo-2917378.jpeg?auto=compress&cs=tinysrgb&w=1600'" />
+    </div>
+  </div>
+</section>
+
+<!-- ID-verified delivery -->
+<section class="delivery">
+  <div class="delivery-inner">
+    <div class="delivery-head">
+      <div class="eyebrow">Hur leverans fungerar</div>
+      <h2>Beställ online. <em>Visa BankID på dörren.</em></h2>
+      <p>Svensk lag kräver att säljaren faktiskt verifierar 18+. Vi gör det på dörren — inte med en kryssruta du klickar förbi.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">/01 · I VARUKORGEN</div>
+        <h4>Lägg i, signera med BankID</h4>
+        <p>Klarna, Swish eller kort. Klarna-faktura tillgänglig. Vid utcheckning signerar du beställningen med BankID — en sekunds bekräftelse.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">/02 · UTLEVERANS</div>
+        <h4>PostNord eller Budbee</h4>
+        <p>Paketet skickas med åldersmärkning. Inom Sverige levereras det på 48 timmar. Hela Norden inom 3–5 dagar.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">/03 · PÅ DÖRREN</div>
+        <h4>BankID en gång till — färdigt</h4>
+        <p>Vid leverans verifierar du dig med BankID en sista gång. Ingen kvittens utan godkänd 18+. Säkert, lagligt, klart.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter -->
+<section class="news">
+  <div class="news-inner">
+    <div class="eyebrow">Klubben</div>
+    <h2>Få besked först. <em>Lådorna är små.</em></h2>
+    <p>Edición Limitada, Reservas och Edición Regional släpps i små partier. Hör du av oss tidigt är du först i kön. Inte spam — max två mejl i månaden.</p>
+    <form>
+      <input type="email" placeholder="din@epost.se" required />
+      <button type="submit">Anmäl mig →</button>
+    </form>
+    <small>Genom att anmäla dig godkänner du integritetspolicyn</small>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="foot">
+  <div class="foot-inner">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#" class="logo">Gott Eftermaten<small>Den anspråkslösa Cigarraffären</small></a>
+        <p>Malmös enda renodlade cigarr- och pip-affär. Officiell Habanos-distribution. LCdH-certifierad humidor.</p>
+        <div class="addr">
+          Östra Förstadsgatan 16<br/>
+          211 31 Malmö<br/>
+          <a href="tel:+46401234567">+46 40 123 45 67</a><br/>
+          <a href="mailto:butik@gotteftermaten.se">butik@gotteftermaten.se</a>
+        </div>
+      </div>
+      <div class="foot-col">
+        <h5>Handla</h5>
+        <ul>
+          <li><a href="#">Cigarrer</a></li>
+          <li><a href="#">Pipor</a></li>
+          <li><a href="#">Cigariller</a></li>
+          <li><a href="#">Tillbehör</a></li>
+          <li><a href="#">Presentkort</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Info</h5>
+        <ul>
+          <li><a href="#">Om oss</a></li>
+          <li><a href="#">Vår humidor</a></li>
+          <li><a href="#">Provningar i butiken</a></li>
+          <li><a href="#">Aktuellt</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Hjälp</h5>
+        <ul>
+          <li><a href="#">Leverans &amp; BankID</a></li>
+          <li><a href="#">Köpvillkor</a></li>
+          <li><a href="#">Retur &amp; reklamation</a></li>
+          <li><a href="#">Integritet</a></li>
+          <li><a href="#">Cookies</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Öppettider</h5>
+        <ul>
+          <li>Tisdag–fredag 11–18</li>
+          <li>Lördag 11–14</li>
+          <li>Söndag–måndag stängt</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-warn">
+      ⚠ &nbsp; Tobak skadar din hälsa &nbsp;·&nbsp; Försäljning endast 18+ &nbsp;·&nbsp; Folkhälsomyndigheten
+    </div>
+    <div class="foot-bot">
+      <span>© 1987–2026 Gott Eftermaten AB · Org.nr 556789-1234 · Tobakshandelstillstånd Malmö stad</span>
+      <div class="pay">
+        <span>Klarna</span><span>Swish</span><span>BankID</span><span>Visa</span><span>Mastercard</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

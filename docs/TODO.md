@@ -14,7 +14,7 @@ Kept in the repo so it survives sessions. Newest at the top of each list. Strike
 
 ## Build queue (in order)
 
-1. **Product photographs** the day the parcel lands: replace every AliExpress CDN image, then the "What we know" sections get a verdict.
+1. **Product photographs** the day the parcels land (now nine drop-ship products): replace every AliExpress CDN image, then the "What we know" sections get a verdict.
 ~~2. **Site search** in the masthead covering vitolas, retailers and articles (QA #7 — finding one vitola took a 3,600px scroll on a phone).~~ shipped 15 Sep
 ~~3. **Mobile front page**: one line above the fold saying what the paper is, linking to the board (QA #8).~~ shipped 15 Sep
 ~~4. **Prices in the reader's currency** on shop pages, USD as the settlement note (QA #9).~~ shipped 15 Sep
