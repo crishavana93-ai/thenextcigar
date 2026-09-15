@@ -14,6 +14,8 @@
 /home-premium /subscribe 302
 /access-denied /subscribe 302
 /sign-up /subscribe 302
+/newsletter /subscribe/ 301
+/newsletter/ /subscribe/ 301
 /log-in /subscribe 302
 /reset-password /subscribe 302
 

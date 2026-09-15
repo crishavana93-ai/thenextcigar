@@ -56,14 +56,14 @@ const jsonLd = {
 
   <div class="front">
     <section class="lead" style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
-      <span class="kick">{catName(lead.data.category)}</span>
+      <span class="chip">{catName(lead.data.category)}</span>
       <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
       {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
       <p class="by">By {authorName(lead.data.author)} · {new Date(lead.data.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
       {cover(lead) && (
         <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(lead), 1024)} srcset={srcsetFor(cover(lead))} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>
       )}
-      <div class="twin" style="grid-template-columns:1fr 1fr 1fr 1fr">
+      <div class="twin four-up">
         {featured.map((p) => (
           <article style="border-left:0;padding-left:0">
             <span class="kick mute">{catName(p.data.category)}</span>

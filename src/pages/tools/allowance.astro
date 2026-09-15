@@ -25,7 +25,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
 
   <div class="front">
     <section style="grid-column:1 / span 2;border-right:1px solid var(--rule);padding-left:0">
-      <form id="al-form" class="rw" style="grid-template-columns:repeat(3,1fr);display:grid;gap:10px;max-width:640px">
+      <form id="al-form" class="rw cols-3" style="grid-template-columns:repeat(3,1fr);display:grid;gap:10px;max-width:640px">
         <label>Travelling to<select id="al-to">{ALLOWANCES.map((a) => <option value={a.code}>{a.name}</option>)}</select></label>
         <label>Coming from<select id="al-from"><option value="out">Outside (Cuba, US, Asia…)</option><option value="eu">Another EU country</option><option value="ch">Switzerland</option><option value="uk">The UK</option></select></label>
         <label>Cigars carried<input type="number" id="al-n" min="0" max="2000" value="50" /></label>

@@ -50,10 +50,13 @@ export const channels: YouTubeChannel[] = [
     enabled: true,
   },
   {
+    // Disabled 15 Sep 2026: the Stogie Geeks podcast ended and its channel
+    // (same owner as Security Weekly) now posts application-security video.
+    // The feed put "AI Just Made Phishing More Profitable" on /watch.
     name: "Stogie Geeks",
     id: "UCg--XBjJ50a9tUhTKXVPiqg",
     handle: "@stogiegeek",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "Jasim Ahmed Cigars",

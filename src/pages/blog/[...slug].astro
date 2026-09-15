@@ -114,6 +114,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 >
   <article class="art">
     <p class="miga"><a href="/">Front page</a> · <a href="/blog/">Magazine</a>{category && <> · <a href={`/blog/`}>{(category.data as any).name}</a></>}</p>
+    {category && <p style="margin:0 0 10px"><span class="chip">{(category.data as any).name}</span></p>}
     <h1>{d.title}</h1>
     {d.excerpt && <p class="standfirst">{d.excerpt}</p>}
     <p class="credit">

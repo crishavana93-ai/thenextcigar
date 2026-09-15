@@ -137,7 +137,7 @@ const jsonLd = {
 
     <!-- CENTRE · LEAD -->
     <section class="lead" aria-label="Lead story">
-      <span class="kick">{String(lead.data.category || "report").replace(/-/g, " ")} · Report</span>
+      <span class="chip">{String(lead.data.category || "report").replace(/-/g, " ")} · Report</span>
       <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
       {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
       <p class="by">By {authorName(lead.data.author)} · {fmtDate(lead.data.updatedAt || lead.data.publishedAt)}</p>
