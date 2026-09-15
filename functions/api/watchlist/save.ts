@@ -138,13 +138,26 @@ You can unsubscribe any time: ${unsubscribe}
   return { subject, html, text };
 }
 
+
+// Resend wants `Name <email>` or a bare address. ALERT_FROM_EMAIL in
+// Cloudflare is set as `The Next Cigar <alerts@thenextcigar.com>`, and every
+// Finder mailer used to wrap it again — "The Next Cigar Finder <The Next
+// Cigar <alerts@…>>" — which Resend rejects with a 422. So no confirmation,
+// no release watch, no price-drop alert and no new-listings mail ever went
+// out. Found 15 September 2026 by reading the emailError the API returns.
+function senderHeader(configured?: string): string {
+  const v = (configured || "").trim();
+  if (!v) return "The Next Cigar Finder <alerts@thenextcigar.com>";
+  return v.includes("<") ? v : `The Next Cigar Finder <${v}>`;
+}
+
 async function sendConfirmationEmail(
   env: Env,
   to: string,
   payload: { subject: string; html: string; text: string }
 ): Promise<{ ok: boolean; error?: string }> {
   if (!env.RESEND_API_KEY) return { ok: false, error: "RESEND_API_KEY not configured" };
-  const from = env.ALERT_FROM_EMAIL || "alerts@thenextcigar.com";
+  const from = senderHeader(env.ALERT_FROM_EMAIL);
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -153,7 +166,7 @@ async function sendConfirmationEmail(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        from: `The Next Cigar Finder <${from}>`,
+        from,
         to: [to],
         subject: payload.subject,
         html: payload.html,

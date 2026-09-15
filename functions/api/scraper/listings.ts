@@ -63,6 +63,19 @@ const clean = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").r
 
 interface Found { url: string; title: string; price?: number }
 
+
+// Resend wants `Name <email>` or a bare address. ALERT_FROM_EMAIL in
+// Cloudflare is set as `The Next Cigar <alerts@thenextcigar.com>`, and every
+// Finder mailer used to wrap it again — "The Next Cigar Finder <The Next
+// Cigar <alerts@…>>" — which Resend rejects with a 422. So no confirmation,
+// no release watch, no price-drop alert and no new-listings mail ever went
+// out. Found 15 September 2026 by reading the emailError the API returns.
+function senderHeader(configured?: string): string {
+  const v = (configured || "").trim();
+  if (!v) return "The Next Cigar Finder <alerts@thenextcigar.com>";
+  return v.includes("<") ? v : `The Next Cigar Finder <${v}>`;
+}
+
 async function fetchText(url: string): Promise<string | null> {
   try {
     const r = await fetch(url, { headers: { "user-agent": UA, accept: "text/html,application/json" } });
@@ -130,9 +143,9 @@ async function supa(env: Env, path: string, init: RequestInit = {}) {
 
 async function sendEmail(env: Env, to: string, subject: string, html: string, text: string) {
   if (!env.RESEND_API_KEY) return { ok: false, error: "no RESEND_API_KEY" };
-  const from = env.ALERT_FROM_EMAIL || "alerts@thenextcigar.com";
+  const from = senderHeader(env.ALERT_FROM_EMAIL);
   const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: `The Next Cigar Finder <${from}>`, to: [to], subject, html, text, tags: [{ name: "category", value: "finder_release" }] }) });
+    body: JSON.stringify({ from, to: [to], subject, html, text, tags: [{ name: "category", value: "finder_release" }] }) });
   return { ok: r.ok, error: r.ok ? undefined : `resend ${r.status}` };
 }
 

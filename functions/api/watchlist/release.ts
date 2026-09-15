@@ -9,6 +9,19 @@ const json = (d: unknown, s = 200) => new Response(JSON.stringify(d), { status: 
 const COUNTRIES = new Set(["de", "ch", "it", "es", "se", "uk", "nl", "be", "at", "dk", "no", "fi", "pt", "cz", "ie", "gr", "fr", "lu"]);
 const hits = new Map<string, { n: number; t: number }>();
 
+
+// Resend wants `Name <email>` or a bare address. ALERT_FROM_EMAIL in
+// Cloudflare is set as `The Next Cigar <alerts@thenextcigar.com>`, and every
+// Finder mailer used to wrap it again — "The Next Cigar Finder <The Next
+// Cigar <alerts@…>>" — which Resend rejects with a 422. So no confirmation,
+// no release watch, no price-drop alert and no new-listings mail ever went
+// out. Found 15 September 2026 by reading the emailError the API returns.
+function senderHeader(configured?: string): string {
+  const v = (configured || "").trim();
+  if (!v) return "The Next Cigar Finder <alerts@thenextcigar.com>";
+  return v.includes("<") ? v : `The Next Cigar Finder <${v}>`;
+}
+
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const ip = request.headers.get("cf-connecting-ip") || "?";
   const h = hits.get(ip); const now = Date.now();
@@ -36,10 +49,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!ins.ok) return json({ ok: false, error: "could not save the watch" }, 500);
 
   if (env.RESEND_API_KEY) {
-    const from = env.ALERT_FROM_EMAIL || "alerts@thenextcigar.com";
+    const from = senderHeader(env.ALERT_FROM_EMAIL);
     const scope = `${country ? `retailers in ${country.toUpperCase()}` : "every retailer we track"}${brand ? `, ${brand} only` : ""}`;
     await fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: `The Next Cigar Finder <${from}>`, to: [email], subject: "Release watch saved", tags: [{ name: "category", value: "finder_release" }],
+      body: JSON.stringify({ from, to: [email], subject: "Release watch saved", tags: [{ name: "category", value: "finder_release" }],
         text: `You'll get one email when a new Cuban listing appears at ${scope}. We crawl four times a day. Unsubscribe any time: https://thenextcigar.com/finder/unsubscribe?email=${encodeURIComponent(email)}`,
         html: `<div style="font-family:Georgia,serif;max-width:560px;color:#151412"><p style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7B2622">The Next Cigar · release watch</p><h1 style="font-size:24px;margin:0 0 12px">Saved.</h1><p>You'll get one email when a new Cuban listing appears at ${scope}. We crawl four times a day and say only what we saw: a product page that wasn't there before.</p><p style="font-size:12px;color:#7a6f60"><a href="https://thenextcigar.com/finder/unsubscribe?email=${encodeURIComponent(email)}" style="color:#7a6f60">Unsubscribe</a></p></div>` }) }).catch(() => {});
   }
