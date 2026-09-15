@@ -282,16 +282,37 @@ const description = best
     function render(code: string) {
       const doorCells = document.querySelectorAll<HTMLElement>("#offers .door");
       const panel = document.getElementById("landed")!;
-      if (!code || !(DUTY_RATES as any)[code]) { doorCells.forEach((c) => (c.hidden = true)); panel.hidden = true; hint.textContent = "Pick a country to see what each box costs at your door."; return; }
+      if (!code || !(DUTY_RATES as any)[code]) {
+        doorCells.forEach((c) => (c.hidden = true)); panel.hidden = true;
+        hint.textContent = "Pick a country to see what each box costs at your door.";
+        const tb = document.querySelector("#offers tbody")!;
+        [...tb.querySelectorAll<HTMLTableRowElement>("tr")]
+          .sort((a, b) => Number(a.querySelector("td.door")?.getAttribute("data-idx")) - Number(b.querySelector("td.door")?.getAttribute("data-idx")))
+          .forEach((tr) => tb.appendChild(tr));
+        return;
+      }
       let best: any = null;
+      const totals = new Map<number, number>();
       for (const o of data.offers) {
         const r = landedCost({ price: o.price, currency: o.currency, fromCountry: o.from, toCountry: code, boxSize: data.sku.boxSize, ring: data.sku.ring, lengthMm: data.sku.lengthMm, fx: data.fx });
+        totals.set(o.idx, r.totalEur);
         const cell = document.querySelector<HTMLElement>(`#offers td.door[data-idx="${o.idx}"]`);
         if (cell) { cell.hidden = false; cell.innerHTML = `${eur(r.totalEur)}<small>${r.sameCountry ? "no extra tax" : "€" + r.perCigarEur.toFixed(2) + " per cigar"}</small>`; }
         if (o.inStock && (!best || r.totalEur < best.r.totalEur)) best = { o, r };
       }
       doorCells.forEach((c) => (c.hidden = false));
-      hint.textContent = `Estimated for delivery to ${data.names[code]}. Sorted by listed price; read the last column for what you'd actually pay.`;
+      // Re-rank the table by what you'd pay, in-stock first — the same rule
+      // the board uses, so the two pages agree.
+      const tbody = document.querySelector("#offers tbody")!;
+      const trs = [...tbody.querySelectorAll<HTMLTableRowElement>("tr")];
+      const idxOf = (tr: HTMLTableRowElement) => Number(tr.querySelector("td.door")?.getAttribute("data-idx") ?? -1);
+      trs.sort((a, b) => {
+        const ao = a.classList.contains("oos"), bo = b.classList.contains("oos");
+        if (ao !== bo) return ao ? 1 : -1;
+        return (totals.get(idxOf(a)) ?? Infinity) - (totals.get(idxOf(b)) ?? Infinity);
+      });
+      trs.forEach((tr) => tbody.appendChild(tr));
+      hint.textContent = `Estimated for delivery to ${data.names[code]}. Ranked by what you'd pay at your door, in-stock first.`;
       if (!best) { panel.hidden = true; return; }
       const { o, r } = best;
       document.getElementById("landed-title")!.textContent = `· cheapest to ${data.names[code]}: ${o.retailer}`;

@@ -73,7 +73,7 @@
       <p class="price-alert-modal__lede" data-success-msg>
         Check your inbox to confirm the alert.
       </p>
-      <button type="button" class="price-alert-modal__submit" data-close>Got it</button>
+      <button type="button" class="price-alert-modal__submit" data-close>Close</button>
     </div>
 
     <div class="price-alert-modal__state" data-state="upsell" hidden>
@@ -103,12 +103,12 @@
     border: none; padding: 0; background: transparent;
     max-width: min(92vw, 480px); width: 100%; border-radius: 0;
   }
-  .price-alert-modal::backdrop { background: rgba(15, 17, 25, 0.72); backdrop-filter: blur(4px); }
+  .price-alert-modal::backdrop { background: rgba(21, 20, 18, 0.55); }
   .price-alert-modal__card {
     position: relative;
-    background: var(--color-bg, #fff);
+    background: var(--paper, #F2F0EA);
     border: 1px solid var(--color-border, #e6e3dc);
-    border-radius: 14px;
+    border-radius: 0; border: 1.5px solid var(--ink, #151412);
     padding: 2.25rem 2rem 1.75rem;
     box-shadow: 0 30px 80px -20px rgba(0,0,0,0.4);
   }
@@ -116,27 +116,27 @@
     position: absolute; top: 14px; right: 14px;
     width: 36px; height: 36px;
     border: none; background: transparent;
-    color: var(--color-text-soft, #555);
+    color: var(--ink-2, #3A3835);
     cursor: pointer; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     transition: background 0.15s;
   }
-  .price-alert-modal__close:hover { background: var(--color-bg-soft, #f5f3ee); }
+  .price-alert-modal__close:hover { background: var(--paper-2, #EAE7E0); }
   .price-alert-modal__eyebrow {
     text-transform: uppercase; letter-spacing: 0.16em;
     font-size: 0.72rem; font-weight: 700;
-    color: var(--color-accent, #ff2e2e);
+    color: var(--ox, #7B2622);
     margin: 0 0 0.6rem;
   }
   .price-alert-modal__title {
-    font-family: var(--font-display, Georgia, serif);
+    font-family: "Newsreader", Georgia, serif;
     font-size: 1.45rem; line-height: 1.2;
     margin: 0 0 0.65rem;
-    color: var(--color-text, #1a1d2e);
+    color: var(--ink, #151412);
     letter-spacing: -0.01em;
   }
   .price-alert-modal__lede {
-    color: var(--color-text-soft, #555);
+    color: var(--ink-2, #3A3835);
     font-size: 0.94rem; line-height: 1.55;
     margin: 0 0 1.4rem;
   }
@@ -144,51 +144,51 @@
   .price-alert-modal__label {
     display: block; font-size: 0.78rem; font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--color-text-soft, #555); margin-bottom: 0.35rem;
+    color: var(--ink-2, #3A3835); margin-bottom: 0.35rem;
   }
   .price-alert-modal__optional {
     text-transform: none; letter-spacing: 0; font-weight: 400;
-    color: var(--color-text-muted, #888);
+    color: var(--mute, #635F58);
   }
   .price-alert-modal__field input {
     width: 100%; padding: 0.75rem 0.9rem;
-    border: 1px solid var(--color-border, #e6e3dc); border-radius: 8px;
+    border: 1px solid var(--rule, #C9C5BB); border-radius: 0;
     font-size: 1rem;
-    background: var(--color-bg-soft, #fafafa);
-    color: var(--color-text, #1a1d2e);
+    background: #fff;
+    color: var(--ink, #151412);
     transition: border-color 0.15s;
   }
-  .price-alert-modal__field input:focus { outline: none; border-color: var(--color-accent, #ff2e2e); }
+  .price-alert-modal__field input:focus { outline: none; border-color: var(--ox, #7B2622); }
   .price-alert-modal__hint {
     display: block; margin-top: 0.4rem;
-    color: var(--color-text-muted, #888); font-size: 0.78rem;
+    color: var(--mute, #635F58); font-size: 0.78rem;
   }
   .price-alert-modal__submit {
     width: 100%; padding: 0.85rem 1rem;
-    background: var(--color-accent, #ff2e2e); color: white;
+    background: var(--ink, #151412); color: var(--paper, #F2F0EA);
     font-weight: 700; font-size: 0.94rem;
     text-transform: uppercase; letter-spacing: 0.06em;
-    border: none; border-radius: 8px;
+    border: none; border-radius: 0; font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; font-size: 12px;
     cursor: pointer; transition: opacity 0.15s;
     display: inline-block; text-decoration: none; text-align: center;
   }
   .price-alert-modal__submit:hover { opacity: 0.92; }
   .price-alert-modal__submit:disabled { opacity: 0.5; cursor: wait; }
-  .price-alert-modal__submit--gold { background: var(--color-gold, #c9a961); color: var(--color-charcoal, #1a1d2e); }
+  .price-alert-modal__submit--gold { background: var(--ox, #7B2622); color: var(--paper, #F2F0EA); }
   .price-alert-modal__link {
     display: block; width: 100%; margin-top: 0.65rem;
     background: transparent; border: none;
-    color: var(--color-text-soft, #555); cursor: pointer;
+    color: var(--ink-2, #3A3835); cursor: pointer;
     font-size: 0.88rem; padding: 0.5rem;
   }
-  .price-alert-modal__link:hover { color: var(--color-accent, #ff2e2e); }
+  .price-alert-modal__link:hover { color: var(--ox, #7B2622); }
   .price-alert-modal__fineprint {
     margin: 0.95rem 0 0; font-size: 0.74rem;
-    color: var(--color-text-muted, #888); line-height: 1.45;
+    color: var(--mute, #635F58); line-height: 1.45;
   }
-  .price-alert-modal__fineprint a { color: var(--color-accent, #ff2e2e); text-decoration: underline; }
+  .price-alert-modal__fineprint a { color: var(--ox, #7B2622); text-decoration: underline; }
   .price-alert-modal__success-icon {
-    color: #2c8a4a; display: flex; justify-content: center; margin-bottom: 0.4rem;
+    color: var(--live, #2F6B3A); display: flex; justify-content: center; margin-bottom: 0.4rem;
   }
 </style>
 

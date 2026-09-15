@@ -1,4 +1,5 @@
 ---
+import { usdRates, approx } from "../../lib/fx";
 import { getCollection, render } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 
@@ -21,6 +22,8 @@ const gallery: string[] = [cover, ...((d.gallery ?? []).map(img))].filter((x, i,
 const abs = (u: string) => (u.startsWith("http") ? u : `https://thenextcigar.com${u}`);
 const galleryAbs = gallery.map(abs);
 const sym = d.currency === "EUR" ? "€" : d.currency === "GBP" ? "£" : "$";
+const fx = d.currency === "USD" ? await usdRates() : null;
+const approxLine = fx ? approx(d.price, fx) : "";
 const soon = !!d.comingSoon;
 const buyable = !soon && d.inStock;
 const etaT = Date.parse(`1 ${d.expectedArrival ?? ""}`);
@@ -94,7 +97,9 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
       {buyable ? (
         <>
           <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
+          {approxLine && <p class="fine" style="margin-top:-6px">About {approxLine} at the ECB rate of {fx!.date}. You pay in US dollars; your bank converts.</p>}
           <button type="button" class="buy" id="buy" data-slug={d.slug}>Buy — {sym}{d.price}</button>
+          <noscript><p class="note">Checkout needs JavaScript: the button opens a Stripe payment page. With scripts off, email <a href="mailto:orders@thenextcigar.com">orders@thenextcigar.com</a> and we send a payment link.</p></noscript>
           <p class="fine" id="buy-status" aria-live="polite"></p>
           <p class="fine">Card checkout by Stripe. Free tracked delivery. {d.type === "digital" ? "Instant download after payment; digital goods are non-refundable once downloaded." : "Ships direct from our supplier, one to two weeks. You have 14 days from delivery to send it back for any reason — you pay return postage unless it arrived faulty."} <a href="/shipping-and-returns/">Shipping and returns</a>.</p>
         </>

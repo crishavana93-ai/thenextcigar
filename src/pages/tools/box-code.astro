@@ -29,6 +29,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
         <label>The code stamped on the bottom of the box
           <input type="text" id="bc-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="MAY 24" />
         </label>
+        <noscript><p class="note" style="margin:0 0 8px">The decoder runs in your browser and needs JavaScript. With scripts off, the reading below still tells you how to read the stamp by eye: the date is a three-letter Spanish month and a two-digit year.</p></noscript>
         <p class="note" style="margin:0">Try: {EXAMPLES.map((e, i) => (<>{i > 0 ? " · " : ""}<a href="#" class="bc-eg" data-eg={e}>{e}</a></>))}</p>
       </form>
 

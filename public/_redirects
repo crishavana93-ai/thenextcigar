@@ -34,6 +34,13 @@
 /user-account    /lounge/login/ 301
 /update-password /lounge/login/ 301
 /401             /            301
+# Preview routes from the redesign that Google discovered and never got to index
+/cinematic-preview/ /            301
+/cinematic-preview  /            301
+/collection/        /shop/       301
+/collection         /shop/       301
+/shelves/           /shop/       301
+/shelves            /shop/       301
 # Archived shop products — send to the shop, not a dead page
 /shop/logo-tee/                     /shop/ 301
 /shop/spanish-cedar-glass-top-humidor/ /shop/ 301
