@@ -1,0 +1,119 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+.k{position:absolute;top:70px;left:72px;right:72px;display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;z-index:4}
+.k b{color:#F2F0EA;font-weight:500}
+.n{position:absolute;right:72px;bottom:60px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.22em;color:#9A958A;z-index:4}
+svg.line{position:absolute;left:0;top:0;width:1080px;height:1350px;pointer-events:none;z-index:3}
+/* cover */
+.h1{position:absolute;left:72px;top:300px;width:940px;font-size:160px;line-height:.9;letter-spacing:-.035em;font-weight:500}
+.h1 i{font-style:italic;font-weight:300;color:#C9A36A}
+.sub{position:absolute;left:72px;top:860px;width:860px;font-size:38px;line-height:1.3;color:#C7C2B6;font-weight:300}
+.sub b{color:#F2F0EA;font-weight:500}
+/* contrast */
+.half{position:absolute;top:0;bottom:200px;width:540px}
+.L{left:0;background:#F2F0EA;color:#151412}.R{right:0}
+.lab{position:absolute;top:70px;left:56px;right:40px;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.2em;text-transform:uppercase;line-height:1.5}
+.L .lab{color:#6A665E}.R .lab{color:#9A958A}
+.shop{position:absolute;top:150px;left:56px;right:40px;font-size:34px;line-height:1.2;font-style:italic;font-weight:300}
+.L .shop{color:#151412}.R .shop{color:#C7C2B6}
+.big{position:absolute;left:56px;top:470px;font-size:150px;letter-spacing:-.05em;line-height:.95;font-weight:500}
+.big .cur{display:block;font-size:56px;letter-spacing:.02em;font-weight:300;color:#6A665E;margin-bottom:-10px}
+.big small{display:block;font-size:34px;letter-spacing:0;font-weight:300;margin-top:18px;color:#6A665E}
+.R .big{color:#F2F0EA}.R .big .cur{display:block;font-size:56px;letter-spacing:.02em;font-weight:300;color:#6A665E;margin-bottom:-10px}
+.big small{color:#9A958A}
+.cap{position:absolute;left:56px;right:40px;top:800px;font-size:30px;line-height:1.35;font-weight:300}
+.L .cap{color:#4A463F}.R .cap{color:#C7C2B6}
+.band{position:absolute;left:0;right:0;bottom:0;height:200px;background:#151412;border-top:1px solid #3A3733}
+.verdict{position:absolute;left:72px;right:200px;top:64px;font-size:46px;font-style:italic;font-weight:300;color:#C9A36A;line-height:1.15}
+.strike{position:relative}
+.strike:after{content:"";position:absolute;left:-6px;right:-6px;top:52%;height:9px;background:#7B2622;transform:rotate(-6deg)}
+/* bill */
+.h2{position:absolute;left:72px;top:470px;width:940px;font-size:96px;line-height:.98;letter-spacing:-.03em;font-weight:500}
+.h2 i{font-style:italic;font-weight:300;color:#C9A36A}
+.bill{position:absolute;left:72px;right:72px;top:690px}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid #3A3733;font-size:36px;font-weight:300;color:#C7C2B6}
+.row b{font-weight:500;color:#F2F0EA;font-size:44px}
+.row.total{border-bottom:none;border-top:2px solid #F2F0EA;margin-top:6px}
+.row.total b{color:#C9A36A;font-size:54px}
+.fine{position:absolute;left:72px;right:72px;bottom:110px;font-size:24px;line-height:1.4;color:#9A958A;font-weight:300}
+/* cta */
+.cta .h2{top:470px}
+.url{position:absolute;left:72px;top:820px;font-family:'IBM Plex Sans';font-size:40px;letter-spacing:.06em;color:#C9A36A}
+.stats{position:absolute;left:72px;right:72px;top:930px;display:flex;gap:40px}
+.st{flex:1;border-top:1px solid #3A3733;padding-top:20px}
+.st b{display:block;font-size:64px;font-weight:500;letter-spacing:-.03em}
+.st span{font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.18em;text-transform:uppercase;color:#9A958A}
+</style></head><body>
+
+<div class="slide" id="s1">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Markets</span><span>15 Sep 2026</span></div>
+ <div class="h1">Sticker<br>price<br><i>lies.</i></div>
+ <div class="sub">One box of <b>Trinidad Reyes</b>. Three shops. The cheapest sticker on the board is not the cheapest box at your door. Swipe →</div>
+ <svg class="line" viewBox="0 0 1080 1350"><path d="M-10 1150 C 250 1150, 500 1130, 720 1100 S 1000 1040, 1090 1010" fill="none" stroke="#7B2622" stroke-width="7"/></svg>
+ <div class="n">1 / 6</div>
+</div>
+
+<div class="slide" id="s2">
+ <div class="grain"></div>
+ <div class="half L"><div class="lab">On the shelf</div><div class="shop">CigarOne, Switzerland</div><div class="big"><span class="cur">CHF</span>369<small>≈ €387 · the cheapest sticker on the board</small></div><div class="cap">Looks like the bargain. It leaves the EU to reach you.</div></div>
+ <div class="half R"><div class="lab">At your door · Germany</div><div class="shop">Same box, delivered</div><div class="big">€544<small>+ €157 · customs, excise, VAT</small></div><div class="cap">Forty-one per cent on top, before the courier.</div></div>
+ <div class="band"><div class="verdict">The bargain sticker. Not the bargain.</div></div>
+ <svg class="line" viewBox="0 0 1080 1350"><path d="M-10 1010 C 200 990, 420 960, 560 930 S 900 860, 1090 820" fill="none" stroke="#7B2622" stroke-width="7"/></svg>
+ <div class="n">2 / 6</div>
+</div>
+
+<div class="slide" id="s3">
+ <div class="grain"></div>
+ <div class="half L"><div class="lab">On the shelf</div><div class="shop">Cigarworld.de, Germany</div><div class="big">€408<small>€21 dearer than the Swiss sticker</small></div><div class="cap">Looks like the one to skip.</div></div>
+ <div class="half R"><div class="lab">At your door · Germany</div><div class="shop">Same box, delivered</div><div class="big">€408<small>+ €0 · nothing crosses a border</small></div><div class="cap">Cheapest box on the board once it lands. By €136.</div></div>
+ <div class="band"><div class="verdict">The dear sticker wins.</div></div>
+ <svg class="line" viewBox="0 0 1080 1350"><path d="M-10 820 C 200 800, 400 790, 540 790 S 900 790, 1090 790" fill="none" stroke="#7B2622" stroke-width="7"/></svg>
+ <div class="n">3 / 6</div>
+</div>
+
+<div class="slide" id="s4">
+ <div class="grain"></div>
+ <div class="half L"><div class="lab">On the shelf</div><div class="shop">EGM Cigars, Switzerland</div><div class="big"><span class="cur">CHF</span>530<small>≈ €556 · the dearest sticker</small></div><div class="cap">Already the most expensive of the three.</div></div>
+ <div class="half R"><div class="lab">At your door · Germany</div><div class="shop">Same box, delivered</div><div class="big">€781<small>+ €225 · customs, excise, VAT</small></div><div class="cap">Nearly double the German shop. Same twelve cigars.</div></div>
+ <div class="band"><div class="verdict">The line only goes one way.</div></div>
+ <svg class="line" viewBox="0 0 1080 1350"><path d="M-10 790 C 200 760, 400 700, 540 640 S 900 480, 1090 400" fill="none" stroke="#7B2622" stroke-width="7"/></svg>
+ <div class="n">4 / 6</div>
+</div>
+
+<div class="slide" id="s5">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · How it adds up</span><span>Trinidad Reyes · 12</span></div>
+ <div class="h2">Where the <i>extra €157</i> goes.</div>
+ <div class="bill">
+  <div class="row"><span>Swiss sticker, Swiss VAT taken off</span><b>€358</b></div>
+  <div class="row"><span>Customs duty at the EU border, 26%</span><b>+ €93</b></div>
+  <div class="row"><span>German tobacco excise, per cigar</span><b>+ €5</b></div>
+  <div class="row"><span>German VAT, 19% on all of the above</span><b>+ €87</b></div>
+  <div class="row total"><span>At your door</span><b>€544</b></div>
+ </div>
+ <div class="fine">Estimate from the published rates (Zoll.de, 2023 tariff), dated and linked on the Finder. Carrier handling fees not included. General duty calculators skip the excise — for cigars that's pricing the flight without the plane.</div>
+ <svg class="line" viewBox="0 0 1080 1350"><path d="M-10 400 C 300 380, 600 330, 1090 300" fill="none" stroke="#7B2622" stroke-width="7" opacity=".35"/></svg>
+ <div class="n">5 / 6</div>
+</div>
+
+<div class="slide cta" id="s6">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · The Finder</span><span>Free</span></div>
+ <div class="h2">Pick your country.<br><i>The whole board re-prices.</i></div>
+ <div class="url">thenextcigar.com/finder</div>
+ <div class="stats">
+  <div class="st"><b>52</b><span>Cuban vitolas</span></div>
+  <div class="st"><b>23</b><span>retailers, 8 countries</span></div>
+  <div class="st"><b>4×</b><span>re-read daily</span></div>
+ </div>
+ <div class="fine">Every price shows the day it was read. A price we haven't re-read in two weeks says so, in red, next to the number. We sell accessories, never tobacco.</div>
+ <svg class="line" viewBox="0 0 1080 1350"><path d="M-10 300 C 300 290, 700 300, 1090 320" fill="none" stroke="#7B2622" stroke-width="7" opacity=".35"/></svg>
+ <div class="n">6 / 6</div>
+</div>
+</body></html>

@@ -1,0 +1,84 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+.k{position:absolute;top:70px;left:72px;right:72px;display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;z-index:4}
+.k b{color:#F2F0EA;font-weight:500}
+.n{position:absolute;right:72px;bottom:60px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.22em;color:#9A958A;z-index:4}
+/* the stamp — identical position on every slide */
+.wood{position:absolute;left:0;right:0;top:180px;height:560px;background:linear-gradient(180deg,#2A2320,#1E1917);border-top:1px solid #3A3733;border-bottom:1px solid #3A3733}
+.wood:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.025) 0 3px,transparent 3px 11px)}
+.stamp{position:absolute;left:50%;top:400px;transform:translate(-50%,-50%) rotate(-2.5deg);padding:34px 54px;border:5px solid #3E3A35;border-radius:10px;font-family:'IBM Plex Sans';font-weight:500;font-size:112px;letter-spacing:.12em;color:#3E3A35;white-space:nowrap;text-shadow:0 0 1px #3E3A35}
+.stamp span{display:inline-block;padding:0 12px}
+.stamp .on{color:#F2F0EA;text-shadow:0 0 2px rgba(242,240,234,.5)}
+.stamp .ox{color:#C24A44}
+.stamp.all span{color:#F2F0EA}
+.stamp.all{border-color:#F2F0EA}
+.cap{position:absolute;left:72px;top:800px;width:936px}
+.cap .l{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;margin-bottom:24px}
+.cap .h{font-size:92px;line-height:.98;letter-spacing:-.03em;font-weight:500}
+.cap .h i{font-style:italic;font-weight:300;color:#C9A36A}
+.cap .h .ox{color:#C24A44}
+.cap p{font-size:34px;line-height:1.35;color:#C7C2B6;font-weight:300;margin:28px 0 0;width:900px}
+.url{position:absolute;left:72px;top:1120px;font-family:'IBM Plex Sans';font-size:36px;letter-spacing:.06em;color:#C9A36A}
+.swipe{position:absolute;left:72px;bottom:60px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:#C9A36A}
+</style></head><body>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Tools</span><span>Box code</span></div>
+ <div class="wood"></div>
+ <div class="stamp all"><span>MUL</span><span>FEB</span><span>14</span></div>
+ <div class="cap"><div class="l">Underside of the box</div><div class="h">Decode <i>this.</i></div><p>The stamp on the bottom of every Habanos box says when it was packed and, supposedly, where. One part of that is true. Swipe.</p></div>
+ <div class="swipe">Hold and swipe →</div><div class="n">1 / 6</div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Tools</span><span>Box code</span></div>
+ <div class="wood"></div>
+ <div class="stamp"><span>MUL</span><span class="on">FEB</span><span>14</span></div>
+ <div class="cap"><div class="l">The month</div><div class="h">February.</div><p>Three letters, Spanish month. FEB is February; ENE is January, ABR is April. This part is printed plainly and has been since 2000.</p></div>
+ <div class="n">2 / 6</div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Tools</span><span>Box code</span></div>
+ <div class="wood"></div>
+ <div class="stamp"><span>MUL</span><span>FEB</span><span class="on">14</span></div>
+ <div class="cap"><div class="l">The year</div><div class="h">2014. <i>12.6 years in the box.</i></div><p>Two digits, the year. Boxed February 2014, read today. Old enough that the question is how it was stored, not how it was rolled.</p></div>
+ <div class="n">3 / 6</div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Tools</span><span>Box code</span></div>
+ <div class="wood"></div>
+ <div class="stamp"><span class="ox">MUL</span><span>FEB</span><span>14</span></div>
+ <div class="cap"><div class="l">The factory</div><div class="h"><span class="ox">We can't tell you.</span></div><p>Habanos rotates the three-letter factory code on a schedule it doesn't publish, and has since about 2003. MUL is a code. It is not a name we can put to a building.</p></div>
+ <div class="n">4 / 6</div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Tools</span><span>Box code</span></div>
+ <div class="wood"></div>
+ <div class="stamp"><span class="ox">MUL</span><span>FEB</span><span>14</span></div>
+ <div class="cap"><div class="l">Other decoders</div><div class="h">Will tell you. <i>They're guessing.</i></div><p>Usually from the 1985–1998 factory table, which Habanos stopped using. A confident answer to a question nobody outside Habanos can answer tells you how much to trust the rest of the page.</p></div>
+ <div class="n">5 / 6</div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="k"><span><b>The Next Cigar</b> · Tools</span><span>Free</span></div>
+ <div class="wood"></div>
+ <div class="stamp all"><span>MUL</span><span>FEB</span><span>14</span></div>
+ <div class="cap"><div class="l">Type yours</div><div class="h">Says what it knows. <i>Says when it doesn't.</i></div><p>Month, year, age, the old ciphers, the pre-2003 factories — and a plain sentence for the rest. Runs in your browser, sends nothing anywhere.</p></div>
+ <div class="url" style="top:1190px">thenextcigar.com/tools/box-code</div>
+ <div class="n">6 / 6</div>
+</div>
+</body></html>
