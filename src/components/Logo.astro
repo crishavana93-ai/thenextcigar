@@ -15,13 +15,6 @@ const { variant = "mark", class: className = "", tone = "dark" } = Astro.props;
 const wordmarkUrl = tone === "light" ? "/logo-light.svg" : "/logo.svg";
 ---
 
-{variant === "wordmark" ? (
-  <img src={wordmarkUrl} alt="TNext Cigars" class={className} width="1000" height="460" />
-) : (
-  <svg viewBox="0 0 64 64" fill="none" class={className} aria-label="TNext Cigars">
-    <g stroke={tone === "light" ? "#f5efe0" : "currentColor"} stroke-width="3" stroke-linecap="round" fill="none">
-      <path d="M28 14 C 22 22, 22 30, 28 38 C 34 46, 34 54, 28 60"/>
-      <path d="M36 14 C 42 22, 42 30, 36 38 C 30 46, 30 54, 36 60"/>
-    </g>
-  </svg>
-)}
+{/* The smoke-curl mark was retired 15 Sep 2026 — the paper's identity is
+    the wordmark. Both variants render the wordmark now. */}
+<img src={wordmarkUrl} alt="The Next Cigar" class={className} width="1000" height="460" />

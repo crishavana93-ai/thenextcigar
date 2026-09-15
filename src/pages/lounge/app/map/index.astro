@@ -1707,6 +1707,15 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     // requestAnimationFrame to catch any layout that's still settling.
     map.invalidateSize();
     requestAnimationFrame(() => map.invalidateSize());
+    // The container keeps changing height after first paint on phones (fonts,
+    // the chip rail wrapping, iOS toolbar collapse) — seen as tiles rendering
+    // only in a top strip with pins floating on cream below. Re-measure on
+    // every container resize, and once more when fonts settle.
+    if ("ResizeObserver" in window) {
+      new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById("lounge-map")!);
+    }
+    (document as any).fonts?.ready?.then(() => map.invalidateSize());
+    setTimeout(() => map.invalidateSize(), 600);
 
     // Coach banner — when arriving from "Be the first" / Check-in CTAs.
     const params = new URLSearchParams(window.location.search);

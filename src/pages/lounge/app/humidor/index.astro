@@ -203,11 +203,11 @@ const board = { priced, skus: SKUS.map((s) => ({ id: s.id, name: `${s.brand} ${s
             : `<small class="${p.changePct >= 0 ? "up" : "down"}">${p.changePct >= 0 ? "+" : ""}${p.changePct}% in 90 days</small>`) : "";
         return `<tr data-id="${r.id}">
           <td class="c"><b>${name}</b><br><small>${r.form === "box" ? "sealed box" : "singles"}${r.retailer ? " · " + r.retailer : ""}${p ? " · " + p.checked : ""}</small></td>
-          <td class="n">${cigars(r)}</td>
-          <td class="n">${r.paid ? `${r.currency} ${Number(r.paid).toFixed(0)}` : "—"}</td>
-          <td class="n">${w !== null ? `<b>${eur(w)}</b>${move}` : `<span class="muted">not on the board</span>`}</td>
-          <td class="n">${fmtAge(r)}</td>
-          <td class="n"><button type="button" class="hum-edit" data-id="${r.id}">Edit</button></td>
+          <td class="n" data-l="Qty">${cigars(r)}</td>
+          <td class="n" data-l="Paid">${r.paid ? `${r.currency} ${Number(r.paid).toFixed(0)}` : "—"}</td>
+          <td class="n" data-l="Worth now">${w !== null ? `<b>${eur(w)}</b>${move}` : `<span class="muted">not on the board</span>`}</td>
+          <td class="n" data-l="Age">${fmtAge(r)}</td>
+          <td class="n act"><button type="button" class="hum-edit" data-id="${r.id}">Edit</button></td>
         </tr>`;
       }).join("");
 
@@ -387,6 +387,19 @@ const board = { priced, skus: SKUS.map((s) => ({ id: s.id, name: `${s.brand} ${s
     .hum-hint { font-size:12px; color:var(--color-text-muted); margin:-6px 0 14px; font-style:italic; min-height:1em }
     .hum-actions { display:flex; gap:10px; margin-top:6px }
     .hum-status { font-size:12.5px; color:var(--color-text-muted); margin:10px 0 0; min-height:1em }
-    @media (max-width:720px){ .hum-figures{grid-template-columns:1fr} .hum-fig{border-right:0;border-bottom:1px solid var(--color-border)} .hum-table th:nth-child(3),.hum-table td:nth-child(3){display:none} }
+    /* Phones: each row becomes a card — name on top with Edit at the right,
+       then Qty / Paid / Worth / Age as four labelled cells. Six columns in
+       390px was unreadable and pushed Edit off the screen. */
+    @media (max-width:720px){
+      .hum-figures{grid-template-columns:1fr} .hum-fig{border-right:0;border-bottom:1px solid var(--color-border)}
+      .hum-table thead{display:none}
+      .hum-table, .hum-table tbody{display:block}
+      .hum-table tr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 6px;padding:12px 0;border-bottom:1px solid var(--color-border);position:relative}
+      .hum-table td{display:block;padding:0;border:0;text-align:left!important}
+      .hum-table td.c{grid-column:1 / -1;padding-right:56px}
+      .hum-table td.act{position:absolute;right:0;top:12px}
+      .hum-table td[data-l]::before{content:attr(data-l);display:block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:2px}
+      .hum-table td.n small{font-size:10.5px}
+    }
   </style>
 </BaseLayout>

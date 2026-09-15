@@ -45,7 +45,7 @@ const today = new Date().toLocaleDateString("en-US", {
       {/* logo.svg viewBox cropped to wordmark only (May 2026) — so h-16 now renders a wordmark
           that's actually 64px tall rather than 18px of art inside an 80px-tall blank canvas. */}
       <img src="/logo.svg" alt="The Next Cigar" class="hidden sm:block h-16 w-auto" />
-      <img src="/logo-mark.png" alt="" class="sm:hidden w-14 h-14" />
+      <span class="sm:hidden font-serif text-2xl" style="font-family:var(--font-serif)">The Next Cigar</span>
     </a>
 
     <nav class="hidden lg:flex items-center gap-7" aria-label="Primary">
