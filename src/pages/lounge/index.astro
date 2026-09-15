@@ -16,7 +16,7 @@ const fmt = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numer
 const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: "The Lounge", url: "https://thenextcigar.com/lounge/", isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" } };
 ---
 
-<PaperLayout title="The Lounge — free membership: the map, the watchlist, the members · The Next Cigar" description={`${places.length} lounges, Casas del Habano and shops mapped in ${cities.length} cities, price alerts on ${SKUS.length} vitolas, and other members to meet. Free.`} section="lounge" compact={true} jsonLd={jsonLd}>
+<PaperLayout title="The Lounge — free membership: the map, the watchlist, the members · The Next Cigar" description={`${places.length} lounges, Casas del Habano and shops mapped in ${cities.length} cities, price alerts on ${SKUS.length} vitolas, and other members to meet. Free.`} section="lounge" image="/og-lounge.jpg" compact={true} jsonLd={jsonLd}>
   <div class="dateline">
     <h1>The Lounge <em>— the members' room.</em></h1>
     <p class="st">{places.length} places · {cities.length} cities · membership free</p>

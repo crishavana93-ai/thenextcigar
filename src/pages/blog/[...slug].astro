@@ -39,7 +39,7 @@ const readMinutes = Math.max(1, Math.round(words / 220));
 const published = new Date(d.publishedAt);
 const modified = d.updatedAt ? new Date(d.updatedAt) : null;
 const fmt = (x: Date) => x.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-const coverUrl = typeof d.cover === "string" ? d.cover : (d.cover as any)?.src ?? "/og-default.svg";
+const coverUrl = typeof d.cover === "string" ? d.cover : (d.cover as any)?.src ?? "/og-default.jpg";
 const url = `https://thenextcigar.com/blog/${d.slug}/`;
 
 // Cigars this piece is about → live prices in the rail.
@@ -124,7 +124,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
       <span>{readMinutes} min read</span>
     </p>
 
-    {coverUrl && coverUrl !== "/og-default.svg" && (
+    {coverUrl && coverUrl !== "/og-default.jpg" && (
       <figure class="cubierta">
         <img class="foto" src={coverUrl} alt="" width="1600" height="800" fetchpriority="high" />
       </figure>
