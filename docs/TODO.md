@@ -32,7 +32,11 @@ Kept in the repo so it survives sessions. Newest at the top of each list. Strike
 
 - 72 live in-stock prices across the board; 40 of 52 vitolas have one. Rows older than 60 days no longer headline a page, rank a board or carry a Buy button (`isStale`, `STALE_DAYS`).
 - Noblego/Cigarmaxx report everything sold out — verified by hand on 15 Sep: the site says "Momentan ausverkauft, Liefertermin unbekannt" on every pack size. Parser is right; Cuban supply in Germany is short.
-- Coverage: Cigarworld.de reads only 12 PDPs; the PDP lists for the German shops and the UK/IE shops cover a fraction of the 52 vitolas. Extend to brand/category pages where the shop has them (the CigarOne pattern) rather than one URL per vitola.
+- Coverage: Cigarmust now reads all 23 Cuban brand pages and every pack via PrestaShop's own AJAX refresh (15 Sep) — watch the first Actions run; expect ~40 vitolas instead of 6. Next: Cigarworld.de (12 PDPs of 52), James J. Fox and Smoke King (Shopify collections already read whole shelves — check why only 16/4 match), Cigarrummet (16 of 52 slugs).
+
+## Social, ready to post
+
+- Deck 06 `docs/social/carousels/06-germany-shortage/` (front page + news bar) — post the day the article goes live; then 04, then 05. Compare saves per reach across the three formats before making more.
 
 ## Watching
 

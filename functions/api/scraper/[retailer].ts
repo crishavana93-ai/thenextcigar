@@ -42,7 +42,7 @@ function currencyForCountry(country: string): string {
 }
 
 // ─── Scraper configs ─────────────────────────────────────────────────────────
-type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations" | "cigarone_brand" | "turmeaus_category";
+type ParserStack = "schema_org_jsonld" | "noblego_html" | "cigarworld_html" | "havanahouse_html" | "cigarmust_html" | "shopify_json" | "shopify_collection" | "woocommerce_variations" | "cigarone_brand" | "turmeaus_category" | "cigarmust_brand";
 
 interface PdpUrl {
   url: string;
@@ -288,35 +288,42 @@ const SCRAPERS: Record<string, ScraperConfig> = {
   },
   "ch-cigarmust": {
     country: "ch",
-    // PrestaShop backend — but this theme does NOT emit JSON-LD. Instead it
-    // exposes the price via OpenGraph meta tags (product:price:amount/currency)
-    // and the stock state via inline text + meta tags. Custom parser below.
-    stack: "cigarmust_html",
+    // PrestaShop. One brand category page per brand gives every product with
+    // its id; the PDP gives the pack-size options; PrestaShop's own AJAX
+    // refresh (controller=product&ajax=1&action=refresh) gives the price and
+    // the stock state of each pack. Reads every pack the shop sells, so the
+    // "default pack filed as a box" trap of the old per-PDP parser cannot
+    // happen. About 4 requests per product, the pack refreshes in parallel,
+    // a short pause between products; the GitHub run slices the brand list
+    // three ways so one invocation stays well inside Cloudflare's ~100 s.
+    stack: "cigarmust_brand",
     preferredPackSize: 25,
+    concurrency: 2,
+    delayMs: 300,
     pdps: [
-      { url: "https://cigarmust.com/en/cohiba/217-140-cohiba-robustos-7612907060907.html",                   skuHint: "cohiba-robustos" },
-      // { url: "https://cigarmust.com/en/cohiba/209-cohiba-behike-52-7612907060877.html", skuHint: "cohiba-behike-52" },
-      // ⚠️ Behike 52 disabled — without a combination ID the PrestaShop page
-      // defaults to a non-canonical pack size and returns CHF 448 (≈ 3-pack
-      // price marked as 25-pack). Re-enable once we find the box-of-10
-      // combination URL (likely 209-{comboId}-cohiba-behike-52-...html).
-      // { url: "https://cigarmust.com/en/cohiba/224-cohiba-siglo-iv-7612907060945.html",                       skuHint: "cohiba-siglo-iv" },
-      // ⚠️ No combination id in the URL, so PrestaShop served its default pack
-      //    and we filed it as a box of 25 (CHF 322). Re-enable with the
-      //    box-of-25 combination URL: /{id}-{comboId}-cohiba-siglo-iv-7612907060945.html
-      // { url: "https://cigarmust.com/en/cohiba/212-cohiba-esplendidos-7612907060600.html",                    skuHint: "cohiba-esplendidos" },
-      // ⚠️ No combination id in the URL, so PrestaShop served its default pack
-      //    and we filed it as a box of 25 (CHF 396). Re-enable with the
-      //    box-of-25 combination URL: /{id}-{comboId}-cohiba-esplendidos-7612907060600.html
-      { url: "https://cigarmust.com/en/montecristo/341-70-montecristo-no4-7612907062178.html",               skuHint: "montecristo-no-4" },
-      // { url: "https://cigarmust.com/en/montecristo/339-montecristo-no2-7612907062123.html",                  skuHint: "montecristo-no-2" },
-      // ⚠️ No combination id in the URL, so PrestaShop served its default pack
-      //    and we filed it as a box of 25 (CHF 303). Re-enable with the
-      //    box-of-25 combination URL: /{id}-{comboId}-montecristo-no2-7612907062123.html
-      { url: "https://cigarmust.com/en/montecristo/336-40-montecristo-petit-edmundo-7612907062314.html",     skuHint: "montecristo-petit-edmundo" },
-      { url: "https://cigarmust.com/en/partagas/367-85-partagas-serie-d-no4-7612907062994.html",             skuHint: "partagas-serie-d-no-4" },
-      { url: "https://cigarmust.com/en/hoyo-de-monterrey/273-18-hoyo-de-monterrey-epicure-no-2-7612907061461.html", skuHint: "hoyo-de-monterrey-epicure-no-2" },
-      { url: "https://cigarmust.com/en/trinidad/448-121-trinidad-reyes-7612907060389.html",                  skuHint: "trinidad-reyes" },
+      { url: "https://cigarmust.com/en/181-cohiba" },
+      { url: "https://cigarmust.com/en/182-hupmann" },
+      { url: "https://cigarmust.com/en/183-hoyo-de-monterrey" },
+      { url: "https://cigarmust.com/en/184-montecristo" },
+      { url: "https://cigarmust.com/en/185-partagas" },
+      { url: "https://cigarmust.com/en/186-romeo-y-julieta" },
+      { url: "https://cigarmust.com/en/187-jose-l-piedra" },
+      { url: "https://cigarmust.com/en/189-san-cristobal" },
+      { url: "https://cigarmust.com/en/190-trinidad" },
+      { url: "https://cigarmust.com/en/191-bolivar" },
+      { url: "https://cigarmust.com/en/192-fonseca" },
+      { url: "https://cigarmust.com/en/194-quintero" },
+      { url: "https://cigarmust.com/en/195-vegas-robaina" },
+      { url: "https://cigarmust.com/en/196-el-rey-del-mundo" },
+      { url: "https://cigarmust.com/en/197-juan-lopez" },
+      { url: "https://cigarmust.com/en/198-la-gloria-cubana" },
+      { url: "https://cigarmust.com/en/199-por-larranaga" },
+      { url: "https://cigarmust.com/en/200-quai-d-orsay" },
+      { url: "https://cigarmust.com/en/201-rafael-gonzalez" },
+      { url: "https://cigarmust.com/en/202-ramon-allones" },
+      { url: "https://cigarmust.com/en/203-saint-luis-rey" },
+      { url: "https://cigarmust.com/en/204-sancho-panza" },
+      { url: "https://cigarmust.com/en/268-diplomaticos" },
     ],
   },
   "se-cigarrummet": {
@@ -1086,6 +1093,82 @@ export function parseTurmeausCategory(html: string): CollectionOffer[] {
   return out;
 }
 
+/**
+ * Cigarmust (PrestaShop) brand category → every pack of every vitola we
+ * recognise. Three steps per product: the category card gives the product id
+ * and slug; the PDP gives the pack-size options; PrestaShop's AJAX refresh
+ * gives the price and the stock state for each option. "Product available
+ * with different options" is PrestaShop's way of saying this pack is sold
+ * out, and is the only phrase besides "out of stock" we treat as unavailable.
+ * Anything we can't read is filed as not in stock, never the reverse.
+ */
+export async function scrapeCigarmustBrand(
+  html: string,
+  brandUrl: string,
+  get: (url: string) => Promise<string | null>,
+  post: (url: string, body: string) => Promise<string | null>,
+  pause: () => Promise<void>,
+): Promise<{ offers: CollectionOffer[]; products: number; pages: number }> {
+  const NOT_REGULAR = /\b(reserva|cosecha|linea|línea|limited|le-?20\d\d|edicion|edición|regional|anejados|añejados|aniversario|coleccion|colección|humidor|jar|gift|club|mini|purito|short|year|dragon|19\d\d|20\d\d)\b/i;
+  const brandSlug = (brandUrl.match(/\/\d+-([a-z0-9-]+)\/?$/) || [])[1] || "";
+  const brandName = brandSlug.replace(/-/g, " ");
+  const origin = new URL(brandUrl).origin;
+
+  // Category pages, with pagination.
+  const pagesHtml = [html];
+  const pageLinks = new Set<string>();
+  for (const m of html.matchAll(/href="([^"]*?\?page=(\d+))"/g)) {
+    const n = Number(m[2]);
+    if (n >= 2 && n <= 6) pageLinks.add(`${brandUrl.split("?")[0]}?page=${n}`);
+  }
+  for (const u of pageLinks) { await pause(); const h = await get(u); if (h) pagesHtml.push(h); }
+
+  // Product cards: id + canonical PDP url (hash stripped) + slug for the name.
+  const products = new Map<number, { url: string; name: string }>();
+  for (const page of pagesHtml) {
+    for (const m of page.matchAll(/data-id-product="(\d+)"[\s\S]{0,600}?href="(https?:\/\/[^"#]+\/(\d+)-(?:\d+-)?([a-z0-9-]+?)(?:-\d{8,})?\.html)[^"]*"/g)) {
+      const id = Number(m[1]);
+      if (products.has(id)) continue;
+      const slug = m[4];
+      products.set(id, { url: m[2], name: `${brandName} ${slug.replace(/-/g, " ")}` });
+    }
+  }
+
+  const out: CollectionOffer[] = [];
+  for (const [id, p] of products) {
+    if (NOT_REGULAR.test(p.name)) continue;
+    const sku = matchCanonSku(p.name);
+    if (!sku) continue;
+    await pause();
+    const pdp = await get(p.url);
+    if (!pdp) continue;
+    const sel = (pdp.match(/<select[^>]*name="group\[(\d+)\]"[\s\S]*?<\/select>/) || [])[0];
+    const groupId = (pdp.match(/<select[^>]*name="group\[(\d+)\]"/) || [])[1];
+    if (!sel || !groupId) continue;
+    const options = [...sel.matchAll(/<option[^>]*value="(\d+)"[^>]*>\s*([^<]+?)\s*<\/option>/g)].map((m) => ({ value: m[1], label: m[2] }));
+    const packs = options.map((o) => ({ ...o, packSize: parsePackSizeFromTitle(o.label) })).filter((o) => o.packSize > 0);
+    const bodies = await Promise.all(packs.map((o) =>
+      post(`${origin}/en/index.php?controller=product&id_product=${id}&group%5B${groupId}%5D=${o.value}&ajax=1&action=refresh`, "quantity_wanted=1")));
+    packs.forEach((o, k) => {
+      const body = bodies[k];
+      if (!body) return;
+      let j: any; try { j = JSON.parse(body); } catch { return; }
+      const strip = (h: unknown) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+      const priceM = strip(j.product_prices).match(/CHF\s*([\d,]+(?:\.\d\d)?)/);
+      if (!priceM) return;
+      const price = parseFloat(priceM[1].replace(/,/g, ""));
+      if (!Number.isFinite(price) || price <= 0) return;
+      const cart = strip(j.product_add_to_cart).toLowerCase();
+      const inStock = !/different options|out[- ]of[- ]stock|not available|unavailable/.test(cart) && /in stock|last items/.test(cart);
+      out.push({ skuId: sku.id, packSize: o.packSize, price, currency: "CHF", inStock, url: p.url });
+    });
+  }
+  // Two options can be the same pack ("Box 25" and "Petacas 5x5 (25 Cigars)");
+  // the caller keeps the first row per pack, so put the buyable one first.
+  out.sort((a, b) => a.skuId.localeCompare(b.skuId) || a.packSize - b.packSize || Number(b.inStock) - Number(a.inStock));
+  return { offers: out, products: products.size, pages: pagesHtml.length };
+}
+
 function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[] {
   let data: Record<string, unknown>;
   try { data = JSON.parse(body); } catch { return []; }
@@ -1391,11 +1474,15 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
       // A Shopify collection is one fetch that yields many vitolas, so it
       // writes its own rows and returns — the per-PDP path below assumes one
       // SKU per URL.
-      if (config.stack === "shopify_collection" || config.stack === "cigarone_brand" || config.stack === "turmeaus_category") {
+      if (config.stack === "shopify_collection" || config.stack === "cigarone_brand" || config.stack === "turmeaus_category" || config.stack === "cigarmust_brand") {
         const currency = currencyForCountry(config.country);
         const origin = new URL(pdp.url).origin;
+        const pause = () => new Promise<void>((r) => setTimeout(r, config.delayMs ?? 0));
+        const getText = async (u: string) => { try { const r = await fetch(u, { headers: BROWSER_HEADERS, cf: { cacheTtl: 0 } }); if (!r.ok) return null; const t = await r.text(); bytesDownloaded += t.length; return t; } catch { return null; } };
+        const postText = async (u: string, body: string) => { try { const r = await fetch(u, { method: "POST", headers: { ...BROWSER_HEADERS, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded" }, body, cf: { cacheTtl: 0 } }); if (!r.ok) return null; const t = await r.text(); bytesDownloaded += t.length; return t; } catch { return null; } };
         const found = config.stack === "cigarone_brand" ? parseCigaroneBrand(html, pdp.url)
           : config.stack === "turmeaus_category" ? parseTurmeausCategory(html)
+          : config.stack === "cigarmust_brand" ? (await scrapeCigarmustBrand(html, pdp.url, getText, postText, pause)).offers
           : parseShopifyCollection(html, currency, origin);
         const minEurC = config.minPriceEur ?? 20;
         let kept = 0, floored = 0;
