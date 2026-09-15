@@ -15,10 +15,11 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
         <label>Name, as other members see it<input type="text" name="display_name" required maxlength="40" autocomplete="nickname" placeholder="Cris O." /></label>
         <label>Referral code <small>optional</small><input type="text" id="signup-ref-code" name="referral_code" maxlength="32" autocomplete="off" placeholder="From a creator's link" /></label>
         <p class="note" id="ref-code-applied" hidden>Code applied — you'll be counted to that creator.</p>
+        <label class="chk"><input type="checkbox" name="newsletter" value="1" /> <span>Also send me the paper's newsletter — the board's movers and the week's pieces, about twice a month. Unsubscribe in one click.</span></label>
         <button type="submit" class="cta">Email me the link →</button>
       </form>
       <p id="signup-status" class="note auth-status" hidden aria-live="polite"></p>
-      <p class="note" style="margin-top:16px">Already a member? <a href="/lounge/login/">Sign in</a>. By joining you accept the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>. 21+ only.</p>
+      <p class="note" style="margin-top:16px">Already a member? <a href="/lounge/login/">Sign in</a>. By joining you accept the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>. Legal age to buy tobacco where you live.</p>
     </div>
     <aside class="auth-side">
       <div class="rulehead"><h2>What's inside</h2></div>
@@ -109,6 +110,7 @@ import PaperLayout from "../../layouts/PaperLayout.astro";
             data: {
               display_name,
               ...(refCode ? { referral_code: refCode } : {}),
+              ...(data.get("newsletter") ? { newsletter: "1" } : {}),
             },
           },
         });
