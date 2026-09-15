@@ -28,6 +28,13 @@ Kept in the repo so it survives sessions. Newest at the top of each list. Strike
 12. Subscribers: the Lounge signup now asks for newsletter consent (migration 034). The 31 existing members have not consented — send them one in-app/service note inviting them to tick the box, then export the consenting ones with the query in 034 and import to MailerLite. First mailing when photos exist.
 13. Instagram bio link with UTM; post carousel 02 first (`docs/social/`).
 
+## Lounge (QA addendum, 15 Sep evening)
+
+- Humidor: Remove needs an Undo toast or a confirm (L1); modal clipped on short viewports (L2).
+- Directory: hide profiles with no display name/city; normalise city spelling (L3).
+- Admin restricted page: replace the Gmail address with hello@ (L4).
+- Copy: "Had time" → "Time in the box" (L5).
+
 ## Finder coverage (15 Sep audit)
 
 - 72 live in-stock prices across the board; 40 of 52 vitolas have one. Rows older than 60 days no longer headline a page, rank a board or carry a Buy button (`isStale`, `STALE_DAYS`).

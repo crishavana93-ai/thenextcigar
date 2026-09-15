@@ -13,9 +13,9 @@ fp = fp.replace('{{FEATURED}}', `data:${mime};base64,${fs.readFileSync(imgPath).
 fs.writeFileSync(path.join(cwd, '_fp.html'), fp);
 
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-let p = await b.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.5 });
+let p = await b.newPage({ viewport: { width: 1440, height: 1040 }, deviceScaleFactor: 1.5 });
 await p.goto('file://' + path.join(cwd, '_fp.html')); await p.waitForTimeout(1200);
-await p.screenshot({ path: path.join(cwd, '_fp.jpg'), type: 'jpeg', quality: 92, clip: { x: 0, y: 0, width: 1440, height: 900 } });
+await p.screenshot({ path: path.join(cwd, '_fp.jpg'), type: 'jpeg', quality: 92, clip: { x: 0, y: 0, width: 1440, height: 1040 } });
 
 const cover = `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(file:///mnt/attach/outputs/tnc-paper/public/fonts/newsreader-normal.woff2) format('woff2-variations')}
@@ -24,13 +24,13 @@ const cover = `<!doctype html><html><head><meta charset="utf-8"><style>
 html,body{margin:0}
 .s{width:1080px;height:1350px;position:relative;overflow:hidden;background:#0B0A09;font-family:'Newsreader',serif;color:#F2F0EA}
 .grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
-.paper{position:absolute;left:48px;top:48px;width:984px;height:800px;overflow:hidden;border-radius:6px 6px 0 0;box-shadow:0 24px 70px rgba(0,0,0,.75);background:#F2F0EA}
-.paper img{position:absolute;left:0;top:0;width:984px}
-.paper:after{content:"";position:absolute;left:0;right:0;bottom:0;height:340px;background:linear-gradient(180deg,rgba(11,10,9,0) 0%,rgba(11,10,9,.04) 18%,rgba(11,10,9,.16) 36%,rgba(11,10,9,.4) 55%,rgba(11,10,9,.72) 75%,rgba(11,10,9,.94) 90%,#0B0A09 100%)}
+.paper{position:absolute;left:0;top:0;width:1080px;height:780px;overflow:hidden;background:#F2F0EA}
+.paper img{position:absolute;left:0;top:0;width:1080px}
+.paper:after{content:"";position:absolute;left:0;right:0;bottom:0;height:300px;background:linear-gradient(180deg,rgba(11,10,9,0) 0%,rgba(11,10,9,.03) 15%,rgba(11,10,9,.12) 30%,rgba(11,10,9,.3) 45%,rgba(11,10,9,.55) 60%,rgba(11,10,9,.8) 75%,rgba(11,10,9,.95) 88%,#0B0A09 100%)}
 .fold{display:none}
-.band{position:absolute;left:0;right:0;top:800px;bottom:0;text-align:center;padding:0 72px}
-.tag{display:inline-block;margin-top:54px;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.26em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:9px 18px}
-h1{margin:30px 0 0;font-size:92px;line-height:.96;letter-spacing:-.035em;font-weight:500}
+.band{position:absolute;left:0;right:0;top:770px;bottom:0;text-align:center;padding:0 72px}
+.tag{display:inline-block;margin-top:40px;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.26em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:9px 18px}
+h1{margin:34px 0 0;font-size:96px;line-height:.96;letter-spacing:-.035em;font-weight:500}
 h1 i{font-style:italic;font-weight:300;color:#C9A36A}
 .sub{margin:26px auto 0;max-width:880px;font-size:29px;line-height:1.3;color:#C7C2B6;font-weight:300}
 .meta{position:absolute;left:72px;right:72px;bottom:26px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Sans';font-size:18px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A}
