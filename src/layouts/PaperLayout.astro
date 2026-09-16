@@ -153,5 +153,31 @@ const ogImage = new URL(image, Astro.site).toString();
         });
       });
     </script>
+    <script is:inline>
+      // Page turn. A same-site link click folds the page away like a
+      // broadsheet leaf (280 ms), the next page settles in (320 ms). Full
+      // page loads underneath, so nothing about scripts or state changes.
+      // Off for reduced-motion, modifier clicks, new tabs, downloads, hashes.
+      (function () {
+        var rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var b = document.body;
+        if (!rm) { b.classList.add("leaf-in"); setTimeout(function () { b.classList.remove("leaf-in"); }, 400); }
+        window.addEventListener("pageshow", function (e) { if (e.persisted) b.classList.remove("leaf-out", "leaf-in"); });
+        if (rm) return;
+        document.addEventListener("click", function (e) {
+          if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          var a = e.target.closest("a[href]"); if (!a) return;
+          if (a.target && a.target !== "_self") return;
+          if (a.hasAttribute("download") || a.dataset.noTurn !== undefined) return;
+          var u; try { u = new URL(a.href, location.href); } catch (err) { return; }
+          if (u.origin !== location.origin) return;
+          if (u.pathname === location.pathname && u.search === location.search && u.hash) return;
+          if (/^(mailto|tel):/.test(a.getAttribute("href") || "")) return;
+          e.preventDefault();
+          b.classList.add("leaf-out");
+          setTimeout(function () { location.href = u.href; }, 260);
+        });
+      })();
+    </script>
   </body>
 </html>

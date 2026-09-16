@@ -615,3 +615,13 @@ details.acc>summary::-webkit-details-marker{display:none}
 .buy-sticky .buy{flex:1;margin:0;padding:12px}
 .buy-sticky__cart{font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
 .cart-bar.yield{bottom:76px}
+
+/* Page turn (16 Sept 2026): the leaf folds away on a link click, settles on load */
+html{perspective:1600px}
+body{transform-origin:0% 50%;backface-visibility:hidden}
+@media (prefers-reduced-motion:no-preference){
+  body.leaf-out{animation:leaf-out .28s cubic-bezier(.55,0,.8,.4) forwards;pointer-events:none}
+  body.leaf-in{animation:leaf-in .32s cubic-bezier(.2,.6,.2,1) both}
+}
+@keyframes leaf-out{to{transform:rotateY(-14deg) translateX(-3%);opacity:.55;filter:brightness(.92)}}
+@keyframes leaf-in{from{transform:rotateY(9deg) translateX(2.5%);opacity:.6;filter:brightness(1.04)}to{transform:none;opacity:1;filter:none}}
