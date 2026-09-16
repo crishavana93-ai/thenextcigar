@@ -30,27 +30,17 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
 <PaperLayout title="The Shop — cutters, lighters, humidors and the Guatabey line · The Next Cigar" description={`${all.length} pieces of cigar gear chosen by the paper. ${buyable} available now, the rest in the pipeline. No tobacco sold here.`} section="shop" compact={true} jsonLd={jsonLd}>
   <div class="dateline">
     <h1>The Shop <em>— goods, not tobacco.</em></h1>
-    <p class="st">{buyable} available · {all.length - buyable} in the pipeline · ships to the EU, UK, CH, US &amp; CA</p>
+    <p class="st">{buyable} available{all.length - buyable > 0 ? ` · ${all.length - buyable} in the pipeline` : ""} · ships to the EU, UK, CH, US &amp; CA</p>
   </div>
 
-  <section class="gb">
-    <div>
-      <span class="kick">Guatabey · in the making</span>
-      <h2>Guatabey. <em>A guayabera, done properly.</em></h2>
-      <p class="deck">Our own guayabera, cut in the Cuban tradition. We are working on the first small run now; when the shirts exist you will see the real ones here, photographed, with the fabric, the maker and the price — not before.</p>
-      <dl class="file" style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
-        <div><dt>What</dt><dd style="font-size:15px">A four-pocket guayabera, Cuban cut</dd></div>
-        <div><dt>How many</dt><dd style="font-size:15px">A small numbered run</dd></div>
-        <div><dt>Where</dt><dd style="font-size:15px">The maker is named when the run is confirmed</dd></div>
-        <div><dt>Who first</dt><dd style="font-size:15px">Lounge members, then everyone</dd></div>
-      </dl>
-      <a class="cta" href="/lounge/signup/">Tell me when it's ready →</a>
-    </div>
-    <div class="mark"><b>GB</b><small>Guatabey (n.) — Taíno for chief. The first people to smoke tobacco.</small></div>
-  </section>
+  <nav class="filter" aria-label="Filter by kind" id="shop-filter">
+    <button type="button" class="chip is-on" data-cat="all">All <small>{all.length}</small></button>
+    {ordered.map(([cat, items]) => <button type="button" class="chip" data-cat={cat}>{label[cat] ?? cat} <small>{items.length}</small></button>)}
+  </nav>
+
 
   {ordered.map(([cat, items]) => (
-    <section class="band" style="padding-top:0">
+    <section class="band" style="padding-top:0" data-cat={cat}>
       <div class="rulehead flat"><h2>{label[cat] ?? cat}</h2><span class="more">{items.length}</span></div>
       <div class="goods">
         {items.map((p) => {
@@ -69,11 +59,42 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
     </section>
   ))}
 
+  <section class="gb">
+    <div>
+      <span class="kick">Guatabey · in the making</span>
+      <h2>Guatabey. <em>A guayabera, done properly.</em></h2>
+      <p class="deck">Our own guayabera, cut in the Cuban tradition. We are working on the first small run now; when the shirts exist you will see the real ones here, photographed, with the fabric, the maker and the price — not before.</p>
+      <dl class="file" style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+        <div><dt>What</dt><dd style="font-size:15px">A four-pocket guayabera, Cuban cut</dd></div>
+        <div><dt>How many</dt><dd style="font-size:15px">A small numbered run</dd></div>
+        <div><dt>Where</dt><dd style="font-size:15px">The maker is named when the run is confirmed</dd></div>
+        <div><dt>Who first</dt><dd style="font-size:15px">Lounge members, then everyone</dd></div>
+      </dl>
+      <a class="cta" href="/lounge/signup/">Tell me when it's ready →</a>
+    </div>
+    <div class="mark"><b>GB</b><small>Guatabey (n.) — Taíno for chief. The first people to smoke tobacco.</small></div>
+  </section>
+
   <section class="band">
     <div class="three">
       <article><span class="kick">How it works</span><p class="t" style="margin-top:8px">Pieces marked available ship from our own stock or straight from the maker. Checkout is by card through Stripe; delivery country and cost are shown before you pay.</p></article>
-      <article><span class="kick">Pipeline</span><p class="t" style="margin-top:8px">A piece is "in the pipeline" until we have held it, photographed it and confirmed stock. Until then there is no button — we do not take money for things we cannot yet ship.</p></article>
+      <article><span class="kick">Held, not just listed</span><p class="t" style="margin-top:8px">We order every piece we sell and hold it ourselves. The maker's photographs stand until ours replace them, and a verdict is written only after we have used the thing.</p></article>
       <article><span class="kick">No tobacco</span><p class="t" style="margin-top:8px">The Shop sells accessories and clothing only. For cigars, the <a href="/finder/">Markets</a> page shows licensed retailers in your country.</p></article>
     </div>
   </section>
+
+  <script is:inline>
+    (function () {
+      var nav = document.getElementById("shop-filter"); if (!nav) return;
+      var chips = nav.querySelectorAll(".chip"), secs = document.querySelectorAll("section.band[data-cat]");
+      function apply(cat, push) {
+        chips.forEach(function (c) { c.classList.toggle("is-on", c.dataset.cat === cat); });
+        secs.forEach(function (s) { s.hidden = cat !== "all" && s.dataset.cat !== cat; });
+        if (push) { var u = new URL(location.href); if (cat === "all") u.searchParams.delete("kind"); else u.searchParams.set("kind", cat); history.replaceState(null, "", u); }
+      }
+      chips.forEach(function (c) { c.addEventListener("click", function () { apply(c.dataset.cat, true); }); });
+      var k = new URLSearchParams(location.search).get("kind");
+      if (k && nav.querySelector('.chip[data-cat="' + k + '"]')) apply(k, false);
+    })();
+  </script>
 </PaperLayout>

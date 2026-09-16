@@ -543,3 +543,14 @@ table.mk td.door small{color:var(--mute);font-weight:400}
 .goes__name{display:block;font-family:var(--serif);font-size:16px;line-height:1.2;margin-top:8px}
 .goes__price{display:block;font-family:var(--sans);font-size:12px;color:#6A665E;margin-top:2px}
 @media (max-width:560px){.goes__row{grid-template-columns:repeat(3,1fr);gap:8px}.goes__name{font-size:13px}}
+
+/* Shop filter chips (16 Sept 2026) */
+.filter{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 18px;padding:10px 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--rule)}
+.filter .chip{font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 12px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;border-radius:999px;white-space:nowrap}
+.filter .chip small{font-size:10px;color:#6A665E;margin-left:3px}
+.filter .chip.is-on{background:var(--ink);color:var(--paper)}
+.filter .chip.is-on small{color:#CFCBC2}
+@media (max-width:640px){
+  .filter{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:0;background:var(--paper);z-index:5;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .filter::-webkit-scrollbar{display:none}
+}
