@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
 import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
+import Passport from "../../../components/lounge/Passport.astro";
 ---
 
 <BaseLayout
@@ -67,6 +68,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
             </p>
           </div>
         </div>
+        <Passport />
       </section>
 
       <section class="container-narrow pb-24">
@@ -660,6 +662,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     const content = document.getElementById("lounge-content");
     if (guard) guard.style.display = "none";
     if (content) content.hidden = false;
+    document.dispatchEvent(new CustomEvent("passport:load", { detail: { memberId: user.id, isSelf: true } }));
   }
 
   document.addEventListener("astro:page-load", init);

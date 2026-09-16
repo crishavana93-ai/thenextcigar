@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import LoungeHeader from "../../../components/lounge/LoungeHeader.astro";
 import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
+import Passport from "../../../components/lounge/Passport.astro";
 import IntroSheet from "../../../components/lounge/IntroSheet.astro";
 ---
 
@@ -56,6 +57,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
 
       <section class="container-wide pb-6">
         <p class="lounge-mem-bio" id="mem-bio">—</p>
+        <Passport />
       </section>
 
       {/* Flavor profile — what they smoke, shown as read-only chips */}
@@ -811,6 +813,7 @@ import IntroSheet from "../../../components/lounge/IntroSheet.astro";
 
     if (guard) guard.style.display = "none";
     if (content) content.hidden = false;
+    document.dispatchEvent(new CustomEvent("passport:load", { detail: { memberId, isSelf: user.id === memberId } }));
   }
 
   function wireIntroForm(fromId: string, toId: string): void {
