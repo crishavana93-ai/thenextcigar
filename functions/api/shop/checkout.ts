@@ -6,7 +6,7 @@
 // are read from catalogue.json, generated at build time from the products
 // content collection by scripts/build-catalogue.mjs. Nothing money-related is
 // trusted from the browser.
-import { discountPct, unitCents } from "./pricing";
+import { discountPct } from "./pricing";
 import catalogue from "./catalogue.json";
 //
 // Env vars required in Cloudflare Pages → Settings → Environment variables:
@@ -69,49 +69,32 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       );
     }
 
-    const raw = (await request.json()) as CheckoutPayload;
-    const item = raw?.slug ? (catalogue as Record<string, any>)[raw.slug] : undefined;
-    if (!item) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "Unknown product." }),
-        { status: 400, headers: { "content-type": "application/json" } }
-      );
+    const raw = (await request.json()) as any;
+    // Accept a cart ({ items: [{ slug, quantity }] }) or the older single
+    // product ({ slug, quantity }). Everything priced comes from the catalogue.
+    const reqItems: { slug: string; quantity?: number }[] = Array.isArray(raw?.items) && raw.items.length
+      ? raw.items.slice(0, 20)
+      : raw?.slug ? [{ slug: raw.slug, quantity: raw.quantity }] : [];
+    const cat = catalogue as Record<string, any>;
+    const lines: { slug: string; item: any; qty: number }[] = [];
+    for (const r of reqItems) {
+      const item = r?.slug ? cat[r.slug] : undefined;
+      if (!item) return new Response(JSON.stringify({ ok: false, error: "Unknown product." }), { status: 400, headers: { "content-type": "application/json" } });
+      if (item.isArchived || item.comingSoon || !item.inStock) return new Response(JSON.stringify({ ok: false, error: `${item.name} is not available to order.` }), { status: 409, headers: { "content-type": "application/json" } });
+      const existing = lines.find((l) => l.slug === r.slug);
+      if (existing) existing.qty = Math.min(existing.qty + safeQuantity(r.quantity), 6); else lines.push({ slug: r.slug, item, qty: safeQuantity(r.quantity) });
     }
-    if (item.isArchived || item.comingSoon || !item.inStock) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "This product is not available to order yet." }),
-        { status: 409, headers: { "content-type": "application/json" } }
-      );
-    }
-    // Everything below comes from the catalogue, not the request.
-    const body: CheckoutPayload = {
-      slug: raw.slug,
-      name: item.name,
-      sku: item.sku,
-      price: item.price,
-      currency: item.currency,
-      supplier: item.supplier,
-      supplierUrl: item.supplierUrl,
-      cover: typeof raw.cover === "string" && /^https:\/\//.test(raw.cover) ? raw.cover : undefined,
-      quantity: raw.quantity,
-    };
+    if (!lines.length) return new Response(JSON.stringify({ ok: false, error: "Nothing to buy." }), { status: 400, headers: { "content-type": "application/json" } });
 
-    const currency = normalizeCurrency(body.currency);
-    const quantity = safeQuantity(body.quantity);
-    // Stripe wants amount in the smallest currency unit (cents for USD/EUR/GBP,
-    // öre for SEK, etc.) — all three-letter currencies we use are cents-based.
-    // Quantity discount (pricing.ts): the unit price drops for 2 and for 3+.
-    const unitAmount = unitCents(body.price, quantity);
-    const discount = discountPct(quantity);
+    const currency = normalizeCurrency(lines[0].item.currency);
+    // Quantity discount (pricing.ts) on the number of pieces in the whole
+    // order, applied to every line: two pieces of anything earn it.
+    const pieces = lines.reduce((n, l) => n + l.qty, 0);
+    const discount = discountPct(pieces);
 
-    // Build the URL for success + cancel — pass session ID placeholder so
-    // the thank-you page can look it up if needed.
     const origin = new URL(request.url).origin;
-    const successUrl =
-      env.STRIPE_SUCCESS_URL ||
-      `${origin}/shop/thank-you/?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl =
-      env.STRIPE_CANCEL_URL || `${origin}/shop/${body.slug}/`;
+    const successUrl = env.STRIPE_SUCCESS_URL || `${origin}/shop/thank-you/?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = env.STRIPE_CANCEL_URL || (lines.length === 1 ? `${origin}/shop/${lines[0].slug}/` : `${origin}/shop/cart/`);
 
     const form = new URLSearchParams();
     form.set("mode", "payment");
@@ -120,48 +103,34 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     form.set("cancel_url", cancelUrl);
     form.set("customer_creation", "if_required");
     form.set("billing_address_collection", "auto");
-    // Ship-to worldwide by default. Cris can tighten this per product later.
-    form.set("shipping_address_collection[allowed_countries][0]", "SE");
-    form.set("shipping_address_collection[allowed_countries][1]", "PT");
-    form.set("shipping_address_collection[allowed_countries][2]", "DE");
-    form.set("shipping_address_collection[allowed_countries][3]", "FR");
-    form.set("shipping_address_collection[allowed_countries][4]", "IT");
-    form.set("shipping_address_collection[allowed_countries][5]", "ES");
-    form.set("shipping_address_collection[allowed_countries][6]", "NL");
-    form.set("shipping_address_collection[allowed_countries][7]", "BE");
-    form.set("shipping_address_collection[allowed_countries][8]", "DK");
-    form.set("shipping_address_collection[allowed_countries][9]", "FI");
-    form.set("shipping_address_collection[allowed_countries][10]", "IE");
-    form.set("shipping_address_collection[allowed_countries][11]", "AT");
-    form.set("shipping_address_collection[allowed_countries][12]", "GB");
-    form.set("shipping_address_collection[allowed_countries][13]", "CH");
-    form.set("shipping_address_collection[allowed_countries][14]", "US");
-    form.set("shipping_address_collection[allowed_countries][15]", "CA");
-    form.set("shipping_address_collection[allowed_countries][16]", "NO");
+    ["SE","PT","DE","FR","IT","ES","NL","BE","DK","FI","IE","AT","GB","CH","US","CA","NO"].forEach((c, i) => form.set(`shipping_address_collection[allowed_countries][${i}]`, c));
     form.set("phone_number_collection[enabled]", "true");
-    form.set("allow_promotion_codes", "true");
+    // Stripe refuses allow_promotion_codes together with discounts[], so the
+    // promo-code box only appears on orders that carry no quantity discount.
+    if (discount) {
+      const coupon = await callStripe(env, "coupons", new URLSearchParams({ percent_off: String(discount), duration: "once", name: `${discount}% off for ${pieces} pieces` }));
+      form.set("discounts[0][coupon]", coupon.id);
+    } else {
+      form.set("allow_promotion_codes", "true");
+    }
 
-    // Single line item — the product itself
-    form.set("line_items[0][price_data][currency]", currency);
-    form.set("line_items[0][price_data][unit_amount]", String(unitAmount));
-    form.set("line_items[0][price_data][product_data][name]", body.name);
-    if (body.sku) {
-      form.set("line_items[0][price_data][product_data][description]", `SKU ${body.sku}`);
-    }
-    if (body.cover) {
-      form.set("line_items[0][price_data][product_data][images][0]", body.cover);
-    }
-    form.set("line_items[0][quantity]", String(quantity));
+    lines.forEach((l, i) => {
+      form.set(`line_items[${i}][price_data][currency]`, currency);
+      form.set(`line_items[${i}][price_data][unit_amount]`, String(Math.round(Number(l.item.price) * 100)));
+      form.set(`line_items[${i}][price_data][product_data][name]`, l.item.name);
+      if (l.item.sku) form.set(`line_items[${i}][price_data][product_data][description]`, `SKU ${l.item.sku}`);
+      form.set(`line_items[${i}][quantity]`, String(l.qty));
+    });
 
     // Metadata — carries through to the webhook so we know what to write to Supabase
-    form.set("metadata[product_slug]", body.slug);
-    form.set("metadata[product_name]", body.name);
-    form.set("metadata[product_sku]", body.sku || "");
-    form.set("metadata[supplier]", body.supplier || "");
-    form.set("metadata[supplier_url]", body.supplierUrl || "");
+    form.set("metadata[product_slug]", lines.map((l) => l.slug).join(","));
+    form.set("metadata[product_name]", lines.map((l) => (l.qty > 1 ? `${l.qty}× ` : "") + l.item.name).join(" + ").slice(0, 500));
+    form.set("metadata[product_sku]", lines.map((l) => l.item.sku || "").join(",").slice(0, 500));
+    form.set("metadata[supplier]", String(lines[0].item.supplier || "").slice(0, 500));
+    form.set("metadata[supplier_url]", String(lines[0].item.supplierUrl || "").slice(0, 500));
     form.set("metadata[source]", "tnc-shop");
     form.set("metadata[discount_pct]", String(discount));
-    form.set("metadata[unit_price]", String(unitAmount / 100));
+    form.set("metadata[pieces]", String(pieces));
 
     const session = await callStripe(env, "checkout/sessions", form);
 

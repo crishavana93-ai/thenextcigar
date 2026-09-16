@@ -1,0 +1,17 @@
+---
+/** Inlines the live catalogue (slug → name, price, cover) and the discount
+ *  tiers for /cart.js, and renders the sticky "n pieces · $total · View cart"
+ *  bar that appears on shop pages when the cart is not empty. */
+import { getCollection } from "astro:content";
+import { TIERS } from "../../../functions/api/shop/pricing";
+const live = (await getCollection("products")).filter((p) => !p.data.isArchived && !p.data.comingSoon && p.data.inStock);
+const img = (c: any) => (!c ? "" : typeof c === "string" ? c : c.src);
+const cat: Record<string, { name: string; price: number; cover: string }> = {};
+for (const p of live) cat[p.data.slug] = { name: p.data.name, price: p.data.price, cover: img(p.data.cover) };
+---
+<script is:inline set:html={`window.TNC_CATALOGUE=${JSON.stringify(cat)};window.TNC_TIERS=${JSON.stringify(TIERS)};`}></script>
+<script is:inline src="/cart.js"></script>
+<a class="cart-bar" id="cart-bar" href="/shop/cart/" hidden>
+  <span data-cart-summary></span>
+  <b>View cart →</b>
+</a>

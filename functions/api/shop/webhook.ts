@@ -160,7 +160,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       product_slug:         meta.product_slug || "unknown",
       product_name:         meta.product_name || full.line_items?.data?.[0]?.description || "Unknown product",
       product_sku:          meta.product_sku || null,
-      quantity:             full.line_items?.data?.[0]?.quantity || 1,
+      quantity:             (full.line_items?.data || []).reduce((n: number, li: any) => n + (li.quantity || 0), 0) || 1,
       supplier:             meta.supplier || null,
       supplier_url:         meta.supplier_url || null,
       amount:               (full.amount_total || 0) / 100,
@@ -196,6 +196,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const notifyTo = env.ORDER_NOTIFY_EMAIL || "guatabeycigars@gmail.com";
     const orderSummary = `
       <h2>New order — ${row.product_name}</h2>
+      <ul>${(full.line_items?.data || []).map((li: any) => `<li>${li.quantity} × ${li.description} — ${((li.amount_total || 0) / 100).toFixed(2)} ${row.currency}</li>`).join("")}</ul>${meta.discount_pct && meta.discount_pct !== "0" ? `<p>Quantity discount applied: ${meta.discount_pct}%</p>` : ""}
       <p><strong>Amount:</strong> ${row.amount.toFixed(2)} ${row.currency}<br/>
       <strong>Quantity:</strong> ${row.quantity}<br/>
       <strong>SKU:</strong> ${row.product_sku || "—"}<br/>

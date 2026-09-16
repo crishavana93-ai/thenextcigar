@@ -1,0 +1,85 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import CartBar from "../../../components/shop/CartBar.astro";
+import { TIER_LINE } from "../../../../functions/api/shop/pricing";
+/** /shop/cart/ — rendered from localStorage by /cart.js; the server re-prices at checkout. */
+---
+<PaperLayout title="Your cart · The Next Cigar" description="What you have picked from the shop." section="shop" compact={true} noIndex={true}>
+  <div class="dateline">
+    <h1>Your cart</h1>
+    <p class="st">{TIER_LINE} · free tracked delivery</p>
+  </div>
+
+  <div class="cart" id="cart" data-page="cart">
+    <p class="cart__empty" id="cart-empty">Nothing here yet. <a href="/shop/">Back to the shop →</a></p>
+    <table class="cart__table" id="cart-table" hidden>
+      <thead><tr><th colspan="2">Piece</th><th>Qty</th><th class="num">Each</th><th class="num">Line</th><th></th></tr></thead>
+      <tbody id="cart-rows"></tbody>
+      <tfoot>
+        <tr><td colspan="4" class="num">Subtotal</td><td class="num" id="c-sub"></td><td></td></tr>
+        <tr id="c-disc-row" hidden><td colspan="4" class="num">Quantity discount <span id="c-pct"></span></td><td class="num" id="c-disc"></td><td></td></tr>
+        <tr class="tot"><td colspan="4" class="num">Total</td><td class="num" id="c-tot"></td><td></td></tr>
+      </tfoot>
+    </table>
+    <div class="cart__act" id="cart-act" hidden>
+      <p class="fine" id="cart-hint"></p>
+      <button type="button" class="buy" id="checkout">Checkout</button>
+      <p class="fine" id="cart-status" aria-live="polite"></p>
+      <p class="fine">Card checkout by Stripe. Delivery country and the total are shown before you pay. Ships direct from our supplier, one to two weeks; 14 days from delivery to send it back. <a href="/shipping-and-returns/">Shipping and returns</a>.</p>
+      <p class="fine"><a href="/shop/">← Keep browsing</a></p>
+    </div>
+    <section class="cart__more" id="cart-more" hidden>
+      <p class="t">Goes with it</p>
+      <div class="row" id="cart-more-row"></div>
+    </section>
+  </div>
+
+  <CartBar />
+  <script is:inline>
+    (function () {
+      document.body.dataset.page = "cart";
+      var C = window.TNCCart, rows = document.getElementById("cart-rows"), tbl = document.getElementById("cart-table"), empty = document.getElementById("cart-empty"), act = document.getElementById("cart-act"), st = document.getElementById("cart-status"), hint = document.getElementById("cart-hint");
+      function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+      function draw() {
+        var it = C.items(), t = C.totals();
+        tbl.hidden = act.hidden = !it.length; empty.hidden = !!it.length;
+        rows.innerHTML = it.map(function (x) {
+          var opts = ""; for (var i = 1; i <= 6; i++) opts += "<option value=\"" + i + "\"" + (i === x.qty ? " selected" : "") + ">" + i + "</option>";
+          return "<tr data-slug=\"" + esc(x.slug) + "\"><td class=\"img\">" + (x.cover ? "<img src=\"" + esc(x.cover) + "\" alt=\"\" width=\"72\" height=\"72\">" : "") + "</td><td><a href=\"/shop/" + esc(x.slug) + "/\">" + esc(x.name) + "</a></td><td><select data-qty>" + opts + "</select></td><td class=\"num each\">" + C.money(x.price) + "</td><td class=\"num\">" + C.money(x.price * x.qty) + "</td><td><button type=\"button\" class=\"rm\" data-rm aria-label=\"Remove\">×</button></td></tr>";
+        }).join("");
+        document.getElementById("c-sub").textContent = C.money(t.subtotal);
+        document.getElementById("c-disc-row").hidden = !t.pct;
+        document.getElementById("c-pct").textContent = t.pct ? "(" + t.pct + "%)" : "";
+        document.getElementById("c-disc").textContent = "−" + C.money(t.discount);
+        document.getElementById("c-tot").textContent = C.money(t.total);
+        var tiers = window.TNC_TIERS || [], next = null;
+        for (var i = tiers.length - 1; i >= 0; i--) if (tiers[i].min > t.pieces) { next = tiers[i]; break; }
+        var more = document.getElementById("cart-more"), mrow = document.getElementById("cart-more-row"), inCart = {}; it.forEach(function (x) { inCart[x.slug] = 1; });
+        var pool = Object.keys(window.TNC_CATALOGUE || {}).filter(function (s) { return !inCart[s]; });
+        // cheap pairing: cheapest three not in the cart, so the next tier is one click away
+        pool.sort(function (a, b) { return window.TNC_CATALOGUE[a].price - window.TNC_CATALOGUE[b].price; });
+        var pick = pool.slice(0, 3);
+        more.hidden = !it.length || !pick.length;
+        mrow.innerHTML = pick.map(function (s) { var q = window.TNC_CATALOGUE[s]; return "<div class=\"card\">" + (q.cover ? "<img src=\"" + esc(q.cover) + "\" alt=\"\" loading=\"lazy\">" : "") + "<a href=\"/shop/" + esc(s) + "/\">" + esc(q.name) + "</a><span class=\"p\">" + C.money(q.price) + "</span><button type=\"button\" data-add=\"" + esc(s) + "\">Add</button></div>"; }).join("");
+        hint.textContent = next ? "Add " + (next.min - t.pieces) + " more " + (next.min - t.pieces === 1 ? "piece" : "pieces") + " for " + next.pct + "% off the total." : (t.pct ? t.pct + "% off the total applied." : "");
+      }
+      rows.addEventListener("change", function (e) { var tr = e.target.closest("tr"); if (e.target.hasAttribute("data-qty") && tr) C.set(tr.dataset.slug, e.target.value); });
+      rows.addEventListener("click", function (e) { var b = e.target.closest("[data-rm]"), tr = e.target.closest("tr"); if (b && tr) C.remove(tr.dataset.slug); });
+      document.getElementById("cart-more-row").addEventListener("click", function (e) { var b = e.target.closest("[data-add]"); if (b) C.add(b.dataset.add, 1); });
+      document.addEventListener("cart:change", draw); draw();
+      document.getElementById("checkout").addEventListener("click", async function () {
+        var btn = this; if (btn.disabled) return;
+        var items = C.read().map(function (x) { return { slug: x.slug, quantity: x.qty }; });
+        if (!items.length) return;
+        btn.disabled = true; var orig = btn.textContent; btn.textContent = "Opening checkout…";
+        try {
+          var res = await fetch("/api/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: items }) });
+          var data = await res.json();
+          if (data.ok && data.url) { window.location.href = data.url; return; }
+          st.textContent = data.error || "Checkout failed — try again.";
+        } catch (e) { st.textContent = "Network error — try again."; }
+        btn.disabled = false; btn.textContent = orig;
+      });
+    })();
+  </script>
+</PaperLayout>
