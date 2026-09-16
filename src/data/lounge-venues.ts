@@ -43,3 +43,25 @@ export const VENUE_COUNTRIES = [...new Set(VENUES.map((v) => v.country))].sort()
 export const TYPE_LABEL: Record<Venue["type"], string> = {
   casadelhabano: "Casa del Habano", lounge: "Lounge", retailer: "Shop", house: "Brand house", club: "Private club", pub: "Cigar-friendly bar",
 };
+
+/** URL slug for a city page: "Malmö" → "malmo". A city name that exists in two
+ *  countries (Hamburg, DE and Hamburg, US) gets the country appended. */
+function slugify(x: string): string {
+  return x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+const AMBIGUOUS = new Set<string>();
+{
+  const seen = new Map<string, Set<string>>();
+  for (const v of VENUES) { const k = slugify(v.city); if (!seen.has(k)) seen.set(k, new Set()); seen.get(k)!.add(v.country); }
+  for (const [k, cs] of seen) if (cs.size > 1) AMBIGUOUS.add(k);
+}
+export function citySlug(city: string, country?: string): string {
+  const k = slugify(city);
+  return AMBIGUOUS.has(k) && country ? `${k}-${slugify(country)}` : k;
+}
+/** Distinct (city, country) pairs, with their rooms. */
+export const CITY_GROUPS: { city: string; country: string; rooms: Venue[] }[] = (() => {
+  const m = new Map<string, { city: string; country: string; rooms: Venue[] }>();
+  for (const v of VENUES) { const k = v.city + "|" + v.country; if (!m.has(k)) m.set(k, { city: v.city, country: v.country, rooms: [] }); m.get(k)!.rooms.push(v); }
+  return [...m.values()];
+})();

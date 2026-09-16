@@ -1,0 +1,192 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+import { VENUES, CITY_GROUPS, TYPE_LABEL, citySlug, type Venue } from "../../../data/lounge-venues";
+import { COUNTRIES, SKUS, PRICE_SNAPSHOTS, RETAILER_BY_ID, FX_TO_EUR, isStale, formatPrice } from "../../../data/finder-live";
+import { DUTY_RATES } from "../../../data/duty-rates";
+import { landedCost } from "../../../lib/finder/landed";
+
+/** /lounge/map/<city>/ — one page per city on the map. The rooms, on a map and
+ *  as a list; what a box costs delivered to that country when the board covers
+ *  it; other cities in the country; and the members' nudge. Static, built from
+ *  the same snapshot as /lounge/map/. This is the page "cigar lounge <city>"
+ *  should land on. */
+export async function getStaticPaths() {
+  return CITY_GROUPS.map((g) => ({ params: { city: citySlug(g.city, g.country) }, props: { city: g.city, rooms: g.rooms } }));
+}
+const { city, rooms } = Astro.props as { city: string; rooms: Venue[] };
+const country = rooms[0].country;
+const order: Venue["type"][] = ["casadelhabano", "lounge", "retailer", "house", "club", "pub"];
+const grouped = order.map((t) => ({ type: t, label: TYPE_LABEL[t], list: rooms.filter((v) => v.type === t) })).filter((g) => g.list.length);
+const nCdh = rooms.filter((v) => v.type === "casadelhabano").length;
+const nLounge = rooms.filter((v) => v.type === "lounge").length;
+const nShop = rooms.filter((v) => v.type === "retailer").length;
+const lat = rooms.reduce((s, v) => s + v.lat, 0) / rooms.length;
+const lng = rooms.reduce((s, v) => s + v.lng, 0) / rooms.length;
+
+// Other cities in the same country, most rooms first.
+const siblings = CITY_GROUPS.filter((g) => g.country === country && g.city !== city).map((g) => ({ city: g.city, n: g.rooms.length })).sort((a, b) => b.n - a.n || a.city.localeCompare(b.city)).slice(0, 12);
+
+// What a box costs delivered here — only where the board has duty rates.
+const cc = COUNTRIES.find((c) => c.name === country);
+const hasLanded = !!(cc && DUTY_RATES[cc.code]);
+const SHOW = ["montecristo-no-4", "partagas-serie-d-no-4", "hoyo-de-monterrey-epicure-no-2", "cohiba-robustos"];
+const landed = hasLanded ? SHOW.map((id) => {
+  const sku = SKUS.find((s) => s.id === id)!;
+  let best: { total: number; snap: any; retailer: any } | null = null;
+  for (const snap of PRICE_SNAPSHOTS) {
+    if (snap.skuId !== id || !snap.inStock || isStale(snap)) continue;
+    if (snap.packSize && snap.packSize !== sku.boxSize) continue;
+    const r = RETAILER_BY_ID[snap.retailerId]; if (!r) continue;
+    try {
+      const res = landedCost({ price: snap.price, currency: snap.currency, fromCountry: r.country, toCountry: cc!.code, boxSize: sku.boxSize, ring: sku.ring, lengthMm: sku.lengthMm, fx: FX_TO_EUR });
+      if (!best || res.totalEur < best.total) best = { total: res.totalEur, snap, retailer: r };
+    } catch {}
+  }
+  return best ? { sku, ...best } : null;
+}).filter(Boolean) as { sku: any; total: number; snap: any; retailer: any }[] : [];
+
+const payload = rooms.map((v) => [v.slug, v.name, v.address || "", v.lat, v.lng, v.type, v.website || ""]);
+const title = `Cigar lounges and shops in ${city} — ${rooms.length} rooms on the Lounge map · The Next Cigar`;
+const desc = `Where to smoke and buy Cuban cigars in ${city}, ${country}: ${nCdh ? `${nCdh} Casa${nCdh > 1 ? "s" : ""} del Habano, ` : ""}${nLounge} lounge${nLounge === 1 ? "" : "s"} and ${nShop} shop${nShop === 1 ? "" : "s"}, with addresses and directions. Members see who is smoking there tonight.`;
+const jsonLd = {
+  "@context": "https://schema.org", "@type": "ItemList",
+  name: `Cigar lounges and shops in ${city}`, url: `https://thenextcigar.com/lounge/map/${citySlug(city, country)}/`,
+  numberOfItems: rooms.length,
+  itemListElement: rooms.map((v, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "LocalBusiness", name: v.name, address: v.address || undefined, url: v.website || undefined, geo: { "@type": "GeoCoordinates", latitude: v.lat, longitude: v.lng } } })),
+};
+---
+
+<PaperLayout title={title} description={desc} section="lounge" image="/og-lounge.jpg" compact={true} jsonLd={jsonLd}>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <div class="dateline">
+    <h1>{city} <em>— where to smoke, where to buy.</em></h1>
+    <p class="st"><a href="/lounge/map/">The map</a> · {country} · {rooms.length} room{rooms.length === 1 ? "" : "s"}</p>
+  </div>
+
+  <div class="front">
+    <section>
+      <div class="mapwrap"><div id="citymap" class="citymap" role="region" aria-label={`Map of cigar venues in ${city}`}></div></div>
+      <p class="note" style="margin-top:8px">Tap a pin for the address and directions. <span class="legend" aria-hidden="true"><i class="pl pl--cdh">C</i>Casa del Habano <i class="pl pl--lounge">L</i>Lounge <i class="pl pl--shop">S</i>Shop</span></p>
+
+      {grouped.map((g) => (
+        <>
+          <div class="rulehead" style="margin-top:22px"><h2>{g.label}{g.list.length > 1 ? "s" : ""} <em>· {g.list.length}</em></h2></div>
+          <ul class="rooms">
+            {g.list.map((v) => (
+              <li id={v.slug}>
+                <span class:list={["pin", `pin--${v.type}`]}>{(v.name.replace(/^(the|la|le|el|casa del habano|lcdh)\s+/i, "").match(/[A-Za-zÀ-ÿ0-9]/) || ["·"])[0].toUpperCase()}</span>
+                <div>
+                  <a class="head" href={v.website || `https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}`} target="_blank" rel="noopener">{v.name}</a>
+                  {v.address && <p class="by">{v.address}</p>}
+                  <p class="links"><a href={`https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}`} target="_blank" rel="noopener">Directions →</a>{v.website && <a href={v.website} target="_blank" rel="noopener">Website →</a>}<a href="/lounge/signup/">Who's there tonight →</a></p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ))}
+      <p class="note" style="margin-top:18px">Know a room in {city} we've missed, or one that has closed? <a href="/lounge/signup/">Join</a> and tell the desk from the app; corrections run within the week.</p>
+    </section>
+
+    <aside class="rail">
+      <div class="box" style="margin-top:0">
+        <span class="kick">The Lounge · members</span>
+        <h3 class="head">Who is smoking in {city} tonight?</h3>
+        <p>Members check in at these rooms, declare trips, and get an email when a box they want drops. Free, no card.</p>
+        <a class="cta" href="/lounge/signup/">Join free →</a>
+      </div>
+
+      {landed.length > 0 && (
+        <>
+          <div class="rulehead" style="margin-top:26px"><h2>A box, delivered to {country}</h2></div>
+          <table class="mk">
+            <thead><tr><th>Box of 25</th><th class="num">At your door</th></tr></thead>
+            <tbody>
+              {landed.map((l) => (
+                <tr>
+                  <td class="v"><a href={`/finder/sku/${l.sku.slug}/`}>{l.sku.brand} {l.sku.vitola}</a><small>{l.retailer.name} · {String(l.retailer.country).toUpperCase()} · {formatPrice(l.snap.price, l.snap.currency)} listed</small></td>
+                  <td class="p">€{Math.round(l.total).toLocaleString("en-GB")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p class="note">Cheapest live listing on the board, plus duty, tobacco excise and VAT for {country}. <a href={`/finder/${cc!.code}/`}>The {country} edition →</a></p>
+        </>
+      )}
+
+      {siblings.length > 0 && (
+        <>
+          <div class="rulehead" style="margin-top:26px"><h2>Elsewhere in {country}</h2></div>
+          <ul class="eds">
+            {siblings.map((s) => (<li><a href={`/lounge/map/${citySlug(s.city, country)}/`}>{s.city}</a><span>{s.n} room{s.n === 1 ? "" : "s"}</span></li>))}
+          </ul>
+        </>
+      )}
+
+      <div class="rulehead" style="margin-top:26px"><h2>Read next</h2></div>
+      <ul class="list">
+        <li><div><a class="head" href="/blog/how-to-read-a-cuban-cigar-box/">How to read a Cuban cigar box</a><p class="by">Seals, stamps, codes, and the one tell that never lies.</p></div></li>
+        <li><div><a class="head" href="/tools/allowance/">The traveller's allowance</a><p class="by">How many you can carry home from {country}, and what you'd pay.</p></div></li>
+        <li><div><a class="head" href="/finder/">The board</a><p class="by">Box prices at ten European retailers, four times a day.</p></div></li>
+      </ul>
+    </aside>
+  </div>
+
+  <script type="application/json" id="city-data" set:html={JSON.stringify({ lat, lng, rows: payload })} />
+</PaperLayout>
+
+<style>
+  .front{grid-template-columns:7fr 4fr}
+  .front > :first-child{border-right:1px solid var(--rule);padding-right:24px}
+  .front > :last-child{border-left:0;padding-left:0}
+  .mapwrap{border:1px solid var(--ink)}
+  .citymap{height:min(56vh,520px);min-height:360px;background:#EAE7E0}
+  .legend{display:inline-flex;align-items:center;gap:4px 6px;margin-left:8px;font-style:normal;text-transform:none;color:var(--ink-2)}
+  .pl{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-family:var(--serif);font-style:normal;font-size:10px;font-weight:500;border:1px solid var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.35);margin-left:6px}
+  .pl--cdh,.pin--casadelhabano{background:var(--ox);color:var(--paper)}.pl--lounge,.pin--lounge{background:var(--ink);color:var(--paper)}.pl--shop,.pin--retailer{background:var(--paper);color:var(--ink);border-color:var(--ink)!important}
+  .pin--house{background:#6A665E;color:var(--paper)}.pin--pub{background:#8C7A5B;color:var(--paper)}.pin--club{background:#4A463F;color:var(--paper)}
+  .rooms{list-style:none;margin:10px 0 0;padding:0}
+  .rooms li{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--rule-2)}
+  .rooms .pin{flex:none;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px;font-weight:500;border:2px solid var(--paper);box-shadow:0 2px 6px rgba(0,0,0,.3);margin-top:2px}
+  .rooms .head{font-size:19px}
+  .rooms .by{margin-top:2px}
+  .links{margin-top:6px;font-family:var(--sans);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .links a{margin-right:14px;border-bottom:1px solid var(--ox)}
+  @media (max-width:980px){.front{grid-template-columns:1fr}.front > :first-child{border-right:0;padding-right:0}}
+  :global(.leaflet-control-zoom){border:1px solid var(--ink)!important;box-shadow:none!important;border-radius:0!important}
+  :global(.leaflet-control-zoom a){background:var(--paper)!important;color:var(--ink)!important;border-radius:0!important;border-bottom:1px solid var(--ink)!important}
+  :global(.leaflet-control-attribution){background:rgba(242,240,234,.92)!important;color:#635F58!important;font-size:9px!important}
+  :global(.tnc-pin){width:30px;height:30px;border-radius:50%;border:2px solid #F2F0EA;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px;font-weight:500;box-shadow:0 3px 10px rgba(0,0,0,.45);cursor:pointer}
+  :global(.tnc-pin--lounge){background:#151412;color:#F2F0EA}
+  :global(.tnc-pin--retailer){background:#F2F0EA;color:#151412;border-color:#151412}
+  :global(.tnc-pin--casadelhabano){background:#7B2622;color:#F2F0EA}
+  :global(.tnc-pin--house){background:#6A665E;color:#F2F0EA}
+  :global(.tnc-pin--pub){background:#8C7A5B;color:#F2F0EA}
+  :global(.tnc-pin--club){background:#4A463F;color:#F2F0EA}
+  :global(.leaflet-marker-icon){background:none;border:0}
+  :global(.leaflet-popup-content-wrapper){border-radius:0;border:1px solid #151412;box-shadow:0 8px 24px rgba(0,0,0,.18);font-family:var(--serif);color:#151412}
+  :global(.leaflet-popup-content b){font-weight:500;font-size:16px}
+  :global(.leaflet-popup-content a){color:#7B2622}
+</style>
+
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script is:inline>
+  (function () {
+    var L = window.L; if (!L) return;
+    var d = JSON.parse(document.getElementById("city-data").textContent || "{}");
+    var map = L.map("citymap", { scrollWheelZoom: false }).setView([d.lat, d.lng], 13);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19 }).addTo(map);
+    var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+    var ms = [];
+    d.rows.forEach(function (v) {
+      var clean = v[1].replace(/^(the|la|le|el|casa del habano|lcdh)\s+/i, "").trim(); var m = clean.match(/[A-Za-zÀ-ÿ0-9]/);
+      var icon = L.divIcon({ className: "", html: '<div class="tnc-pin tnc-pin--' + esc(v[5]) + '">' + (m ? m[0] : "·").toUpperCase() + "</div>", iconSize: [30, 30], iconAnchor: [15, 15] });
+      var mk = L.marker([v[3], v[4]], { icon: icon }).addTo(map);
+      mk.bindPopup("<b>" + esc(v[1]) + "</b><br>" + esc(v[2]) + '<br><a href="https://www.google.com/maps/dir/?api=1&destination=' + v[3] + "," + v[4] + '" target="_blank" rel="noopener">Directions →</a> · <a href="#' + esc(v[0]) + '">Details ↓</a>');
+      ms.push(mk);
+    });
+    if (ms.length > 1) map.fitBounds(L.featureGroup(ms).getBounds().pad(0.2), { maxZoom: 15 });
+    if (location.hash) { var t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView({ block: "center" }); }
+  })();
+</script>

@@ -1,6 +1,6 @@
 ---
 import PaperLayout from "../../../layouts/PaperLayout.astro";
-import { VENUES, VENUE_CITIES, VENUE_COUNTRIES, TYPE_LABEL } from "../../../data/lounge-venues";
+import { VENUES, VENUE_CITIES, VENUE_COUNTRIES, CITY_GROUPS, TYPE_LABEL, citySlug } from "../../../data/lounge-venues";
 
 /** /lounge/map/ — the Lounge map, read-only, for people who are not members.
  *  Same venues a member sees; what a member gets on top is who is there
@@ -12,7 +12,9 @@ const counts = {
 };
 const byCity = new Map<string, number>();
 for (const v of VENUES) byCity.set(v.city, (byCity.get(v.city) || 0) + 1);
-const topCities = [...byCity.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+const groupsSorted = CITY_GROUPS.slice().sort((a, b) => b.rooms.length - a.rooms.length || a.city.localeCompare(b.city));
+const topCities = groupsSorted.slice(0, 12);
+const allGroups = CITY_GROUPS.slice().sort((a, b) => a.city.localeCompare(b.city));
 const payload = VENUES.map((v) => [v.slug, v.name, v.city, v.country, v.address || "", v.lat, v.lng, v.type, v.website || ""]);
 const jsonLd = {
   "@context": "https://schema.org", "@type": "WebPage", name: "The Lounge map",
@@ -62,8 +64,13 @@ const jsonLd = {
 
   <div class="rulehead" style="margin-top:28px"><h2>Cities with the most rooms</h2></div>
   <ul class="eds cities">
-    {topCities.map(([c, n]) => (<li><a href={`#city=${encodeURIComponent(c)}`} data-city={c}>{c}</a><span>{n} rooms</span></li>))}
+    {topCities.map((g) => (<li><a href={`/lounge/map/${citySlug(g.city, g.country)}/`}>{g.city}</a><span>{g.rooms.length} rooms</span></li>))}
   </ul>
+
+  <div class="rulehead" style="margin-top:28px"><h2>Every city on the map</h2></div>
+  <p class="allcities">
+    {allGroups.map((g, i) => (<>{i > 0 ? " · " : ""}<a href={`/lounge/map/${citySlug(g.city, g.country)}/`}>{g.city}</a></>))}
+  </p>
 
   <script type="application/json" id="venues-data" set:html={JSON.stringify(payload)} />
 </PaperLayout>
@@ -84,6 +91,8 @@ const jsonLd = {
   .mc-links{margin-top:8px;font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
   .mc-links a{margin-right:14px;border-bottom:1px solid var(--ox)}
   .cities{columns:2;column-gap:28px}
+  .allcities{font-family:var(--serif);font-size:15px;line-height:1.7;color:var(--ink-2)}
+  .allcities a{color:var(--ink)}
   @media (min-width:760px){.cities{columns:3}}
   @media (max-width:560px){.pubmap{height:64vh}.legend{margin-left:0}.card{left:8px;right:8px;bottom:8px;width:auto}}
   :global(.leaflet-control-zoom){border:1px solid var(--ink)!important;box-shadow:none!important;border-radius:0!important}
