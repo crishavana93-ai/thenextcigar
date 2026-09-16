@@ -101,8 +101,8 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
               </svg>
             </div>
-            <h3 class="lounge-empty__title">Nobody's checked in right now.</h3>
-            <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
+            <h3 class="lounge-empty__title">Nobody's lit up right now.</h3>
+            <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-primary lbtn-sm">Light up</a>
           </div>
         </div>
       </section>
@@ -767,7 +767,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
     ] = await Promise.all([
       supabase
         .from("checkins")
-        .select("id, member_id, checked_in_at, expires_at, message, profile:member_id(display_name, avatar_url), lounge:lounge_id(name, city)")
+        .select("id, member_id, checked_in_at, expires_at, message, cigar, drink, profile:member_id(display_name, avatar_url), lounge:lounge_id(name, city)")
         .gt("expires_at", now)
         .order("checked_in_at", { ascending: false })
         .limit(40),
@@ -806,8 +806,8 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
               </svg>
             </div>
-            <h3 class="lounge-empty__title">Nobody's checked in right now.</h3>
-            <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-primary lbtn-sm">Be the first</a>
+            <h3 class="lounge-empty__title">Nobody's lit up right now.</h3>
+            <a href="/lounge/app/map/?checkin=1" class="lbtn lbtn-primary lbtn-sm">Light up</a>
           </div>`;
       } else {
         liveStrip.innerHTML = liveRows.map((c) => {
@@ -820,7 +820,7 @@ import LoungeTabBar from "../../../components/lounge/LoungeTabBar.astro";
               <div class="live-card__avatar">${avatarHtml(c.profile)}</div>
               <div class="live-card__name">${name}${meTag}</div>
               <div class="live-card__venue">${venue}</div>
-              <div class="live-card__city">${city}</div>
+              <div class="live-card__city">${c.cigar ? `<i>${escapeHtml(c.cigar)}</i>` : city}</div>
             </a>`;
         }).join("");
       }

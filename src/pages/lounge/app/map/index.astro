@@ -4,6 +4,8 @@ import LoungeHeader from "../../../../components/lounge/LoungeHeader.astro";
 import LoungeTabBar from "../../../../components/lounge/LoungeTabBar.astro";
 import IntroSheet from "../../../../components/lounge/IntroSheet.astro";
 import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
+import { SKUS } from "../../../../data/finder-live";
+const cigarNames = SKUS.map((s) => `${s.brand} ${s.vitola}`).sort();
 ---
 
 <BaseLayout
@@ -82,7 +84,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       {/* Check-in coach banner — appears when user arrives from "Be the first" CTA */}
       <div id="checkin-coach-banner" class="nearby-banner" hidden>
         <div class="nearby-banner__info">
-          <span class="nearby-banner__eyebrow">To check in</span>
+          <span class="nearby-banner__eyebrow">To light up</span>
           <strong class="nearby-banner__venue">Tap any venue pin on the map</strong>
           <span class="nearby-banner__distance">A bottom sheet opens with a Check in button.</span>
         </div>
@@ -150,9 +152,16 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
             </div>
           </div>
 
-          <form id="checkin-form" class="lounge-sheet__form">
-            <input type="text" name="message" maxlength="140" placeholder="Optional message (max 140 chars)" />
-            <button type="submit" class="btn-pill btn-pill--primary" id="checkin-submit">Check in</button>
+          <form id="checkin-form" class="lounge-sheet__form lounge-sheet__form--lightup">
+            <label class="lu-label">What are you lighting?
+              <input type="text" name="cigar" maxlength="80" list="cigar-list" autocomplete="off" placeholder="Montecristo No. 2, a Regional, anything" />
+            </label>
+            <datalist id="cigar-list">{cigarNames.map((n) => <option value={n} />)}</datalist>
+            <div class="lu-row">
+              <input type="text" name="drink" maxlength="60" placeholder="With… (optional)" />
+              <input type="text" name="message" maxlength="140" placeholder="A word for the room (optional)" />
+            </div>
+            <button type="submit" class="btn-pill btn-pill--primary" id="checkin-submit">Light up</button>
           </form>
           <p id="checkin-status" class="lounge-sheet__status" hidden></p>
         </div>
@@ -858,6 +867,14 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
   .lounge-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
   .lounge-sheet__form { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+  .lounge-sheet__form--lightup { flex-direction: column; gap: 0.5rem; }
+  .lu-label { display: block; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-text-muted); }
+  .lu-label input { display: block; width: 100%; margin-top: 4px; font-size: 16px; font-family: var(--font-serif); }
+  .lu-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 0.5rem; }
+  .lu-row input { width: 100%; min-width: 0; }
+  .lounge-sheet__form--lightup .btn-pill { align-self: flex-start; }
+  .lounge-sheet__avatar-row .row-txt { display: flex; flex-direction: column; line-height: 1.2; }
+  .lounge-sheet__avatar-row .lit { font-size: 12px; color: #7B2622; font-family: var(--font-serif); font-style: italic; }
   .lounge-sheet__form input {
     flex-grow: 1;
     border: 1px solid var(--color-border);
@@ -954,6 +971,8 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     lounge_id: string;
     expires_at: string;
     message: string | null;
+    cigar?: string | null;
+    drink?: string | null;
     profile: { display_name: string | null; avatar_url: string | null } | null;
   };
 
@@ -1009,7 +1028,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("checkins")
-      .select("id, member_id, lounge_id, expires_at, message, profile:member_id(display_name, avatar_url)");
+      .select("id, member_id, lounge_id, expires_at, message, cigar, drink, profile:member_id(display_name, avatar_url)");
     if (error) {
       console.error("[Lounge map] failed to load checkins:", error);
       return;
@@ -1184,7 +1203,8 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
             : initials(c.profile?.display_name || null);
           const href = c.member_id === myUserId ? "/lounge/app/profile/" : `/lounge/app/member/?id=${c.member_id}`;
           const meTag = c.member_id === myUserId ? " (you)" : "";
-          return `<a class="lounge-sheet__avatar-row" href="${href}"><span class="lounge-avatar lounge-avatar--sm">${avatar}</span>${escapeHtml(name)}${meTag}</a>`;
+          const lit = c.cigar ? `<span class="lit">${escapeHtml(c.cigar)}${c.drink ? ` · ${escapeHtml(c.drink)}` : ""}</span>` : "";
+          return `<a class="lounge-sheet__avatar-row" href="${href}"><span class="lounge-avatar lounge-avatar--sm">${avatar}</span><span class="row-txt">${escapeHtml(name)}${meTag}${lit}</span></a>`;
         })
         .join("");
     }
@@ -1208,7 +1228,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       }
     } else {
       submit.disabled = alreadyHere;
-      submit.textContent = alreadyHere ? "Already checked in" : "Check in";
+      submit.textContent = alreadyHere ? "Already lit up here" : "Light up";
       if (status) {
         status.hidden = true;
         status.classList.remove("is-error");
@@ -1218,15 +1238,19 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     form.onsubmit = async (e) => {
       e.preventDefault();
       submit.disabled = true;
-      submit.textContent = "Checking in…";
+      submit.textContent = "Lighting…";
       const fd = new FormData(form);
       const message = String(fd.get("message") || "").trim() || null;
+      const cigar = String(fd.get("cigar") || "").trim().slice(0, 80) || null;
+      const drink = String(fd.get("drink") || "").trim().slice(0, 60) || null;
       try {
         const supabase = getSupabase();
         const { error } = await supabase.from("checkins").insert({
           member_id: myUserId,
           lounge_id: l.id,
           message,
+          cigar,
+          drink,
         });
         if (error) throw error;
         await loadActive();
@@ -1237,7 +1261,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
         if (status) {
           status.hidden = false;
           status.classList.remove("is-error");
-          status.textContent = "You're checked in.";
+          status.textContent = cigar ? `Lit. ${cigar} at ${l.name}.` : "You're checked in.";
         }
       } catch (err: any) {
         if (status) {
@@ -1268,8 +1292,10 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
       ? `${lounge.name} · ${lounge.city}`
       : "";
     const msgEl = document.getElementById("member-msg") as HTMLElement;
-    msgEl.textContent = c.message ? `"${c.message}"` : "";
-    msgEl.hidden = !c.message;
+    const litLine = c.cigar ? `Smoking ${c.cigar}${c.drink ? ` with ${c.drink}` : ""}` : "";
+    const quote = c.message ? `"${c.message}"` : "";
+    msgEl.textContent = [litLine, quote].filter(Boolean).join(" — ");
+    msgEl.hidden = !(litLine || quote);
     const viewEl = document.getElementById("member-view") as HTMLAnchorElement;
     viewEl.href = c.member_id === myUserId ? "/lounge/app/profile/" : `/lounge/app/member/?id=${c.member_id}`;
     const introBtn = document.getElementById("member-intro") as HTMLButtonElement;
@@ -1475,7 +1501,7 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
             <div class="cruiser-card__avatar">${av}</div>
             <div class="cruiser-card__name">${name}${youTag}</div>
             <div class="cruiser-card__venue">${escapeHtml(l.name)}</div>
-            <div class="cruiser-card__city">${escapeHtml(l.city)}</div>
+            <div class="cruiser-card__city">${c.cigar ? escapeHtml(c.cigar) : escapeHtml(l.city)}</div>
           </button>`;
       })
       .join("");
