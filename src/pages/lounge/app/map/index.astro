@@ -145,13 +145,6 @@ const cigarNames = SKUS.map((s) => `${s.brand} ${s.vitola}`).sort();
           <p class="lounge-sheet__sub" id="venue-city">—</p>
           <p class="lounge-sheet__body" id="venue-address">—</p>
 
-          <div class="lounge-sheet__active">
-            <p class="lounge-sheet__active-label">Currently here</p>
-            <div id="venue-active-list" class="lounge-sheet__avatars">
-              <p class="lounge-sheet__empty">Nobody checked in.</p>
-            </div>
-          </div>
-
           <form id="checkin-form" class="lounge-sheet__form lounge-sheet__form--lightup">
             <label class="lu-label">What are you lighting?
               <input type="text" name="cigar" maxlength="80" list="cigar-list" autocomplete="off" placeholder="Montecristo No. 2, a Regional, anything" />
@@ -164,6 +157,13 @@ const cigarNames = SKUS.map((s) => `${s.brand} ${s.vitola}`).sort();
             <button type="submit" class="btn-pill btn-pill--primary" id="checkin-submit">Light up</button>
           </form>
           <p id="checkin-status" class="lounge-sheet__status" hidden></p>
+
+          <div class="lounge-sheet__active">
+            <p class="lounge-sheet__active-label">Currently here</p>
+            <div id="venue-active-list" class="lounge-sheet__avatars">
+              <p class="lounge-sheet__empty">Nobody checked in.</p>
+            </div>
+          </div>
         </div>
 
         {/* Member mode */}
@@ -773,8 +773,9 @@ const cigarNames = SKUS.map((s) => `${s.brand} ${s.vitola}`).sort();
     box-shadow: 0 -8px 30px rgba(0,0,0,0.35);
     padding: 1.2rem 1.25rem 1.4rem;
     z-index: 1000;                        /* well above Leaflet panes (~400) */
-    max-height: 65vh;
+    max-height: 78vh;
     overflow-y: auto;
+    padding-bottom: calc(1.2rem + 72px + env(safe-area-inset-bottom)); /* clear the tab bar */
     overflow-x: hidden;                   /* belt-and-suspenders */
     animation: sheetUp 0.22s ease-out;
   }
@@ -872,7 +873,8 @@ const cigarNames = SKUS.map((s) => `${s.brand} ${s.vitola}`).sort();
   .lu-label input { display: block; width: 100%; margin-top: 4px; font-size: 16px; font-family: var(--font-serif); }
   .lu-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 0.5rem; }
   .lu-row input { width: 100%; min-width: 0; }
-  .lounge-sheet__form--lightup .btn-pill { align-self: flex-start; }
+  .lounge-sheet__form--lightup .btn-pill { align-self: stretch; text-align: center; }
+  .lounge-sheet__form--lightup { margin-top: 0.8rem; }
   .lounge-sheet__avatar-row .row-txt { display: flex; flex-direction: column; line-height: 1.2; }
   .lounge-sheet__avatar-row .lit { font-size: 12px; color: #7B2622; font-family: var(--font-serif); font-style: italic; }
   .lounge-sheet__form input {
