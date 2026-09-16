@@ -530,3 +530,16 @@ table.mk td.door small{color:var(--mute);font-weight:400}
 .affil-arrow{font-family:var(--sans);font-size:14px;color:var(--ox)}
 .affil-why{margin:4px 0 0;font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--mute)}
 
+
+/* Shop: quantity + "Goes with it" (16 Sept 2026) */
+.product .qtyrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.product .qtyrow label{font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.product .qtyrow select{font-family:var(--sans);font-size:14px;padding:6px 28px 6px 10px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:0}
+.product .qtyrow .fine{margin:0;flex-basis:100%}
+.goes{margin-top:28px;border-top:1px solid var(--ink);padding-top:10px}
+.goes__row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.goes__card{display:block;text-decoration:none;color:inherit}
+.goes__card img,.goes__ph{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:1px solid var(--rule);background:#fff}
+.goes__name{display:block;font-family:var(--serif);font-size:16px;line-height:1.2;margin-top:8px}
+.goes__price{display:block;font-family:var(--sans);font-size:12px;color:#6A665E;margin-top:2px}
+@media (max-width:560px){.goes__row{grid-template-columns:repeat(3,1fr);gap:8px}.goes__name{font-size:13px}}

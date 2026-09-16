@@ -6,6 +6,7 @@
 // are read from catalogue.json, generated at build time from the products
 // content collection by scripts/build-catalogue.mjs. Nothing money-related is
 // trusted from the browser.
+import { discountPct, unitCents } from "./pricing";
 import catalogue from "./catalogue.json";
 //
 // Env vars required in Cloudflare Pages → Settings → Environment variables:
@@ -40,7 +41,7 @@ function normalizeCurrency(c?: string): string {
 // Minimum quantity for cigar accessories — most suppliers have MOQ of 1.
 function safeQuantity(q?: number): number {
   const n = Math.floor(Number(q || 1));
-  return Math.min(Math.max(n, 1), 10);
+  return Math.min(Math.max(n, 1), 6);
 }
 
 async function callStripe(env: Env, path: string, form: URLSearchParams) {
@@ -99,7 +100,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const quantity = safeQuantity(body.quantity);
     // Stripe wants amount in the smallest currency unit (cents for USD/EUR/GBP,
     // öre for SEK, etc.) — all three-letter currencies we use are cents-based.
-    const unitAmount = Math.round(Number(body.price) * 100);
+    // Quantity discount (pricing.ts): the unit price drops for 2 and for 3+.
+    const unitAmount = unitCents(body.price, quantity);
+    const discount = discountPct(quantity);
 
     // Build the URL for success + cancel — pass session ID placeholder so
     // the thank-you page can look it up if needed.
@@ -157,6 +160,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     form.set("metadata[supplier]", body.supplier || "");
     form.set("metadata[supplier_url]", body.supplierUrl || "");
     form.set("metadata[source]", "tnc-shop");
+    form.set("metadata[discount_pct]", String(discount));
+    form.set("metadata[unit_price]", String(unitAmount / 100));
 
     const session = await callStripe(env, "checkout/sessions", form);
 

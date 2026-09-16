@@ -184,6 +184,8 @@ const products = defineCollection({
       // Digital download (for type: digital)
       downloadUrl: z.string().optional().nullable(),
       // Affiliate / drop-ship metadata (internal — never shown publicly)
+      // Slugs shown under "Goes with it" on the product page. Curated, not computed.
+      related: z.array(z.string()).optional(),
       supplier: z.string().optional().nullable(),
       supplierUrl: z.string().optional().nullable(),
       // Publication state

@@ -2,6 +2,7 @@
 import { usdRates, approx } from "../../lib/fx";
 import { getCollection, render } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
+import { TIERS, discountPct } from "../../../functions/api/shop/pricing";
 
 /** /shop/[slug]/
  *  The client sends only the slug; price, name and supplier are resolved
@@ -28,6 +29,13 @@ const soon = !!d.comingSoon;
 const buyable = !soon && d.inStock;
 const etaT = Date.parse(`1 ${d.expectedArrival ?? ""}`);
 const eta = d.expectedArrival && !isNaN(etaT) && etaT + 31 * 86400e3 > Date.now() ? `Expected ${d.expectedArrival}` : "Price when it lands";
+const allLive = (await getCollection("products")).filter((p) => !p.data.isArchived && !p.data.comingSoon && p.data.inStock && p.data.slug !== d.slug);
+// "Goes with it": curated slugs from the entry; otherwise the natural pairing by kind.
+const PAIR: Record<string, string[]> = { lighter: ["cutter", "ashtray"], cutter: ["lighter", "case", "humidor"], humidor: ["accessories", "cutter"], case: ["cutter", "accessories"], ashtray: ["lighter", "cutter"], accessories: ["humidor", "case"] };
+const wanted: string[] = (d.related ?? []) as string[];
+let goesWith = wanted.map((s) => allLive.find((p) => p.data.slug === s)).filter(Boolean) as typeof allLive;
+if (goesWith.length < 3) for (const k of PAIR[d.category] ?? []) for (const p of allLive) if (goesWith.length < 3 && (p.data as any).category === k && !goesWith.includes(p)) goesWith.push(p);
+const tierLine = TIERS.slice().sort((a, b) => a.min - b.min).map((t) => `${t.min === 2 ? "Two" : "Three or more"}: ${t.pct}% off each`).join(". ") + ".";
 const others = (await getCollection("products")).filter((p) => !p.data.isArchived && p.data.slug !== d.slug && (p.data as any).category === d.category).slice(0, 3);
 const url = `https://thenextcigar.com/shop/${d.slug}/`;
 // Google warns on an offer with no priceValidUntil and treats a past date as
@@ -98,7 +106,12 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
         <>
           <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
           {approxLine && <p class="fine" style="margin-top:-6px">About {approxLine} at the ECB rate of {fx!.date}. You pay in US dollars; your bank converts.</p>}
-          <button type="button" class="buy" id="buy" data-slug={d.slug}>Buy — {sym}{d.price}</button>
+          <div class="qtyrow">
+            <label for="qty">Quantity</label>
+            <select id="qty">{[1, 2, 3, 4, 5, 6].map((n) => <option value={n}>{n}</option>)}</select>
+            <span class="fine" id="qty-note">{tierLine}</span>
+          </div>
+          <button type="button" class="buy" id="buy" data-slug={d.slug} data-price={d.price} data-sym={sym} data-tiers={JSON.stringify(TIERS)}>Buy — {sym}{d.price}</button>
           <noscript><p class="note">Checkout needs JavaScript: the button opens a Stripe payment page. With scripts off, email <a href="mailto:orders@thenextcigar.com">orders@thenextcigar.com</a> and we send a payment link.</p></noscript>
           <p class="fine" id="buy-status" aria-live="polite"></p>
           <p class="fine">Card checkout by Stripe. Free tracked delivery. {d.type === "digital" ? "Instant download after payment; digital goods are non-refundable once downloaded." : "Ships direct from our supplier, one to two weeks. You have 14 days from delivery to send it back for any reason — you pay return postage unless it arrived faulty."} <a href="/shipping-and-returns/">Shipping and returns</a>.</p>
@@ -126,16 +139,39 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
     <div class="prose"><Content /></div>
   </div>
 
+  {goesWith.length > 0 && (
+    <section class="goes">
+      <p class="t">Goes with it</p>
+      <div class="goes__row">
+        {goesWith.map((p) => { const pd: any = p.data; const c = img(pd.cover); return (
+          <a class="goes__card" href={`/shop/${pd.slug}/`}>
+            {c ? <img src={c} alt="" width="300" height="300" loading="lazy" /> : <span class="goes__ph" />}
+            <span class="goes__name">{pd.name}</span>
+            <span class="goes__price">{pd.currency === "EUR" ? "€" : pd.currency === "GBP" ? "£" : "$"}{pd.price}</span>
+          </a>
+        ); })}
+      </div>
+    </section>
+  )}
+
   {buyable && (
     <script is:inline>
       (function () {
-        var btn = document.getElementById("buy"), st = document.getElementById("buy-status");
+        var btn = document.getElementById("buy"), st = document.getElementById("buy-status"), qty = document.getElementById("qty");
         if (!btn) return;
+        var price = Number(btn.dataset.price), sym = btn.dataset.sym, tiers = JSON.parse(btn.dataset.tiers || "[]");
+        function pct(n) { for (var i = 0; i < tiers.length; i++) if (n >= tiers[i].min) return tiers[i].pct; return 0; }
+        function refresh() {
+          var n = Number(qty && qty.value || 1), p = pct(n);
+          var unit = Math.round(price * 100 * (100 - p) / 100) / 100, total = Math.round(unit * n * 100) / 100;
+          btn.textContent = n > 1 ? "Buy " + n + " — " + sym + total + (p ? " (" + p + "% off)" : "") : "Buy — " + sym + price;
+        }
+        if (qty) { qty.addEventListener("change", refresh); refresh(); }
         btn.addEventListener("click", async function () {
           if (btn.disabled) return;
           var orig = btn.textContent; btn.disabled = true; btn.textContent = "Opening checkout…";
           try {
-            var res = await fetch("/api/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: btn.dataset.slug }) });
+            var res = await fetch("/api/shop/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug: btn.dataset.slug, quantity: Number(qty && qty.value || 1) }) });
             var data = await res.json();
             if (data.ok && data.url) { window.location.href = data.url; return; }
             st.textContent = data.error || "Checkout failed — try again.";
