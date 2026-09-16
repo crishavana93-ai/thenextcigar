@@ -176,6 +176,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       shipping_country:     address.country || null,
       shipping_phone:       customer.phone || null,
       status:               "paid",
+      lines:                (full.line_items?.data || []).map((li: any) => ({ name: li.description, qty: li.quantity, amount: (li.amount_total || 0) / 100 })),
     };
 
     // ── Notify Cris FIRST, before anything that can fail ──
@@ -196,6 +197,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const notifyTo = env.ORDER_NOTIFY_EMAIL || "guatabeycigars@gmail.com";
     const orderSummary = `
       <h2>New order — ${row.product_name}</h2>
+      <p><a href="https://thenextcigar.com/admin/ship/?s=${encodeURIComponent(row.stripe_session_id)}">Mark shipped and send the tracking number →</a></p>
       <ul>${(full.line_items?.data || []).map((li: any) => `<li>${li.quantity} × ${li.description} — ${((li.amount_total || 0) / 100).toFixed(2)} ${row.currency}</li>`).join("")}</ul>${meta.discount_pct && meta.discount_pct !== "0" ? `<p>Quantity discount applied: ${meta.discount_pct}%</p>` : ""}
       <p><strong>Amount:</strong> ${row.amount.toFixed(2)} ${row.currency}<br/>
       <strong>Quantity:</strong> ${row.quantity}<br/>
@@ -226,6 +228,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           <h2 style="font-weight:500;letter-spacing:-0.02em;">Order received. Thank you.</h2>
           <p>We got your order for <strong>${row.product_name}</strong> — ${row.amount.toFixed(2)} ${row.currency}. It's forwarded to our supplier in the next 24 hours; you'll get a shipping confirmation once the tracking number is live (usually 2–4 days).</p>
           <p>If you need to change the shipping address or cancel, reply to this email within 24 hours and we'll sort it before the supplier ships.</p>
+          <p>While you wait: The Lounge is our members' room, free. Who is lighting up near you tonight, your humidor valued against today's board, and 465 rooms in 212 cities. <a href="https://thenextcigar.com/lounge/download/?src=order">Open The Lounge</a>.</p>
           <p style="margin-top:32px;">— The Next Cigar<br/><a href="https://thenextcigar.com/">thenextcigar.com</a></p>
         </div>
       `;

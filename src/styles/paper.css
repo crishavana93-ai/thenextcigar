@@ -625,3 +625,9 @@ body{transform-origin:0% 50%;backface-visibility:hidden}
 }
 @keyframes leaf-out{to{transform:rotateY(-14deg) translateX(-3%);opacity:.55;filter:brightness(.92)}}
 @keyframes leaf-in{from{transform:rotateY(9deg) translateX(2.5%);opacity:.6;filter:brightness(1.04)}to{transform:none;opacity:1;filter:none}}
+.ship{max-width:520px;display:grid;gap:14px}
+.ship label{display:grid;gap:4px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.ship input{font-family:var(--sans);font-size:15px;padding:9px 10px;border:1px solid var(--ink);background:var(--paper);letter-spacing:0;text-transform:none}
+.ship .buy{background:var(--ink);color:var(--paper);border:0;font-family:var(--sans);font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:14px;cursor:pointer}
+.ship .fine{font-family:var(--sans);font-size:12px;color:#6A665E}
+.masthead .acct .cart-top{white-space:nowrap}

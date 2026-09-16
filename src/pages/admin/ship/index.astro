@@ -1,0 +1,35 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+/** /admin/ship/ — mark an order shipped. The link in the order email opens
+ *  this with the order id filled in; the token is SHOP_ADMIN_TOKEN. */
+---
+<PaperLayout title="Mark shipped · The Next Cigar" description="Admin" section="shop" compact={true} noIndex={true}>
+  <div class="dateline"><h1>Mark an order shipped</h1><p class="st">Sends the customer the tracking number and records it.</p></div>
+  <form class="ship" id="ship">
+    <label>Order id (Stripe session, from the order email)<input name="session_id" id="sid" required placeholder="cs_live_…"></label>
+    <label>Tracking number<input name="tracking" required></label>
+    <label>Carrier (optional)<input name="carrier" placeholder="China Post · PostNord · DHL"></label>
+    <label>Tracking link (optional)<input name="url" type="url" placeholder="https://…"></label>
+    <label>Admin token<input name="token" type="password" required autocomplete="off"></label>
+    <button type="submit" class="buy">Send shipping email</button>
+    <p class="fine" id="ship-status" aria-live="polite"></p>
+  </form>
+  <script is:inline>
+    (function () {
+      var f = document.getElementById("ship"), st = document.getElementById("ship-status");
+      var s = new URLSearchParams(location.search).get("s"); if (s) document.getElementById("sid").value = s;
+      try { var tk = sessionStorage.getItem("tnc-admin-token"); if (tk) f.token.value = tk; } catch (e) {}
+      f.addEventListener("submit", async function (e) {
+        e.preventDefault(); var b = f.querySelector("button"); b.disabled = true; st.textContent = "Sending…";
+        try {
+          var body = Object.fromEntries(new FormData(f).entries());
+          try { sessionStorage.setItem("tnc-admin-token", body.token); } catch (err) {}
+          var r = await fetch("/api/shop/ship", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+          var d = await r.json();
+          st.textContent = d.ok ? ("Done. " + (d.emailed ? "Email sent to " + d.customer : "Recorded; no email (Resend not configured or no address).")) : ("Failed: " + d.error);
+        } catch (err) { st.textContent = "Network error."; }
+        b.disabled = false;
+      });
+    })();
+  </script>
+</PaperLayout>

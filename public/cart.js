@@ -17,6 +17,8 @@
   function money(n) { return "$" + (Math.round(n * 100) / 100).toFixed(n % 1 ? 2 : 0); }
   function render() {
     var t = totals(), bar = document.getElementById("cart-bar");
+    if (!window.TNC_CATALOGUE) { t.pieces = read().reduce(function (n, x) { return n + x.qty; }, 0); }
+    document.querySelectorAll("[data-cart-link]").forEach(function (el) { el.hidden = !t.pieces; });
     document.querySelectorAll("[data-cart-count]").forEach(function (el) { el.textContent = t.pieces ? String(t.pieces) : ""; el.hidden = !t.pieces; });
     if (bar) {
       bar.hidden = !t.pieces || document.body.dataset.page === "cart";

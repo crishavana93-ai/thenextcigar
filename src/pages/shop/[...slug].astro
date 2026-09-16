@@ -105,7 +105,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
       {buyable ? (
         <>
           <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
-          {approxLine && <p class="fine" style="margin-top:-6px">About {approxLine} at the ECB rate of {fx!.date}. You pay in US dollars; your bank converts.</p>}
+          {approxLine && <p class="fine" style="margin-top:-6px">About {approxLine} at the ECB rate of {fx!.date}. Charged in euros in the EU, pounds in the UK and kronor in Sweden; US dollars elsewhere.</p>}
           <div class="qtyrow">
             <label for="qty">Quantity</label>
             <select id="qty">{[1, 2, 3, 4, 5, 6].map((n) => <option value={n}>{n}</option>)}</select>

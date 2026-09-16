@@ -10,7 +10,6 @@ const cat: Record<string, { name: string; price: number; cover: string }> = {};
 for (const p of live) cat[p.data.slug] = { name: p.data.name, price: p.data.price, cover: img(p.data.cover) };
 ---
 <script is:inline set:html={`window.TNC_CATALOGUE=${JSON.stringify(cat)};window.TNC_TIERS=${JSON.stringify(TIERS)};`}></script>
-<script is:inline src="/cart.js"></script>
 <a class="cart-bar" id="cart-bar" href="/shop/cart/" hidden>
   <span data-cart-summary></span>
   <b>View cart →</b>
