@@ -1,0 +1,14 @@
+---
+/** The four promises under a buy button, with line icons drawn here, and the
+ *  payment marks as typographic chips. Same component on product and cart. */
+const { compact = false } = Astro.props;
+---
+<div class:list={["svc", { "svc--compact": compact }]}>
+  <ul class="svc__list">
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg><span>Free tracked delivery<small>1–2 weeks, EU · UK · CH</small></span></li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Duties and VAT paid<small>Nothing to pay at the door</small></span></li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 0 10h-3"/></svg><span>14-day returns<small>Any reason, from delivery</small></span></li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Secure checkout<small>Card details never touch our site</small></span></li>
+  </ul>
+  <p class="svc__pay" aria-label="Payment methods"><span>Apple Pay</span><span>Google Pay</span><span>Visa</span><span>Mastercard</span><span>Amex</span><span>Link</span></p>
+</div>

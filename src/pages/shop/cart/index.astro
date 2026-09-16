@@ -1,6 +1,7 @@
 ---
 import PaperLayout from "../../../layouts/PaperLayout.astro";
 import CartBar from "../../../components/shop/CartBar.astro";
+import ServiceStrip from "../../../components/shop/ServiceStrip.astro";
 import { TIER_LINE } from "../../../../functions/api/shop/pricing";
 /** /shop/cart/ — rendered from localStorage by /cart.js; the server re-prices at checkout. */
 ---
@@ -23,9 +24,9 @@ import { TIER_LINE } from "../../../../functions/api/shop/pricing";
     </table>
     <div class="cart__act" id="cart-act" hidden>
       <p class="fine" id="cart-hint"></p>
-      <button type="button" class="buy" id="checkout">Checkout</button>
+      <button type="button" class="buy" id="checkout">Checkout <span class="arrow">→</span></button>
       <p class="fine" id="cart-status" aria-live="polite"></p>
-      <p class="fine">Card checkout by Stripe. Delivery country and the total are shown before you pay. Ships direct from our supplier, one to two weeks; 14 days from delivery to send it back. <a href="/shipping-and-returns/">Shipping and returns</a>.</p>
+      <ServiceStrip compact={true} />
       <p class="fine"><a href="/shop/">← Keep browsing</a></p>
     </div>
     <section class="cart__more" id="cart-more" hidden>
@@ -44,8 +45,8 @@ import { TIER_LINE } from "../../../../functions/api/shop/pricing";
         var it = C.items(), t = C.totals();
         tbl.hidden = act.hidden = !it.length; empty.hidden = !!it.length;
         rows.innerHTML = it.map(function (x) {
-          var opts = ""; for (var i = 1; i <= 6; i++) opts += "<option value=\"" + i + "\"" + (i === x.qty ? " selected" : "") + ">" + i + "</option>";
-          return "<tr data-slug=\"" + esc(x.slug) + "\"><td class=\"img\">" + (x.cover ? "<img src=\"" + esc(x.cover) + "\" alt=\"\" width=\"72\" height=\"72\">" : "") + "</td><td><a href=\"/shop/" + esc(x.slug) + "/\">" + esc(x.name) + "</a></td><td><select data-qty>" + opts + "</select></td><td class=\"num each\">" + C.money(x.price) + "</td><td class=\"num\">" + C.money(x.price * x.qty) + "</td><td><button type=\"button\" class=\"rm\" data-rm aria-label=\"Remove\">×</button></td></tr>";
+          var step = "<div class=\"stepper stepper--sm\"><button type=\"button\" class=\"stepper__btn\" data-step=\"-1\" aria-label=\"Fewer\">−</button><span class=\"stepper__n\">" + x.qty + "</span><button type=\"button\" class=\"stepper__btn\" data-step=\"1\" aria-label=\"More\"" + (x.qty >= 6 ? " disabled" : "") + ">+</button></div>";
+          return "<tr data-slug=\"" + esc(x.slug) + "\"><td class=\"img\">" + (x.cover ? "<img src=\"" + esc(x.cover) + "\" alt=\"\" width=\"72\" height=\"72\">" : "") + "</td><td><a href=\"/shop/" + esc(x.slug) + "/\">" + esc(x.name) + "</a></td><td>" + step + "</td><td class=\"num each\">" + C.money(x.price) + "</td><td class=\"num\">" + C.money(x.price * x.qty) + "</td><td><button type=\"button\" class=\"rm\" data-rm aria-label=\"Remove\">×</button></td></tr>";
         }).join("");
         document.getElementById("c-sub").textContent = C.money(t.subtotal);
         document.getElementById("c-disc-row").hidden = !t.pct;
@@ -63,8 +64,11 @@ import { TIER_LINE } from "../../../../functions/api/shop/pricing";
         mrow.innerHTML = pick.map(function (s) { var q = window.TNC_CATALOGUE[s]; return "<div class=\"card\">" + (q.cover ? "<img src=\"" + esc(q.cover) + "\" alt=\"\" loading=\"lazy\">" : "") + "<a href=\"/shop/" + esc(s) + "/\">" + esc(q.name) + "</a><span class=\"p\">" + C.money(q.price) + "</span><button type=\"button\" data-add=\"" + esc(s) + "\">Add</button></div>"; }).join("");
         hint.textContent = next ? "Add " + (next.min - t.pieces) + " more " + (next.min - t.pieces === 1 ? "piece" : "pieces") + " for " + next.pct + "% off the total." : (t.pct ? t.pct + "% off the total applied." : "");
       }
-      rows.addEventListener("change", function (e) { var tr = e.target.closest("tr"); if (e.target.hasAttribute("data-qty") && tr) C.set(tr.dataset.slug, e.target.value); });
-      rows.addEventListener("click", function (e) { var b = e.target.closest("[data-rm]"), tr = e.target.closest("tr"); if (b && tr) C.remove(tr.dataset.slug); });
+      rows.addEventListener("click", function (e) {
+        var tr = e.target.closest("tr"); if (!tr) return;
+        var s = e.target.closest("[data-step]"); if (s) { var cur = C.read().filter(function (x) { return x.slug === tr.dataset.slug; })[0]; if (cur) C.set(tr.dataset.slug, cur.qty + Number(s.dataset.step)); return; }
+        if (e.target.closest("[data-rm]")) C.remove(tr.dataset.slug);
+      });
       document.getElementById("cart-more-row").addEventListener("click", function (e) { var b = e.target.closest("[data-add]"); if (b) C.add(b.dataset.add, 1); });
       document.addEventListener("cart:change", draw); document.addEventListener("DOMContentLoaded", draw); if (window.TNC_CATALOGUE) draw();
       document.getElementById("checkout").addEventListener("click", async function () {

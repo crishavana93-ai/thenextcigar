@@ -4,6 +4,7 @@ import { getCollection, render } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { TIERS, TIER_LINE } from "../../../functions/api/shop/pricing";
 import CartBar from "../../components/shop/CartBar.astro";
+import ServiceStrip from "../../components/shop/ServiceStrip.astro";
 
 /** /shop/[slug]/
  *  The client sends only the slug; price, name and supplier are resolved
@@ -106,19 +107,24 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
         <>
           <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
           {approxLine && <p class="fine" style="margin-top:-6px">About {approxLine} at the ECB rate of {fx!.date}. Charged in euros in the EU, pounds in the UK and kronor in Sweden; US dollars elsewhere.</p>}
-          <div class="qtyrow">
-            <label for="qty">Quantity</label>
-            <select id="qty">{[1, 2, 3, 4, 5, 6].map((n) => <option value={n}>{n}</option>)}</select>
-            <span class="fine" id="qty-note">{TIER_LINE}</span>
+          <div class="buybox">
+            <div class="qtyrow">
+              <span class="qtyrow__label">Quantity</span>
+              <div class="stepper" role="group" aria-label="Quantity">
+                <button type="button" class="stepper__btn" data-step="-1" aria-label="Fewer">−</button>
+                <input id="qty" type="number" min="1" max="6" value="1" inputmode="numeric" aria-label="Quantity">
+                <button type="button" class="stepper__btn" data-step="1" aria-label="More">+</button>
+              </div>
+              <span class="qtyrow__note">{TIER_LINE}</span>
+            </div>
+            <div class="buyrow">
+              <button type="button" class="buy" id="add" data-slug={d.slug}>Add to cart</button>
+              <button type="button" class="buy buy--ghost" id="buy" data-slug={d.slug} data-price={d.price} data-sym={sym}>Buy now <span class="arrow">→</span></button>
+            </div>
+            <p class="buy-status" id="buy-status" aria-live="polite"></p>
+            <ServiceStrip />
           </div>
-          <div class="buyrow">
-            <button type="button" class="buy add" id="add" data-slug={d.slug}>Add to cart</button>
-            <button type="button" class="buy" id="buy" data-slug={d.slug} data-price={d.price} data-sym={sym}>Buy now — {sym}{d.price}</button>
-          </div>
-          <p class="fine cartlink"><a href="/shop/cart/">Cart <span data-cart-count hidden></span></a></p>
           <noscript><p class="note">Checkout needs JavaScript: the button opens a Stripe payment page. With scripts off, email <a href="mailto:orders@thenextcigar.com">orders@thenextcigar.com</a> and we send a payment link.</p></noscript>
-          <p class="fine" id="buy-status" aria-live="polite"></p>
-          <p class="fine">Card checkout by Stripe. Free tracked delivery. {d.type === "digital" ? "Instant download after payment; digital goods are non-refundable once downloaded." : "Ships direct from our supplier, one to two weeks. You have 14 days from delivery to send it back for any reason — you pay return postage unless it arrived faulty."} <a href="/shipping-and-returns/">Shipping and returns</a>.</p>
         </>
       ) : (
         <>
@@ -165,14 +171,16 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
         var btn = document.getElementById("buy"), add = document.getElementById("add"), st = document.getElementById("buy-status"), qty = document.getElementById("qty");
         if (!btn) return;
         var price = Number(btn.dataset.price), sym = btn.dataset.sym;
-        function n() { return Number(qty && qty.value || 1); }
-        function refresh() { var k = n(); btn.textContent = k > 1 ? "Buy now " + k + " — " + sym + (Math.round(price * k * 100) / 100) : "Buy now — " + sym + price; }
-        if (qty) { qty.addEventListener("change", refresh); refresh(); }
+        function n() { var v = Math.round(Number(qty && qty.value || 1)); return Math.max(1, Math.min(6, isNaN(v) ? 1 : v)); }
+        function refresh() { if (qty) qty.value = String(n()); var k = n(); btn.innerHTML = (k > 1 ? "Buy " + k + " now — " + sym + (Math.round(price * k * 100) / 100) : "Buy now — " + sym + price) + " <span class=\"arrow\">→</span>"; }
+        if (qty) { qty.addEventListener("change", refresh); qty.addEventListener("input", refresh); refresh(); }
+        document.querySelectorAll(".stepper__btn").forEach(function (b) { b.addEventListener("click", function () { qty.value = String(n() + Number(b.dataset.step)); refresh(); }); });
         if (add) add.addEventListener("click", function () {
           if (!window.TNCCart) return;
           window.TNCCart.add(add.dataset.slug, n());
           var t = window.TNCCart.totals();
-          st.innerHTML = "Added. " + t.pieces + (t.pieces === 1 ? " piece" : " pieces") + " in the cart" + (t.pct ? ", " + t.pct + "% off the total" : "") + ". <a href=\"/shop/cart/\">View cart</a> or keep browsing.";
+          st.innerHTML = "<b>Added.</b> " + t.pieces + (t.pieces === 1 ? " piece" : " pieces") + " in your cart" + (t.pct ? ", " + t.pct + "% off the total" : "") + ". <a href=\"/shop/cart/\">View cart →</a>";
+          add.textContent = "Added ✓"; setTimeout(function () { add.textContent = "Add to cart"; }, 1400);
         });
         btn.addEventListener("click", async function () {
           if (btn.disabled) return;
