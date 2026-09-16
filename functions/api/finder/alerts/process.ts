@@ -209,7 +209,7 @@ function renderEmail(event: AlertEvent): { subject: string; html: string; text: 
             </tr>
           </table>
           <div style="margin:0 0 22px 0;">
-            <a href="${escapeHtml(event.newest.source_url)}" style="display:inline-block;background:#c9a961;color:#1a1612;font-weight:700;font-size:14px;text-decoration:none;padding:13px 22px;border-radius:4px;">View at ${escapeHtml(retailerName)} →</a>
+            <a href="${escapeHtml(shopUrl(event.newest.source_url))}" style="display:inline-block;background:#c9a961;color:#1a1612;font-weight:700;font-size:14px;text-decoration:none;padding:13px 22px;border-radius:4px;">View at ${escapeHtml(retailerName)} →</a>
           </div>
           <p style="margin:0 0 4px 0;font-size:13px;color:#7a6f60;">Compare across all European retailers:</p>
           <p style="margin:0;font-size:13px;"><a href="${skuUrl}" style="color:#3a322a;">${skuUrl}</a></p>
@@ -234,7 +234,7 @@ Per cigar: ${fmtPrice(perCigar)}
 Pack: ${packLabel}
 Retailer: ${retailerName}
 
-Shop: ${event.newest.source_url}
+Shop: ${shopUrl(event.newest.source_url)}
 Compare: ${skuUrl}
 
 Unsubscribe: https://thenextcigar.com/finder/unsubscribe?email=${encodeURIComponent(event.watchlist.email)}
@@ -244,6 +244,11 @@ Unsubscribe: https://thenextcigar.com/finder/unsubscribe?email=${encodeURICompon
 }
 
 // ─── Resend transport ──────────────────────────────────────────────────────
+/** The scraper reads Shopify's /products/<handle>.json; readers get the page. */
+function shopUrl(u: string): string {
+  return (u || "").replace(/\.json(?=$|[?#])/, "").replace(/\/products\.json\?.*$/, "");
+}
+
 async function sendEmail(
   env: Env,
   to: string,

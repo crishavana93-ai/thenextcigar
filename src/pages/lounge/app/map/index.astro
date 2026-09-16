@@ -1558,10 +1558,20 @@ import CoachMarks from "../../../../components/lounge/CoachMarks.astro";
     // CARTO's hosted basemaps now require an API key and render "API KEY
     // REQUIRED" across every tile without one. OpenStreetMap's own tiles are
     // free, need no key, and suit the paper better than a dark theme.
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
+    // If OSM's main tile server refuses us (it rate-limits some mobile
+    // carriers), switch to the German mirror after a handful of failures.
+    let tileErrors = 0;
+    tiles.on("tileerror", () => {
+      tileErrors++;
+      if (tileErrors === 4) {
+        tiles.setUrl("https://tile.openstreetmap.de/{z}/{x}/{y}.png");
+        console.warn("[Lounge] tile server errors — switched to openstreetmap.de");
+      }
+    });
 
     // Toggle pin labels at zoom 11+
     const updateZoomClass = () => {

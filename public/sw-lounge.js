@@ -9,7 +9,7 @@
 // Bump this version any time the deployed app changes meaningfully (new
 // migrations, layout changes, big UI updates). Old caches are deleted on
 // activate, forcing a fresh fetch on next visit.
-const CACHE_NAME = "lounge-app-v6";
+const CACHE_NAME = "lounge-app-v7";
 const PRECACHE_URLS = [
   "/lounge/app/",
   "/lounge-app-icon-192.png",
@@ -52,6 +52,10 @@ self.addEventListener("fetch", (event) => {
   // Skip Supabase API + Realtime connections — must always go to network.
   const url = new URL(request.url);
   if (url.hostname.includes("supabase.co")) return;
+  // Never sit between the page and third-party assets (map tiles from
+  // OpenStreetMap, Leaflet from unpkg). Opaque cross-origin responses go
+  // straight through; a worker in the middle only adds ways to fail.
+  if (url.origin !== self.location.origin) return;
 
   // Network-first for HTML navigations (so members always see latest UI).
   if (request.mode === "navigate") {
