@@ -99,6 +99,7 @@ const ogImage = new URL(image, Astro.site).toString();
     <link rel="preload" as="font" type="font/woff2" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" crossorigin />
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    <script is:inline src="/cart.js"></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -153,7 +154,6 @@ const ogImage = new URL(image, Astro.site).toString();
         });
       });
     </script>
-    <script is:inline src="/cart.js" defer></script>
     <script is:inline>
       // Page turn. A same-site link click folds the page away like a
       // broadsheet leaf (280 ms), the next page settles in (320 ms). Full

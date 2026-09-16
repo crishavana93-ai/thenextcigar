@@ -66,7 +66,7 @@ import { TIER_LINE } from "../../../../functions/api/shop/pricing";
       rows.addEventListener("change", function (e) { var tr = e.target.closest("tr"); if (e.target.hasAttribute("data-qty") && tr) C.set(tr.dataset.slug, e.target.value); });
       rows.addEventListener("click", function (e) { var b = e.target.closest("[data-rm]"), tr = e.target.closest("tr"); if (b && tr) C.remove(tr.dataset.slug); });
       document.getElementById("cart-more-row").addEventListener("click", function (e) { var b = e.target.closest("[data-add]"); if (b) C.add(b.dataset.add, 1); });
-      document.addEventListener("cart:change", draw); draw();
+      document.addEventListener("cart:change", draw); document.addEventListener("DOMContentLoaded", draw); if (window.TNC_CATALOGUE) draw();
       document.getElementById("checkout").addEventListener("click", async function () {
         var btn = this; if (btn.disabled) return;
         var items = C.read().map(function (x) { return { slug: x.slug, quantity: x.qty }; });

@@ -28,6 +28,7 @@
     document.dispatchEvent(new CustomEvent("cart:change", { detail: t }));
   }
   window.TNCCart = { read: read, items: items, totals: totals, add: add, set: set, remove: remove, clear: clear, money: money, pct: pct, render: render };
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render); else render();
+  document.addEventListener("DOMContentLoaded", render);
+  if (document.readyState !== "loading") render();
   window.addEventListener("storage", function (e) { if (e.key === KEY) render(); });
 })();
