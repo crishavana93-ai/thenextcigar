@@ -136,7 +136,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return new Response("Bad JSON", { status: 400 });
   }
 
-  // We only act on completed checkout sessions. Ignore everything else.
+  // Refunds: flip the order row so the admin panel stops asking to ship it.
+  // Needs "charge.refunded" ticked on the Stripe endpoint.
+  if (event.type === "charge.refunded") {
+    try {
+      const ch = event.data.object;
+      const pi = ch.payment_intent;
+      if (pi && env.PUBLIC_SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
+        const full = ch.amount_refunded >= ch.amount;
+        await fetch(`${env.PUBLIC_SUPABASE_URL}/rest/v1/shop_orders?stripe_payment_intent=eq.${encodeURIComponent(pi)}`, {
+          method: "PATCH",
+          headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, "content-type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ status: full ? "refunded" : "partly_refunded" }),
+        });
+      }
+    } catch (e) { console.error("[shop/webhook] refund update", String(e)); }
+    return new Response("ok", { status: 200 });
+  }
+
+  // Otherwise we only act on completed checkout sessions.
   if (event.type !== "checkout.session.completed") {
     return new Response("Ignored", { status: 200 });
   }
