@@ -159,7 +159,7 @@ const description = best
           <p class="sub" style="margin-top:6px">at <b style="color:var(--ink)">{best.retailer.name}</b>, {best.country.name} · {checkedLabel(best.snap)}</p>
           <a class="cta" href={best.link.url} target="_blank" rel="noopener nofollow sponsored">{best.link.isExact ? `Buy at ${best.retailer.name}` : `Search ${best.retailer.name}`} →</a>
           <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="ghost" />
-          <p class="note" style="margin-top:10px">Clicking through may earn us a commission. Your price is unchanged.</p>
+          <p class="note" style="margin-top:10px">Clicking through may earn us a commission. Your price is unchanged. Stock is as the retailer reported it when we last read the page; if it was sold out when you got there, <a href={`mailto:contact@thenextcigar.com?subject=${encodeURIComponent(`Sold out: ${sku.brand} ${sku.vitola} at ${best.retailer.name}`)}`}>tell us</a> and we re-read it.</p>
         </div>
       ) : lastSeen ? (
         <div class="quote">

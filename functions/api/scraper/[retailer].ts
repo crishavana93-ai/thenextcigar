@@ -1009,8 +1009,10 @@ function parseShopifyCollection(body: string, currency: string, origin: string):
       const packSize = parsePackSizeFromTitle(String(v?.option1 || v?.title || ""))
         || parsePackSizeFromTitle(title);
       if (!packSize) continue;
+      // No availability flag means we do not know, and "do not know" is
+      // never shown as in stock.
       const inStock = typeof v?.available === "boolean" ? v.available
-        : typeof v?.inventory_quantity === "number" ? v.inventory_quantity > 0 : true;
+        : typeof v?.inventory_quantity === "number" ? v.inventory_quantity > 0 : false;
       if (!byPack.has(packSize)) byPack.set(packSize, { packSize, price, currency, inStock, skuId: sku.id, url });
     }
     for (const o of byPack.values()) out.push(o);
@@ -1169,7 +1171,18 @@ export async function scrapeCigarmustBrand(
   return { offers: out, products: products.size, pages: pagesHtml.length };
 }
 
-function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[] {
+/** Variant id → available, read from /products/<handle>.js (the .json twin omits it). */
+function shopifyAvailability(jsBody: string | null): Map<string, boolean> | null {
+  if (!jsBody) return null;
+  try {
+    const d = JSON.parse(jsBody) as { variants?: { id?: unknown; available?: unknown }[] };
+    const m = new Map<string, boolean>();
+    for (const v of d?.variants ?? []) if (v && v.id != null && typeof v.available === "boolean") m.set(String(v.id), v.available);
+    return m.size ? m : null;
+  } catch { return null; }
+}
+
+function parseShopifyJson(body: string, currency: string = "CHF", availability: Map<string, boolean> | null = null): ParsedOffer[] {
   let data: Record<string, unknown>;
   try { data = JSON.parse(body); } catch { return []; }
   const product = (data?.product as Record<string, unknown>) || null;
@@ -1190,15 +1203,21 @@ function parseShopifyJson(body: string, currency: string = "CHF"): ParsedOffer[]
     const packSize = parsePackSizeFromTitle(title);
     if (!packSize) continue;
 
-    // Shopify's `available` flag is the most reliable inventory signal;
-    // fall back to inventory_quantity if it's not set.
+    // Shopify's `available` flag is the only reliable inventory signal.
+    // /products/<handle>.json does NOT carry it (only the .js twin does), so
+    // the caller merges availability from the .js body via `availability`.
+    // With no signal at all the row is NOT in stock: an optimistic default
+    // put sold-out boxes at the top of the board (EGM, Sept 2026).
     let inStock: boolean;
-    if (typeof vv.available === "boolean") {
+    const byId = availability && vv.id != null ? availability.get(String(vv.id)) : undefined;
+    if (typeof byId === "boolean") {
+      inStock = byId;
+    } else if (typeof vv.available === "boolean") {
       inStock = vv.available;
     } else if (typeof vv.inventory_quantity === "number") {
       inStock = vv.inventory_quantity > 0;
     } else {
-      inStock = true;  // optimistic when neither flag is present
+      inStock = false;
     }
 
     offers.push({ packSize, price, currency, inStock });
@@ -1526,7 +1545,17 @@ export const onRequestPost: PagesFunction<Env, "retailer"> = async (ctx) => {
         case "cigarmust_html":   parsed = parseCigarmustHtml(html); break;
       case "woocommerce_variations": parsed = parseWooVariations(html, currencyForCountry(config.country)); break;
         case "cigarworld_html":  parsed = parseSchemaOrg(html); break; // currently same as schema.org
-        case "shopify_json":     parsed = parseShopifyJson(html, currencyForCountry(config.country)); break;
+        case "shopify_json": {
+          // Stock lives in the .js twin of the product JSON; one extra GET.
+          let avail: Map<string, boolean> | null = null;
+          try {
+            const jsRes = await fetch(pdp.url.replace(/\.json(\?.*)?$/, ".js"), { headers: BROWSER_HEADERS, cf: { cacheTtl: 0 } });
+            if (jsRes.ok) { const t = await jsRes.text(); bytesDownloaded += t.length; avail = shopifyAvailability(t); }
+          } catch { /* no availability → rows are not in stock */ }
+          if (!avail) notices.push(`${pdp.url}: no .js availability; rows written as not in stock`);
+          parsed = parseShopifyJson(html, currencyForCountry(config.country), avail);
+          break;
+        }
         case "schema_org_jsonld":
         default:                 parsed = parseSchemaOrg(html);
       }
