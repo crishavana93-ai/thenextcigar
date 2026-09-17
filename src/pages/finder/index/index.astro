@@ -1,15 +1,23 @@
 ---
 import PaperLayout from "../../../layouts/PaperLayout.astro";
-import { SKUS, PRICE_HISTORY, bestPriceForSku, RETAILERS, PRICE_SNAPSHOTS } from "../../../data/finder-live";
+import { SKUS, PRICE_HISTORY, RETAILER_HISTORY, bestPriceForSku, RETAILERS, PRICE_SNAPSHOTS } from "../../../data/finder-live";
 
 /**
  * /finder/index/ — The Habanos Index.
  *
- * An equal-weighted index of the cheapest in-stock per-cigar price in Europe
- * across every vitola on the board, base 100 on the first day the scraper
- * has readings for at least half the basket. Every number is derived from
- * finder_price_daily; nothing is estimated. Until the history is long enough
- * the page says so instead of drawing a line.
+ * An equal-weighted, chained index of Cuban cigar prices in Europe.
+ *
+ * Method (from 17 Sept 2026): for each vitola, each day's move is the
+ * geometric mean of the day-over-day change in the SAME retailer's in-stock
+ * price, across every retailer that priced it on both days. A retailer
+ * selling out, a new one appearing, or a scrape failing contributes
+ * nothing — only a price that actually changed moves the line. Per-vitola
+ * levels start at 100 on the base day and chain forward; the index is
+ * their equal-weighted mean. Source: finder_price_daily_retailer (038).
+ *
+ * Before that view exists the page falls back to the old "cheapest
+ * in-stock price" method (finder_price_daily), which jumped every time
+ * the cheapest retailer sold out — the reason for the change.
  */
 
 const MIN_COVERAGE = 0.5;
@@ -25,8 +33,44 @@ const days = [...byDay.keys()].sort();
 const baseDay = days.find((d) => byDay.get(d)!.size >= SKUS.length * MIN_COVERAGE) ?? null;
 const base = baseDay ? byDay.get(baseDay)! : null;
 
-// Chain each day against the base on the SKUs both have.
-const series = baseDay
+// ── Chained method (per-retailer history) ────────────────────────────────
+// level[sku][day]: 100 on the sku's first day at or after base, then × the
+// geometric mean of same-retailer day-over-day ratios. Days with no overlap
+// carry the previous level.
+const CHAINED = RETAILER_HISTORY.size > 0 && !!baseDay;
+const levelBySku = new Map<string, Map<string, number>>();
+if (CHAINED) {
+  for (const sku of SKUS) {
+    const byRet = RETAILER_HISTORY.get(sku.id); if (!byRet) continue;
+    const skuDays = [...new Set([...byRet.values()].flatMap((m) => [...m.keys()]))].filter((d) => d >= baseDay!).sort();
+    if (!skuDays.length) continue;
+    const lv = new Map<string, number>(); let level = 100; let prev: string | null = null;
+    for (const d of skuDays) {
+      if (prev) {
+        let sumLog = 0, n = 0;
+        for (const m of byRet.values()) { const a = m.get(prev!), b = m.get(d); if (a && b && a > 0 && b > 0) { sumLog += Math.log(b / a); n++; } }
+        if (n) level = level * Math.exp(sumLog / n);
+      }
+      lv.set(d, level); prev = d;
+    }
+    levelBySku.set(sku.id, lv);
+  }
+}
+const levelOn = (skuId: string, day: string): number | null => {
+  const lv = levelBySku.get(skuId); if (!lv) return null;
+  let last: number | null = null;
+  for (const [d, v] of lv) { if (d > day) break; last = v; }
+  return last;
+};
+const allDays = CHAINED ? [...new Set([...levelBySku.values()].flatMap((m) => [...m.keys()]))].sort() : [];
+
+const series = CHAINED
+  ? allDays.map((d) => {
+      let n = 0, sum = 0;
+      for (const s of SKUS) { const v = levelOn(s.id, d); if (v != null) { sum += v; n++; } }
+      return { day: d, value: n >= SKUS.length * MIN_COVERAGE ? Math.round((sum / n) * 10) / 10 : null, n };
+    }).filter((p) => p.value !== null) as { day: string; value: number; n: number }[]
+  : baseDay
   ? days.filter((d) => d >= baseDay).map((d) => {
       const m = byDay.get(d)!;
       let n = 0, sum = 0;
@@ -44,14 +88,25 @@ const pct = (a: number, b: number) => Math.round(((a - b) / b) * 1000) / 10;
 const brands = [...new Set(SKUS.map((s) => s.brand))].sort();
 const brandIdx = latest && base ? brands.map((b) => {
   const ids = SKUS.filter((s) => s.brand === b).map((s) => s.id);
-  const m = byDay.get(latest.day)!;
   let n = 0, sum = 0;
-  for (const id of ids) { const p = m.get(id), q = base.get(id); if (p && q) { sum += p / q; n++; } }
+  if (CHAINED) {
+    for (const id of ids) { const v = levelOn(id, latest.day); if (v != null) { sum += v / 100; n++; } }
+  } else {
+    const m = byDay.get(latest.day)!;
+    for (const id of ids) { const p = m.get(id), q = base.get(id); if (p && q) { sum += p / q; n++; } }
+  }
   return n > 0 ? { brand: b, value: Math.round((sum / n) * 1000) / 10, n } : null;
 }).filter((x): x is NonNullable<typeof x> => !!x).sort((a, b) => b.value - a.value) : [];
 
 // Movers since base, per vitola.
+// Chained: the vitola's own level vs 100; "now" and "then" show today's
+// cheapest in-stock price and what it implies at the base level, so the
+// figures on the page are prices a reader recognises.
 const movers = latest && base ? SKUS.map((s) => {
+  if (CHAINED) {
+    const v = levelOn(s.id, latest.day); const p = byDay.get(latest.day)?.get(s.id) ?? bestPriceForSku(s.id)?.eur! / s.boxSize;
+    return v != null && p ? { sku: s, now: p, then: p / (v / 100), pct: Math.round((v - 100) * 10) / 10 } : null;
+  }
   const p = byDay.get(latest.day)!.get(s.id), q = base.get(s.id);
   return p && q ? { sku: s, now: p, then: q, pct: pct(p, q) } : null;
 }).filter((x): x is NonNullable<typeof x> => !!x).sort((a, b) => b.pct - a.pct) : [];
@@ -80,10 +135,10 @@ const pricedRetailers = new Set(PRICE_SNAPSHOTS.map((s) => s.retailerId)).size;
 const perCigar = SKUS.map((s) => ({ s, p: bestPriceForSku(s.id) })).filter((x) => x.p).map((x) => ({ s: x.s, v: x.p!.eur / x.s.boxSize })).sort((a, b) => b.v - a.v);
 const dearest = perCigar[0]?.s, cheapest = perCigar.at(-1)?.s;
 
-const jsonLd = { "@context": "https://schema.org", "@type": "Dataset", name: "The Habanos Index", description: "Equal-weighted index of the cheapest in-stock per-cigar price in Europe across the Cuban vitolas tracked by The Next Cigar.", url: "https://thenextcigar.com/finder/index/", creator: { "@type": "Organization", name: "The Next Cigar" }, temporalCoverage: baseDay ? `${baseDay}/${latest?.day}` : undefined, license: "https://creativecommons.org/licenses/by/4.0/" };
+const jsonLd = { "@context": "https://schema.org", "@type": "Dataset", name: "The Habanos Index", description: "Equal-weighted, chained index of Cuban cigar prices at European retailers, across the vitolas tracked by The Next Cigar.", url: "https://thenextcigar.com/finder/index/", creator: { "@type": "Organization", name: "The Next Cigar" }, temporalCoverage: baseDay ? `${baseDay}/${latest?.day}` : undefined, license: "https://creativecommons.org/licenses/by/4.0/" };
 ---
 
-<PaperLayout title="The Habanos Index — what a Cuban cigar costs in Europe, day by day · The Next Cigar" description={latest ? `The Habanos Index stands at ${latest.value} (base 100 on ${fmt(baseDay!)}): the cheapest per-cigar price across ${coverage} Cuban vitolas at ${pricedRetailers} European retailers.` : `An equal-weighted index of the cheapest per-cigar price in Europe across ${SKUS.length} Cuban vitolas. Publishing from the first month of readings.`} section="markets" jsonLd={jsonLd}>
+<PaperLayout title="The Habanos Index — what a Cuban cigar costs in Europe, day by day · The Next Cigar" description={latest ? `The Habanos Index stands at ${latest.value} (base 100 on ${fmt(baseDay!)}): retailer prices for ${coverage} Cuban vitolas at ${pricedRetailers} European retailers, chained day by day.` : `An equal-weighted index of Cuban cigar prices at European retailers across ${SKUS.length} vitolas. Publishing from the first month of readings.`} section="markets" jsonLd={jsonLd}>
   <p class="miga" style="padding-bottom:0;margin-bottom:-14px">Markets · <a href="/finder/">the board</a> · index</p>
   <div class="dateline">
     <h1>The Habanos Index <em>— {latest ? `${latest.value}` : "opening soon"}</em></h1>
@@ -142,9 +197,9 @@ const jsonLd = { "@context": "https://schema.org", "@type": "Dataset", name: "Th
       <div class="rulehead" style="margin-top:26px"><h2>How it is made</h2></div>
       <div class="prose" style="max-width:none;font-size:15.5px">
         <p><b>The basket</b> is every Cuban vitola on the Markets board — {SKUS.length} at present, {dearest && cheapest ? `from the ${dearest.brand} ${dearest.vitola} to the ${cheapest.brand} ${cheapest.vitola} — ` : ""}each weighted equally. A vitola enters the day's reading when at least one tracked retailer has it in stock at a price our scraper read that day.</p>
-        <p><b>The price</b> for each vitola is the cheapest in-stock box anywhere in Europe that day, in euros at our reference rate, divided by the canonical box size. Per-cigar, because a box of 10 and a box of 25 are not comparable otherwise.</p>
-        <p><b>The index</b> is 100 on the base day — the first day with readings for at least half the basket — and on any later day is the average, across vitolas with a reading on both days, of that day's price over the base price. Days with fewer than half the basket are skipped rather than estimated. Brand indices use the same method on that brand's vitolas.</p>
-        <p><b>What it is not.</b> It is not Habanos S.A.'s list price, not a survey of every retailer in Europe, and not what any one buyer pays after duty. It is a daily measure of the cheapest legal way to buy each cigar online in Europe, from the {pricedRetailers} retailers we read. When a retailer sells out, the next-cheapest sets the price; that is a real cost to a buyer, so it stays in.</p>
+        <p><b>The move</b> for each vitola on each day is the change in the same retailer's in-stock price for the same box since the previous reading, averaged (geometrically) across every retailer that priced it on both days. A retailer selling out, a new retailer appearing, or a scrape that failed contributes nothing: only a price that actually changed moves the line. Prices are in euros at our reference rate, per cigar.</p>
+        <p><b>The index</b> is 100 on the base day — the first day with readings for at least half the basket. Each vitola's level chains forward from 100 by its daily moves; the index is the equal-weighted mean of those levels across vitolas with a reading. Days with fewer than half the basket are skipped rather than estimated. Brand indices use the same method on that brand's vitolas.</p>
+        <p><b>What it is not.</b> It is not Habanos S.A.'s list price, not a survey of every retailer in Europe, and not what any one buyer pays after duty. It is a daily measure of how the prices European retailers actually charge for each cigar are moving, from the {pricedRetailers} retailers we read. Until 17 September 2026 the index tracked the cheapest in-stock price instead, which jumped whenever the cheapest retailer sold out; the method was changed for that reason and the series recomputed.</p>
         <p>The data are free to reuse with attribution (CC BY 4.0). Write to <a href="mailto:contact@thenextcigar.com?subject=Habanos%20Index">the desk</a> for the daily series.</p>
       </div>
     </section>

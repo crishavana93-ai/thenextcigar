@@ -185,6 +185,36 @@ async function fetchHistory(): Promise<Map<string, HistoryPoint[]>> {
 }
 
 export const PRICE_HISTORY: Map<string, HistoryPoint[]> = await fetchHistory();
+
+/** Per-retailer daily prices for the chained index: sku → retailer → day → EUR. */
+export type RetailerHistory = Map<string, Map<string, Map<string, number>>>;
+async function fetchRetailerHistory(): Promise<RetailerHistory> {
+  const out: RetailerHistory = new Map();
+  if (!SUPABASE_URL || !SUPABASE_KEY) return out;
+  const since = new Date(Date.now() - HISTORY_DAYS * 86400e3).toISOString().slice(0, 10);
+  const box = new Map(seed.SKUS.map((s) => [s.id, (s as any).boxSize as number]));
+  const params = new URLSearchParams({ select: "sku,retailer_id,pack_size,day,min_eur", day: `gte.${since}`, order: "sku.asc,retailer_id.asc,day.asc" });
+  try {
+    for (let from = 0, page = 1000; ; from += page) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/finder_price_daily_retailer?${params}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Range: `${from}-${from + page - 1}` },
+      });
+      if (!res.ok) { if (from === 0) console.warn(`[finder-live] retailer history ${res.status} — index falls back to cheapest-price method`); break; }
+      const rows = (await res.json()) as { sku: string; retailer_id: string; pack_size: number | null; day: string; min_eur: string | number }[];
+      for (const r of rows) {
+        if (box.get(r.sku) !== r.pack_size) continue;
+        if (!out.has(r.sku)) out.set(r.sku, new Map());
+        const byRet = out.get(r.sku)!;
+        if (!byRet.has(r.retailer_id)) byRet.set(r.retailer_id, new Map());
+        byRet.get(r.retailer_id)!.set(r.day, Number(r.min_eur));
+      }
+      if (rows.length < page) break;
+    }
+  } catch (err) { console.warn("[finder-live] retailer history fetch failed", err); }
+  if (out.size) console.log(`[finder-live] retailer history: ${out.size} SKUs`);
+  return out;
+}
+export const RETAILER_HISTORY: RetailerHistory = await fetchRetailerHistory();
 export function historyForSku(skuId: string): HistoryPoint[] { return PRICE_HISTORY.get(skuId) ?? []; }
 export const LIVE_COUNT = PRICE_SNAPSHOTS.filter((s) => s.live).length;
 export const NEWEST_SCRAPE = PRICE_SNAPSHOTS.map((s) => s.scrapedAt).sort().at(-1) || "";
