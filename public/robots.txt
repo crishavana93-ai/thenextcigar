@@ -1,0 +1,13 @@
+# The Next Cigar — https://thenextcigar.com
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /shop/cart/
+Disallow: /shop/thank-you/
+Disallow: /lounge/app/
+Disallow: /lounge/login/
+Disallow: /lounge/signup/
+Disallow: /lounge/reset-password/
+
+Sitemap: https://thenextcigar.com/sitemap-index.xml
