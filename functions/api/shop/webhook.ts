@@ -146,11 +146,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     // Re-fetch with expand to be sure we have shipping_details + line items
     const full = await stripeGet(
       env,
-      `checkout/sessions/${session.id}?expand[]=line_items&expand[]=customer_details&expand[]=shipping_details`
+      // Only line_items is expandable; customer_details is always inline and
+      // shipping now lives under collected_information (API 2026-07-29+).
+      // Expanding the old names made Stripe answer 400 and the whole webhook 500.
+      `checkout/sessions/${session.id}?expand[]=line_items`
     );
 
     const meta = full.metadata || {};
-    const shipping = full.shipping_details || full.customer_details || {};
+    const shipping = full.collected_information?.shipping_details || full.shipping_details || full.customer_details || {};
     const address = shipping.address || {};
     const customer = full.customer_details || {};
 
