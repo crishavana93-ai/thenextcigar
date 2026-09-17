@@ -200,7 +200,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
     <div class="buy-sticky" id="buy-sticky" hidden>
       <span class="buy-sticky__price">{sym}{d.price}</span>
       <button type="button" class="buy add" id="add-sticky">Add to cart</button>
-      <a class="buy-sticky__cart" href="/shop/cart/">Cart <span data-cart-count hidden></span></a>
+      <a class="buy-sticky__cart cart-top" href="/shop/cart/" aria-label="Cart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="cart-top__n" data-cart-count hidden></span></a>
     </div>
   )}
   <CartBar />
