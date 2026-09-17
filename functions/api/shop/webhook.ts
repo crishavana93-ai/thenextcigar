@@ -248,8 +248,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const customerHtml = `
         <div style="font-family:Georgia,serif;max-width:520px;color:#1a120a;">
           <h2 style="font-weight:500;letter-spacing:-0.02em;">Order received. Thank you.</h2>
-          <p>We got your order for <strong>${row.product_name}</strong> — ${row.amount.toFixed(2)} ${row.currency}. It's forwarded to our supplier in the next 24 hours; you'll get a shipping confirmation once the tracking number is live (usually 2–4 days).</p>
-          <p>If you need to change the shipping address or cancel, reply to this email within 24 hours and we'll sort it before the supplier ships.</p>
+          <p>We got your order for <strong>${row.product_name}</strong> — ${row.amount.toFixed(2)} ${row.currency}. It's prepared within 24 hours; you'll get a shipping confirmation with the tracking number once the parcel is on its way (usually 2–4 days).</p>
+          <p>If you need to change the shipping address or cancel, reply to this email within 24 hours and we'll sort it before dispatch.</p>
           <p>While you wait: The Lounge is our members' room, free. Who is lighting up near you tonight, your humidor valued against today's board, and 465 rooms in 212 cities. <a href="https://thenextcigar.com/lounge/download/?src=order">Open The Lounge</a>.</p>
           <p style="margin-top:32px;">— The Next Cigar<br/><a href="https://thenextcigar.com/">thenextcigar.com</a></p>
         </div>
