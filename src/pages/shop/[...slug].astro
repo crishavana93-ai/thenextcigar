@@ -1,8 +1,7 @@
 ---
-import { usdRates, approx } from "../../lib/fx";
 import { getCollection, render } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
-import { TIERS, TIER_LINE, amountIn } from "../../../functions/api/shop/pricing";
+import { TIERS, TIER_LINE } from "../../../functions/api/shop/pricing";
 import CartBar from "../../components/shop/CartBar.astro";
 import ServiceStrip from "../../components/shop/ServiceStrip.astro";
 
@@ -25,20 +24,9 @@ const gallery: string[] = [cover, ...((d.gallery ?? []).map(img))].filter((x, i,
 const abs = (u: string) => (u.startsWith("http") ? u : `https://thenextcigar.com${u}`);
 const galleryAbs = gallery.map(abs);
 const sym = d.currency === "EUR" ? "€" : d.currency === "GBP" ? "£" : "$";
-const fx = d.currency === "USD" ? await usdRates() : null;
-const approxLine = fx ? approx(d.price, fx) : "";
-// What checkout actually charges, from pricing.ts — the same figures the
-// Merchant Center feeds carry, so the page and the feed never disagree.
-const local = d.currency === "USD" ? { EUR: amountIn(d.price, "EUR") / 100, GBP: amountIn(d.price, "GBP") / 100, SEK: amountIn(d.price, "SEK") / 100 } : null;
-const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
-const OFFERS = [
-  { cur: d.currency || "USD", price: d.price, region: ["CH","US","CA","NO"] },
-  ...(local ? [
-    { cur: "SEK", price: local.SEK, region: ["SE"] },
-    { cur: "EUR", price: local.EUR, region: ["PT","DE","FR","IT","ES","NL","BE","DK","FI","IE","AT"] },
-    { cur: "GBP", price: local.GBP, region: ["GB"] },
-  ] : []),
-];
+// One price, in the list currency (USD), for every country we ship to.
+// Checkout charges exactly this; the customer's bank does any conversion.
+const OFFERS = [{ cur: d.currency || "USD", price: d.price, region: ["SE","PT","DE","FR","IT","ES","NL","BE","DK","FI","IE","AT","GB","CH","US","CA","NO"] }];
 const soon = !!d.comingSoon;
 const buyable = !soon && d.inStock;
 const etaT = Date.parse(`1 ${d.expectedArrival ?? ""}`);
@@ -119,7 +107,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
       {buyable ? (
         <>
           <p class="price">{sym}{d.price}{d.compareAtPrice && <s>{sym}{d.compareAtPrice}</s>}</p>
-          {local && <p class="fine" style="margin-top:-6px">Charged in your currency at checkout: €{fmt(local.EUR)} in the EU · £{fmt(local.GBP)} in the UK · {fmt(local.SEK)} kr in Sweden · {sym}{d.price} elsewhere. Free tracked delivery included.</p>}
+          <p class="fine" style="margin-top:-6px">Charged in US dollars. Free tracked delivery, duties and VAT included.</p>
           <div class="buybox">
             <div class="qtyrow">
               <span class="qtyrow__label">Quantity</span>

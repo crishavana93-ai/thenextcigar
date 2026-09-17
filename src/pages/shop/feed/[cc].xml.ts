@@ -1,18 +1,18 @@
 /**
- * Google Merchant Center product feeds — one per target country, priced in
- * that country's currency with the same rates checkout charges (pricing.ts).
- *   /shop/feed/se.xml  SEK   /shop/feed/de.xml  EUR   /shop/feed/gb.xml  GBP   /shop/feed/us.xml  USD
- * Add each URL in Merchant Center → Products → Add products → scheduled fetch.
+ * Google Merchant Center product feeds — one per target country, all priced
+ * in USD, which is what the site shows and what checkout charges. Merchant
+ * Center converts for display when "currency conversion" is enabled on the
+ * account (Settings → Shipping and returns → Currency conversion).
+ *   /shop/feed/se.xml  SE   /shop/feed/de.xml  DE   /shop/feed/gb.xml  GB   /shop/feed/us.xml  US
  */
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { amountIn } from "../../../../functions/api/shop/pricing";
 
 const SITE = "https://thenextcigar.com";
 const TARGETS: Record<string, { cur: string; country: string; lang: string }> = {
-  se: { cur: "SEK", country: "SE", lang: "en" },
-  de: { cur: "EUR", country: "DE", lang: "en" },
-  gb: { cur: "GBP", country: "GB", lang: "en" },
+  se: { cur: "USD", country: "SE", lang: "en" },
+  de: { cur: "USD", country: "DE", lang: "en" },
+  gb: { cur: "USD", country: "GB", lang: "en" },
   us: { cur: "USD", country: "US", lang: "en" },
 };
 const CATEGORY: Record<string, string> = {
@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ params }) => {
   const products = (await getCollection("products")).filter((p) => !p.data.isArchived && !p.data.comingSoon && p.data.inStock && p.data.requiresShipping);
   const img = (c: any) => (!c ? "" : typeof c === "string" ? c : c.src);
   const abs = (u: string) => (u.startsWith("http") ? u : SITE + u);
-  const money = (usd: number) => (amountIn(usd, t.cur) / 100).toFixed(2) + " " + t.cur;
+  const money = (usd: number) => Number(usd).toFixed(2) + " " + t.cur;
   const items = products.map((p) => {
     const d: any = p.data;
     const cover = img(d.cover);

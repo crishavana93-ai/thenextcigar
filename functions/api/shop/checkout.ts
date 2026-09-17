@@ -6,7 +6,7 @@
 // are read from catalogue.json, generated at build time from the products
 // content collection by scripts/build-catalogue.mjs. Nothing money-related is
 // trusted from the browser.
-import { discountPct, currencyFor, amountIn } from "./pricing";
+import { discountPct } from "./pricing";
 import catalogue from "./catalogue.json";
 //
 // Env vars required in Cloudflare Pages → Settings → Environment variables:
@@ -86,11 +86,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
     if (!lines.length) return new Response(JSON.stringify({ ok: false, error: "Nothing to buy." }), { status: 400, headers: { "content-type": "application/json" } });
 
-    // Charge in the customer's currency (EUR / GBP / SEK) from the Cloudflare
-    // country of the request; USD elsewhere. Rates live in pricing.ts.
-    const country = (request as any).cf?.country as string | undefined;
-    const chargeCur = currencyFor(country);
-    const currency = chargeCur.toLowerCase();
+    // Every order is charged in US dollars, the shop's list currency; the
+    // customer's bank converts. No local-currency conversion on our side.
+    const chargeCur = "USD";
+    const currency = "usd";
     // Quantity discount (pricing.ts) on the number of pieces in the whole
     // order, applied to every line: two pieces of anything earn it.
     const pieces = lines.reduce((n, l) => n + l.qty, 0);
@@ -120,7 +119,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     lines.forEach((l, i) => {
       form.set(`line_items[${i}][price_data][currency]`, currency);
-      form.set(`line_items[${i}][price_data][unit_amount]`, String(amountIn(Number(l.item.price), chargeCur)));
+      form.set(`line_items[${i}][price_data][unit_amount]`, String(Math.round(Number(l.item.price) * 100)));
       form.set(`line_items[${i}][price_data][product_data][name]`, l.item.name);
       if (l.item.sku) form.set(`line_items[${i}][price_data][product_data][description]`, `SKU ${l.item.sku}`);
       form.set(`line_items[${i}][quantity]`, String(l.qty));
