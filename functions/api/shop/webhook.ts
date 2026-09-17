@@ -102,17 +102,17 @@ async function supaInsert(env: Env, table: string, row: Record<string, any>) {
   return res.json();
 }
 
-async function sendEmail(env: Env, to: string, subject: string, html: string) {
+async function sendEmail(env: Env, to: string | string[], subject: string, html: string, replyTo?: string) {
   if (!env.RESEND_API_KEY) return;
   const from = env.ALERT_FROM_EMAIL || "The Next Cigar Orders <orders@thenextcigar.com>";
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({ from, to, subject, html }),
-  }).catch(() => {}); // best-effort — order write already succeeded
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "content-type": "application/json", Authorization: `Bearer ${env.RESEND_API_KEY}` },
+      body: JSON.stringify({ from, to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+    });
+    if (!r.ok) console.error("[shop webhook] Resend", r.status, await r.text(), "to", to);
+  } catch (e) { console.error("[shop webhook] Resend threw", String(e)); } // best-effort — order write already succeeded
 }
 
 // ── Handler ──
@@ -194,7 +194,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     // parcel from being sent. So: email Cris, email the customer, and only
     // then try to record it — with the recording failure isolated so it cannot
     // take the rest down with it.
-    const notifyTo = env.ORDER_NOTIFY_EMAIL || "guatabeycigars@gmail.com";
+    // Both inboxes, so a Gmail spam filter on one never hides an order.
+    const notifyTo = [...new Set([env.ORDER_NOTIFY_EMAIL || "guatabeycigars@gmail.com", "contact@thenextcigar.com"])];
     const orderSummary = `
       <h2>New order — ${row.product_name}</h2>
       <p><a href="https://thenextcigar.com/admin/ship/?s=${encodeURIComponent(row.stripe_session_id)}">Mark shipped and send the tracking number →</a></p>
@@ -217,9 +218,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       <p><strong>Customer:</strong> ${row.customer_email}${row.shipping_phone ? " · " + row.shipping_phone : ""}</p>
       <hr/>
       <p style="color:#666;font-size:12px;">Session ${row.stripe_session_id} · <a href="https://dashboard.stripe.com/payments/${row.stripe_payment_intent}">Open in Stripe</a></p>
-      <p style="color:#666;font-size:12px;">Forward this address to the supplier${row.supplier_url ? ` at ${row.supplier_url}` : ""}. Update the order row in Supabase → shop_orders → status='forwarded_to_supplier' + tracking_number when the supplier confirms.</p>
+      <p style="color:#666;font-size:12px;">Forward this address to the supplier${row.supplier_url ? ` at ${row.supplier_url}` : ""}. All orders: <a href="https://thenextcigar.com/admin/orders/">thenextcigar.com/admin/orders</a>.</p>
     `;
-    await sendEmail(env, notifyTo, `[TNC Shop] New order · ${row.product_name} · ${row.amount.toFixed(2)} ${row.currency}`, orderSummary);
+    await sendEmail(env, notifyTo, `[TNC Shop] New order · ${row.product_name} · ${row.amount.toFixed(2)} ${row.currency}`, orderSummary, row.customer_email !== "unknown" ? row.customer_email : undefined);
 
     // ── Confirmation to customer ──
     if (row.customer_email && row.customer_email !== "unknown") {

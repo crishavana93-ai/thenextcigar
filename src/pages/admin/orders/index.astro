@@ -1,0 +1,72 @@
+---
+import PaperLayout from "../../../layouts/PaperLayout.astro";
+/** /admin/orders/ — every shop order, newest first, with mark-shipped inline.
+ *  Reads through /api/shop/orders with SHOP_ADMIN_TOKEN; nothing is baked in. */
+---
+<PaperLayout title="Orders · The Next Cigar" description="Admin" section="shop" compact={true} noIndex={true}>
+  <div class="dateline"><h1>Orders</h1><p class="st" id="o-sum">Sign in with the admin token.</p></div>
+
+  <form class="ship o-auth" id="o-auth">
+    <label>Admin token<input name="token" type="password" required autocomplete="off"></label>
+    <button type="submit" class="buy">Load orders</button>
+    <p class="fine" id="o-status" aria-live="polite"></p>
+  </form>
+
+  <div class="o-tools" id="o-tools" hidden>
+    <div class="filter" style="margin:0 0 12px">
+      <button type="button" class="chip is-on" data-f="all">All</button>
+      <button type="button" class="chip" data-f="paid">To ship</button>
+      <button type="button" class="chip" data-f="shipped">Shipped</button>
+      <button type="button" class="chip" data-f="refunded">Refunded</button>
+    </div>
+    <input class="o-search" id="o-search" type="search" placeholder="Search name, email, product, city…">
+  </div>
+
+  <div class="orders" id="orders"></div>
+
+  <script is:inline>
+    (function () {
+      var auth = document.getElementById("o-auth"), st = document.getElementById("o-status"), list = document.getElementById("orders"), tools = document.getElementById("o-tools"), sum = document.getElementById("o-sum"), search = document.getElementById("o-search");
+      var token = "", rows = [], filter = "all", q = "";
+      try { token = sessionStorage.getItem("tnc-admin-token") || ""; if (token) auth.token.value = token; } catch (e) {}
+      function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+      function money(n, c) { return (Math.round(Number(n) * 100) / 100).toFixed(2) + " " + (c || ""); }
+      function when(iso) { var d = new Date(iso); return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); }
+      function draw() {
+        var v = rows.filter(function (r) { return filter === "all" || (r.status || "paid") === filter; }).filter(function (r) { if (!q) return true; var h = [r.customer_name, r.customer_email, r.product_name, r.shipping_city, r.shipping_country, r.shipping_name, r.tracking_number].join(" ").toLowerCase(); return h.indexOf(q) >= 0; });
+        var toShip = rows.filter(function (r) { return (r.status || "paid") === "paid"; }).length;
+        var rev = rows.filter(function (r) { return r.status !== "refunded"; }).reduce(function (m, r) { m[r.currency] = (m[r.currency] || 0) + Number(r.amount); return m; }, {});
+        sum.textContent = rows.length + " orders · " + toShip + " to ship · " + Object.keys(rev).map(function (c) { return money(rev[c], c); }).join(" + ");
+        list.innerHTML = v.length ? v.map(function (r) {
+          var lines = Array.isArray(r.lines) && r.lines.length ? r.lines.map(function (l) { return l.qty + " × " + esc(l.name); }).join("<br>") : (r.quantity > 1 ? r.quantity + " × " : "") + esc(r.product_name);
+          var addr = [r.shipping_name, r.shipping_line1, r.shipping_line2, [r.shipping_postal, r.shipping_city].filter(Boolean).join(" "), r.shipping_state, r.shipping_country].filter(Boolean).map(esc).join("<br>");
+          var status = r.status || "paid";
+          var ship = status === "paid" ? "<form class=\"o-ship\" data-sid=\"" + esc(r.stripe_session_id) + "\"><input name=\"tracking\" placeholder=\"Tracking number\" required><input name=\"carrier\" placeholder=\"Carrier\"><input name=\"url\" placeholder=\"Tracking link (optional)\"><button type=\"submit\">Mark shipped</button></form>" : (r.tracking_number ? "<p class=\"o-track\">" + (r.tracking_url ? "<a href=\"" + esc(r.tracking_url) + "\">" + esc(r.tracking_number) + "</a>" : esc(r.tracking_number)) + (r.carrier ? " · " + esc(r.carrier) : "") + (r.shipped_at ? " · " + when(r.shipped_at) : "") + "</p>" : "");
+          return "<article class=\"o\"><div class=\"o__head\"><span class=\"o__when\">" + when(r.created_at) + "</span><span class=\"o__status o__status--" + esc(status) + "\">" + esc(status === "paid" ? "to ship" : status) + "</span><span class=\"o__amt\">" + money(r.amount, r.currency) + "</span></div><div class=\"o__body\"><div><p class=\"o__lines\">" + lines + "</p><p class=\"o__cust\">" + esc(r.customer_name || r.shipping_name || "") + " · <a href=\"mailto:" + esc(r.customer_email) + "\">" + esc(r.customer_email) + "</a>" + (r.shipping_phone ? " · " + esc(r.shipping_phone) : "") + "</p></div><address class=\"o__addr\">" + addr + "</address></div>" + ship + "<p class=\"o__meta\"><a href=\"https://dashboard.stripe.com/payments/" + esc(r.stripe_payment_intent || "") + "\">Stripe</a> · <button type=\"button\" class=\"o__copy\" data-copy=\"" + esc([r.shipping_name, r.shipping_line1, r.shipping_line2, [r.shipping_postal, r.shipping_city].filter(Boolean).join(" "), r.shipping_state, r.shipping_country, r.shipping_phone].filter(Boolean).join("\\n")) + "\">Copy address for supplier</button></p></article>";
+        }).join("") : "<p class=\"cart__empty\">No orders match.</p>";
+      }
+      async function load() {
+        st.textContent = "Loading…";
+        try {
+          var r = await fetch("/api/shop/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token: token }) });
+          var d = await r.json();
+          if (!d.ok) { st.textContent = d.error; return; }
+          rows = d.orders; auth.hidden = true; tools.hidden = false; st.textContent = ""; draw();
+          try { sessionStorage.setItem("tnc-admin-token", token); } catch (e) {}
+        } catch (e) { st.textContent = "Network error."; }
+      }
+      auth.addEventListener("submit", function (e) { e.preventDefault(); token = auth.token.value.trim(); load(); });
+      tools.querySelectorAll(".chip").forEach(function (c) { c.addEventListener("click", function () { tools.querySelectorAll(".chip").forEach(function (x) { x.classList.toggle("is-on", x === c); }); filter = c.dataset.f; draw(); }); });
+      search.addEventListener("input", function () { q = search.value.trim().toLowerCase(); draw(); });
+      list.addEventListener("submit", async function (e) {
+        var f = e.target.closest(".o-ship"); if (!f) return; e.preventDefault();
+        var b = f.querySelector("button"); b.disabled = true; b.textContent = "Sending…";
+        var body = { token: token, session_id: f.dataset.sid, tracking: f.tracking.value, carrier: f.carrier.value, url: f.url.value };
+        try { var r = await fetch("/api/shop/ship", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); var d = await r.json(); if (d.ok) { await load(); return; } alert(d.error); } catch (err) { alert("Network error"); }
+        b.disabled = false; b.textContent = "Mark shipped";
+      });
+      list.addEventListener("click", function (e) { var c = e.target.closest("[data-copy]"); if (c) { navigator.clipboard.writeText(c.dataset.copy).then(function () { c.textContent = "Copied"; setTimeout(function () { c.textContent = "Copy address for supplier"; }, 1200); }); } });
+      if (token) load();
+    })();
+  </script>
+</PaperLayout>
