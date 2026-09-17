@@ -59,8 +59,11 @@ const mentioned = seedIds
 const faqPairs: { q: string; a: string }[] = [];
 {
   const body = post.body ?? "";
-  const rx = /^###\s+(.+?)\s*\n+([^#][\s\S]*?)(?=\n###\s|\n##\s|$)/gm;
-  const faqSection = body.match(/^##\s+(?:Questions|FAQ|Frequently[^\n]*)\n([\s\S]*?)(?=\n##\s|$)/m);
+  // Note the end-of-string lookahead: with the m flag a bare $ matched the
+  // first line break, so the section (and every answer) came back empty and
+  // no article ever emitted FAQPage. Fixed 17 Sept 2026.
+  const rx = /(?:^|\n)###\s+(.+?)\s*\n+([^#][\s\S]*?)(?=\n###\s|\n##\s|$(?![\s\S]))/g;
+  const faqSection = body.match(/(?:^|\n)##\s+(?:Questions|FAQ|Frequently[^\n]*)\n([\s\S]*?)(?=\n##\s|$(?![\s\S]))/);
   if (faqSection) {
     let m: RegExpExecArray | null;
     while ((m = rx.exec(faqSection[1])) !== null && faqPairs.length < 12) {

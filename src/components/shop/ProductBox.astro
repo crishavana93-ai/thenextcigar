@@ -1,0 +1,53 @@
+---
+/**
+ * <ProductBox slug="…" /> and <ProductBox slugs={["…","…"]} />
+ * The "What we use" card inside an article: live name, photo and price from
+ * the product entry, Add to cart via /cart.js, source tagged with the page.
+ *   import ProductBox from "../../components/shop/ProductBox.astro";
+ *   <ProductBox slug="cigarloong-3-jet-windproof-lighter" note="The one we lit in the wind test." />
+ */
+import { getCollection } from "astro:content";
+import { TIERS } from "../../../functions/api/shop/pricing";
+interface Props { slug?: string; slugs?: string[]; note?: string; title?: string }
+const { slug, slugs, note, title } = Astro.props;
+const want = slugs ?? (slug ? [slug] : []);
+const all = await getCollection("products");
+const img = (c: any) => (!c ? "" : typeof c === "string" ? c : c.src);
+const items = want.map((s) => all.find((p) => p.data.slug === s)).filter(Boolean) as typeof all;
+const live = (p: (typeof all)[number]) => !p.data.isArchived && !p.data.comingSoon && p.data.inStock;
+const sym = (c: string) => (c === "EUR" ? "€" : c === "GBP" ? "£" : "$");
+const cat: Record<string, { name: string; price: number; cover: string }> = {};
+for (const p of items) cat[p.data.slug] = { name: p.data.name, price: p.data.price, cover: img(p.data.cover) };
+---
+{items.length > 0 && (
+  <aside class:list={["pbox", { "pbox--row": items.length > 1 }]} data-pbox>
+    <p class="pbox__kick">{title ?? (items.length > 1 ? "What we used" : "What we use")}</p>
+    <div class="pbox__items">
+      {items.map((p) => { const d: any = p.data; const c = img(d.cover); return (
+        <div class="pbox__item">
+          <a class="pbox__img" href={`/shop/${d.slug}/`}>{c ? <img src={c} alt={d.name} width="300" height="300" loading="lazy" /> : <span class="stamp">Photo when it lands</span>}</a>
+          <div class="pbox__body">
+            <a class="pbox__name" href={`/shop/${d.slug}/`}>{d.name}</a>
+            {items.length === 1 && note && <p class="pbox__note">{note}</p>}
+            <p class="pbox__price">{live(p) ? <>{sym(d.currency)}{d.price} <small>· free tracked delivery, duties paid</small></> : <em>Not available right now</em>}</p>
+            {live(p) ? <button type="button" class="pbox__add" data-add={d.slug}>Add to cart</button> : <a class="pbox__add pbox__add--ghost" href={`/shop/${d.slug}/`}>See the product</a>}
+          </div>
+        </div>
+      ); })}
+    </div>
+    <script is:inline set:html={`window.TNC_CATALOGUE=Object.assign(window.TNC_CATALOGUE||{},${JSON.stringify(cat)});window.TNC_TIERS=window.TNC_TIERS||${JSON.stringify(TIERS)};`}></script>
+  </aside>
+)}
+<script is:inline>
+  (function () {
+    if (window.__pboxWired) return; window.__pboxWired = true;
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-pbox] [data-add]"); if (!b || !window.TNCCart) return;
+      window.TNCCart.add(b.dataset.add, 1);
+      try { sessionStorage.setItem("tnc-cart-source", location.pathname); } catch (err) {}
+      var t = window.TNCCart.totals();
+      b.textContent = "Added ✓ · " + t.pieces + (t.pieces === 1 ? " piece" : " pieces") + " in cart";
+      setTimeout(function () { b.textContent = "Add to cart"; }, 1800);
+    });
+  })();
+</script>
