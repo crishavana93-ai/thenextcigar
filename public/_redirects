@@ -2,22 +2,28 @@
 # Old Webflow URLs → new Astro URLs
 
 # Category pages: /blog-post-categories/<slug> → /category/<slug>
-/blog-post-categories/cubans /category/cubans 301
-/blog-post-categories/cigar-accessories /category/cigar-accessories 301
-/blog-post-categories/cigar-events /category/cigar-events 301
-/blog-post-categories/havana-cigar-life /category/havana-cigar-life 301
-/blog-post-categories/cigar-culture /category/cigar-culture 301
-/blog-post-categories/cigar-101 /category/cigar-101 301
-/blog-post-categories/latest-news /category/latest-news 301
+/blog-post-categories/cubans /category/cubans/ 301
+/blog-post-categories/cigar-accessories /category/cigar-accessories/ 301
+/blog-post-categories/cigar-events /category/cigar-events/ 301
+/blog-post-categories/havana-cigar-life /category/havana-cigar-life/ 301
+/blog-post-categories/cigar-culture /category/cigar-culture/ 301
+/blog-post-categories/cigar-101 /category/cigar-101/ 301
+/blog-post-categories/latest-news /category/latest-news/ 301
 
-# Webflow membership pages — point at the new newsletter subscribe page until member area is rebuilt
-/home-premium /subscribe 302
-/access-denied /subscribe 302
-/sign-up /subscribe 302
+# Webflow membership pages → the Lounge (permanent; the member area exists now)
+/home-premium /lounge/ 301
+/home-premium/ /lounge/ 301
+/access-denied /lounge/login/ 301
+/sign-up /lounge/signup/ 301
+/sign-up/ /lounge/signup/ 301
 /newsletter /subscribe/ 301
 /newsletter/ /subscribe/ 301
-/log-in /subscribe 302
-/reset-password /subscribe 302
+/log-in /lounge/login/ 301
+/log-in/ /lounge/login/ 301
+/reset-password /lounge/reset-password/ 301
+/reset-password/ /lounge/reset-password/ 301
+# Old app route for places → the public map
+/lounge/app/places/* /lounge/map/ 301
 
 # Webflow template pages — drop them
 /template-pages/start-here / 301
@@ -71,7 +77,6 @@ https://lounge.thenextcigar.com/profile/        /lounge/app/profile/          20
 https://lounge.thenextcigar.com/member          /lounge/app/member/           200
 https://lounge.thenextcigar.com/member/         /lounge/app/member/           200
 
-# 2026-09-11 broadsheet relaunch: retired pages
-/collection /lounge/ 301
-/shelves /lounge/ 301
+# 2026-09-11 broadsheet relaunch: retired pages (/collection and /shelves
+# are handled above)
 /paper/* /:splat 301
