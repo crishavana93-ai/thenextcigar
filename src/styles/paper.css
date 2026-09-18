@@ -399,6 +399,16 @@ table.mk .go{font-family:var(--sans);font-size:12px;white-space:nowrap}
 .goods .price .approx{color:var(--mute);font-weight:400;margin-left:4px}
 .goods .price s{color:var(--mute);margin-left:6px}
 .goods .soon{position:absolute;top:10px;left:10px;font-family:var(--sans);font-size:9px;letter-spacing:.14em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:3px 6px}
+/* Phones: two across, like a shop shelf, not a list. */
+@media (max-width:560px){
+  .goods{grid-template-columns:1fr 1fr}
+  .goods article{padding:10px}
+  .goods .head{font-size:15px}
+  .goods .by{display:none}
+  .goods .price{font-size:12.5px;padding-top:8px}
+  .goods .ph{margin-bottom:8px}
+  .goods .soon{top:6px;left:6px;font-size:8px}
+}
 .gb{border:3px double var(--ink);padding:26px 28px;margin:0 0 28px;display:grid;grid-template-columns:1fr 200px;gap:28px}
 .gb h2{font-size:clamp(30px,3.6vw,46px);line-height:1;letter-spacing:-.02em;margin:6px 0 12px}
 .gb h2 em{font-weight:400;color:var(--ink-2)}
