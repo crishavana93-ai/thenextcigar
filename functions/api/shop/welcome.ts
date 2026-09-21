@@ -30,7 +30,7 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   catch (e) { console.error("[welcome] threw", String(e)); return json({ ok: false, error: "Server error: " + String((e as any)?.message || e).slice(0, 200) }, 500); }
 };
 
-async function handle({ request, env }: { request: Request; env: Env }): Promise<Response> {
+async function handle({ request, env, waitUntil }: { request: Request; env: Env; waitUntil: (p: Promise<unknown>) => void }): Promise<Response> {
   let body: any = {};
   try { body = await request.json(); } catch { return json({ ok: false, error: "Bad request" }, 400); }
   if (body.website) return json({ ok: true, code: null }); // honeypot
@@ -65,8 +65,12 @@ async function handle({ request, env }: { request: Request; env: Env }): Promise
 <p>Tracked post, duties and VAT paid, nothing at the door.</p>
 <p><a href="https://thenextcigar.com/shop/" style="color:#7B2622">The shop →</a></p>
 <p style="font-size:13px;color:#6A665E">You asked for this code on thenextcigar.com. No newsletter follows unless you join the Lounge.</p></div>`;
-    fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: `Bearer ${env.RESEND_API_KEY}` }, body: JSON.stringify({ from, to: email, subject: `${code} — 10% off your first piece`, html }) })
-      .then(async (r) => { if (!r.ok) console.error("[welcome] resend", r.status, await r.text()); }).catch((e) => console.error("[welcome] resend threw", String(e)));
+    // Awaited: a fetch left running after the response is what turns a
+    // perfectly good 200 into a bare Cloudflare 502.
+    try {
+      const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: `Bearer ${env.RESEND_API_KEY}` }, body: JSON.stringify({ from, to: email, subject: `${code} — 10% off your first piece`, html }) });
+      if (!r.ok) console.error("[welcome] resend", r.status, await r.text());
+    } catch (e) { console.error("[welcome] resend threw", String(e)); }
   }
   return json({ ok: true, code });
 }
