@@ -25,7 +25,12 @@ async function stripe(env: Env, method: "GET" | "POST", path: string, form?: URL
 }
 const sb = (env: Env) => ({ apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, "content-type": "application/json" });
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async (ctx) => {
+  try { return await handle(ctx); }
+  catch (e) { console.error("[welcome] threw", String(e)); return json({ ok: false, error: "Server error: " + String((e as any)?.message || e).slice(0, 200) }, 500); }
+};
+
+async function handle({ request, env }: { request: Request; env: Env }): Promise<Response> {
   let body: any = {};
   try { body = await request.json(); } catch { return json({ ok: false, error: "Bad request" }, 400); }
   if (body.website) return json({ ok: true, code: null }); // honeypot
@@ -64,4 +69,4 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .then(async (r) => { if (!r.ok) console.error("[welcome] resend", r.status, await r.text()); }).catch((e) => console.error("[welcome] resend threw", String(e)));
   }
   return json({ ok: true, code });
-};
+}
