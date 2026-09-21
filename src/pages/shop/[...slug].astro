@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
+import WelcomeBox from "../../components/shop/WelcomeBox.astro";
 import { TIERS, TIER_LINE } from "../../../functions/api/shop/pricing";
 import CartBar from "../../components/shop/CartBar.astro";
 import ServiceStrip from "../../components/shop/ServiceStrip.astro";
@@ -124,6 +125,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
             </div>
             <p class="buy-status" id="buy-status" aria-live="polite"></p>
             <ServiceStrip />
+          <WelcomeBox source="product" compact />
           </div>
           <noscript><p class="note">Checkout needs JavaScript: the button opens a Stripe payment page. With scripts off, email <a href="mailto:orders@thenextcigar.com">orders@thenextcigar.com</a> and we send a payment link.</p></noscript>
         </>
@@ -201,7 +203,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
     <div class="buy-sticky" id="buy-sticky" hidden>
       <span class="buy-sticky__price">{sym}{d.price}</span>
       <button type="button" class="buy add" id="add-sticky">Add to cart</button>
-      <a class="buy-sticky__cart cart-top" href="/shop/cart/" aria-label="Cart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="cart-top__n" data-cart-count hidden></span></a>
+      <a class="buy-sticky__cart cart-top" href="/shop/cart/" aria-label="Cart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 4h2.6l2.3 10.4a1.6 1.6 0 0 0 1.6 1.3h8.4a1.6 1.6 0 0 0 1.6-1.2L21 7.5H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg><span class="cart-top__n" data-cart-count hidden></span></a>
     </div>
   )}
   <CartBar />

@@ -3,6 +3,7 @@ import PaperLayout from "../../../layouts/PaperLayout.astro";
 import CartBar from "../../../components/shop/CartBar.astro";
 import ServiceStrip from "../../../components/shop/ServiceStrip.astro";
 import { TIER_LINE } from "../../../../functions/api/shop/pricing";
+import WelcomeBox from "../../../components/shop/WelcomeBox.astro";
 /** /shop/cart/ — rendered from localStorage by /cart.js; the server re-prices at checkout. */
 ---
 <PaperLayout title="Your cart · The Next Cigar" description="What you have picked from the shop." section="shop" compact={true} noIndex={true}>
@@ -29,6 +30,7 @@ import { TIER_LINE } from "../../../../functions/api/shop/pricing";
       <ServiceStrip compact={true} />
       <p class="fine"><a href="/shop/">← Keep browsing</a></p>
     </div>
+    <WelcomeBox source="cart" />
     <section class="cart__more" id="cart-more" hidden>
       <p class="t">Goes with it</p>
       <div class="row" id="cart-more-row"></div>

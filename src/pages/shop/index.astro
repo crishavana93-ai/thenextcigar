@@ -1,4 +1,5 @@
 ---
+import WelcomeBox from "../../components/shop/WelcomeBox.astro";
 import { getCollection } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import CartBar from "../../components/shop/CartBar.astro";
@@ -57,6 +58,8 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
       </div>
     </section>
   ))}
+
+  <WelcomeBox source="shop" />
 
   <section class="gb">
     <div>

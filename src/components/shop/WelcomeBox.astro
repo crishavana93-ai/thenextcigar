@@ -1,0 +1,36 @@
+---
+/** First-order code capture. <WelcomeBox source="cart" /> */
+interface Props { source?: string; compact?: boolean }
+const { source = "shop", compact = false } = Astro.props;
+---
+<aside class:list={["welcome", { "welcome--compact": compact }]} data-welcome data-source={source}>
+  <p class="welcome__kick">First piece · 10% off</p>
+  <p class="welcome__lead">One email, one code, no newsletter unless you ask.</p>
+  <form class="welcome__form" novalidate>
+    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
+    <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" aria-label="Email address" />
+    <button type="submit">Send the code</button>
+  </form>
+  <p class="welcome__out" hidden aria-live="polite"></p>
+</aside>
+<script is:inline>
+  (function () {
+    if (window.__welcomeWired) return; window.__welcomeWired = true;
+    document.addEventListener("submit", async function (e) {
+      var f = e.target.closest("[data-welcome] form"); if (!f) return;
+      e.preventDefault();
+      var box = f.closest("[data-welcome]"), out = box.querySelector(".welcome__out"), btn = f.querySelector("button");
+      var email = f.email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { out.hidden = false; out.textContent = "That address does not look right."; return; }
+      btn.disabled = true; btn.textContent = "Sending…";
+      try {
+        var r = await fetch("/api/shop/welcome", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: email, source: box.dataset.source + ":" + location.pathname, website: f.website.value }) });
+        var d = await r.json();
+        out.hidden = false;
+        if (d.ok && d.code) { out.innerHTML = (d.again ? "Your code, again: " : "Your code: ") + "<b>" + d.code + "</b> — it is in your inbox too. Type it in the promotion-code box at checkout."; f.hidden = true; }
+        else out.textContent = d.error || "Something went wrong; try again in a moment.";
+      } catch (err) { out.hidden = false; out.textContent = "Something went wrong; try again in a moment."; }
+      btn.disabled = false; btn.textContent = "Send the code";
+    });
+  })();
+</script>
