@@ -5,6 +5,7 @@ import {
   bestPriceInCountry, formatPrice, toEUR, checkedLabel, effectiveShopUrl, type CountryCode,
 } from "../../data/finder-live";
 import { policyFor } from "../../data/country-config.ts";
+import ProductBox from "../../components/shop/ProductBox.astro";
 import { places as cigarPlaces } from "../../data/cigar-places.ts";
 
 /**
@@ -182,6 +183,9 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
         <p>Members can scope alerts to a country, so you only hear about boxes you can legally have delivered.</p>
         <a class="cta" href="/lounge/signup/">Join the Lounge</a>
       </div>
+      <div class="rulehead" style="margin-top:24px"><h2>The drawer</h2></div>
+      <p class="by" style="margin:-4px 0 8px">Delivered to {country.name}, duties and VAT paid, nothing at the door. <a href="/blog/cigar-accessories-delivered-sweden-germany-uk-duties-paid/">How that works →</a></p>
+      <ProductBox slugs={["five-in-one-cigar-cutter-toolkit","cigarloong-3-jet-windproof-lighter","waterproof-travel-humidor-5-cigars"]} title="In the shop" />
     </aside>
   </div>
 </PaperLayout>

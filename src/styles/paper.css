@@ -722,4 +722,10 @@ body{transform-origin:0% 50%;backface-visibility:hidden}
 .pbox__price small{font-family:var(--sans);font-size:11px;color:#6A665E}
 .pbox__add{display:inline-block;font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:10px 16px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;text-decoration:none}
 .pbox__add--ghost{background:transparent;color:var(--ink)}
+.rail .pbox{margin:0 0 8px;padding:12px}
+.rail .pbox--row .pbox__items{grid-template-columns:1fr}
+.rail .pbox--row .pbox__item{grid-template-columns:72px 1fr;gap:10px}
+.rail .pbox__name{font-size:15px}
+.rail .pbox__price{font-size:16px;margin:4px 0 6px}
+.rail .pbox__add{padding:7px 10px;font-size:10px}
 @media (max-width:560px){.pbox__item{grid-template-columns:96px 1fr;gap:10px}.pbox__name{font-size:17px}.pbox__price{font-size:18px}.pbox--row .pbox__items{grid-template-columns:1fr 1fr}}

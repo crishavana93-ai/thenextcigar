@@ -9,6 +9,7 @@ import {
 import { buildSkuFaq } from "../../../lib/finder/skuFaq.ts";
 import { COUNTRIES, FX_TO_EUR, isStale, STALE_DAYS } from "../../../data/finder-live";
 import { DUTY_RATES } from "../../../data/duty-rates";
+import ProductBox from "../../../components/shop/ProductBox.astro";
 
 /**
  * /finder/sku/[sku]/
@@ -88,6 +89,14 @@ const destinations = COUNTRIES.filter((c) => DUTY_RATES[c.code]).sort((a, b) => 
 const fmtDay = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 const url = `https://thenextcigar.com/finder/sku/${sku.slug}/`;
+// "The drawer": the cutter that suits this ring gauge and shape (the rule from
+// the V-cut article), a case sized to the box, and a lighter. Shop products
+// only; ProductBox drops anything not live.
+const torpedo = /pir[aá]mide|belicoso|campana|torpedo|figurado/i.test(`${sku.shape ?? ""} ${sku.vitola}`);
+const cutterPick = torpedo || sku.ring < 45 ? "double-blade-cigar-cutter-tnc" : sku.ring >= 55 ? "five-in-one-cigar-cutter-toolkit" : "dual-side-cutter-drill-rest";
+const casePick = sku.boxSize <= 10 ? "waterproof-travel-humidor-5-cigars" : "pu-travel-humidor-mesh-pocket";
+const drawer = [cutterPick, "cigarloong-3-jet-windproof-lighter", casePick];
+const drawerNote = torpedo ? "Straight cut, two to three millimetres from the tip." : sku.ring < 45 ? `Ring ${sku.ring}: a straight cut, one millimetre into the cap.` : sku.ring >= 55 ? `Ring ${sku.ring}: a V-cut, or a straight blade that clears 22 mm.` : `Ring ${sku.ring}: a V-cut gives the better draw.`;
 const graph: any[] = [
   // Was "Product" with an AggregateOffer. Dropped 12 September 2026, for the
   // same reason as the Finder list pages: Google requires an "image" on any
@@ -276,6 +285,9 @@ const description = best
         <p>One email when this vitola falls below your price or comes back in stock. No charge, no newsletter unless you ask.</p>
         {best && <SaveAlertButton sku={sku.slug} productName={`${sku.brand} ${sku.vitola}`} baselineEur={Math.round(best.eur)} baselineLabel={`€${Math.round(best.eur).toLocaleString("en-GB")}`} variant="primary" />}
       </div>
+      <div class="rulehead" style="margin-top:24px"><h2>The drawer</h2></div>
+      <p class="by" style="margin:-4px 0 8px">{drawerNote} <a href="/blog/v-cut-or-straight-cut-cuban-vitolas-ring-gauge-table/">Why →</a></p>
+      <ProductBox slugs={drawer} title={`For the ${sku.vitola}`} />
       <div class="rulehead" style="margin-top:24px"><h2>Read next</h2></div>
       <ul class="list">
         <li><div><a class="head" href="/blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/">Import duty, explained</a><p class="by">What a cross-border box really costs</p></div></li>
