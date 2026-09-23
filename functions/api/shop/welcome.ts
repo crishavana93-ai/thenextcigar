@@ -14,7 +14,7 @@ interface Env {
   ALERT_FROM_EMAIL?: string;
 }
 const COUPON = "tnc-welcome-10";
-const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+const json = (b: unknown, s = 200) => { const t = JSON.stringify(b); console.log("[welcome] respond", s, t.slice(0, 120)); return new Response(t, { status: s, headers: { "content-type": "application/json; charset=utf-8" } }); };
 
 async function stripe(env: Env, method: "GET" | "POST", path: string, form?: URLSearchParams) {
   const r = await fetch(`https://api.stripe.com/v1/${path}`, {
@@ -39,11 +39,14 @@ async function handle({ request, env, waitUntil }: { request: Request; env: Env;
   const source = String(body.source || "").slice(0, 120);
 
   // Already issued? Return the same code.
+  console.log("[welcome] start", email, source);
   const ex = await fetch(`${env.PUBLIC_SUPABASE_URL}/rest/v1/shop_welcome?email=eq.${encodeURIComponent(email)}&select=code`, { headers: sb(env) });
+  console.log("[welcome] lookup", ex.status);
   if (ex.ok) { const rows = (await ex.json()) as { code: string }[]; if (rows[0]) return json({ ok: true, code: rows[0].code, again: true }); }
 
   // Coupon once, by id (Stripe returns resource_already_exists afterwards).
   const c = await stripe(env, "POST", "coupons", new URLSearchParams({ id: COUPON, percent_off: "10", duration: "once", name: "Welcome · 10% off your first piece" }));
+  console.log("[welcome] coupon", c.ok, c.d?.error?.code || c.d?.id);
   if (!c.ok && c.d?.error?.code !== "resource_already_exists") return json({ ok: false, error: "Could not create the code." }, 502);
 
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(3))).map((b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
@@ -51,9 +54,11 @@ async function handle({ request, env, waitUntil }: { request: Request; env: Env;
   const p = await stripe(env, "POST", "promotion_codes", new URLSearchParams({
     coupon: COUPON, code, max_redemptions: "1", "restrictions[first_time_transaction]": "true", "metadata[email]": email, "metadata[source]": source,
   }));
+  console.log("[welcome] promo", p.ok, p.d?.id || p.d?.error?.message);
   if (!p.ok) return json({ ok: false, error: "Could not create the code." }, 502);
 
   const ins = await fetch(`${env.PUBLIC_SUPABASE_URL}/rest/v1/shop_welcome`, { method: "POST", headers: { ...sb(env), Prefer: "return=minimal" }, body: JSON.stringify({ email, code, promo_id: p.d.id, source }) });
+  console.log("[welcome] insert", ins.status);
   if (!ins.ok) console.error("[welcome] supabase", ins.status, await ins.text());
 
   if (env.RESEND_API_KEY) {
@@ -69,6 +74,7 @@ async function handle({ request, env, waitUntil }: { request: Request; env: Env;
     // perfectly good 200 into a bare Cloudflare 502.
     try {
       const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", Authorization: `Bearer ${env.RESEND_API_KEY}` }, body: JSON.stringify({ from, to: email, subject: `${code} — 10% off your first piece`, html }) });
+      console.log("[welcome] resend", r.status);
       if (!r.ok) console.error("[welcome] resend", r.status, await r.text());
     } catch (e) { console.error("[welcome] resend threw", String(e)); }
   }
