@@ -1,6 +1,6 @@
 ---
 import { getCollection } from "astro:content";
-import { srcFor, srcsetFor } from "../../lib/img";
+import { coverSet } from "../../lib/cover";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 
 /**
@@ -22,6 +22,9 @@ const cover = (p: (typeof posts)[number]) => {
 const catName = (slug?: string) => (slug && cats.get(slug)?.name) || "Editorial";
 
 const [lead, ...others] = posts;
+const leadCover = lead ? await coverSet(lead.data.cover) : undefined;
+const thumbs = new Map<string, Awaited<ReturnType<typeof coverSet>>>();
+for (const p of posts) thumbs.set(p.id, await coverSet(p.data.cover, [320, 480, 768], 768));
 const featured = others.slice(0, 4);
 const archive = others.slice(4);
 
@@ -60,8 +63,8 @@ const jsonLd = {
       <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
       {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
       <p class="by">By {authorName(lead.data.author)} · {new Date(lead.data.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
-      {cover(lead) && (
-        <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(lead), 1024)} srcset={srcsetFor(cover(lead))} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>
+      {leadCover && (
+        <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={leadCover?.src} srcset={leadCover?.srcset} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>
       )}
       <div class="twin four-up">
         {featured.map((p) => (

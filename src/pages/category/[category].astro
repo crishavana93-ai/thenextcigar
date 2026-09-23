@@ -1,6 +1,6 @@
 ---
 import { getCollection } from "astro:content";
-import { srcFor, srcsetFor } from "../../lib/img";
+import { coverSet } from "../../lib/cover";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 
 /** /category/[slug]/
@@ -17,6 +17,9 @@ const authors = await getCollection("authors");
 const by = (slug?: string) => (authors.find((a) => a.id === slug || (a.data as any).slug === slug)?.data as any)?.name ?? "The Next Cigar";
 const cover = (p: (typeof posts)[number]) => { const c: any = p.data.cover; return !c ? undefined : typeof c === "string" ? c : c.src; };
 const [lead, ...rest] = posts;
+const leadCover = lead ? await coverSet(lead.data.cover) : undefined;
+const thumbs = new Map<string, Awaited<ReturnType<typeof coverSet>>>();
+for (const p of posts) thumbs.set(p.id, await coverSet(p.data.cover, [320, 480, 768], 768));
 const cats = (await getCollection("categories")).filter((c) => c.data.slug !== cat.slug);
 const fmt = (d: any, long = false) => new Date(d).toLocaleDateString("en-GB", long ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "short" });
 const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: cat.name, url: `https://thenextcigar.com/category/${cat.slug}/`, isPartOf: { "@type": "WebSite", url: "https://thenextcigar.com/" } };
@@ -36,7 +39,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
         <h2 class="head" style="margin-top:8px"><a href={`/blog/${lead.data.slug}/`}>{lead.data.title}</a></h2>
         {lead.data.excerpt && <p class="deck">{lead.data.excerpt}</p>}
         <p class="by">By {by(lead.data.author)} · {fmt(lead.data.publishedAt, true)}</p>
-        {cover(lead) && <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={srcFor(cover(lead), 1024)} srcset={srcsetFor(cover(lead))} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>}
+        {leadCover && <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={leadCover?.src} srcset={leadCover?.srcset} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>}
         <ul class="list" style="margin-top:18px">
           {rest.map((p) => (
             <li style="grid-template-columns:1fr auto;gap:18px;align-items:baseline">
