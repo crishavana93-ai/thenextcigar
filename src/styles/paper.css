@@ -631,34 +631,34 @@ details.acc>summary::-webkit-details-marker{display:none}
 .buy-sticky__cart{font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
 .cart-bar.yield{bottom:76px}
 
-/* Page turn (23 Sept 2026, v2): a real leaf. The page is pinned at its
-   left edge (the gutter) and swings towards the reader on rotateY; a curl
-   shadow sweeps across it as it lifts, and the sheet underneath (the paper
-   colour) shows through. On arrival the new leaf settles from a slight
-   lift. Body keeps its own paint; the curl is a fixed overlay so the
-   layout never reflows. */
-html{perspective:1400px;perspective-origin:25% 40%;background:var(--paper)}
-body{transform-origin:0% 50%;backface-visibility:hidden;transform-style:preserve-3d}
-.leaf-curl{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;
-  background:linear-gradient(100deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 34%,rgba(0,0,0,.10) 46%,rgba(0,0,0,.28) 54%,rgba(255,255,255,.18) 58%,rgba(0,0,0,.22) 66%,rgba(0,0,0,0) 80%);
-  background-size:220% 100%;background-position:120% 0}
+/* Page turn (23 Sept 2026, v3): a broadsheet leaf.
+   The whole page is one sheet hinged on its left edge (the spine). On a
+   link click it lifts from the right and folds over to the left; past 90°
+   its cream back (.leaf-back) is what you see. The new page loads under it
+   with the same sheet, still falling (.leaf-front), which finishes the turn
+   and lies flat off to the left. Reduced-motion: no turn at all. */
+html{perspective:1800px;perspective-origin:38% 45%;background:var(--paper)}
+html.leaf-turning{background:#E4E0D6}
+body{transform-origin:0% 50%;backface-visibility:hidden}
+/* The back of the sheet lives on <html>, beside <body>, so it can face the
+   other way: it is invisible until the page has folded past 90°, then it is
+   the cream reverse of the leaf still falling to the left. */
+.leaf-back{position:fixed;inset:0;z-index:9998;pointer-events:none;transform-origin:0% 50%;backface-visibility:hidden;display:none;
+  background:#EEEBE3;background-image:linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,0) 10%);box-shadow:-30px 0 60px rgba(0,0,0,.25)}
+.leaf-shade{position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.06) 55%,rgba(0,0,0,.24) 100%)}
+.leaf-front{position:fixed;inset:0;z-index:9999;pointer-events:none;transform-origin:0% 50%;display:none;
+  background:#EEEBE3;background-image:linear-gradient(90deg,rgba(0,0,0,.22),rgba(0,0,0,0) 14%);box-shadow:30px 0 60px rgba(0,0,0,.28)}
 @media (prefers-reduced-motion:no-preference){
-  body.leaf-out{animation:leaf-out .46s cubic-bezier(.6,.02,.7,.5) forwards;pointer-events:none}
-  body.leaf-out .leaf-curl{animation:curl-out .46s cubic-bezier(.6,.02,.7,.5) forwards}
-  body.leaf-in{animation:leaf-in .42s cubic-bezier(.16,.7,.25,1) both}
-  body.leaf-in .leaf-curl{animation:curl-in .42s cubic-bezier(.16,.7,.25,1) both}
+  html.leaf-turning body{animation:leaf-out .8s cubic-bezier(.55,.05,.4,1) forwards;pointer-events:none}
+  html.leaf-turning .leaf-shade{animation:leaf-shade .8s cubic-bezier(.55,.05,.4,1) forwards}
+  html.leaf-turning .leaf-back{display:block;animation:leaf-back .8s cubic-bezier(.55,.05,.4,1) forwards}
+  body.leaf-in .leaf-front{display:block;animation:leaf-front .5s cubic-bezier(.3,.6,.35,1) forwards}
 }
-@keyframes leaf-out{
-  0%{transform:rotateY(0) translateZ(0);filter:brightness(1)}
-  55%{filter:brightness(.96)}
-  100%{transform:rotateY(-34deg) translateX(-3%);filter:brightness(.8);box-shadow:-40px 0 60px rgba(0,0,0,.25)}
-}
-@keyframes curl-out{0%{opacity:0;background-position:120% 0}30%{opacity:1}100%{opacity:1;background-position:-20% 0}}
-@keyframes leaf-in{
-  0%{transform:rotateY(16deg) translateX(1.5%);filter:brightness(1.05)}
-  100%{transform:none;filter:none}
-}
-@keyframes curl-in{0%{opacity:.9;background-position:-10% 0}100%{opacity:0;background-position:120% 0}}
+@keyframes leaf-out{0%{transform:rotateY(0)}100%{transform:rotateY(-128deg)}}
+@keyframes leaf-back{0%{transform:rotateY(180deg)}100%{transform:rotateY(52deg)}}
+@keyframes leaf-shade{0%{opacity:0}40%{opacity:1}100%{opacity:1}}
+@keyframes leaf-front{0%{transform:rotateY(-128deg);opacity:1}85%{transform:rotateY(-179deg);opacity:1}100%{transform:rotateY(-180deg);opacity:0}}
 .ship{max-width:520px;display:grid;gap:14px}
 .ship label{display:grid;gap:4px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
 .ship input{font-family:var(--sans);font-size:15px;padding:9px 10px;border:1px solid var(--ink);background:var(--paper);letter-spacing:0;text-transform:none}
