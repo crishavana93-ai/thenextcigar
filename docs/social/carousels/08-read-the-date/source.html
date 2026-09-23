@@ -1,0 +1,98 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+.band{position:absolute;left:0;right:0;bottom:0;height:480px;box-sizing:border-box;background:#0B0A09;padding:40px 72px 0;z-index:4}
+.band h2,.band p,.band .tag{position:relative}
+.slide.over .band{background:transparent}
+.slide.over .band:before{content:"";position:absolute;left:0;right:0;top:-40px;bottom:0;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 25%)}
+.slide.over .band .tag{position:absolute;top:-250px;left:72px;z-index:2}
+.slide.over .band h2{margin-top:-190px}
+.tag{display:inline-block;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.24em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:8px 16px;margin-bottom:26px}
+.band h2{margin:0;font-size:92px;line-height:.95;letter-spacing:-.035em;font-weight:500;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.band h2 i{font-style:italic;font-weight:300;color:#C9A36A}
+.band p{margin:24px 0 0;font-size:30px;line-height:1.3;color:#C7C2B6;font-weight:300}
+.meta{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:#6A665E;z-index:6}
+.meta b{color:#9A958A;font-weight:500}
+.paper{position:absolute;left:0;top:0;width:1080px;height:1000px;overflow:hidden;background:#000}
+.paper img{position:absolute;left:-30px;top:50px;width:1150px;box-shadow:0 30px 80px rgba(0,0,0,.7);transform:rotate(-1.5deg);transform-origin:top left}
+.paper:after{content:"";position:absolute;left:0;right:0;bottom:0;height:420px;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 85%)}
+.top{position:absolute;left:72px;right:72px;top:80px}
+.k{font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;margin-bottom:28px}
+.k b{color:#F2F0EA;font-weight:500}
+table{border-collapse:collapse;width:100%}
+td{padding:12px 0;border-bottom:1px solid #3A3733;font-size:30px;font-weight:300;color:#C7C2B6;vertical-align:baseline}
+.big{font-size:150px;line-height:.92;letter-spacing:-.045em;font-weight:500;color:#F2F0EA;margin-top:10px}
+.big i{font-style:italic;font-weight:300;color:#C9A36A}
+.big small{display:block;font-size:32px;letter-spacing:0;font-weight:300;color:#C7C2B6;margin-top:26px;line-height:1.3}
+.stamp{font-family:'Courier New',monospace;font-weight:700;color:#5B7BE0;letter-spacing:.08em}
+.mon{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;margin-top:6px}
+.mon div{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #3A3733;padding:14px 0;font-size:34px;font-weight:300;color:#C7C2B6}
+.mon div b{font-family:'Courier New',monospace;font-weight:700;color:#5B7BE0;font-size:40px;letter-spacing:.08em}
+.list td{font-size:34px;padding:16px 0}
+.list td.n{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:#9A958A;width:170px;vertical-align:top;padding-top:24px;text-align:left}
+.list td b.stamp{font-size:38px}
+.ox{color:#C24A44}
+</style></head><body>
+<div class="slide over">
+ <div class="paper"><img src="paper.png"></div>
+ <div class="grain"></div>
+ <div class="band"><span class="tag">Cigar 101</span><h2>Read the date, <i>not the factory.</i></h2><p>Two lines of ink under every Habanos box. One you can read in ten seconds. The other has been a secret since 2003, whatever the tables online say. Swipe →</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>23 Sep 2026 · 1 / 7</span></div>
+</div>
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The date, since 2000</b> · three letters, two digits</div>
+  <div class="big"><span class="stamp">ABR 24</span><small>April 2024. The first three letters of the Spanish month, then the last two digits of the year. That is the whole system, unchanged since January 2000.</small></div></div>
+ <div class="band"><span class="tag">How to read it</span><h2>Turn the box <i>over.</i></h2><p>Under the marks burnt into the cedar, two crooked lines of blue or black ink. A hand stamp, a few hundred boxes a day. Too perfect worries us more than a little crooked.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>2 / 7</span></div>
+</div>
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The twelve stamps</b> · Spanish, not English</div>
+  <div class="mon">
+   <div><b>ENE</b><span>January</span></div><div><b>JUL</b><span>July</span></div>
+   <div><b>FEB</b><span>February</span></div><div><b>AGO</b><span>August</span></div>
+   <div><b>MAR</b><span>March</span></div><div><b>SEP</b><span>September</span></div>
+   <div><b>ABR</b><span>April</span></div><div><b>OCT</b><span>October</span></div>
+   <div><b>MAY</b><span>May</span></div><div><b>NOV</b><span>November</span></div>
+   <div><b>JUN</b><span>June</span></div><div><b>DIC</b><span>December</span></div>
+  </div></div>
+ <div class="band"><span class="tag">The table</span><h2>ENE is January, <i>not June.</i></h2><p>AGO is August, DIC is December, and SET turns up now and then for September. Save this slide; it is the only translation you need at a counter.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>3 / 7</span></div>
+</div>
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>What the date means</b> · filled, not harvested</div>
+  <div class="big">+2 <i>years</i><small>The stamp is the month the box was filled. The leaf inside was fermented and aged for a year and a half to two years before anyone rolled it. A 2024 box holds 2022 tobacco.</small></div></div>
+ <div class="band"><span class="tag">Our rule</span><h2>Not in its <i>first year.</i></h2><p>Fresh Habanos often smoke sharp and closed for months after boxing. From about eighteen months the box settles. Same cigar, same price, two dates on the shelf: take the older one.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>4 / 7</span></div>
+</div>
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Before 2000</b> · a cipher, not a month</div>
+  <table class="list">
+   <tr><td class="n">1985–98</td><td><b class="stamp">NNSU</b> &nbsp;= 11 98, November 1998. The letters of NIVELACUSO stand for 1 to 0.</td></tr>
+   <tr><td class="n">1999</td><td><b class="stamp ox">????</b> &nbsp;New keyword; the two best references don't even agree on it. Read with care.</td></tr>
+   <tr><td class="n">2000–</td><td><b class="stamp">ENE 00</b> &nbsp;Plain Spanish month from January 2000, and ever since.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Vintage boxes</span><h2>N I V E L A <i>C U S O</i></h2><p>N is 1, I is 2, V is 3 … O is 0. Month first, in one or two letters, then the year in two. Our decoder reads it for you.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Cuban Cigar Website</span><span>5 / 7</span></div>
+</div>
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The factory code</b> · the second line</div>
+  <div class="big">2003<small>The year Habanos S.A. started rotating the three-letter factory code on a schedule it keeps to itself. Enough combinations that a code need not repeat for years. The Cuban Cigar Website calls tracking them “virtually impossible”.</small></div></div>
+ <div class="band"><span class="tag">The myth</span><h2>Nobody can <i>decode it.</i></h2><p>The confident tables online — EL for El Laguito, FPG for Partagás — are the 1985–1998 list under a new heading. For any modern box, the factory line tells you nothing. We say so, rather than guess.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>6 / 7</span></div>
+</div>
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Does the stamp prove it's real?</b></div>
+  <div class="big">No.<small>Forgers copy stamps off real boxes. A date you recognise proves nothing; a code you don't recognise condemns nothing. What a bad stamp can do is confirm a doubt: ENE 98 is impossible, printed-flat marks are a tell, and a price far under the board is the tell nobody can fake.</small></div></div>
+ <div class="band"><span class="tag">Decode yours</span><h2>Decode <i>yours.</i></h2><p>thenextcigar.com/tools/box-code — type the stamp, get the month and year, and an honest “we can't say” for the factory. Full guide with worked examples on the site — link in bio. We sell accessories, never tobacco.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>7 / 7</span></div>
+</div></body></html>
