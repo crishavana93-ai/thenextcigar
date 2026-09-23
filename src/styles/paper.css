@@ -631,34 +631,34 @@ details.acc>summary::-webkit-details-marker{display:none}
 .buy-sticky__cart{font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
 .cart-bar.yield{bottom:76px}
 
-/* Page turn (23 Sept 2026, v3): a broadsheet leaf.
-   The whole page is one sheet hinged on its left edge (the spine). On a
-   link click it lifts from the right and folds over to the left; past 90°
-   its cream back (.leaf-back) is what you see. The new page loads under it
-   with the same sheet, still falling (.leaf-front), which finishes the turn
-   and lies flat off to the left. Reduced-motion: no turn at all. */
-html{perspective:1800px;perspective-origin:38% 45%;background:var(--paper)}
-html.leaf-turning{background:#E4E0D6}
-body{transform-origin:0% 50%;backface-visibility:hidden}
-/* The back of the sheet lives on <html>, beside <body>, so it can face the
-   other way: it is invisible until the page has folded past 90°, then it is
-   the cream reverse of the leaf still falling to the left. */
-.leaf-back{position:fixed;inset:0;z-index:9998;pointer-events:none;transform-origin:0% 50%;backface-visibility:hidden;display:none;
-  background:#EEEBE3;background-image:linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,0) 10%);box-shadow:-30px 0 60px rgba(0,0,0,.25)}
-.leaf-shade{position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;
-  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.06) 55%,rgba(0,0,0,.24) 100%)}
-.leaf-front{position:fixed;inset:0;z-index:9999;pointer-events:none;transform-origin:0% 50%;display:none;
-  background:#EEEBE3;background-image:linear-gradient(90deg,rgba(0,0,0,.22),rgba(0,0,0,0) 14%);box-shadow:30px 0 60px rgba(0,0,0,.28)}
-@media (prefers-reduced-motion:no-preference){
-  html.leaf-turning body{animation:leaf-out .8s cubic-bezier(.55,.05,.4,1) forwards;pointer-events:none}
-  html.leaf-turning .leaf-shade{animation:leaf-shade .8s cubic-bezier(.55,.05,.4,1) forwards}
-  html.leaf-turning .leaf-back{display:block;animation:leaf-back .8s cubic-bezier(.55,.05,.4,1) forwards}
-  body.leaf-in .leaf-front{display:block;animation:leaf-front .5s cubic-bezier(.3,.6,.35,1) forwards}
-}
-@keyframes leaf-out{0%{transform:rotateY(0)}100%{transform:rotateY(-128deg)}}
-@keyframes leaf-back{0%{transform:rotateY(180deg)}100%{transform:rotateY(52deg)}}
-@keyframes leaf-shade{0%{opacity:0}40%{opacity:1}100%{opacity:1}}
-@keyframes leaf-front{0%{transform:rotateY(-128deg);opacity:1}85%{transform:rotateY(-179deg);opacity:1}100%{transform:rotateY(-180deg);opacity:0}}
+/* Page turn (24 Sept 2026, v4): quiet.
+   v3 folded the whole page in 3D and it read as a gimmick. v4 is the feel
+   of a sheet being laid down: the old page lifts a hair, drifts left off
+   its spine and thins to nothing while the next one settles under it. It
+   runs through cross-document view transitions, so there is no white flash
+   and no scripting on the arriving page; browsers without them get a plain
+   short fade from the script in PaperLayout. Reduced-motion: instant. */
+@view-transition{navigation:auto}
+html{background:var(--paper)}
+::view-transition-old(root),::view-transition-new(root){animation-timing-function:cubic-bezier(.4,0,.2,1);mix-blend-mode:normal}
+::view-transition-old(root){animation:tnc-leave .52s both;transform-origin:0 50%}
+::view-transition-new(root){animation:tnc-arrive .52s both;transform-origin:0 50%}
+@keyframes tnc-leave{
+  0%{opacity:1;transform:none;filter:none}
+  35%{opacity:1;transform:perspective(2200px) rotateY(-7deg) translateX(-1.5%);filter:drop-shadow(-18px 0 24px rgba(0,0,0,.18))}
+  100%{opacity:0;transform:perspective(2200px) rotateY(-16deg) translateX(-7%) scale(.985);filter:drop-shadow(-30px 0 40px rgba(0,0,0,.14))}}
+@keyframes tnc-arrive{
+  0%{opacity:0;transform:translateX(1.5%) scale(.995)}
+  45%{opacity:0;transform:translateX(1.5%) scale(.995)}
+  100%{opacity:1;transform:none}}
+/* Fallback for browsers without cross-document view transitions. */
+html.leaf-turning body{transition:opacity .22s ease-out;opacity:0}
+body.leaf-in{animation:tnc-fade-in .3s ease-out both}
+@keyframes tnc-fade-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-group(root),::view-transition-old(root),::view-transition-new(root){animation-duration:0s}
+  html.leaf-turning body{transition:none;opacity:1}
+  body.leaf-in{animation:none}}
 .ship{max-width:520px;display:grid;gap:14px}
 .ship label{display:grid;gap:4px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
 .ship input{font-family:var(--sans);font-size:15px;padding:9px 10px;border:1px solid var(--ink);background:var(--paper);letter-spacing:0;text-transform:none}

@@ -155,21 +155,18 @@ const ogImage = new URL(image, Astro.site).toString();
       });
     </script>
     <script is:inline>
-      // Page turn (v3). See paper.css. The old page folds over its left
-      // edge; the new page arrives with the same sheet still falling. Full
-      // page loads underneath, so scripts and state are untouched. Off for
-      // reduced-motion, modifier clicks, new tabs, downloads, hashes, forms.
+      // Page turn (v4). Browsers with cross-document view transitions do the
+      // whole thing in CSS (see paper.css); this script only serves the rest
+      // with a short fade out and in. Off for reduced-motion, modifier
+      // clicks, new tabs, downloads, hashes, forms.
       (function () {
+        if ("startViewTransition" in document) return;
         var rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        var b = document.body;
-        var back = document.createElement("div"); back.className = "leaf-back"; back.setAttribute("aria-hidden", "true"); document.documentElement.appendChild(back);
-        var shade = document.createElement("div"); shade.className = "leaf-shade"; shade.setAttribute("aria-hidden", "true"); b.appendChild(shade);
-        var front = document.createElement("div"); front.className = "leaf-front"; front.setAttribute("aria-hidden", "true"); b.appendChild(front);
-        var turning = false;
-        try { turning = sessionStorage.getItem("tnc-leaf") === "1"; sessionStorage.removeItem("tnc-leaf"); } catch (e) {}
-        if (!rm && turning) { b.classList.add("leaf-in"); setTimeout(function () { b.classList.remove("leaf-in"); }, 600); }
-        window.addEventListener("pageshow", function (e) { if (e.persisted) { b.classList.remove("leaf-in"); document.documentElement.classList.remove("leaf-turning"); } });
         if (rm) return;
+        var b = document.body, turning = false;
+        try { turning = sessionStorage.getItem("tnc-leaf") === "1"; sessionStorage.removeItem("tnc-leaf"); } catch (e) {}
+        if (turning) { b.classList.add("leaf-in"); setTimeout(function () { b.classList.remove("leaf-in"); }, 400); }
+        window.addEventListener("pageshow", function (e) { if (e.persisted) { b.classList.remove("leaf-in"); document.documentElement.classList.remove("leaf-turning"); } });
         document.addEventListener("click", function (e) {
           if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
           var a = e.target.closest("a[href]"); if (!a) return;
@@ -182,7 +179,7 @@ const ogImage = new URL(image, Astro.site).toString();
           e.preventDefault();
           try { sessionStorage.setItem("tnc-leaf", "1"); } catch (err) {}
           document.documentElement.classList.add("leaf-turning");
-          setTimeout(function () { location.href = u.href; }, 600);
+          setTimeout(function () { location.href = u.href; }, 200);
         });
       })();
     </script>
