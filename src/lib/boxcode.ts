@@ -50,7 +50,8 @@ const FACTORIES: FactoryHit[] = [
 /** Pre-2000 ciphers: a keyword whose letters stand for the digits 1…0. */
 const CIPHERS: { name: string; word: string; period: string }[] = [
   { name: "NIVELACUSO", word: "NIVELACUSO", period: "1985–1998" },
-  { name: "NETAGIDOCU", word: "NETAGIDOCU", period: "early 1999" },
+  { name: "NETAGIDOCU", word: "NETAGIDOCU", period: "early 1999 (keyword as Cigar Weekly records it)" },
+  { name: "CODIGUNETA", word: "CODIGUNETA", period: "early 1999 (keyword as the Cuban Cigar Website records it)" },
 ];
 
 export interface Decoded {
