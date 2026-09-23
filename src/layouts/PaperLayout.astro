@@ -162,7 +162,8 @@ const ogImage = new URL(image, Astro.site).toString();
       (function () {
         var rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         var b = document.body;
-        if (!rm) { b.classList.add("leaf-in"); setTimeout(function () { b.classList.remove("leaf-in"); }, 400); }
+        var curl = document.createElement("div"); curl.className = "leaf-curl"; curl.setAttribute("aria-hidden", "true"); b.appendChild(curl);
+        if (!rm) { b.classList.add("leaf-in"); setTimeout(function () { b.classList.remove("leaf-in"); }, 500); }
         window.addEventListener("pageshow", function (e) { if (e.persisted) b.classList.remove("leaf-out", "leaf-in"); });
         if (rm) return;
         document.addEventListener("click", function (e) {
@@ -176,7 +177,7 @@ const ogImage = new URL(image, Astro.site).toString();
           if (/^(mailto|tel):/.test(a.getAttribute("href") || "")) return;
           e.preventDefault();
           b.classList.add("leaf-out");
-          setTimeout(function () { location.href = u.href; }, 260);
+          setTimeout(function () { location.href = u.href; }, 400);
         });
       })();
     </script>
