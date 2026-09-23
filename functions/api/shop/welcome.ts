@@ -52,7 +52,8 @@ async function handle({ request, env, waitUntil }: { request: Request; env: Env;
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(3))).map((b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
   const code = `WELCOME-${suffix}`;
   const p = await stripe(env, "POST", "promotion_codes", new URLSearchParams({
-    coupon: COUPON, code, max_redemptions: "1", "restrictions[first_time_transaction]": "true", "metadata[email]": email, "metadata[source]": source,
+    // Stripe API 2025-09-30+ (clover): promotion codes take promotion[type]/promotion[coupon], not `coupon`.
+    "promotion[type]": "coupon", "promotion[coupon]": COUPON, code, max_redemptions: "1", "restrictions[first_time_transaction]": "true", "metadata[email]": email, "metadata[source]": source,
   }));
   console.log("[welcome] promo", p.ok, p.d?.id || p.d?.error?.message);
   if (!p.ok) return json({ ok: false, error: "Could not create the code.", detail: String(p.d?.error?.message || "").slice(0, 200) }, 500);
