@@ -47,7 +47,7 @@ async function handle({ request, env, waitUntil }: { request: Request; env: Env;
   // Coupon once, by id (Stripe returns resource_already_exists afterwards).
   const c = await stripe(env, "POST", "coupons", new URLSearchParams({ id: COUPON, percent_off: "10", duration: "once", name: "Welcome · 10% off your first piece" }));
   console.log("[welcome] coupon", c.ok, c.d?.error?.code || c.d?.id);
-  if (!c.ok && c.d?.error?.code !== "resource_already_exists") return json({ ok: false, error: "Could not create the code." }, 502);
+  if (!c.ok && c.d?.error?.code !== "resource_already_exists") return json({ ok: false, error: "Could not create the code.", detail: String(c.d?.error?.message || "").slice(0, 200) }, 500);
 
   const suffix = Array.from(crypto.getRandomValues(new Uint8Array(3))).map((b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
   const code = `WELCOME-${suffix}`;
@@ -55,7 +55,7 @@ async function handle({ request, env, waitUntil }: { request: Request; env: Env;
     coupon: COUPON, code, max_redemptions: "1", "restrictions[first_time_transaction]": "true", "metadata[email]": email, "metadata[source]": source,
   }));
   console.log("[welcome] promo", p.ok, p.d?.id || p.d?.error?.message);
-  if (!p.ok) return json({ ok: false, error: "Could not create the code." }, 502);
+  if (!p.ok) return json({ ok: false, error: "Could not create the code.", detail: String(p.d?.error?.message || "").slice(0, 200) }, 500);
 
   const ins = await fetch(`${env.PUBLIC_SUPABASE_URL}/rest/v1/shop_welcome`, { method: "POST", headers: { ...sb(env), Prefer: "return=minimal" }, body: JSON.stringify({ email, code, promo_id: p.d.id, source }) });
   console.log("[welcome] insert", ins.status);
