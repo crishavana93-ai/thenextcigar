@@ -3,20 +3,25 @@
  * LivePaper — the front-page opener: someone in a club chair reading today's
  * paper, and the paper is this site.
  *
- * Layers, all in one "scene" sized to the photograph (1344 x 752):
- *   1. /hero/reader.webp — the reader holding a blank broadsheet
- *      (DRAFT: Higgsfield-generated stand-in, 19 Oct 2026, until real footage)
- *   2. .lp-spread — today's front and back page, live HTML, mapped onto the
- *      blank sheet with a measured matrix3d and printed with mix-blend-mode:
- *      multiply so the creases and lamp light of the photo show through
- *   3. /hero/reader-hands.webp — the hands cut out of the same photo, laid
- *      back over the print so the fingers sit on top of the paper
- *   4. smoke, rising from behind the sheet (CSS)
- * Scrolling moves a camera into the front page until it fills the screen;
- * the print hands over to plain newsprint and the real masthead follows.
+ * Scene (sized to the photograph, 1344 x 752 px), back to front:
+ *   .lp-soft   the room, pre-blurred (4 KB) — revealed as the camera racks focus
+ *   .lp-photo  the room, sharp — fades out during the focus pull
+ *   .lp-sheet  the same photo clipped to the paper: the sheet never goes soft
+ *   .lp-spread today's back and front page, live HTML, mapped onto the sheet
+ *              with a measured matrix3d, printed with mix-blend-mode:multiply
+ *   .lp-hands  the hands, cut from the photo, back over the print
+ *   smoke, lamp glow, grain
+ * Photo: DRAFT Higgsfield stand-in (19 Oct 2026) until real footage.
  *
- * Budget: 47 KB photo + 8 KB hands + HTML/CSS + a small inline script.
- * prefers-reduced-motion: a static first frame, no pinning, no movement.
+ * Motion, in order:
+ *   1. Opening: the room fades up from dark and the camera settles; the
+ *      prices on the board count up to today's.
+ *   2. Scroll (smoothed, so wheel steps glide): the camera travels into the
+ *      front page on a log-scale zoom while the room racks out of focus.
+ *   3. Match cut: the camera lands the printed "The Next Cigar" exactly on the
+ *      real masthead, which is held still underneath the whole time, and the
+ *      paper dissolves into the site.
+ * prefers-reduced-motion: the first frame, still; no pin, no counting.
  */
 import { MASTHEAD } from "../../data/masthead";
 
@@ -30,66 +35,73 @@ interface Props {
   inside: string[];
 }
 const { leadTitle, leadDeck, leadKicker = "Report", leadCover, rows, inside } = Astro.props;
-const fmt = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Stockholm" });
-const buildDate = fmt(new Date());
-const isDev = import.meta.env.DEV;
+const buildDate = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Stockholm" });
+const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
 ---
 
 <section class="lp" id="lp" aria-label="Today's paper" data-lp>
   <div class="lp-stage">
     <div class="lp-scene">
-      <img class="lp-photo" src="/hero/reader.webp" alt="" width="1344" height="752" fetchpriority="high" decoding="async" />
+      <img class="lp-soft" src="/hero/reader-blur.webp" alt="" width="1344" height="752" decoding="async" />
+      <img class="lp-photo" src="/hero/reader.webp" alt="" width="1344" height="752" fetchpriority="high" />
+      <img class="lp-sheet" src="/hero/reader.webp" alt="" width="1344" height="752" style={`clip-path:polygon(${quad})`} />
       <div class="lp-spread" aria-hidden="true">
         <div class="lp-page lp-back">
           <div class="lp-ear"><span>The board</span><span data-lp-date>{buildDate}</span></div>
           <div class="lp-bh">Markets <i>· cheapest box, today</i></div>
           {rows.map((r) => (
-            <div class="lp-row"><b>{r.name}</b><span>{r.price}</span><small>{r.where}{r.live ? " · live" : ""}</small></div>
+            <div class="lp-row"><b>{r.name}</b><span data-lp-count>{r.price}</span><small>{r.where}{r.live ? " · live" : ""}</small></div>
           ))}
           <div class="lp-bh lp-gap">Inside today</div>
           <ol class="lp-in">{inside.map((t) => <li>{t}</li>)}</ol>
         </div>
         <div class="lp-page lp-front">
           <div class="lp-ear"><span data-lp-date>{buildDate}</span><span>Malmö</span></div>
-          <div class="lp-name">The Next Cigar</div>
+          <div class="lp-name"><span data-lp-name>The Next Cigar</span></div>
           <div class="lp-tag">The anthology of the leaf — Cuban cigars, the European market, and the things worth owning.</div>
           <div class="lp-ed"><span>{MASTHEAD.volume} · {MASTHEAD.issue.replace("Issue", "No.")}</span><span>No tobacco sold here</span><span>{MASTHEAD.date}</span></div>
           <div class="lp-kick">{leadKicker}</div>
           <div class="lp-head">{leadTitle}</div>
-          {leadCover && <img class="lp-foto" src={leadCover.src} srcset={leadCover.srcset} sizes="600px" alt="" width="1200" height="675" loading="eager" />}
+          {leadCover && <img class="lp-foto" src={leadCover.src} srcset={leadCover.srcset} sizes="600px" alt="" width="1200" height="675" />}
           {leadDeck && <p class="lp-deck">{leadDeck}</p>}
         </div>
       </div>
-      <img class="lp-hands" src="/hero/reader-hands.webp" alt="" width="795" height="240" decoding="async" />
-      <div class="lp-smoke" aria-hidden="true"><span></span><span></span><span></span></div>
+      <img class="lp-hands" src="/hero/reader-hands.webp" alt="" width="795" height="240" fetchpriority="high" />
+      <div class="lp-smoke" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div class="lp-lamp" aria-hidden="true"></div>
     </div>
-    <div class="lp-veil" aria-hidden="true"></div>
-    <p class="lp-cue" aria-hidden="true">Today's paper <span>— scroll to read it</span></p>
-    {isDev && <p class="lp-draft">Draft image · generated stand-in</p>}
+    <div class="lp-grain" aria-hidden="true"></div>
+    <div class="lp-dark" aria-hidden="true"></div>
+    <div class="lp-cue" aria-hidden="true"><span>Today's paper</span><i></i></div>
   </div>
 </section>
 
 <style>
-  .lp{position:relative;height:100vh;height:100svh;background:#110d0a;margin:0}
-  .lp.armed{height:300vh;margin-bottom:-100vh;margin-bottom:-100svh}
-  /* the page slides up over the last, blank frame: the paper becomes the site */
+  .lp{position:relative;z-index:2;height:100vh;height:100svh;background:#110d0a;margin:0}
+  .lp.armed{height:300vh;margin-bottom:-100vh;margin-bottom:-100svh;background:transparent}
   :global(.lp.armed ~ .wrap){position:relative;z-index:1;background:var(--paper)}
-  .lp-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+  .lp-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;opacity:var(--o,1);
+    background:linear-gradient(rgba(14,11,8,.55),rgba(14,11,8,.55)),#110d0a url(/hero/reader-blur.webp) 50% 45%/cover no-repeat}
+  .lp.cut .lp-stage{pointer-events:none}
   .lp-scene{position:absolute;left:0;top:0;width:1344px;height:752px;transform-origin:0 0;will-change:transform;
     transform:translate3d(var(--tx,0px),var(--ty,0px),0) scale(var(--k,1))}
-  .lp-photo{position:absolute;inset:0;width:1344px;height:752px;max-width:none}
-  .lp-hands{position:absolute;left:280px;top:260px;width:795px;height:240px;max-width:none;pointer-events:none}
+  .lp-scene > img{position:absolute;left:0;top:0;width:1344px;height:752px;max-width:none}
+  .lp-photo{opacity:calc(1 - var(--f,0))}
+  .lp-hands{position:absolute;left:280px!important;top:260px!important;width:795px!important;height:240px!important;pointer-events:none}
 
   /* the spread, designed at 1400 x 946, mapped onto the blank sheet */
   .lp-spread{position:absolute;left:0;top:0;width:1400px;height:946px;transform-origin:0 0;
     transform:matrix3d(0.4623514,0.00091954023,0,1.6420361e-06,0.040176804,0.49799835,0,6.6268575e-05,0,0,1,0,352,124,0,1);
     display:grid;grid-template-columns:1fr 1fr;mix-blend-mode:multiply;color:#1b1713;opacity:.94}
   .lp-page{padding:44px 64px 40px;overflow:hidden}
+  /* before the hand-over, everything but the title lifts off the page */
+  .lp-back,.lp-front > :not(.lp-name){opacity:var(--pf,1)}
   .lp-back{padding-left:150px}
   .lp-front{padding-right:150px}
   .lp-ear{display:flex;justify-content:space-between;font:500 15px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;border-bottom:2px solid currentColor;padding-bottom:10px}
-  .lp-name{font:600 92px/1 var(--serif);letter-spacing:-.02em;text-align:center;margin-top:22px;white-space:nowrap}
-  .lp-tag{font:italic 400 19px/1.3 var(--serif);text-align:center;margin-top:10px;opacity:.85}
+  /* set exactly like the real masthead, so the match cut lands glyph on glyph */
+  .lp-name{font-family:var(--serif);font-weight:700;font-size:88px;line-height:.92;letter-spacing:-.025em;font-variation-settings:'opsz' 72;text-align:center;margin-top:24px;white-space:nowrap}
+  .lp-tag{font:italic 400 19px/1.3 var(--serif);text-align:center;margin-top:12px;opacity:.85}
   .lp-ed{display:flex;justify-content:space-between;margin-top:18px;padding:9px 0;border-top:5px double currentColor;border-bottom:2px solid currentColor;font:500 13px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase}
   .lp-kick{display:inline-block;margin-top:26px;background:#7B2622;color:#EEEBE3;font:600 13px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;padding:6px 9px}
   .lp-head{font:600 50px/1.04 var(--serif);letter-spacing:-.01em;margin-top:14px;text-wrap:balance}
@@ -104,57 +116,143 @@ const isDev = import.meta.env.DEV;
   .lp-in{margin:12px 0 0;padding-left:28px;font:600 21px/1.25 var(--serif)}
   .lp-in li{margin-bottom:12px}
 
-  .lp-smoke{position:absolute;left:826px;top:110px;width:0;height:0;opacity:calc(1 - var(--p,0) * 4)}
-  .lp-smoke span{position:absolute;left:-40px;top:-40px;width:80px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(225,218,205,.28),transparent);filter:blur(9px);animation:lp-smoke 8s linear infinite;opacity:0}
-  .lp-smoke span:nth-child(2){animation-delay:-2.7s;left:-30px}
-  .lp-smoke span:nth-child(3){animation-delay:-5.3s;left:-50px}
-  @keyframes lp-smoke{0%{transform:translate(0,20px) scale(.5);opacity:0}20%{opacity:1}100%{transform:translate(28px,-150px) scale(2.2) rotate(20deg);opacity:0}}
+  .lp-smoke{position:absolute;left:826px;top:112px;width:0;height:0;opacity:calc(1 - var(--p,0) * 3)}
+  .lp-smoke span{position:absolute;left:-40px;top:-40px;width:80px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(225,218,205,.26),transparent);filter:blur(9px);animation:lp-smoke 9s cubic-bezier(.3,.1,.5,1) infinite;opacity:0}
+  .lp-smoke span:nth-child(2){animation-delay:-2.2s;left:-30px}
+  .lp-smoke span:nth-child(3){animation-delay:-4.5s;left:-52px}
+  .lp-smoke span:nth-child(4){animation-delay:-6.7s;left:-36px}
+  @keyframes lp-smoke{0%{transform:translate(0,24px) scale(.45);opacity:0}18%{opacity:1}100%{transform:translate(34px,-160px) scale(2.3) rotate(22deg);opacity:0}}
+  .lp-lamp{position:absolute;left:1000px;top:-120px;width:600px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,206,140,.16),transparent);mix-blend-mode:screen;animation:lp-lamp 6.5s ease-in-out infinite;pointer-events:none}
+  @keyframes lp-lamp{50%{opacity:.72}}
 
-  .lp-veil{position:absolute;inset:0;background:var(--paper);opacity:calc((var(--p,0) - .74) * 4);pointer-events:none}
-  .lp-cue{position:absolute;left:0;right:0;bottom:3.5vh;margin:0;text-align:center;font:500 11px/1 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:#e2d6c2;opacity:calc(1 - var(--p,0) * 10);text-shadow:0 1px 8px rgba(0,0,0,.8)}
-  .lp-cue span{color:#a99b84}
-  .lp-draft{position:absolute;right:12px;top:12px;margin:0;font:600 10px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;background:#7B2622;color:#fff;padding:5px 7px}
+  .lp-grain{position:absolute;inset:-50%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:lp-grain .6s steps(3) infinite}
+  @keyframes lp-grain{33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}}
+  .lp-dark{position:absolute;inset:0;background:#0b0907;opacity:var(--d,0);pointer-events:none}
+
+  .lp-cue{position:absolute;left:50%;bottom:3.2vh;transform:translateX(-50%);display:grid;justify-items:center;gap:10px;font:500 10.5px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:#e2d6c2;opacity:calc(1 - var(--p,0) * 12);text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .lp-cue i{display:block;width:1px;height:34px;background:linear-gradient(#e2d6c2 0 0) 0 0/1px 40% no-repeat,rgba(226,214,194,.25);animation:lp-cue 2.2s cubic-bezier(.6,0,.2,1) infinite}
+  @keyframes lp-cue{0%{background-position:0 -40%}100%{background-position:0 140%}}
+
   .lp.armed.rest .lp-scene{animation:lp-breathe 9s ease-in-out infinite}
-  @keyframes lp-breathe{50%{translate:0 -2px;scale:1.004}}
-  @media (prefers-reduced-motion:reduce){ .lp-smoke span,.lp.armed.rest .lp-scene{animation:none} }
+  @keyframes lp-breathe{50%{translate:0 -2px}}
+  @media (prefers-reduced-motion:reduce){
+    .lp-smoke span,.lp-lamp,.lp-grain,.lp-cue i,.lp.armed.rest .lp-scene{animation:none}
+  }
 </style>
 
 <script is:inline>
 (function () {
   var root = document.querySelector("[data-lp]");
   if (!root) return;
-  var fmt = { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Stockholm" };
-  root.querySelectorAll("[data-lp-date]").forEach(function (el) { el.textContent = new Date().toLocaleDateString("en-GB", fmt); });
+  var fmtD = { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Stockholm" };
+  root.querySelectorAll("[data-lp-date]").forEach(function (el) { el.textContent = new Date().toLocaleDateString("en-GB", fmtD); });
   var still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var IW = 1344, IH = 752;
-  // Front page of the spread, in photo pixels: x 672..997, top edge y 125.
-  var PX0 = 672, PX1 = 997, PTOP = 125, PCX = (PX0 + PX1) / 2;
+  var wrap = null, mast = null; // found once the rest of the page has parsed
+  function findPage() { for (var n = root.nextElementSibling; n; n = n.nextElementSibling) { if (n.classList && n.classList.contains("wrap")) { wrap = n; break; } } mast = document.querySelector(".mast h1 a, .mast .h1 a"); }
+  var nameEl = root.querySelector("[data-lp-name]");
+  var IW = 1344, IH = 752, SPREAD_W = 645, PAPER_CX = 674, PAPER_CY = 342;
+  var PX0 = 672, PX1 = 997;
   if (!still) root.classList.add("armed");
+
   var lerp = function (a, b, t) { return a + (b - a) * t; };
+  var clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
   var ease = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
-  var raf = 0;
-  function frame() {
+  var smooth = function (a, b, v) { var x = clamp((v - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+
+  // Where the printed title sits in scene pixels, measured once at a known camera.
+  var nameScene = null, target = null;
+  function measure() {
+    if (!nameEl) return;
+    var vw = innerWidth, vh = innerHeight;
+    root.style.setProperty("--k", "1"); root.style.setProperty("--tx", "0px"); root.style.setProperty("--ty", "0px");
+    var r = nameEl.getBoundingClientRect(), st = root.querySelector(".lp-stage").getBoundingClientRect();
+    nameScene = { cx: r.left - st.left + r.width / 2, cy: r.top - st.top + r.height / 2, w: r.width };
+    if (wrap) wrap.style.transform = "";
+    if (mast && wrap) {
+      // The real title's place on screen at the moment the pin releases.
+      var lpTop = root.getBoundingClientRect().top + scrollY;
+      var A = root.offsetHeight - vh;
+      var m = mast.getBoundingClientRect();
+      var top = m.top + scrollY - (lpTop + A);
+      target = { cx: m.left + m.width / 2, cy: top + m.height / 2, w: m.width };
+    }
+    if (!target) target = { cx: vw / 2, cy: vh * 0.12, w: vw * 0.6 };
+  }
+
+  var cur = 0, born = performance.now(), raf = 0, counted = false;
+  function goal() {
+    var total = root.offsetHeight - innerHeight;
+    return still ? 0 : clamp(-root.getBoundingClientRect().top / Math.max(1, total), 0, 1);
+  }
+  function frame(now) {
     raf = 0;
     var vw = innerWidth, vh = innerHeight, phone = vw < 700;
-    var total = root.offsetHeight - 2 * vh; // last screen is the hand-over
-    var raw = still ? 0 : Math.min(1, Math.max(0, -root.getBoundingClientRect().top / Math.max(1, total)));
-    var t = ease(Math.min(1, raw / 0.78));
-    // Start: the whole room (cover) on wide screens; the front page on phones.
-    var k0 = phone ? (vw * 0.94) / (PX1 - PX0) : Math.max(vw / IW, vh / IH);
-    var cx0 = phone ? PCX : IW / 2, cy0 = phone ? Math.min(IH - vh / (2 * k0), Math.max(vh / (2 * k0), 360)) : IH / 2;
-    // End: the front page fills the width, its top edge at the top of the screen.
-    var k1 = vw / (PX1 - PX0) * 1.02;
-    var cx1 = PCX, cy1 = PTOP + vh / (2 * k1) - 6 / k1;
-    var k = lerp(k0, k1, t), cx = lerp(cx0, cx1, t), cy = lerp(cy0, cy1, t);
-    root.style.setProperty("--k", k.toFixed(4));
-    root.style.setProperty("--tx", (vw / 2 - cx * k).toFixed(1) + "px");
-    root.style.setProperty("--ty", (vh / 2 - cy * k).toFixed(1) + "px");
-    root.style.setProperty("--p", raw.toFixed(4));
+    var g = goal();
+    cur += (g - cur) * (Math.abs(g - cur) < 0.0005 ? 1 : 0.16);
+    var raw = cur;
+    var t = ease(clamp(raw / 0.8, 0, 1));
+
+    // 1. start: the room on wide screens, the whole spread on phones
+    var k0 = phone ? (vw * 0.98) / SPREAD_W : Math.max(vw / IW, vh / IH) * 1.02;
+    var cx0 = phone ? PAPER_CX : IW / 2, cy0 = phone ? PAPER_CY : IH / 2;
+    // opening dolly: settle from slightly closer over 1.8 s
+    var intro = still ? 1 : smooth(0, 1800, now - born);
+    k0 *= 1 + 0.045 * (1 - intro);
+    // 3. end: the printed title on the real one
+    var k1 = target.w / nameScene.w;
+    var cx1 = nameScene.cx + (vw / 2 - target.cx) / k1;
+    var cy1 = nameScene.cy + (vh / 2 - target.cy) / k1;
+    var k = Math.exp(lerp(Math.log(k0), Math.log(k1), t));
+    var cx = lerp(cx0, cx1, t), cy = lerp(cy0, cy1, t);
+
+    var s = root.style;
+    s.setProperty("--k", k.toFixed(5));
+    s.setProperty("--tx", (vw / 2 - cx * k).toFixed(2) + "px");
+    s.setProperty("--ty", (vh / 2 - cy * k).toFixed(2) + "px");
+    s.setProperty("--p", raw.toFixed(4));
+    s.setProperty("--f", smooth(0.08, 0.55, t).toFixed(3));          // focus pull
+    s.setProperty("--d", (1 - smooth(0, 1400, now - born)).toFixed(3)); // fade up from dark
+    s.setProperty("--pf", (1 - smooth(0.74, 0.86, raw)).toFixed(3));
+    var o = 1 - smooth(0.86, 0.98, raw);
+    s.setProperty("--o", o.toFixed(3));
+    root.classList.toggle("cut", o < 0.6);
     root.classList.toggle("rest", raw < 0.01);
+
+    // hold the real page still under the stage until the pin releases
+    if (wrap && !still) {
+      var A = root.offsetHeight - vh, sc = -root.getBoundingClientRect().top;
+      var off = Math.max(0, A - sc);
+      wrap.style.transform = off > 0 ? "translate3d(0," + (-off).toFixed(1) + "px,0)" : "";
+    }
+    if (Math.abs(g - cur) > 0.0002 || now - born < 1800) raf = requestAnimationFrame(frame);
   }
   function req() { if (!raf) raf = requestAnimationFrame(frame); }
+
+  // 2. the board counts up to today's prices, once
+  function countUp() {
+    if (still || counted) return; counted = true;
+    root.querySelectorAll("[data-lp-count]").forEach(function (el, i) {
+      var text = el.textContent, m = text.match(/^([^0-9]*)([0-9][0-9,]*(?:\.[0-9]+)?)(.*)$/);
+      if (!m) return;
+      var val = parseFloat(m[2].replace(/,/g, "")), dec = (m[2].split(".")[1] || "").length, t0 = performance.now() + i * 90;
+      (function tick(n) {
+        var x = smooth(t0, t0 + 1300, n);
+        el.textContent = m[1] + (val * x).toLocaleString("en-GB", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + m[3];
+        if (x < 1) requestAnimationFrame(tick); else el.textContent = text;
+      })(performance.now());
+    });
+  }
+
+  measure();
+  frame(performance.now());
+  function ready() { findPage(); measure(); req(); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready); else ready();
+  countUp();
   addEventListener("scroll", req, { passive: true });
-  addEventListener("resize", req);
-  frame();
+  addEventListener("resize", function () { measure(); req(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); req(); });
+  requestAnimationFrame(frame);
 })();
 </script>
