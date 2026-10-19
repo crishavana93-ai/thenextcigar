@@ -39,8 +39,10 @@ const buildDate = new Date().toLocaleDateString("en-GB", { weekday: "long", day:
 const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
 ---
 
-<section class="lp" id="lp" aria-label="Today's paper" data-lp>
+<section class="lp armed" id="lp" aria-label="Today's paper" data-lp>
+  <noscript><style>.lp.armed{height:100svh!important;margin-bottom:0!important}.lp.armed ~ .wrap{transform:none!important}</style></noscript>
   <div class="lp-stage">
+    <div class="lp-cam">
     <div class="lp-scene">
       <img class="lp-soft" src="/hero/reader-blur.webp" alt="" width="1344" height="752" decoding="async" />
       <img class="lp-photo" src="/hero/reader.webp" alt="" width="1344" height="752" fetchpriority="high" />
@@ -70,6 +72,7 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
       <div class="lp-smoke" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
       <div class="lp-lamp" aria-hidden="true"></div>
     </div>
+    </div>
     <div class="lp-grain" aria-hidden="true"></div>
     <div class="lp-dark" aria-hidden="true"></div>
     <div class="lp-cue" aria-hidden="true"><span>Today's paper</span><i></i></div>
@@ -79,7 +82,10 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
 <style>
   .lp{position:relative;z-index:2;height:100vh;height:100svh;background:#110d0a;margin:0}
   .lp.armed{height:300vh;margin-bottom:-100vh;margin-bottom:-100svh;background:transparent}
-  :global(.lp.armed ~ .wrap){position:relative;z-index:1;background:var(--paper)}
+  :global(.lp.armed ~ .wrap){position:relative;z-index:1;background:var(--paper);transform:translate3d(0,-200vh,0)}
+  /* opening shot: fade up from dark, camera settles (GPU only, no script) */
+  .lp-cam{position:absolute;inset:0;transform-origin:50% 50%;animation:lp-settle 1.8s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes lp-settle{from{transform:scale(1.045)}}
   .lp-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;opacity:var(--o,1);
     background:linear-gradient(rgba(14,11,8,.55),rgba(14,11,8,.55)),#110d0a url(/hero/reader-blur.webp) 50% 45%/cover no-repeat}
   .lp.cut .lp-stage{pointer-events:none}
@@ -129,7 +135,8 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation:lp-grain .6s steps(3) infinite}
   @keyframes lp-grain{33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}}
-  .lp-dark{position:absolute;inset:0;background:#0b0907;opacity:var(--d,0);pointer-events:none}
+  .lp-dark{position:absolute;inset:0;background:#0b0907;opacity:0;pointer-events:none;animation:lp-up 1.4s ease-out both}
+  @keyframes lp-up{from{opacity:1}}
 
   .lp-cue{position:absolute;left:50%;bottom:3.2vh;transform:translateX(-50%);display:grid;justify-items:center;gap:10px;font:500 10.5px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:#e2d6c2;opacity:calc(1 - var(--p,0) * 12);text-shadow:0 1px 8px rgba(0,0,0,.8)}
   .lp-cue i{display:block;width:1px;height:34px;background:linear-gradient(#e2d6c2 0 0) 0 0/1px 40% no-repeat,rgba(226,214,194,.25);animation:lp-cue 2.2s cubic-bezier(.6,0,.2,1) infinite}
@@ -138,7 +145,9 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
   .lp.armed.rest .lp-scene{animation:lp-breathe 9s ease-in-out infinite}
   @keyframes lp-breathe{50%{translate:0 -2px}}
   @media (prefers-reduced-motion:reduce){
-    .lp-smoke span,.lp-lamp,.lp-grain,.lp-cue i,.lp.armed.rest .lp-scene{animation:none}
+    .lp-smoke span,.lp-lamp,.lp-grain,.lp-cue i,.lp.armed.rest .lp-scene,.lp-cam,.lp-dark{animation:none}
+    .lp.armed{height:100svh;margin-bottom:0}
+    :global(.lp.armed ~ .wrap){transform:none}
   }
 </style>
 
@@ -154,7 +163,7 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
   var nameEl = root.querySelector("[data-lp-name]");
   var IW = 1344, IH = 752, SPREAD_W = 645, PAPER_CX = 674, PAPER_CY = 342;
   var PX0 = 672, PX1 = 997;
-  if (!still) root.classList.add("armed");
+  if (still) root.classList.remove("armed");
 
   var lerp = function (a, b, t) { return a + (b - a) * t; };
   var clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
@@ -162,14 +171,20 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
   var smooth = function (a, b, v) { var x = clamp((v - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
 
   // Where the printed title sits in scene pixels, measured once at a known camera.
-  var nameScene = null, target = null;
+  var nameScene = null, target = null, lpTop = 0, lpH = 0, VH = innerHeight, lastWrap = "init";
   function measure() {
+    VH = innerHeight; lpTop = root.getBoundingClientRect().top + scrollY; lpH = root.offsetHeight;
     if (!nameEl) return;
     var vw = innerWidth, vh = innerHeight;
     root.style.setProperty("--k", "1"); root.style.setProperty("--tx", "0px"); root.style.setProperty("--ty", "0px");
     var r = nameEl.getBoundingClientRect(), st = root.querySelector(".lp-stage").getBoundingClientRect();
-    nameScene = { cx: r.left - st.left + r.width / 2, cy: r.top - st.top + r.height / 2, w: r.width };
-    if (wrap) wrap.style.transform = "";
+    // undo the opening camera move if it is still running (scale about the stage centre)
+    var cam = root.querySelector(".lp-cam"), cs = getComputedStyle(cam).transform, a = 1, e = 0, f = 0;
+    if (cs && cs !== "none") { var mm = new DOMMatrix(cs); a = mm.a; e = mm.e; f = mm.f; }
+    var ox = st.width / 2, oy = st.height / 2;
+    var x = r.left - st.left + r.width / 2, y = r.top - st.top + r.height / 2;
+    nameScene = { cx: ox + (x - ox - e) / a, cy: oy + (y - oy - f) / a, w: r.width / a };
+    if (wrap) { wrap.style.transform = "none"; lastWrap = "none"; }
     if (mast && wrap) {
       // The real title's place on screen at the moment the pin releases.
       var lpTop = root.getBoundingClientRect().top + scrollY;
@@ -183,12 +198,12 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
 
   var cur = 0, born = performance.now(), raf = 0, counted = false;
   function goal() {
-    var total = root.offsetHeight - innerHeight;
-    return still ? 0 : clamp(-root.getBoundingClientRect().top / Math.max(1, total), 0, 1);
+    var total = lpH - VH;
+    return still ? 0 : clamp((scrollY - lpTop) / Math.max(1, total), 0, 1);
   }
   function frame(now) {
     raf = 0;
-    var vw = innerWidth, vh = innerHeight, phone = vw < 700;
+    var vw = innerWidth, vh = VH, phone = vw < 700;
     var g = goal();
     cur += (g - cur) * (Math.abs(g - cur) < 0.0005 ? 1 : 0.16);
     var raw = cur;
@@ -197,9 +212,6 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
     // 1. start: the room on wide screens, the whole spread on phones
     var k0 = phone ? (vw * 0.98) / SPREAD_W : Math.max(vw / IW, vh / IH) * 1.02;
     var cx0 = phone ? PAPER_CX : IW / 2, cy0 = phone ? PAPER_CY : IH / 2;
-    // opening dolly: settle from slightly closer over 1.8 s
-    var intro = still ? 1 : smooth(0, 1800, now - born);
-    k0 *= 1 + 0.045 * (1 - intro);
     // 3. end: the printed title on the real one
     var k1 = target.w / nameScene.w;
     var cx1 = nameScene.cx + (vw / 2 - target.cx) / k1;
@@ -213,7 +225,6 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
     s.setProperty("--ty", (vh / 2 - cy * k).toFixed(2) + "px");
     s.setProperty("--p", raw.toFixed(4));
     s.setProperty("--f", smooth(0.08, 0.55, t).toFixed(3));          // focus pull
-    s.setProperty("--d", (1 - smooth(0, 1400, now - born)).toFixed(3)); // fade up from dark
     s.setProperty("--pf", (1 - smooth(0.74, 0.86, raw)).toFixed(3));
     var o = 1 - smooth(0.86, 0.98, raw);
     s.setProperty("--o", o.toFixed(3));
@@ -222,11 +233,11 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
 
     // hold the real page still under the stage until the pin releases
     if (wrap && !still) {
-      var A = root.offsetHeight - vh, sc = -root.getBoundingClientRect().top;
-      var off = Math.max(0, A - sc);
-      wrap.style.transform = off > 0 ? "translate3d(0," + (-off).toFixed(1) + "px,0)" : "";
+      var off = Math.max(0, (lpH - VH) - (scrollY - lpTop));
+      var tf = off > 0 ? "translate3d(0," + (-off).toFixed(0) + "px,0)" : "none";
+      if (tf !== lastWrap) { wrap.style.transform = tf; lastWrap = tf; }
     }
-    if (Math.abs(g - cur) > 0.0002 || now - born < 1800) raf = requestAnimationFrame(frame);
+    if (Math.abs(g - cur) > 0.0002) raf = requestAnimationFrame(frame);
   }
   function req() { if (!raf) raf = requestAnimationFrame(frame); }
 
@@ -249,10 +260,9 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
   frame(performance.now());
   function ready() { findPage(); measure(); req(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready); else ready();
-  countUp();
+  if (document.readyState === "complete") setTimeout(countUp, 150); else addEventListener("load", function () { setTimeout(countUp, 150); });
   addEventListener("scroll", req, { passive: true });
   addEventListener("resize", function () { measure(); req(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); req(); });
-  requestAnimationFrame(frame);
 })();
 </script>
