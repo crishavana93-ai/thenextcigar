@@ -82,13 +82,14 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
 <style>
   .lp{position:relative;z-index:2;height:100vh;height:100svh;background:#110d0a;margin:0}
   .lp.armed{height:300vh;margin-bottom:-100vh;margin-bottom:-100svh;background:transparent}
+  /* nothing in the hero is clickable: let every click reach the page beneath (nav, links) */
+  .lp,.lp *{pointer-events:none}
   :global(.lp.armed ~ .wrap){position:relative;z-index:1;background:var(--paper);transform:translate3d(0,-200vh,0)}
   /* opening shot: fade up from dark, camera settles (GPU only, no script) */
   .lp-cam{position:absolute;inset:0;transform-origin:50% 50%;animation:lp-settle 1.8s cubic-bezier(.2,.7,.2,1) both}
   @keyframes lp-settle{from{transform:scale(1.045)}}
   .lp-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;opacity:var(--o,1);
     background:linear-gradient(rgba(14,11,8,.55),rgba(14,11,8,.55)),#110d0a url(/hero/reader-blur.webp) 50% 45%/cover no-repeat}
-  .lp.cut .lp-stage{pointer-events:none}
   .lp-scene{position:absolute;left:0;top:0;width:1344px;height:752px;transform-origin:0 0;will-change:transform;
     transform:translate3d(var(--tx,0px),var(--ty,0px),0) scale(var(--k,1))}
   .lp-scene > img{position:absolute;left:0;top:0;width:1344px;height:752px;max-width:none}
