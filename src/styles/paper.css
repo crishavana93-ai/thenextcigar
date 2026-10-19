@@ -759,3 +759,7 @@ body.leaf-in{animation:tnc-fade-in .3s ease-out both}
 .welcome__out{margin:10px 0 0;font-family:var(--serif);font-size:15px;line-height:1.4}
 .welcome--compact{padding:12px 14px;margin:16px 0}
 .welcome--compact .welcome__lead{font-size:15px}
+
+/* Cover photo credit (licensed photos) */
+.cubierta-credit{font-family:var(--sans);font-size:11px;letter-spacing:.02em;color:var(--mute);margin-top:6px;text-align:right}
+.cubierta-credit a{color:inherit;text-decoration:underline;text-decoration-color:var(--rule)}

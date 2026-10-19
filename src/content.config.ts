@@ -33,6 +33,10 @@ const blog = defineCollection({
         image(),
         z.string(),
       ]).optional().nullable(),
+      // Photo credit and alt text for the cover, e.g. "Photo: Jane Doe / Wikimedia Commons, CC BY-SA 4.0".
+      coverCredit: z.string().optional(),
+      coverCreditUrl: z.string().optional(),
+      coverAlt: z.string().optional(),
       featured: z.boolean().default(false),
       sidebarFeatured: z.boolean().default(false),
       isPremium: z.boolean().default(false),
