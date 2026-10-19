@@ -71,6 +71,14 @@ const blog = defineCollection({
         .optional()
         .nullable(),
       // SEO fields (optional, populated by Decap CMS editor)
+      // "The one to buy": up to three picks shown under the byline of a buying guide.
+      oneToBuy: z
+        .object({
+          title: z.string().optional(),
+          checked: z.string(),
+          picks: z.array(z.object({ label: z.string(), name: z.string(), url: z.string(), why: z.string(), rating: z.string(), price: z.string().optional(), image: z.string().optional() })).max(3),
+        })
+        .optional(),
       seo: z
         .object({
           metaTitle: z.string().optional().nullable(),

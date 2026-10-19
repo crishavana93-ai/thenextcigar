@@ -133,6 +133,12 @@ const ogImage = new URL(image, Astro.site).toString();
             if (!/^\/shop\/.+/.test(u.pathname) || /^\/shop\//.test(location.pathname)) return;
             host = "shop";
           } else if (!HOSTS.test(host)) return;
+          // A link inside a tagged block (the "one to buy" box) is counted
+          // under "<tag>.<host>", e.g. box.amazon.com, so the box can be
+          // compared with the links further down. The server's apex check
+          // already accepts subdomains, so no server change is needed.
+          var tag = a.closest("[data-out]");
+          if (tag && /^[a-z]{1,12}$/.test(tag.getAttribute("data-out") || "")) host = tag.getAttribute("data-out") + "." + host;
           var payload = JSON.stringify({ host: host, page: location.pathname });
           try {
             if (navigator.sendBeacon) {

@@ -2,6 +2,7 @@
 import { getCollection, getEntry, render } from "astro:content";
 import { toolsFor, metaDescription, pageTitle } from "../../lib/seo";
 import BuyBox from "../../components/paper/BuyBox.astro";
+import OneToBuy from "../../components/blog/OneToBuy.astro";
 import { coverSet } from "../../lib/cover";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
@@ -129,6 +130,8 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
       {modified && modified.getTime() - published.getTime() > 86400000 && <span>Updated {fmt(modified)}</span>}
       <span>{readMinutes} min read</span>
     </p>
+
+    {(d as any).oneToBuy && <OneToBuy {...(d as any).oneToBuy} />}
 
     {coverUrl && coverUrl !== "/og-default.jpg" && (
       <figure class="cubierta">
