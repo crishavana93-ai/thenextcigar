@@ -208,14 +208,15 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
   )}
   <CartBar />
   <script is:inline>
-    // Phone: when the buy buttons scroll away, a slim bar with the price and
-    // Add to cart stays at the bottom (the cart bar yields to it).
+    // Phone: whenever the buy buttons are off screen (still below the photo on
+    // arrival, or scrolled past), a slim bar with the price and Add to cart
+    // stays at the bottom, so the price is in the first screen (cart bar yields).
     (function () {
       var s = document.getElementById("buy-sticky"), add = document.getElementById("add"), a2 = document.getElementById("add-sticky"), m = window.matchMedia("(max-width: 640px)");
       if (!s || !add || !("IntersectionObserver" in window)) return;
       var out = false;
       function set() { s.hidden = !(m.matches && out); var cb = document.getElementById("cart-bar"); if (cb) cb.classList.toggle("yield", !s.hidden); }
-      new IntersectionObserver(function (es) { out = !es[0].isIntersecting && es[0].boundingClientRect.top < 0; set(); }, { threshold: 0 }).observe(add);
+      new IntersectionObserver(function (es) { out = !es[0].isIntersecting; set(); }, { threshold: 0 }).observe(add);
       m.addEventListener ? m.addEventListener("change", set) : m.addListener(set);
       if (a2) a2.addEventListener("click", function () { add.click(); a2.textContent = "Added ✓"; setTimeout(function () { a2.textContent = "Add to cart"; }, 1600); });
     })();
