@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import { coverSet } from "../lib/cover";
 import PaperLayout from "../layouts/PaperLayout.astro";
+import LivePaper from "../components/paper/LivePaper.astro";
 import { SKUS, RETAILERS, COUNTRIES, PRICE_SNAPSHOTS, bestPriceForSku, formatPrice, checkedLabel } from "../data/finder-live";
 import { events } from "../data/cigar-events";
 
@@ -111,6 +112,15 @@ const jsonLd = {
   section="front"
   jsonLd={jsonLd}
 >
+  <LivePaper
+    slot="hero"
+    leadTitle={lead.data.title}
+    leadDeck={lead.data.excerpt}
+    leadKicker={`${String(lead.data.category || "report").replace(/-/g, " ")} · Report`}
+    leadCover={leadCover ? { src: leadCover.src, srcset: leadCover.srcset } : undefined}
+    rows={market.slice(0, 7).map(({ sku, best }) => ({ name: `${sku.brand} ${sku.vitola}`, where: `${RET[best!.snap.retailerId]?.name ?? ""} · ${String(RET[best!.snap.retailerId]?.country ?? "").toUpperCase()}`, price: formatPrice(best!.snap.price, best!.snap.currency), live: !!best!.snap.live }))}
+    inside={[...secondaries, ...longReads.slice(0, 1)].map((p) => p.data.title)}
+  />
   <div class="front">
 
     <!-- LEFT RAIL · MARKETS -->

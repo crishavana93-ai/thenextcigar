@@ -103,6 +103,7 @@ const ogImage = new URL(image, Astro.site).toString();
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
+    <slot name="hero" />
     <div class="wrap">
       {!noEar && <Ear />}
       <Masthead section={section} compact={compact} />
