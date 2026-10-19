@@ -80,3 +80,24 @@ https://lounge.thenextcigar.com/member/         /lounge/app/member/           20
 # 2026-09-11 broadsheet relaunch: retired pages (/collection and /shelves
 # are handled above)
 /paper/* /:splat 301
+
+# ── 19 Oct 2026: drop-ship shop closed. Each retired product → the guide that covers it ──
+/shop/cigarloong-3-jet-lighter-v-cutter-punch/  /blog/best-cigar-lighters-2026/  301
+/shop/cigarloong-3-jet-windproof-lighter/       /blog/best-cigar-lighters-2026/  301
+/shop/cigarloong-windproof-torch-lighter/       /blog/best-cigar-lighters-2026/  301
+/shop/triple-flame-jet-lighter-visible-gas/     /blog/best-cigar-lighters-2026/  301
+/shop/double-blade-cigar-cutter-tnc/            /blog/best-cigar-cutters-2026/   301
+/shop/dual-side-cutter-drill-rest/              /blog/best-cigar-cutters-2026/   301
+/shop/five-in-one-cigar-cutter-toolkit/         /blog/best-cigar-cutters-2026/   301
+/shop/stainless-cigar-cutter-v-cut-drill-gift-box/ /blog/best-cigar-cutters-2026/ 301
+/shop/steel-cigar-scissors-leather-head/        /blog/best-cigar-cutters-2026/   301
+/shop/cigar-needle-and-rest-tool/               /blog/best-cigar-cutters-2026/   301
+/shop/glass-mini-ashtray-gift-box/              /blog/best-cigar-gifts-under-100/ 301
+/shop/square-ceramic-ashtray-four-rests/        /blog/best-cigar-gifts-under-100/ 301
+/shop/humidor-humidifier-plastic/               /blog/how-to-store-cuban-cigars-65-not-70/ 301
+/shop/small-cigar-humidifier/                   /blog/how-to-store-cuban-cigars-65-not-70/ 301
+/shop/usb-probe-hygrometer/                     /blog/how-to-store-cuban-cigars-65-not-70/ 301
+/shop/pu-travel-humidor-mesh-pocket/            /blog/cigar-travel-cases-which-to-buy-2026/ 301
+/shop/waterproof-travel-humidor-5-cigars/       /blog/cigar-travel-cases-which-to-buy-2026/ 301
+/shop/cart/                                     /shop/  301
+/blog/cigar-accessories-delivered-sweden-germany-uk-duties-paid/ /blog/cuban-cigar-import-duty-germany-switzerland-uk-explained-2026/ 301

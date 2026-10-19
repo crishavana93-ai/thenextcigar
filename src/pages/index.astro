@@ -91,6 +91,10 @@ const diary = events
     return { ...e, day: d.toLocaleDateString("en-GB", { day: "numeric" }), mon: d.toLocaleDateString("en-GB", { month: "short" }), when: `${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${e.endDate !== e.startDate ? "–" + new Date(e.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}` };
   });
 
+// Classifieds: the shop is closed (19 Oct 2026); the four gear guides that
+// earn (Amazon picks, labelled) take its place.
+const GEAR = ["best-cigar-lighters-2026", "best-cigar-cutters-2026", "cigar-travel-cases-which-to-buy-2026", "best-cigar-gifts-under-100"];
+const gearGuides = GEAR.map((sl) => posts.find((p) => p.data.slug === sl)).filter(Boolean) as typeof posts;
 // Classifieds: four products, in-stock and buyable first.
 const tiles = products
   .sort((a, b) => Number(b.data.inStock && !b.data.comingSoon) - Number(a.data.inStock && !a.data.comingSoon))
@@ -233,20 +237,15 @@ const jsonLd = {
 
   <!-- CLASSIFIEDS -->
   <section class="class" aria-label="The shop">
-    <div class="rulehead flat"><h2>Classifieds <em>· the shop</em></h2><a class="more" href="/shop/">Opening soon · stocked in fives →</a></div>
+    <div class="rulehead flat"><h2>Classifieds <em>· the gear guides</em></h2><a class="more" href="/category/cigar-accessories/">All accessory pieces →</a></div>
     <div class="tiles">
-      {tiles.map((p) => {
-        const d: any = p.data;
-        const buyable = d.inStock && !d.comingSoon;
-        const img = !d.cover ? "" : typeof d.cover === "string" ? d.cover : d.cover.src;
-        return (
-          <a class="tile" href={`/shop/${d.slug}/`}>
-            <div class="ph">{img ? <img class="foto" src={img} alt="" width="400" height="400" loading="lazy" /> : <span class="stamp">Photo to come</span>}</div>
-            <div><div class="n">{d.name}</div><div class="m">{d.excerpt}</div></div>
-            <div class="pr">{money(d.price, d.currency)} <span>{buyable ? "in stock" : "pending stock"}</span></div>
-          </a>
-        );
-      })}
+      {gearGuides.map((p) => (
+        <a class="tile" href={`/blog/${p.data.slug}/`}>
+          <div class="ph">{thumbs.get(p.id) ? <img class="foto" src={thumbs.get(p.id)!.src} alt="" width="400" height="400" loading="lazy" /> : <span class="stamp">The guide</span>}</div>
+          <div><div class="n">{p.data.title}</div><div class="m">{p.data.excerpt}</div></div>
+          <div class="pr">Read the guide <span>→</span></div>
+        </a>
+      ))}
     </div>
     <div class="gb">
       <div class="mark">GB</div>

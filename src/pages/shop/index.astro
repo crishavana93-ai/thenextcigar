@@ -1,71 +1,42 @@
 ---
-import WelcomeBox from "../../components/shop/WelcomeBox.astro";
-import { getCollection } from "astro:content";
 import PaperLayout from "../../layouts/PaperLayout.astro";
-import CartBar from "../../components/shop/CartBar.astro";
 
 /**
  * /shop/
  *
- * The goods page. Accessories first (they can be sold everywhere), grouped
- * by kind; pieces without confirmed stock or photographs are marked "in the
- * pipeline" and cannot be bought. Guatabey stays "in the making" with no
- * claims until the shirts exist.
+ * 19 Oct 2026: the drop-ship accessory shop is closed. The same pieces were
+ * cheaper on Amazon, so the guides now link readers there (affiliate,
+ * disclosed). This page keeps the address alive for what only the paper can
+ * make — the Guatabey guayabera and the paper's own goods — and sends anyone
+ * looking for gear to the tested guides. The old checkout code is kept in
+ * the repo (functions/api/shop, src/pages/shop/[...slug].astro), switched off
+ * by every product being isArchived.
  */
-const all = (await getCollection("products")).filter((p) => !p.data.isArchived);
-const label: Record<string, string> = { cutter: "Cutters & tools", lighter: "Lighters", humidor: "Humidors & storage", accessories: "Accessories", case: "Travel cases", ashtray: "Ashtrays", cedar: "Cedar & humidity", merch: "The Guatabey line", print: "Prints & paper", guide: "Guides" };
-const order = ["cutter", "lighter", "humidor", "accessories", "case", "ashtray", "cedar", "print", "guide", "merch"];
-const groups = new Map<string, typeof all>();
-for (const p of all) { const c = (p.data as any).category || "accessories"; if (!groups.has(c)) groups.set(c, []); groups.get(c)!.push(p); }
-const ordered = [...groups.entries()].sort((a, b) => (order.indexOf(a[0]) + 100) % 100 - (order.indexOf(b[0]) + 100) % 100);
-const cover = (p: (typeof all)[number]) => { const c: any = p.data.cover; return !c ? "" : typeof c === "string" ? c : c.src; };
-const money = (p: (typeof all)[number]) => { const d: any = p.data; const s = d.currency === "EUR" ? "€" : d.currency === "GBP" ? "£" : "$"; return `${s}${d.price}`; };
-// "Expected June 2026" must never print after June 2026.
-const eta = (d: any) => { const t = Date.parse(`1 ${d.expectedArrival ?? ""}`); return d.expectedArrival && !isNaN(t) && t + 31 * 86400e3 > Date.now() ? `Expected ${d.expectedArrival}` : "Price when it lands"; };
-const buyable = all.filter((p) => !(p.data as any).comingSoon && p.data.inStock).length;
-
-const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: "The Next Cigar Shop", url: "https://thenextcigar.com/shop/" };
+const guides = [
+  { href: "/blog/best-cigar-lighters-2026/", kick: "Lighters", t: "Best cigar lighters of 2026", d: "Single-jet, double-jet and the budget workhorse, picked for real-world smokers." },
+  { href: "/blog/best-cigar-cutters-2026/", kick: "Cutters", t: "Best cigar cutters of 2026", d: "Guillotine, V-cut and punch: which cut suits which Cuban, and the cutters worth owning." },
+  { href: "/blog/cigar-travel-cases-which-to-buy-2026/", kick: "Travel cases", t: "Leather fingers, tubes or a hard humidor?", d: "What each kind of case does to the cigars inside after a day, a weekend and a week." },
+  { href: "/blog/how-to-store-cuban-cigars-65-not-70/", kick: "Storage", t: "How to store Cuban cigars: 65%, not 70%", d: "Humidity, hygrometers and the cheapest setup that keeps a box right." },
+  { href: "/blog/best-cigar-gifts-under-100/", kick: "Gifts", t: "Best cigar gifts under $100", d: "For the smoker who already has a cutter." },
+];
+const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", name: "The Shop · The Next Cigar", url: "https://thenextcigar.com/shop/" };
 ---
 
-<PaperLayout title="The Shop — cutters, lighters, humidors and the Guatabey line · The Next Cigar" description={`${all.length} pieces of cigar gear chosen by the paper. ${buyable} available now, the rest in the pipeline. No tobacco sold here.`} section="shop" compact={true} jsonLd={jsonLd}>
+<PaperLayout title="The Shop · The Next Cigar" description="The Next Cigar's own goods: the Guatabey guayabera, in the making. For cutters, lighters, cases and humidors, our tested guides link to where they cost least." section="shop" compact={true} jsonLd={jsonLd}>
   <div class="dateline">
-    <h1>The Shop <em>— goods, not tobacco.</em></h1>
-    <p class="st">{buyable} available{all.length - buyable > 0 ? ` · ${all.length - buyable} in the pipeline` : ""} · ships to the EU, UK, CH, US &amp; CA</p>
+    <h1>The Shop <em>— what only we make.</em></h1>
+    <p class="st">No tobacco sold here · no accessories either, for now</p>
   </div>
 
-  <nav class="filter" aria-label="Filter by kind" id="shop-filter">
-    <button type="button" class="chip is-on" data-cat="all">All <small>{all.length}</small></button>
-    {ordered.map(([cat, items]) => <button type="button" class="chip" data-cat={cat}>{label[cat] ?? cat} <small>{items.length}</small></button>)}
-  </nav>
-
-
-  {ordered.map(([cat, items], ci) => (
-    <section class="band" style="padding-top:0" data-cat={cat}>
-      <div class="rulehead flat"><h2>{label[cat] ?? cat}</h2><span class="more">{items.length}</span></div>
-      <div class="goods">
-        {items.map((p, pi) => {
-          const d: any = p.data; const soon = d.comingSoon || !d.inStock;
-          return (
-            <article>
-              {soon && <span class="soon">{d.comingSoon ? "In the pipeline" : "Sold out"}</span>}
-              <a class="ph" href={`/shop/${d.slug}/`}>{cover(p) ? <img src={cover(p)} alt="" width="600" height="600" loading={ci === 0 && pi < 2 ? "eager" : "lazy"} fetchpriority={ci === 0 && pi === 0 ? "high" : undefined} onerror="this.closest('a,figure,div')?.classList.add('noimg');this.replaceWith(Object.assign(document.createElement('span'),{className:'stamp',textContent:'Photo to come'}))" /> : <span class="stamp">Photo to come</span>}</a>
-              <a class="head" href={`/shop/${d.slug}/`}>{d.name}</a>
-              {d.excerpt && <p class="by" style="margin-top:6px">{d.excerpt.slice(0, 110)}{d.excerpt.length > 110 ? "…" : ""}</p>}
-              <p class="price">{soon ? eta(d) : <>{money(p)}{d.compareAtPrice ? <s>{d.currency === "EUR" ? "€" : "$"}{d.compareAtPrice}</s> : null}</>}</p>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  ))}
-
-  <WelcomeBox source="shop" />
+  <section class="band" style="padding-top:0">
+    <p class="deck" style="max-width:64ch">We used to sell cutters, lighters and cases shipped from our supplier. The same pieces cost less elsewhere, so we stopped: a paper that tells you where a Cohiba is cheapest should not charge you double for the lighter. Our guides now point you to where each piece costs least, with the affiliate links labelled. What we will sell here is what nobody else can.</p>
+  </section>
 
   <section class="gb">
     <div>
       <span class="kick">Guatabey · in the making</span>
       <h2>Guatabey. <em>A guayabera, done properly.</em></h2>
-      <p class="deck">Our own guayabera, cut in the Cuban tradition. We are working on the first small run now; when the shirts exist you will see the real ones here, photographed, with the fabric, the maker and the price — not before.</p>
+      <p class="deck">Our own guayabera, cut in the Cuban tradition. We are working on the first small run now; when the shirts exist you will see the real ones here, photographed, with the maker named.</p>
       <dl class="file" style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
         <div><dt>What</dt><dd style="font-size:15px">A four-pocket guayabera, Cuban cut</dd></div>
         <div><dt>How many</dt><dd style="font-size:15px">A small numbered run</dd></div>
@@ -77,27 +48,12 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
     <div class="mark"><b>GB</b><small>Guatabey (n.) — Taíno for chief. The first people to smoke tobacco.</small></div>
   </section>
 
-  <section class="band">
+  <section class="band" aria-label="Accessory guides">
+    <div class="rulehead flat"><h2>Looking for gear? <em>· the tested guides</em></h2><a class="more" href="/category/cigar-accessories/">All accessory pieces →</a></div>
     <div class="three">
-      <article><span class="kick">How it works</span><p class="t" style="margin-top:8px">Every piece is dispatched within 24 hours by tracked post, duties and VAT paid. Checkout is by card through Stripe; delivery country and cost are shown before you pay.</p></article>
-      <article><span class="kick">Held, not just listed</span><p class="t" style="margin-top:8px">We order every piece we sell and hold it ourselves. The maker's photographs stand until ours replace them, and a verdict is written only after we have used the thing.</p></article>
-      <article><span class="kick">No tobacco</span><p class="t" style="margin-top:8px">The Shop sells accessories and clothing only. For cigars, the <a href="/finder/">Markets</a> page shows licensed retailers in your country.</p></article>
+      {guides.map((g) => (
+        <article><span class="kick">{g.kick}</span><a class="head" href={g.href} style="display:block;margin-top:6px;font-size:22px;line-height:1.15">{g.t}</a><p class="t" style="margin-top:8px">{g.d}</p></article>
+      ))}
     </div>
   </section>
-
-  <CartBar />
-  <script is:inline>
-    (function () {
-      var nav = document.getElementById("shop-filter"); if (!nav) return;
-      var chips = nav.querySelectorAll(".chip"), secs = document.querySelectorAll("section.band[data-cat]");
-      function apply(cat, push) {
-        chips.forEach(function (c) { c.classList.toggle("is-on", c.dataset.cat === cat); });
-        secs.forEach(function (s) { s.hidden = cat !== "all" && s.dataset.cat !== cat; });
-        if (push) { var u = new URL(location.href); if (cat === "all") u.searchParams.delete("kind"); else u.searchParams.set("kind", cat); history.replaceState(null, "", u); }
-      }
-      chips.forEach(function (c) { c.addEventListener("click", function () { apply(c.dataset.cat, true); }); });
-      var k = new URLSearchParams(location.search).get("kind");
-      if (k && nav.querySelector('.chip[data-cat="' + k + '"]')) apply(k, false);
-    })();
-  </script>
 </PaperLayout>

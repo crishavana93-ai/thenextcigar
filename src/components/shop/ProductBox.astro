@@ -13,8 +13,9 @@ const { slug, slugs, note, title } = Astro.props;
 const want = slugs ?? (slug ? [slug] : []);
 const all = await getCollection("products");
 const img = (c: any) => (!c ? "" : typeof c === "string" ? c : c.src);
-const items = want.map((s) => all.find((p) => p.data.slug === s)).filter(Boolean) as typeof all;
 const live = (p: (typeof all)[number]) => !p.data.isArchived && !p.data.comingSoon && p.data.inStock;
+// Only products on sale render; a retired line drops out of every article.
+const items = (want.map((s) => all.find((p) => p.data.slug === s)).filter(Boolean) as typeof all).filter(live);
 const sym = (c: string) => (c === "EUR" ? "€" : c === "GBP" ? "£" : "$");
 const cat: Record<string, { name: string; price: number; cover: string }> = {};
 for (const p of items) cat[p.data.slug] = { name: p.data.name, price: p.data.price, cover: img(p.data.cover) };
