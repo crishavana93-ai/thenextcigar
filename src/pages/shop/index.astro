@@ -39,16 +39,16 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
   </nav>
 
 
-  {ordered.map(([cat, items]) => (
+  {ordered.map(([cat, items], ci) => (
     <section class="band" style="padding-top:0" data-cat={cat}>
       <div class="rulehead flat"><h2>{label[cat] ?? cat}</h2><span class="more">{items.length}</span></div>
       <div class="goods">
-        {items.map((p) => {
+        {items.map((p, pi) => {
           const d: any = p.data; const soon = d.comingSoon || !d.inStock;
           return (
             <article>
               {soon && <span class="soon">{d.comingSoon ? "In the pipeline" : "Sold out"}</span>}
-              <a class="ph" href={`/shop/${d.slug}/`}>{cover(p) ? <img src={cover(p)} alt="" width="600" height="600" loading="lazy" onerror="this.closest('a,figure,div')?.classList.add('noimg');this.replaceWith(Object.assign(document.createElement('span'),{className:'stamp',textContent:'Photo to come'}))" /> : <span class="stamp">Photo to come</span>}</a>
+              <a class="ph" href={`/shop/${d.slug}/`}>{cover(p) ? <img src={cover(p)} alt="" width="600" height="600" loading={ci === 0 && pi < 2 ? "eager" : "lazy"} fetchpriority={ci === 0 && pi === 0 ? "high" : undefined} onerror="this.closest('a,figure,div')?.classList.add('noimg');this.replaceWith(Object.assign(document.createElement('span'),{className:'stamp',textContent:'Photo to come'}))" /> : <span class="stamp">Photo to come</span>}</a>
               <a class="head" href={`/shop/${d.slug}/`}>{d.name}</a>
               {d.excerpt && <p class="by" style="margin-top:6px">{d.excerpt.slice(0, 110)}{d.excerpt.length > 110 ? "…" : ""}</p>}
               <p class="price">{soon ? eta(d) : <>{money(p)}{d.compareAtPrice ? <s>{d.currency === "EUR" ? "€" : "$"}{d.compareAtPrice}</s> : null}</>}</p>
