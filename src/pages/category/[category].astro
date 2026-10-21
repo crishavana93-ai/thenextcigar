@@ -42,9 +42,10 @@ const jsonLd = { "@context": "https://schema.org", "@type": "CollectionPage", na
         {leadCover && <figure><a href={`/blog/${lead.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={leadCover?.src} srcset={leadCover?.srcset} sizes="(max-width: 900px) 100vw, 620px" alt="" width="1200" height="675" fetchpriority="high" /></a></figure>}
         <ul class="list" style="margin-top:18px">
           {rest.map((p) => (
-            <li style="grid-template-columns:1fr auto;gap:18px;align-items:baseline">
+            <li class="withthumb">
+              {thumbs.get(p.id) ? <a class="lthumb" href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1"><img src={thumbs.get(p.id)!.src} srcset={thumbs.get(p.id)!.srcset} sizes="(max-width: 640px) 96px, 144px" alt="" width="320" height="180" loading="lazy" decoding="async" /></a> : <span class="lthumb" />}
               <div><a class="head" style="font-size:20px" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>{p.data.excerpt && <p class="by" style="margin-top:4px">{p.data.excerpt.slice(0, 130)}…</p>}</div>
-              <span class="by" style="white-space:nowrap">{fmt(p.data.publishedAt)}</span>
+              <span class="by lmeta">{fmt(p.data.publishedAt)}</span>
             </li>
           ))}
         </ul>

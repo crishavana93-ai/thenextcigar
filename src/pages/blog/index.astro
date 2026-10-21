@@ -69,6 +69,7 @@ const jsonLd = {
       <div class="twin four-up">
         {featured.map((p) => (
           <article style="border-left:0;padding-left:0">
+            {thumbs.get(p.id) && <a class="fthumb" href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1"><img src={thumbs.get(p.id)!.src} srcset={thumbs.get(p.id)!.srcset} sizes="(max-width: 640px) 45vw, 220px" alt="" width="320" height="180" loading="lazy" decoding="async" /></a>}
             <span class="kick mute">{catName(p.data.category)}</span>
             <h3 class="head" style="font-size:19px;margin:6px 0 6px"><a href={`/blog/${p.data.slug}/`}>{p.data.title}</a></h3>
             <p class="by">{new Date(p.data.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
@@ -81,7 +82,7 @@ const jsonLd = {
       <div class="rulehead"><h2>Sections</h2></div>
       <ul class="eds">
         {[...cats.values()].map((c: any) => (
-          <li><a href={`/blog/`}>{c.name}</a><span>{posts.filter((p) => p.data.category === c.slug).length}</span></li>
+          <li><a href={c.slug === "cigar-events" ? "/category/cigar-events/" : `/category/${c.slug}/`}>{c.name}</a><span>{posts.filter((p) => p.data.category === c.slug).length}</span></li>
         ))}
       </ul>
       <div class="box">
@@ -100,12 +101,13 @@ const jsonLd = {
         <p class="kick mute" style="padding:10px 0 6px;border-bottom:1px solid var(--rule)">{month}</p>
         <ul class="list">
           {list.map((p) => (
-            <li style="grid-template-columns:1fr auto;gap:18px;align-items:baseline">
+            <li class="withthumb">
+              {thumbs.get(p.id) ? <a class="lthumb" href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1"><img src={thumbs.get(p.id)!.src} srcset={thumbs.get(p.id)!.srcset} sizes="(max-width: 640px) 96px, 144px" alt="" width="320" height="180" loading="lazy" decoding="async" /></a> : <span class="lthumb" />}
               <div>
                 <a class="head" style="font-size:19px" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>
                 {p.data.excerpt && <p class="by" style="margin-top:4px">{p.data.excerpt.slice(0, 120)}…</p>}
               </div>
-              <span class="by" style="white-space:nowrap">{catName(p.data.category)} · {new Date(p.data.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+              <span class="by lmeta">{catName(p.data.category)} · {new Date(p.data.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
             </li>
           ))}
         </ul>

@@ -147,6 +147,18 @@ table.mk tr.old td.p{text-decoration:none;font-weight:400}
 .list .head{font-size:17px;font-weight:500}
 .list .by{margin-top:3px}
 .list img{width:54px;height:54px;object-fit:cover}
+/* Magazine / section index rows with a cover thumbnail */
+.list li.withthumb{grid-template-columns:144px minmax(0,1fr) auto;gap:18px;align-items:start;padding:12px 0}
+.list li.withthumb .lthumb{display:block;width:144px;aspect-ratio:16/9;background:var(--paper-2)}
+.list li.withthumb .lthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.list li.withthumb .lmeta{white-space:nowrap}
+.fthumb{display:block;aspect-ratio:16/9;margin-bottom:10px;background:var(--paper-2)}
+.fthumb img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:640px){
+  .list li.withthumb{grid-template-columns:96px minmax(0,1fr);gap:12px}
+  .list li.withthumb .lthumb{width:96px}
+  .list li.withthumb .lmeta{grid-column:2;white-space:normal;margin-top:-6px}
+}
 .diary li{grid-template-columns:44px 1fr}
 .diary .d{font-family:var(--sans);font-size:11px;line-height:1.2;color:var(--ox);font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding-top:3px}
 .diary .d b{display:block;font-size:20px;font-family:var(--serif);font-weight:500;color:var(--ink);letter-spacing:0;line-height:1}
