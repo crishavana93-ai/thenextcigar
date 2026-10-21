@@ -99,7 +99,7 @@ const ogImage = new URL(image, Astro.site).toString();
     <link rel="preload" as="font" type="font/woff2" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" crossorigin />
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
-    <script is:inline src="/cart.js"></script>
+    <script is:inline defer src="/cart.js"></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>

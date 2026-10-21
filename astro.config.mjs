@@ -51,6 +51,9 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    // Astro inlines stylesheets smaller than this, so small page-specific CSS
+    // (the front page's is ~8 KB) no longer blocks first paint as a separate request.
+    build: { assetsInlineLimit: 10240 },
   },
   image: {
     // Allow remote optimization for Unsplash (free-license editorial covers)
@@ -66,6 +69,8 @@ export default defineConfig({
   },
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: "viewport",
+    // "hover" prefetches the page a reader is about to open; "viewport" fetched
+    // every link on screen during load and competed with the hero on phones.
+    defaultStrategy: "hover",
   },
 });

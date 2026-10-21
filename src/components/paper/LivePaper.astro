@@ -64,7 +64,7 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
           <div class="lp-ed"><span>{MASTHEAD.volume} · {MASTHEAD.issue.replace("Issue", "No.")}</span><span>No tobacco sold here</span><span>{MASTHEAD.date}</span></div>
           <div class="lp-kick">{leadKicker}</div>
           <div class="lp-head">{leadTitle}</div>
-          {leadCover && <img class="lp-foto" src={leadCover.src} srcset={leadCover.srcset} sizes="600px" alt="" width="1200" height="675" />}
+          {leadCover && <img class="lp-foto" src={leadCover.src} srcset={leadCover.srcset} sizes="(max-width: 700px) 320px, 600px" alt="" width="1200" height="675" />}
           {leadDeck && <p class="lp-deck">{leadDeck}</p>}
         </div>
       </div>
@@ -124,29 +124,35 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
   .lp-in li{margin-bottom:12px}
 
   .lp-smoke{position:absolute;left:826px;top:112px;width:0;height:0;opacity:calc(1 - var(--p,0) * 3)}
-  .lp-smoke span{position:absolute;left:-40px;top:-40px;width:80px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(225,218,205,.26),transparent);filter:blur(9px);animation:lp-smoke 9s cubic-bezier(.3,.1,.5,1) infinite;opacity:0}
+  .lp-smoke span{position:absolute;left:-40px;top:-40px;width:80px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(225,218,205,.26),transparent);filter:blur(9px);opacity:0}
+  .lp.live .lp-smoke span{animation:lp-smoke 9s cubic-bezier(.3,.1,.5,1) infinite}
   .lp-smoke span:nth-child(2){animation-delay:-2.2s;left:-30px}
   .lp-smoke span:nth-child(3){animation-delay:-4.5s;left:-52px}
   .lp-smoke span:nth-child(4){animation-delay:-6.7s;left:-36px}
   @keyframes lp-smoke{0%{transform:translate(0,24px) scale(.45);opacity:0}18%{opacity:1}100%{transform:translate(34px,-160px) scale(2.3) rotate(22deg);opacity:0}}
-  .lp-lamp{position:absolute;left:1000px;top:-120px;width:600px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,206,140,.16),transparent);mix-blend-mode:screen;animation:lp-lamp 6.5s ease-in-out infinite;pointer-events:none}
+  .lp-lamp{position:absolute;left:1000px;top:-120px;width:600px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,206,140,.16),transparent);mix-blend-mode:screen;pointer-events:none}
+  .lp.live .lp-lamp{animation:lp-lamp 6.5s ease-in-out infinite}
   @keyframes lp-lamp{50%{opacity:.72}}
 
   .lp-grain{position:absolute;inset:-50%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    animation:lp-grain .6s steps(3) infinite}
+    }
+  .lp.live .lp-grain{animation:lp-grain .6s steps(3) infinite}
   @keyframes lp-grain{33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}}
   .lp-dark{position:absolute;inset:0;background:#0b0907;opacity:0;pointer-events:none;animation:lp-up 1.4s ease-out both}
   @keyframes lp-up{from{opacity:1}}
 
   .lp-cue{position:absolute;left:50%;bottom:3.2vh;transform:translateX(-50%);display:grid;justify-items:center;gap:10px;font:500 10.5px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:#e2d6c2;opacity:calc(1 - var(--p,0) * 12);text-shadow:0 1px 8px rgba(0,0,0,.8)}
-  .lp-cue i{display:block;width:1px;height:34px;background:linear-gradient(#e2d6c2 0 0) 0 0/1px 40% no-repeat,rgba(226,214,194,.25);animation:lp-cue 2.2s cubic-bezier(.6,0,.2,1) infinite}
-  @keyframes lp-cue{0%{background-position:0 -40%}100%{background-position:0 140%}}
+  .lp-cue i{display:block;position:relative;overflow:hidden;width:1px;height:34px;background:rgba(226,214,194,.25)}
+  .lp-cue i::after{content:"";position:absolute;left:0;top:0;width:1px;height:40%;background:#e2d6c2;transform:translateY(-100%)}
+  .lp.live .lp-cue i::after{animation:lp-cue 2.2s cubic-bezier(.6,0,.2,1) infinite}
+  @keyframes lp-cue{to{transform:translateY(250%)}}
 
-  .lp.armed.rest .lp-scene{animation:lp-breathe 9s ease-in-out infinite}
+  .lp.armed.live.rest .lp-scene{animation:lp-breathe 9s ease-in-out infinite}
   @keyframes lp-breathe{50%{translate:0 -2px}}
+  @media (max-width:700px){.lp-grain,.lp-lamp{display:none}}
   @media (prefers-reduced-motion:reduce){
-    .lp-smoke span,.lp-lamp,.lp-grain,.lp-cue i,.lp.armed.rest .lp-scene,.lp-cam,.lp-dark{animation:none}
+    .lp-smoke span,.lp-lamp,.lp-grain,.lp-cue i::after,.lp.armed.live.rest .lp-scene,.lp-cam,.lp-dark{animation:none!important}
     .lp.armed{height:100svh;margin-bottom:0}
     :global(.lp.armed ~ .wrap){transform:none}
   }
@@ -262,6 +268,11 @@ const quad = "352px 124px, 997px 125px, 974px 560px, 367px 560px";
   function ready() { findPage(); measure(); req(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready); else ready();
   if (document.readyState === "complete") setTimeout(countUp, 150); else addEventListener("load", function () { setTimeout(countUp, 150); });
+  // 3. ambient loops (smoke, lamp, grain, breathing) start only once the page has loaded
+  //    and the browser is idle, so they never compete with the first paint
+  function goLive() { if (root) root.classList.add("live"); }
+  function afterLoad() { (window.requestIdleCallback || function (f) { setTimeout(f, 600); })(goLive, { timeout: 2500 }); }
+  if (document.readyState === "complete") afterLoad(); else addEventListener("load", afterLoad);
   addEventListener("scroll", req, { passive: true });
   addEventListener("resize", function () { measure(); req(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); req(); });

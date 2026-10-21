@@ -247,6 +247,7 @@ footer.paper{margin-top:40px;border-top:3px double var(--ink);padding:18px 0 40p
 footer.paper .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:24px}
 footer.paper .m{font-family:var(--serif);font-size:28px;font-weight:700;letter-spacing:-.03em;color:var(--ink);line-height:1}
 footer.paper ul{list-style:none;margin:8px 0 0;padding:0;line-height:1.9}
+footer.paper li a{display:inline-block;min-height:24px;padding:2px 0}
 footer.paper .t{font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:10px;color:var(--ink-2)}
 footer.paper .legal{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 footer.paper a:hover{text-decoration:underline}
