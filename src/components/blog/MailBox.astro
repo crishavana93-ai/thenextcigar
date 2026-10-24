@@ -1,0 +1,36 @@
+---
+/** In-article newsletter prompt. No third-party script: it links to /subscribe/,
+ *  the only page that loads the MailerLite form, so article pages stay fast.
+ *  variant "line": one quiet line (under the one-to-buy box).
+ *  variant "box": the end-of-article panel. */
+interface Props { variant?: "line" | "box" }
+const { variant = "box" } = Astro.props;
+---
+{variant === "line" ? (
+  <p class="mbx-line">
+    <span class="mbx-k">The paper, by email</span>
+    New guides, real price drops and the Black Friday deals list, once they're checked.
+    <a href="/subscribe/" data-out="newsletter-line">Subscribe free&nbsp;→</a>
+  </p>
+) : (
+  <aside class="mbx" aria-label="Newsletter">
+    <p class="mbx-k">The paper, by email</p>
+    <p class="mbx-h">One email when there's something worth knowing.</p>
+    <p class="mbx-t">A new guide, a price that moved enough to matter, the Black Friday deals list once we've checked it. No fixed schedule, no nagging, and we never sell your address.</p>
+    <a class="mbx-btn" href="/subscribe/" data-out="newsletter-box">Subscribe free <span aria-hidden="true">→</span></a>
+    <p class="mbx-f">Free · 21+ · unsubscribe in one click</p>
+  </aside>
+)}
+<style>
+  .mbx-line{margin:-14px 0 28px;font:400 14px/1.45 var(--sans);color:var(--ink-2)}
+  .mbx-line .mbx-k{display:inline-block;margin-right:8px;font:600 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ox)}
+  .mbx-line a{color:var(--ink);font-weight:600;white-space:nowrap;display:inline-block;min-height:24px}
+  .mbx{margin:36px auto 8px;max-width:680px;border-top:3px double var(--ink);border-bottom:1px solid var(--ink);padding:20px 0 18px;text-align:center}
+  .mbx-k{margin:0 0 10px;font:600 11px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ox)}
+  .mbx-h{margin:0 0 8px;font:600 26px/1.15 var(--serif);color:var(--ink)}
+  .mbx-t{margin:0 auto 16px;max-width:52ch;font:400 16px/1.45 var(--serif);color:var(--ink-2)}
+  .mbx-btn{display:inline-block;background:var(--ink);color:var(--paper);text-decoration:none;font:600 12px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;padding:15px 26px;min-height:44px;box-sizing:border-box}
+  .mbx-btn:hover{background:var(--ox)}
+  .mbx-f{margin:12px 0 0;font:400 12px/1.3 var(--sans);color:var(--mute)}
+  @media (max-width:700px){.mbx-h{font-size:22px}}
+</style>

@@ -3,6 +3,7 @@ import { getCollection, getEntry, render } from "astro:content";
 import { toolsFor, metaDescription, pageTitle } from "../../lib/seo";
 import BuyBox from "../../components/paper/BuyBox.astro";
 import OneToBuy from "../../components/blog/OneToBuy.astro";
+import MailBox from "../../components/blog/MailBox.astro";
 import { coverSet } from "../../lib/cover";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
@@ -132,6 +133,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     </p>
 
     {(d as any).oneToBuy && <OneToBuy {...(d as any).oneToBuy} />}
+    {(d as any).oneToBuy && <MailBox variant="line" />}
 
     {coverUrl && coverUrl !== "/og-default.jpg" && (
       <figure class="cubierta">
@@ -175,6 +177,8 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
         <Content />
       </div>
     </div>
+
+    <MailBox />
 
     <BuyBox slug={d.slug} />
 
