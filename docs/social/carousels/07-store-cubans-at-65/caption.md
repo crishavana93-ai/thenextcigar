@@ -1,21 +1,18 @@
-# 07 · Store Cubans at 65%, not 70 — caption
+# 07 · Store Cubans at 65%, not 70 — caption (revised 26 Oct 2026)
 
-**Article:** /blog/how-to-store-cuban-cigars-65-not-70/ · 23 Sept 2026 · 7 slides, 1080×1350
+**Article:** /blog/how-to-store-cuban-cigars-65-not-70/ · 7 slides, 1080×1350
+
+## Compliance notes
+Revised 26 Oct: the cover photo (cigars with visible bands) is replaced by an empty humidor (MajestyWoodworks, CC BY 4.0). Taste verdicts and unsupported claims are removed: the forum consensus line, beetle eggs hatching at 23 °C, the inverted temperature example, the 20–30% flat humidity and "ten points off". The personal Havana/Malmö story is removed from the caption. Tobacco hashtags are dropped.
 
 ## Caption
 
-The 70/70 rule is an American rule. It was written for looser, thicker-wrapped cigars, and on a Habano it closes the draw, bends the burn and splits the wrapper on the cut. Habanos' own range starts at 65 — and after years of humidors in Havana and now Malmö, that is where I keep mine. Swipe for the number at each humidity, why temperature matters more than people think (beetles, not flavour), and the five rules for holding 65% through a Swedish winter when the flat is desert air. Full guide, with the table by humidity, on the site — link in bio. We sell accessories, never tobacco.
+Habanos publishes a storage range of 65–70% humidity at 16–18 °C. We keep Cuban cigars at the low end of it, and the hard part in a northern winter is holding it there.
+
+Swipe for what each humidity number means for the wrapper, why Habanos caps the temperature at 18 °C (the tobacco beetle), five rules for a dry, heated flat, and the salt test that tells you whether your hygrometer is right.
+
+Full guide at the link in bio. The Next Cigar is independent and published from Sweden. We don't sell tobacco.
 
 ## First comment
 
-#cubancigars #habanos #humidor #cigarstorage #cigar101 #cigarlife #cigarsociety #boveda #cigaraficionado #thenextcigar
-
-## Slides
-
-1. Cover — the humidor photo (our own), "Store Cubans at 65%, not 70."
-2. 65–70% — Habanos' published range; the range starts at 65.
-3. 72 / 65 / 58 — what the cigar does at each number.
-4. 18°C — temperature; beetles hatch from ~23°C.
-5. Five rules for a Swedish winter.
-6. 75% — the salt test; the lid gauge is lying.
-7. Slowly. — reviving dry cigars; link to the guide.
+#humidor #humiditycontrol #hygrometer #boveda #cigaraccessories #thenextcigar
