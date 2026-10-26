@@ -1,0 +1,120 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(../../../../public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(../../../../public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(../../../../public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+/* news bar, every slide */
+.band{position:absolute;left:0;right:0;bottom:0;height:480px;box-sizing:border-box;background:#0B0A09;padding:40px 72px 0;z-index:4}
+.band h2,.band p,.band .tag{position:relative}
+.slide.over .band{background:transparent}
+.slide.over .band:before{content:"";position:absolute;left:0;right:0;top:-40px;bottom:0;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 25%)}
+.slide.over .band .tag{position:absolute;top:-250px;left:72px;z-index:2}
+.slide.over .band h2{margin-top:-190px}
+.tag{display:inline-block;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.24em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:8px 16px;margin-bottom:26px}
+.band h2{margin:0;font-size:92px;line-height:.95;letter-spacing:-.035em;font-weight:500;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.band h2 i{font-style:italic;font-weight:300;color:#C9A36A}
+.band p{margin:24px 0 0;font-size:30px;line-height:1.3;color:#C7C2B6;font-weight:300}
+.meta{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:#6A665E;z-index:6}
+.meta b{color:#9A958A;font-weight:500}
+/* cover: the paper */
+.paper{position:absolute;left:0;top:0;width:1080px;height:1000px;overflow:hidden;background:#000}
+.paper img{position:absolute;left:40px;top:60px;width:1000px;box-shadow:0 30px 80px rgba(0,0,0,.7);transform:rotate(-1.5deg);transform-origin:top left}
+.paper:after{content:"";position:absolute;left:0;right:0;bottom:0;height:420px;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 85%)}
+/* top area for inner slides */
+.top{position:absolute;left:72px;right:72px;top:80px}
+.k{font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;margin-bottom:28px}
+.k b{color:#F2F0EA;font-weight:500}
+.hero{font-size:230px;line-height:.9;letter-spacing:-.05em;font-weight:500;color:#F2F0EA}
+.hero small{display:block;font-size:34px;letter-spacing:0;font-weight:300;color:#C7C2B6;margin-top:22px}
+.hero .ox{color:#C24A44}
+table{border-collapse:collapse;width:100%}
+td{padding:12px 0;border-bottom:1px solid #3A3733;font-size:30px;font-weight:300;color:#C7C2B6;vertical-align:baseline}
+td.n{text-align:right;font-weight:500;color:#F2F0EA;white-space:nowrap}
+td.n.ox{color:#C24A44}td.n.ok{color:#C9A36A}
+td small{display:block;font-family:'IBM Plex Sans';font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#6A665E;margin-top:4px}
+.bar{height:16px;background:#2A2724;border-radius:0 3px 3px 0;position:relative;margin-top:8px}
+.bar b{position:absolute;left:0;top:0;bottom:0;background:#F2F0EA;border-radius:0 3px 3px 0}
+.bar b.ox{background:#C24A44}
+.url{font-family:'IBM Plex Sans';font-size:34px;letter-spacing:.05em;color:#C9A36A;margin-top:26px}
+.big td{font-size:40px;line-height:1.25;padding:20px 0}
+</style></head>
+<body>
+
+<div class="slide over">
+ <div class="paper"><img src="fp-crop.jpg"></div>
+ <div class="grain"></div>
+ <div class="band"><span class="tag">Gear · Fixes</span><h2>Clicks but won't light? <i>It's usually one of five things.</i></h2><p>Before you bin the lighter: the fixes, from Xikar's, Colibri's and Vector's own instructions. Swipe →</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>1 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Quick diagnosis</b> · what happens → likely cause</div>
+  <table class="big">
+   <tr><td>Sparks, no flame, worse after each refill</td><td class="n ok">Air in the tank</td></tr>
+   <tr><td>Fails right after a refill</td><td class="n ok">Lit too soon</td></tr>
+   <tr><td>Has fuel, sparks, won't catch</td><td class="n ok">Flame too low</td></tr>
+   <tr><td>Weak, uneven flame</td><td class="n ok">Dirty jet</td></tr>
+   <tr><td>Fine indoors, dead outside in winter</td><td class="n ok">Cold butane</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">The diagnosis</span><h2>Match the symptom. <i>Then the fix.</i></h2><p>Five causes cover most torch lighters that click and do nothing.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>2 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>1 · Air in the tank</b> · how to bleed it</div>
+  <table class="big">
+   <tr><td class="n ok" style="text-align:left;width:260px;vertical-align:top">Step 1</td><td>Turn the flame adjuster to its lowest setting.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">Step 2</td><td>Point the refill valve away from your face.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">Step 3</td><td>Press the valve with a small screwdriver until the hissing stops.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">Step 4</td><td>Refill.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Fix 1</span><h2>Bleed it. <i>Then refill.</i></h2><p>Every refill lets in a little air, and over time the lighter pushes out air instead of gas. Xikar says to bleed before every refill.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: Xikar, Colibri, Vector</span><span>3 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>2 · Wait after refilling</b> · what each maker says</div>
+  <table class="big">
+   <tr><td>Colibri</td><td class="n ok">2 minutes</td></tr>
+   <tr><td>Zippo butane inserts</td><td class="n ok">2 minutes</td></tr>
+   <tr><td>Xikar</td><td class="n ok">3–4 minutes</td></tr>
+   <tr><td>Vector</td><td class="n ok">5–10 minutes</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Fix 2</span><h2>Don't light it <i>straight away.</i></h2><p>Liquid butane from the can is cold and the pressure needs time to settle. If gas sprays back while you fill, stop: it's full.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: maker instructions</span><span>4 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>3 &amp; 4 · Flame and jet</b></div>
+  <table class="big">
+   <tr><td class="n ok" style="text-align:left;width:260px;vertical-align:top">Too low</td><td>Turn the adjuster towards + a little at a time.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">Too high</td><td>Lights, then blows itself out? Turn it down a notch.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">Dirty jet</td><td>Wipe with a little alcohol, let it dry 2–3 minutes, then short bursts of low-pressure air.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Fixes 3 &amp; 4</span><h2>Set the flame. <i>Clean the jet.</i></h2><p>Low-grade butane leaves residue that clogs the jet. Xikar says it will damage a lighter.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Xikar, Vector</span><span>5 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>5 · The cold</b> · butane's boiling point</div>
+  <div class="hero"><span class="ox">−0.5</span><span style="color:#6A665E;font-weight:300"> °C</span><small>Near freezing, butane barely turns to gas, so there's almost no pressure to push it out of the jet.</small></div></div>
+ <div class="band"><span class="tag">Fix 5</span><h2>Warm it <i>in your hand.</i></h2><p>Colibri says to let it reach room temperature. Keep it in an inside pocket, not a coat or a cold car.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: NIST, Colibri</span><span>6 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The full guide</b> · seven causes, every source</div>
+  <div class="hero" style="font-size:96px;letter-spacing:-.03em;line-height:1">Why your torch lighter won't light. <i style="font-weight:300;color:#C9A36A">And how to fix it.</i></div>
+  <div class="url">thenextcigar.com · link in bio</div></div>
+ <div class="band"><span class="tag">Safety</span><h2>Never refill <i>near a flame.</i></h2><p>Hissing when you're not pressing means a leaking valve. Stop using it and send it for service.</p></div>
+ <div class="meta"><span><b>thenextcigar.com</b></span><span>7 / 7</span></div>
+</div>
+</body></html>
