@@ -19,6 +19,13 @@ html,body{margin:0;background:#000}
 .sc{position:absolute;inset:0;will-change:transform,opacity,clip-path;background:var(--bg)}
 .edge{position:absolute;top:0;bottom:0;width:6px;background:var(--ox);z-index:35;display:none}
 .bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(2px) saturate(.75);opacity:.22}
+.bg.strong{filter:saturate(.9) contrast(1.05);opacity:.75}
+.bg.strong:after{background:linear-gradient(180deg,rgba(18,17,16,.35) 0%,rgba(18,17,16,.25) 30%,rgba(18,17,16,.85) 62%,#121110 80%)}
+.bg.top{filter:saturate(.9);opacity:.7}
+.bg.top:after{background:linear-gradient(180deg,rgba(18,17,16,.6) 0%,rgba(18,17,16,.2) 25%,rgba(18,17,16,.55) 42%,#121110 55%)}
+.ph{position:absolute;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7);will-change:transform,opacity}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph .cr{position:absolute;left:12px;bottom:8px;font-family:'Plex';font-size:14px;color:rgba(242,240,234,.85);text-shadow:0 1px 6px #000}
 .bg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,17,16,.55),rgba(18,17,16,.92) 55%,#121110)}
 .k{position:absolute;left:84px;top:270px;font-family:'Plex';font-weight:500;font-size:24px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute)}
 .k b{color:var(--ox);font-weight:500}
@@ -50,7 +57,7 @@ const nord=['IS','NO','SE','FI','DK','EE','LV','LT'], germ=['DE','AT','PL'];
 
 const S=[]; // scenes: {dur, el, draw(local t seconds, p)}
 const root=document.getElementById('scenes');
-function scene(dur,html,img,draw){const el=$(`<div class="sc">${img?`<div class="bg" style="background-image:url(img/${img})"></div>`:''}${html}</div>`);root.appendChild(el);const o={dur,el,draw};o.init&&o.init();S.push(o);return o;}
+function scene(dur,html,img,draw,bgc=''){const el=$(`<div class="sc">${img?`<div class="bg ${bgc}" style="background-image:url(img/${img})"></div>`:''}${html}</div>`);root.appendChild(el);const o={dur,el,draw};o.init&&o.init();S.push(o);return o;}
 
 /* 0 HOOK */
 {const s=scene(3.4,`<div>
@@ -58,7 +65,7 @@ function scene(dur,html,img,draw){const el=$(`<div class="sc">${img?`<div class=
  <div id="h_n" class="big" style="position:absolute;left:70px;top:400px;font-size:620px;color:var(--ox)">0</div>
  <div id="h_t" style="position:absolute;left:84px;right:130px;top:1000px;font-size:92px;line-height:1;letter-spacing:-.03em;font-weight:500">countries where the official <i style="font-weight:300;color:var(--gold)">Cuban cigar importer</i> has stopped.</div>
  <div id="h_q" class="lbl" style="position:absolute;left:84px;top:1330px;color:var(--gold)">Guess which ones before the map →</div>
- </div>`,'field.jpg');
+ </div>`,'roller.jpg',null,'strong');
  const ws=words(s.el.querySelector('#h_t'));
  s.draw=(t)=>{const n=Math.round(11*eio(t/1.3));s.el.querySelector('#h_n').textContent=n;s.el.querySelector('#h_n').style.transform=`scale(${1+0.04*Math.sin(Math.min(t,1.3)*2.4)})`;reveal(ws,t,0.35,0.05);const q=s.el.querySelector('#h_q');q.style.opacity=eo((t-1.9)/0.4)*(0.6+0.4*Math.abs(Math.sin(t*3)));};}
 
@@ -83,15 +90,16 @@ function scene(dur,html,img,draw){const el=$(`<div class="sc">${img?`<div class=
  <h2 id="g_h">Deliveries stop. <i>Seven days later, insolvency.</i></h2>
  <div id="g_n" class="big" style="position:absolute;left:70px;top:640px;font-size:400px;color:var(--ink)">0</div>
  <div class="lbl" style="position:absolute;left:400px;top:880px;font-size:30px;color:var(--ink)">days</div>
+ <div class="ph" id="g_ph" style="left:560px;top:600px;width:436px;height:400px"><img src="img/rafters.jpg"><div class="cr">Tobacco curing, Cuba. A. Klink, CC BY 4.0</div></div>
  <svg width="912" height="420" style="position:absolute;left:84px;top:1080px">
   <line x1="20" y1="120" x2="892" y2="120" stroke="#2E2B28" stroke-width="4"/>
   <line id="g_bar" x1="20" y1="120" x2="20" y2="120" stroke="#C24A44" stroke-width="10" stroke-linecap="round"/>
   <g id="g_a"><circle cx="20" cy="120" r="16" fill="#C24A44"/><text x="0" y="60" font-size="30" font-weight="500" fill="#F2F0EA">4 SEP</text><text x="0" y="190" font-size="26" fill="#9A958A">Deliveries suspended</text><text x="0" y="226" font-size="26" fill="#9A958A">bank accounts frozen</text></g>
   <g id="g_b"><circle cx="892" cy="120" r="16" fill="#C24A44"/><text x="892" y="60" font-size="30" font-weight="500" fill="#F2F0EA" text-anchor="end">BY 11 SEP</text><text x="892" y="190" font-size="26" fill="#9A958A" text-anchor="end">Insolvency filed,</text><text x="892" y="226" font-size="26" fill="#9A958A" text-anchor="end">administrator appointed</text></g>
  </svg>
- <div class="src">Importer: 5th Avenue Products Trading GmbH. Sources: Finews, 14 Sep 2026; Cigar Aficionado, 11 Sep 2026.</div></div>`,'rafters.jpg');
+ <div class="src">Importer: 5th Avenue Products Trading GmbH. Sources: Finews, 14 Sep 2026; Cigar Aficionado, 11 Sep 2026.</div></div>`,'barn.jpg');
  const ws=words(s.el.querySelector('#g_h'));
- s.draw=(t)=>{reveal(ws,t);const p=eio((t-0.7)/1.6);s.el.querySelector('#g_n').textContent=Math.round(7*p);s.el.querySelector('#g_bar').setAttribute('x2',20+872*p);s.el.querySelector('#g_a').style.opacity=eo((t-0.5)/0.4);s.el.querySelector('#g_b').style.opacity=eo((t-2.2)/0.4);};}
+ s.draw=(t)=>{reveal(ws,t);const ph=s.el.querySelector('#g_ph');const q=eo((t-0.3)/0.6);ph.style.opacity=q;ph.style.transform=`translateY(${(1-q)*60}px) rotate(${1.5-0.5*q}deg)`;ph.querySelector('img').style.transform=`scale(${1.05+0.05*t/5.4})`;const p=eio((t-0.7)/1.6);s.el.querySelector('#g_n').textContent=Math.round(7*p);s.el.querySelector('#g_bar').setAttribute('x2',20+872*p);s.el.querySelector('#g_a').style.opacity=eo((t-0.5)/0.4);s.el.querySelector('#g_b').style.opacity=eo((t-2.2)/0.4);};}
 
 /* 3 SWEDEN licence */
 {const ev=[['15 Dec 2025','Gothenburg revokes the licence',0],['10 Jun 2026','Court rejects the appeal',177],['1 Jul 2026','Owners vote to liquidate',198],['11 Sep 2026','Licence gone for good',270]];
@@ -102,7 +110,7 @@ function scene(dur,html,img,draw){const el=$(`<div class="sc">${img?`<div class=
  <div id="w_n" class="big" style="position:absolute;left:70px;top:560px;font-size:330px;color:var(--gold)">0</div>
  <div class="lbl" style="position:absolute;left:600px;top:760px;font-size:30px;color:var(--ink)">days</div>
  <svg width="912" height="520" style="position:absolute;left:84px;top:960px"><line x1="40" y1="60" x2="40" y2="420" stroke="#2E2B28" stroke-width="4"/><line id="w_l" x1="40" y1="60" x2="40" y2="60" stroke="#C9A36A" stroke-width="6"/>${g}</svg>
- <div class="src">Elite Trading Scandinavia (formerly Habanos Nordic). Source: Realtid, 22 Oct 2026.</div></div>`,'hands.jpg');
+ <div class="src">Elite Trading Scandinavia (formerly Habanos Nordic). Source: Realtid, 22 Oct 2026.</div></div>`,'hands.jpg',null,'top');
  const ws=words(s.el.querySelector('#w_h'));const evs=[...s.el.querySelectorAll('.ev')];
  s.draw=(t)=>{reveal(ws,t);const p=eio((t-0.6)/2.6);s.el.querySelector('#w_n').textContent=Math.round(270*p);s.el.querySelector('#w_l').setAttribute('y2',60+360*p);evs.forEach((e,i)=>{const at=0.6+2.6*(i/3);const q=eo((t-at)/0.35);e.style.opacity=q;e.style.transform=`translateX(${(1-q)*30}px)`;});};}
 
@@ -181,7 +189,7 @@ function scene(dur,html,img,draw){const el=$(`<div class="sc">${img?`<div class=
  <div id="x_h" style="position:absolute;left:84px;right:130px;top:480px;font-size:120px;line-height:.95;letter-spacing:-.04em;font-weight:500">Which country <i style="font-weight:300;color:var(--gold)">is next?</i></div>
  <div id="x_c" style="position:absolute;left:84px;right:130px;top:900px;font-family:'Plex';font-weight:500;font-size:40px;line-height:1.35;color:var(--ink)">Comment your country.<br><span style="color:var(--mute)">We'll check its supply in next month's numbers.</span></div>
  <div id="x_f" class="lbl" style="position:absolute;left:84px;top:1240px;color:var(--gold);font-size:26px">Save this · Full timeline and sources: thenextcigar.com</div>
- <div class="src">Images: Wikimedia Commons (CC BY / CC BY-SA). Credits in the caption.</div></div>`,'field.jpg');
+ <div class="src">Images: Wikimedia Commons (CC BY / CC BY-SA). Credits in the caption.</div></div>`,'field.jpg',null,'strong');
  const ws=words(s.el.querySelector('#x_h'));
  s.draw=(t)=>{reveal(ws,t,0.05,0.06);s.el.querySelector('#x_c').style.opacity=eo((t-0.9)/0.4);s.el.querySelector('#x_f').style.opacity=eo((t-1.6)/0.4);};}
 

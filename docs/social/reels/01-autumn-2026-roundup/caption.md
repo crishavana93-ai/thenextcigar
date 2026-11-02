@@ -41,10 +41,12 @@ Images: Wikimedia Commons, credits below.
 
 | Scene | File | Credit | Licence |
 |---|---|---|---|
-| Hook, outro | Tobacco plants in Pinar del Rio | Eduardo Manchon / Wikimedia Commons | CC BY-SA 3.0 |
-| 01, 06 | Tobacco drying in Pinar del Río (01) | Gorupdebesanez / Wikimedia Commons | CC BY-SA 3.0 |
-| 02 | Tobacco Air Curing Cuba2 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
-| 03 | Rolling a Cuban Cigar | kuhnmi / Wikimedia Commons | CC BY 2.0 |
+| Hook (full photo), 07 | Tobacco Roller on Plantation Near Pinar del Rio | Adam Jones / Wikimedia Commons | CC BY-SA 3.0 |
+| 01, 02 (background), 06 | Tobacco drying in Pinar del Río (01) | Gorupdebesanez / Wikimedia Commons | CC BY-SA 3.0 |
+| 02 (photo card) | Tobacco Air Curing Cuba2 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
+| 03 (top photo) | Rolling a Cuban Cigar | kuhnmi / Wikimedia Commons | CC BY 2.0 |
 | 04 | Rolling a cigar in Cuba | FranHogan / Wikimedia Commons | CC BY-SA 4.0 |
 | 05 | Tobacco Air Curing Cuba1 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
-| 07 | Tobacco Roller on Plantation Near Pinar del Rio | Adam Jones / Wikimedia Commons | CC BY-SA 3.0 |
+| Outro (full photo) | Tobacco plants in Pinar del Rio | Eduardo Manchon / Wikimedia Commons | CC BY-SA 3.0 |
+
+No photo shows a cigar band, box logo or brand name.
