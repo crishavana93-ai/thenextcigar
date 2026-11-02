@@ -1,0 +1,77 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(../../../../public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(../../../../public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(../../../../public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Plex';font-weight:400;src:url(../../../../public/fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+#s{width:1080px;height:1920px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");z-index:20;pointer-events:none}
+.brand{position:absolute;left:84px;top:196px;font-family:'Plex';font-weight:500;font-size:22px;letter-spacing:.26em;text-transform:uppercase;color:#9A958A}
+.brand b{color:#F2F0EA;font-weight:500}
+.tag{position:absolute;right:140px;top:188px;font-family:'Plex';font-weight:500;font-size:20px;letter-spacing:.22em;text-transform:uppercase;background:#7B2622;color:#F2F0EA;padding:8px 16px}
+h1{position:absolute;left:84px;right:120px;top:260px;margin:0;font-size:84px;line-height:.98;letter-spacing:-.03em;font-weight:500}
+h1 i{font-style:italic;font-weight:300;color:#C9A36A}
+.card{position:absolute;left:110px;top:560px;width:860px;height:560px;overflow:hidden;background:#000;box-shadow:0 40px 90px rgba(0,0,0,.7);will-change:transform,opacity}
+.card img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+.card .cr{position:absolute;left:14px;bottom:10px;font-family:'Plex';font-weight:400;font-size:14px;color:rgba(242,240,234,.85);text-shadow:0 1px 6px #000;letter-spacing:.02em}
+.cap{position:absolute;left:84px;right:120px;top:1164px;text-align:center}
+.cap .k{font-family:'Plex';font-weight:500;font-size:22px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A}
+.cap .k b{color:#C24A44;font-weight:500}
+.cap .t{margin-top:12px;font-size:56px;line-height:1.05;letter-spacing:-.02em;font-weight:400}
+.cap .t i{font-style:italic;font-weight:400;color:#C9A36A}
+.list{position:absolute;left:84px;right:120px;top:1352px}
+.row{display:flex;align-items:baseline;height:60px;border-bottom:1px solid #2E2B28;font-size:36px}
+.row .n{width:64px;font-family:'Plex';font-weight:500;font-size:24px;color:#6A665E}
+.row .x{font-weight:300;color:#C7C2B6;white-space:nowrap;overflow:hidden}
+.row.on .n{color:#C24A44}.row.on .x{color:#F2F0EA;font-weight:400}
+.end{position:absolute;left:84px;right:120px;top:1680px;text-align:center;font-family:'Plex';font-weight:500;font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:#C9A36A;opacity:0}
+</style></head><body><div id="s">
+<div class="brand"><b>The Next Cigar</b> · News</div><div class="tag">Sept–Oct 2026</div>
+<h1 id="h1">5 things that shook <i>Europe's Cuban cigar trade.</i></h1>
+<div id="cards"></div>
+<div class="cap"><div class="k" id="k"></div><div class="t" id="t"></div></div>
+<div class="list" id="list"></div>
+<div class="end" id="end">Dates and sources · thenextcigar.com</div>
+<div class="grain"></div>
+</div>
+<script>
+const items=[
+ {img:'niebla.jpg',cr:'Photo: simon / Wikimedia Commons, CC BY 2.0',k:'<b>Sept–Oct 2026</b> · Europe',t:'Two months, <i>five stories.</i>',li:null},
+ {img:'tiengen.jpg',cr:'Waldshut-Tiengen. Photo: Zieglhar / Wikimedia Commons, CC BY-SA 4.0',k:'<b>4 Sep</b> · Germany, Austria, Poland',t:'The official importer <i>stops deliveries.</i>',li:'Germany’s importer stops deliveries'},
+ {img:'waldshut.jpg',cr:'Waldshut. Photo: Badener / Wikimedia Commons, CC BY-SA 3.0',k:'<b>September</b> · Germany',t:'The same company files <i>for insolvency.</i>',li:'It files for insolvency'},
+ {img:'goteborg.jpg',cr:'Göteborg harbour. Photo: Slottsviken51 / Wikimedia Commons, CC BY-SA 4.0',k:'<b>11 Sep</b> · Nordics and Baltics',t:'Sweden’s importer loses its licence <i>for good.</i>',li:'Nordic importer loses its licence'},
+ {img:'treasury.jpg',cr:'US Treasury. Photo: APK / Wikimedia Commons, CC BY-SA 4.0',k:'<b>The link</b> · Habanos S.A. ownership',t:'A part-owner is under <i>US, UK and EU sanctions.</i>',li:'The sanctions behind both'},
+ {img:'brussels.jpg',cr:'Brussels. Photo: almathias / Wikimedia Commons, CC0',k:'<b>26 Oct</b> · Brussels',t:'EU tobacco tax talks <i>continue.</i>',li:'EU tobacco tax talks go on'},
+ {img:'vinales.jpg',cr:'Viñales, Cuba. Photo: Ji-Elle / Wikimedia Commons, CC BY-SA 4.0',k:'<b>Full story</b> · dates and sources',t:'What it means <i>across Europe.</i>',li:null}
+];
+const T0=2.2, D=3.5, OUT=T0+5*D, TOTAL=OUT+3.6;
+const cards=document.getElementById('cards'), list=document.getElementById('list');
+items.forEach((it,i)=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<img src="img/${it.img}"><div class="cr">${it.cr}</div>`;cards.appendChild(c);it.el=c;});
+for(let i=1;i<=5;i++){const r=document.createElement('div');r.className='row';r.innerHTML=`<span class="n">${String(i).padStart(2,'0')}</span><span class="x"></span>`;list.appendChild(r);}
+const ease=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+function idxAt(t){if(t<T0)return 0;if(t>=OUT)return 6;return 1+Math.floor((t-T0)/D);}
+function startOf(i){return i===0?0:i===6?OUT:T0+(i-1)*D;}
+function render(t){
+ const i=idxAt(t);
+ items.forEach((it,j)=>{
+  const s=startOf(j), e=j===6?TOTAL:startOf(j+1);
+  const c=it.el;
+  if(t<s||j<i-1||j>i){c.style.opacity=0;return;}
+  if(j===i){const p=ease((t-s)/0.45);const life=(t-s)/(e-s);const rot=(j%2?1.4:-1.4)*(1-p*0.4);
+   c.style.opacity=p;c.style.zIndex=10;c.style.transform=`translateY(${(1-p)*90}px) rotate(${rot}deg) scale(${0.94+0.06*p})`;
+   c.querySelector('img').style.transform=`scale(${1.04+0.07*life})`;}
+  else{const p=ease((t-startOf(i))/0.45);c.style.zIndex=5;c.style.opacity=1-p;c.style.transform=`translateY(${-60*p}px) rotate(${(j%2?1:-1)*(1.4+2*p)}deg) scale(${1-0.08*p})`;}
+ });
+ const it=items[i]; const pc=ease((t-startOf(i))/0.4);
+ const k=document.getElementById('k'),tt=document.getElementById('t');
+ if(k.dataset.i!=i){k.innerHTML=it.k;tt.innerHTML=it.t;k.dataset.i=i;}
+ k.style.opacity=pc;tt.style.opacity=pc;tt.style.transform=`translateY(${(1-pc)*24}px)`;
+ [...list.children].forEach((r,j)=>{const n=j+1;const x=r.querySelector('.x');
+  if(i>=n){const p=ease((t-startOf(n))/0.5);const txt=items[n].li;x.textContent=txt.slice(0,Math.ceil(txt.length*Math.min(1,(t-startOf(n))/0.5)));r.classList.toggle('on',i===n||i===6);r.style.opacity=1;}
+  else{x.textContent='';r.classList.remove('on');}
+ });
+ document.getElementById('h1').style.opacity=ease(t/0.5);
+ document.getElementById('end').style.opacity=i===6?ease((t-OUT-0.3)/0.5):0;
+}
+window.TOTAL=TOTAL;window.render=render;
+</script></body></html>
