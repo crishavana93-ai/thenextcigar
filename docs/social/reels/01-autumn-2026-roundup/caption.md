@@ -1,45 +1,50 @@
-# Reel 01: Sept–Oct 2026 news roundup
+# Reel 01 (v2): Sept–Oct 2026, by the numbers
 
-**Format:** 23 s, 1080×1920, no audio. Add a quiet instrumental from Instagram's library. Cover frame: cover-frame.jpg (item 01).
-**Compliance (KOVFS 2024:2, see SOCIAL_COMPLIANCE_2026-10-26.md):** company and market news only. No cigar products, prices, shops or stock levels; no taste verdicts; no cigar photos; neutral hashtags only. The Talismán and Concordia launches are deliberately left out (they're products); they're on the site only.
+**Format:** 49 s, 1080×1920, 7 data stories, no audio (record the voice from vo-script.md). Cover frame: cover-frame-v2.jpg (the "11" hook).
+**Compliance (KOVFS 2024:2, see SOCIAL_COMPLIANCE_2026-10-26.md):** company and market data only. No cigar products, prices, shops or stock levels; no taste verdicts; no cigar bands or brands in images; neutral hashtags. Product launches (Talismán, Concordia) stay on the website.
 **Link in bio:** homepage, not the Finder.
+**Interactive:** the hook asks viewers to guess before the map; the outro asks "Which country is next?" to drive comments. Reply to every comment in the first hour. Pin a comment: "Full timeline with sources: link in bio."
 
 ## Caption (paste as is)
 
-Two months that changed how Cuban cigars reach Europe.
+11 countries. 2 importers. 1 ownership problem. 📊
 
-01 · 4 Sep: 5th Avenue, the official importer for Germany, Austria and Poland, stops deliveries.
-02 · September: the company files for insolvency and a court appoints an administrator.
-03 · 11 Sep: Sweden's former importer, which supplied the Nordics and the Baltics, loses its tobacco licence for good.
-04 · The link: a part-owner of Habanos S.A. is under US, UK and EU sanctions.
-05 · 26 Oct: EU tax experts keep negotiating new tobacco excise rules.
+01 · 11 European countries saw their official Cuban cigar importer stop this autumn.
+02 · Germany, Austria, Poland: deliveries stopped 4 Sep, insolvency within 7 days.
+03 · Nordics and Baltics: a 270-day licence fight ended on 11 Sep.
+04 · That importer handled ~45% of Sweden's cigar market (Cigarrvärlden estimate).
+05 · Its 2025 revenue: 119m SEK, up from 87m. 66m SEK couldn't be verified by the auditor.
+06 · Half of Habanos S.A. is owned via Prince Group, whose founder is under US, UK and EU sanctions. Prince Group denies the allegations.
+07 · New EU tobacco taxes need all 27 member states to agree. No deal yet.
 
-No new importer has been named for Germany or the Nordics yet.
+Which country is next? Comment yours 👇
 
-Dates and sources: link in bio.
+Sources: Cigar Aficionado (11 Sep 2026), Finews (14 Sep 2026), Realtid (22 Oct 2026), Cigars Connect (4 Jun 2026), RFA (14 Oct 2025), Council of the EU documents (20 Oct 2026). Full timeline: link in bio.
+Images: Wikimedia Commons, credits below.
 
-Sources: Cigar Aficionado (11 Sep), Finews (14 Sep), Realtid (22 Oct), Council of the EU documents (20 Oct).
+#thenextcigar #europenews #businessnews #datavisualization #tradenews
 
-#thenextcigar #europenews #businessnews #tradenews
+## Fact check (each on-screen number → source)
 
-## Image credits (also printed on each image)
+| On screen | Value | Source |
+|---|---|---|
+| Countries affected | 11 = DE, AT, PL (5th Avenue) + SE, NO, DK, FI, IS, EE, LV, LT (Elite Trading Scandinavia) | Cigar Aficionado 11 Sep 2026; Cigars Connect 4 Jun 2026 |
+| Germany | Deliveries suspended 4 Sep, bank accounts frozen; insolvency filed, administrator appointed by 11 Sep | Finews 14 Sep 2026; Cigar Aficionado 11 Sep 2026 |
+| Sweden timeline | 15 Dec 2025 revoked; 10 Jun 2026 court; 1 Jul liquidation vote; 11 Sep final. 15 Dec → 11 Sep = 270 days | Realtid 22 Oct 2026 |
+| Market share | ~45% of Swedish cigar market | Realtid 22 Oct 2026, citing Cigarrvärlden |
+| Books | Revenue 87m (2024) → 119m SEK (2025); profit 37.5m; unverified inventory 29m + receivables 37m = 66m; no cash at year-end | Realtid 22 Oct 2026 |
+| Ownership | Habanos 50% Cuban state / 50% Prince Group via Allied Cigar Corp. | Cigar Aficionado 11 Sep 2026; Realtid 22 Oct 2026 |
+| Sanctions | 14 Oct 2025 US and UK act, 146 targets, ~$15bn bitcoin seized; EU sanctions July 2026 | RFA 14 Oct 2025; Realtid 22 Oct 2026 |
+| EU tax | Unanimity of 27; working party on compromise texts 26 Oct | Presidency note 20 Oct 2026 (Austrian Parliament EU database) |
 
-All images show the cigar world with no cigar bands, box logos or brand names (see the compliance note).
+## Image credits
 
-| Item | File | Credit | Licence |
+| Scene | File | Credit | Licence |
 |---|---|---|---|
-| Intro | Tobacco plants in Pinar del Rio | Eduardo Manchon / Wikimedia Commons | CC BY-SA 3.0 |
-| 01 | Tobacco drying in Pinar del Río (01) | Gorupdebesanez / Wikimedia Commons | CC BY-SA 3.0 |
+| Hook, outro | Tobacco plants in Pinar del Rio | Eduardo Manchon / Wikimedia Commons | CC BY-SA 3.0 |
+| 01, 06 | Tobacco drying in Pinar del Río (01) | Gorupdebesanez / Wikimedia Commons | CC BY-SA 3.0 |
 | 02 | Tobacco Air Curing Cuba2 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
 | 03 | Rolling a Cuban Cigar | kuhnmi / Wikimedia Commons | CC BY 2.0 |
 | 04 | Rolling a cigar in Cuba | FranHogan / Wikimedia Commons | CC BY-SA 4.0 |
 | 05 | Tobacco Air Curing Cuba1 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
-| Outro | Tobacco Roller on Plantation Near Pinar del Rio | Adam Jones / Wikimedia Commons | CC BY-SA 3.0 |
-
-## Fact check (each line → source)
-- 4 Sep stop, frozen accounts: Finews 14 Sep. Germany/Austria/Poland, insolvency, administrator: Cigar Aficionado 11 Sep.
-- 11 Sep licence lost for good; Nordics and Baltics: Realtid 22 Oct.
-- Sanctions by US, UK and EU: Cigar Aficionado 11 Sep; EU sanctions July 2026: Realtid.
-- 26 Oct Council working party on tobacco excise compromise texts: Austrian Parliament EU database, presidency steering note dated 20 Oct.
-
-To re-render: open source.html from this folder (fonts load from public/fonts), or ask Claude to rerun the Playwright frame render.
+| 07 | Tobacco Roller on Plantation Near Pinar del Rio | Adam Jones / Wikimedia Commons | CC BY-SA 3.0 |
