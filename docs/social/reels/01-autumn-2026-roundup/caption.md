@@ -24,15 +24,17 @@ Sources: Cigar Aficionado (11 Sep), Finews (14 Sep), Realtid (22 Oct), Council o
 
 ## Image credits (also printed on each image)
 
+All images show the cigar world with no cigar bands, box logos or brand names (see the compliance note).
+
 | Item | File | Credit | Licence |
 |---|---|---|---|
-| Intro | Niebla en Viñales, Cuba | simon / Wikimedia Commons | CC BY 2.0 |
-| 01 | Tiengen Altstadt 4 | Zieglhar / Wikimedia Commons | CC BY-SA 4.0 |
-| 02 | Waldshut WT Altstadt | Badener / Wikimedia Commons | CC BY-SA 3.0 |
-| 03 | Port Cranes in Gothenburg Harbour | Slottsviken51 / Wikimedia Commons | CC BY-SA 4.0 |
-| 04 | Treasury Building at night | APK / Wikimedia Commons | CC BY-SA 4.0 |
-| 05 | Berlaymont building in Brussels | almathias / Wikimedia Commons | CC0 |
-| Outro | Vallée de Viñales – Mogotes (3) | Ji-Elle / Wikimedia Commons | CC BY-SA 4.0 |
+| Intro | Tobacco plants in Pinar del Rio | Eduardo Manchon / Wikimedia Commons | CC BY-SA 3.0 |
+| 01 | Tobacco drying in Pinar del Río (01) | Gorupdebesanez / Wikimedia Commons | CC BY-SA 3.0 |
+| 02 | Tobacco Air Curing Cuba2 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
+| 03 | Rolling a Cuban Cigar | kuhnmi / Wikimedia Commons | CC BY 2.0 |
+| 04 | Rolling a cigar in Cuba | FranHogan / Wikimedia Commons | CC BY-SA 4.0 |
+| 05 | Tobacco Air Curing Cuba1 | Alexander Klink / Wikimedia Commons | CC BY 4.0 |
+| Outro | Tobacco Roller on Plantation Near Pinar del Rio | Adam Jones / Wikimedia Commons | CC BY-SA 3.0 |
 
 ## Fact check (each line → source)
 - 4 Sep stop, frozen accounts: Finews 14 Sep. Germany/Austria/Poland, insolvency, administrator: Cigar Aficionado 11 Sep.
