@@ -1,9 +1,7 @@
 ---
 import PaperLayout from "../../../layouts/PaperLayout.astro";
 import { VENUES, CITY_GROUPS, TYPE_LABEL, citySlug, type Venue } from "../../../data/lounge-venues";
-import { COUNTRIES, SKUS, PRICE_SNAPSHOTS, RETAILER_BY_ID, FX_TO_EUR, isStale, formatPrice } from "../../../data/finder-live";
-import { DUTY_RATES } from "../../../data/duty-rates";
-import { landedCost } from "../../../lib/finder/landed";
+import { CITY_GUIDES } from "../../../data/city-guides";
 
 /** /lounge/map/<city>/ — one page per city on the map. The rooms, on a map and
  *  as a list; what a box costs delivered to that country when the board covers
@@ -26,33 +24,28 @@ const lng = rooms.reduce((s, v) => s + v.lng, 0) / rooms.length;
 // Other cities in the same country, most rooms first.
 const siblings = CITY_GROUPS.filter((g) => g.country === country && g.city !== city).map((g) => ({ city: g.city, n: g.rooms.length })).sort((a, b) => b.n - a.n || a.city.localeCompare(b.city)).slice(0, 12);
 
-// What a box costs delivered here — only where the board has duty rates.
-const cc = COUNTRIES.find((c) => c.name === country);
-const hasLanded = !!(cc && DUTY_RATES[cc.code]);
-const SHOW = ["montecristo-no-4", "partagas-serie-d-no-4", "hoyo-de-monterrey-epicure-no-2", "cohiba-robustos"];
-const landed = hasLanded ? SHOW.map((id) => {
-  const sku = SKUS.find((s) => s.id === id)!;
-  let best: { total: number; snap: any; retailer: any } | null = null;
-  for (const snap of PRICE_SNAPSHOTS) {
-    if (snap.skuId !== id || !snap.inStock || isStale(snap)) continue;
-    if (snap.packSize && snap.packSize !== sku.boxSize) continue;
-    const r = RETAILER_BY_ID[snap.retailerId]; if (!r) continue;
-    try {
-      const res = landedCost({ price: snap.price, currency: snap.currency, fromCountry: r.country, toCountry: cc!.code, boxSize: sku.boxSize, ring: sku.ring, lengthMm: sku.lengthMm, fx: FX_TO_EUR });
-      if (!best || res.totalEur < best.total) best = { total: res.totalEur, snap, retailer: r };
-    } catch {}
-  }
-  return best ? { sku, ...best } : null;
-}).filter(Boolean) as { sku: any; total: number; snap: any; retailer: any }[] : [];
+// Editorial guide for this city, when one has been written.
+const slug = citySlug(city, country);
+const guide = CITY_GUIDES[slug];
+const fmtDate = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
 const payload = rooms.map((v) => [v.slug, v.name, v.address || "", v.lat, v.lng, v.type, v.website || ""]);
 const title = `Cigar lounges and shops in ${city} — ${rooms.length} rooms on the Lounge map · The Next Cigar`;
 const desc = `Where to smoke and buy Cuban cigars in ${city}, ${country}: ${nCdh ? `${nCdh} Casa${nCdh > 1 ? "s" : ""} del Habano, ` : ""}${nLounge} lounge${nLounge === 1 ? "" : "s"} and ${nShop} shop${nShop === 1 ? "" : "s"}, with addresses and directions. Members see who is smoking there tonight.`;
-const jsonLd = {
-  "@context": "https://schema.org", "@type": "ItemList",
+const itemList = {
+  "@type": "ItemList",
   name: `Cigar lounges and shops in ${city}`, url: `https://thenextcigar.com/lounge/map/${citySlug(city, country)}/`,
   numberOfItems: rooms.length,
   itemListElement: rooms.map((v, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "LocalBusiness", name: v.name, address: v.address || undefined, url: v.website || undefined, geo: { "@type": "GeoCoordinates", latitude: v.lat, longitude: v.lng } } })),
+};
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    itemList,
+    ...(guide && guide.faq.length >= 2
+      ? [{ "@type": "FAQPage", mainEntity: guide.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a.replace(/<[^>]+>/g, "") } })) }]
+      : []),
+  ],
 };
 ---
 
@@ -61,7 +54,8 @@ const jsonLd = {
 
   <div class="dateline">
     <h1>{city} <em>— where to smoke, where to buy.</em></h1>
-    <p class="st"><a href="/lounge/map/">The map</a> · {country} · {rooms.length} room{rooms.length === 1 ? "" : "s"}</p>
+    <p class="st"><a href="/lounge/map/">The map</a> · {country} · {rooms.length} room{rooms.length === 1 ? "" : "s"}{guide && <> · Checked {fmtDate(guide.updated)}</>}</p>
+    {guide && <p class="lede" set:html={guide.lede} />}
   </div>
 
   <div class="front">
@@ -87,6 +81,26 @@ const jsonLd = {
         </>
       ))}
       <p class="note" style="margin-top:18px">Know a room in {city} we've missed, or one that has closed? <a href="/lounge/signup/">Join</a> and tell the desk from the app; corrections run within the week.</p>
+
+      {guide && (
+        <article class="cityguide">
+          {guide.sections.map((sec) => (
+            <>
+              <div class="rulehead" style="margin-top:30px"><h2>{sec.h}</h2></div>
+              <div class="prose" set:html={sec.body} />
+            </>
+          ))}
+          {guide.faq.length > 0 && (
+            <>
+              <div class="rulehead" style="margin-top:30px"><h2>Questions</h2></div>
+              <div class="prose">
+                {guide.faq.map((f) => (<><h3>{f.q}</h3><p set:html={f.a} /></>))}
+              </div>
+            </>
+          )}
+          <p class="note srcs">Sources: {guide.sources.map((x, i) => (<>{i > 0 && " · "}<a href={x.url} target="_blank" rel="noopener">{x.label}</a></>))}. Rules change; check locally before you go.</p>
+        </article>
+      )}
     </section>
 
     <aside class="rail">
@@ -96,24 +110,6 @@ const jsonLd = {
         <p>Members check in at these rooms, declare trips, and get an email when a box they want drops. Free, no card.</p>
         <a class="cta" href="/lounge/signup/">Join free →</a>
       </div>
-
-      {landed.length > 0 && (
-        <>
-          <div class="rulehead" style="margin-top:26px"><h2>A box, delivered to {country}</h2></div>
-          <table class="mk">
-            <thead><tr><th>Box of 25</th><th class="num">At your door</th></tr></thead>
-            <tbody>
-              {landed.map((l) => (
-                <tr>
-                  <td class="v"><a href={`/finder/sku/${l.sku.slug}/`}>{l.sku.brand} {l.sku.vitola}</a><small>{l.retailer.name} · {String(l.retailer.country).toUpperCase()} · {formatPrice(l.snap.price, l.snap.currency)} listed</small></td>
-                  <td class="p">€{Math.round(l.total).toLocaleString("en-GB")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p class="note">Cheapest live listing on the board, plus duty, tobacco excise and VAT for {country}. <a href={`/finder/${cc!.code}/`}>The {country} edition →</a></p>
-        </>
-      )}
 
       {siblings.length > 0 && (
         <>
@@ -128,7 +124,7 @@ const jsonLd = {
       <ul class="list">
         <li><div><a class="head" href="/blog/how-to-read-a-cuban-cigar-box/">How to read a Cuban cigar box</a><p class="by">Seals, stamps, codes, and the one tell that never lies.</p></div></li>
         <li><div><a class="head" href="/tools/allowance/">The traveller's allowance</a><p class="by">How many you can carry home from {country}, and what you'd pay.</p></div></li>
-        <li><div><a class="head" href="/finder/">The board</a><p class="by">Box prices at ten European retailers, four times a day.</p></div></li>
+        <li><div><a class="head" href="/blog/cuban-cigar-news-september-october-2026/">Cuban cigar news, Sept–Oct 2026</a><p class="by">Importers, ownership and EU tax: what changed in Europe.</p></div></li>
       </ul>
     </aside>
   </div>
@@ -141,6 +137,14 @@ const jsonLd = {
   .front > :first-child{border-right:1px solid var(--rule);padding-right:24px}
   .front > :last-child{border-left:0;padding-left:0}
   .mapwrap{border:1px solid var(--ink)}
+  .dateline .lede{max-width:62ch;margin:14px 0 0;font-size:19px;line-height:1.5;color:var(--ink-2)}
+  .cityguide .prose{font-size:17px;line-height:1.6;max-width:66ch}
+  .cityguide .prose p{margin:10px 0}
+  .cityguide .prose ul{margin:10px 0 10px 1.2em;padding:0}
+  .cityguide .prose li{margin:4px 0}
+  .cityguide .prose h3{font-size:19px;font-weight:500;margin:18px 0 4px}
+  .cityguide .prose a{border-bottom:1px solid var(--ox)}
+  .cityguide .srcs{margin-top:22px}
   .citymap{height:min(56vh,520px);min-height:360px;background:#EAE7E0}
   .legend{display:inline-flex;align-items:center;gap:4px 6px;margin-left:8px;font-style:normal;text-transform:none;color:var(--ink-2)}
   .pl{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-family:var(--serif);font-style:normal;font-size:10px;font-weight:500;border:1px solid var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.35);margin-left:6px}
