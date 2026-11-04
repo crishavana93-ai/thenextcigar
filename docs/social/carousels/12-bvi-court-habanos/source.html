@@ -1,0 +1,121 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(../../../../public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(../../../../public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(../../../../public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-weight:400;src:url(../../../../public/fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+.ph{position:absolute;left:0;top:0;width:1080px;height:1000px;background-size:cover;background-position:center 30%}
+.ph:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,10,9,.25),rgba(11,10,9,.1) 40%,#0B0A09 92%)}
+.bgp{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.16;filter:saturate(.7)}
+.bgp:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,20,18,.3),#151412 70%)}
+.cr{position:absolute;right:28px;top:900px;font-family:'IBM Plex Sans';font-size:14px;color:rgba(242,240,234,.65);writing-mode:vertical-rl;transform:rotate(180deg);transform-origin:center;z-index:6}
+.band{position:absolute;left:0;right:0;bottom:0;height:480px;box-sizing:border-box;background:#0B0A09;padding:40px 72px 0;z-index:4}
+.band h2,.band p,.band .tag{position:relative}
+.slide.over .band{background:transparent}
+.slide.over .band:before{content:"";position:absolute;left:0;right:0;top:-40px;bottom:0;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 25%)}
+.slide.over .band .tag{position:absolute;top:-250px;left:72px;z-index:2}
+.slide.over .band h2{margin-top:-190px}
+.tag{display:inline-block;font-family:'IBM Plex Sans';font-weight:500;font-size:20px;letter-spacing:.24em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:8px 16px;margin-bottom:26px}
+.band h2{margin:0;font-size:88px;line-height:.95;letter-spacing:-.035em;font-weight:500;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.band h2 i{font-style:italic;font-weight:300;color:#C9A36A}
+.band p{margin:24px 0 0;font-size:30px;line-height:1.3;color:#C7C2B6;font-weight:300}
+.meta{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:#6A665E;z-index:6}
+.meta b{color:#9A958A;font-weight:500}
+.top{position:absolute;left:72px;right:72px;top:80px;z-index:3}
+.k{font-family:'IBM Plex Sans';font-weight:500;font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;margin-bottom:28px}
+.k b{color:#F2F0EA;font-weight:500}
+.hero{font-size:230px;line-height:.9;letter-spacing:-.05em;font-weight:500;color:#F2F0EA}
+.hero .ox{color:#C24A44}
+.hero small{display:block;font-size:34px;letter-spacing:0;font-weight:300;color:#C7C2B6;margin-top:18px}
+table{border-collapse:collapse;width:100%}
+td{padding:12px 0;border-bottom:1px solid #3A3733;font-size:30px;font-weight:300;color:#C7C2B6;vertical-align:baseline}
+td.n{text-align:right;font-weight:500;color:#F2F0EA;white-space:nowrap}
+td.n.ox{color:#C24A44}td.n.ok{color:#C9A36A}
+.big td{font-size:38px;line-height:1.22;padding:18px 0}
+.own{margin-top:34px}
+.own .row{display:flex;height:74px;font-family:'IBM Plex Sans';font-weight:500;font-size:24px}
+.own .row div{display:flex;align-items:center;padding-left:18px;box-sizing:border-box}
+.own .lbl{font-family:'IBM Plex Sans';font-size:17px;letter-spacing:.18em;text-transform:uppercase;color:#6A665E;margin:18px 0 8px}
+.url{font-family:'IBM Plex Sans';font-size:34px;letter-spacing:.05em;color:#C9A36A;margin-top:26px}
+</style></head>
+<body>
+
+<!-- 1 COVER -->
+<div class="slide over">
+ <div class="ph" style="background-image:url(img/rolling.jpg)"></div>
+ <div class="cr">Photo: Bryan Ledgard / Wikimedia Commons, CC BY 2.0</div>
+ <div class="grain"></div>
+ <div class="band"><span class="tag">Courts · News</span><h2>A court could hand back <i>a stake in Habanos.</i></h2><p>A judge in the British Virgin Islands will end the liquidation of 30 companies linked to Chen Zhi. The sanctions stay. Swipe for what it means →</p></div>
+ <div class="meta"><span><b>The Next Cigar</b></span><span>5 Nov 2026 · 1 / 6</span></div>
+</div>
+
+<!-- 2 OWNERSHIP -->
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/barn.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Habanos S.A.</b> · who owns it</div>
+  <div class="hero"><span class="ox">28.55%</span><small>held indirectly by Chen Zhi, its second-largest shareholder.</small></div>
+  <div class="own">
+   <div class="lbl">Habanos S.A.</div>
+   <div class="row"><div style="width:468px;background:#5E5A53">Cuban state · 50%</div><div style="width:468px;background:#3A3632">Allied Cigar Corp. · 50%</div></div>
+   <div class="lbl">Allied Cigar Corp. (Madrid)</div>
+   <div class="row"><div style="width:534px;background:#C24A44">Chen Zhi · 57.1%</div><div style="width:402px;background:#3A3632;font-size:21px">Renovaire (Abu Dhabi) · 42.9%</div></div>
+  </div></div>
+ <div class="band"><span class="tag">The stake</span><h2>One stake. <i>Three continents.</i></h2><p>Chen Zhi holds his share through companies on three continents. One of them, Simply Advanced Ltd, is registered in the British Virgin Islands.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: halfwheel, 11 Sep and 4 Nov 2026</span><span>2 / 6</span></div>
+</div>
+
+<!-- 3 THE RULING -->
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/curing.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>High Court of the British Virgin Islands</b></div>
+  <table class="big">
+   <tr><td class="n ok" style="text-align:left;width:250px;vertical-align:top">Jan 2026</td><td>The court puts more than 30 Chen-linked companies under provisional liquidation.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">21 Oct</td><td>The judge says the liquidation of 30 companies will end.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">After 6 Nov</td><td>Written judgment expected.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">The ruling</span><h2>"Mere association <i>is not enough."</i></h2><p>The judge found he had no admissible evidence to wind the companies up. He did not rule on the US allegations, which Chen Zhi and the Prince Group deny.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: halfwheel, Cigars-connect, 4 Nov 2026</span><span>3 / 6</span></div>
+</div>
+
+<!-- 4 THE WORRY -->
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/hands-bw.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Why importers are worried</b> · the sanctions stay</div>
+  <table class="big">
+   <tr><td class="n ox" style="text-align:left;width:250px;vertical-align:top">Germany</td><td>No deliveries since early September. Formal insolvency opened on 1 November.</td></tr>
+   <tr><td class="n ox" style="text-align:left;vertical-align:top">Spain</td><td>The importer's payments need prior clearance from the Spanish Treasury.</td></tr>
+   <tr><td class="n ox" style="text-align:left;vertical-align:top">UK · US</td><td>Distributors' trading licences "could come under review".</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">The fear</span><h2>A win in court. <i>Not at the bank.</i></h2><p>"Chen Zhi's legal victory will not unblock the bank accounts of Cuban cigar distributors." — Laurent Mimouni, L'Amateur de Cigare</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Cigars-connect, 12 Sep, 3 and 4 Nov 2026</span><span>4 / 6</span></div>
+</div>
+
+<!-- 5 OPEN QUESTIONS -->
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/field.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>What happens next</b> · as of 4 November</div>
+  <table class="big">
+   <tr><td class="n ok" style="text-align:left;width:250px;vertical-align:top">A stay?</td><td>The BVI Attorney General is expected to seek one, the liquidators' lawyers say.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">Control</td><td>Would pass to Cosimo Borrelli, appointed by Chen Zhi.</td></tr>
+   <tr><td class="n ok" style="text-align:left;vertical-align:top">A sale?</td><td>Several parties have shown interest. Nothing announced.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Next date</span><h2>8–9 December. <i>Back in court.</i></h2><p>A hearing on how the liquidators hand over control. We'll report what changes.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: halfwheel, Cigars-connect, 4 Nov 2026</span><span>5 / 6</span></div>
+</div>
+
+<!-- 6 FULL REPORT -->
+<div class="slide">
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The full report</b> · with every source</div>
+  <div class="hero" style="font-size:90px;letter-spacing:-.03em;line-height:1">A court could hand Chen Zhi back his Habanos stake. <i style="font-weight:300;color:#C9A36A">What it means for Cuban cigars in Europe.</i></div>
+  <div class="url">thenextcigar.com · link in bio</div></div>
+ <div class="band"><span class="tag">The Next Cigar</span><h2>A newspaper <i>about cigars.</i></h2><p>Independent and published from Sweden. We don't sell tobacco, and no tobacco company pays us.</p></div>
+ <div class="meta"><span><b>thenextcigar.com</b></span><span>6 / 6</span></div>
+</div>
+</body></html>
