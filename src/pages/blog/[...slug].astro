@@ -60,19 +60,32 @@ const mentioned = seedIds
   .filter((r) => r.best)
   .slice(0, 4);
 
-// FAQ blocks in the body → FAQPage schema (matches "## Questions" H2 + H3 pairs).
+// FAQ blocks in the body → FAQPage schema. The section is any H2 starting
+// "Questions", "FAQ" or "Frequently…" ("Questions people ask", "Questions I
+// get asked"…). Questions are either H3s with the answer below, or a bold
+// question ending in "?" with the answer on the same paragraph. Before
+// 4 Nov 2026 only "## Questions" + H3s matched, so 7 articles emitted nothing.
 const faqPairs: { q: string; a: string }[] = [];
 {
   const body = post.body ?? "";
-  // Note the end-of-string lookahead: with the m flag a bare $ matched the
-  // first line break, so the section (and every answer) came back empty and
-  // no article ever emitted FAQPage. Fixed 17 Sept 2026.
-  const rx = /(?:^|\n)###\s+(.+?)\s*\n+([^#][\s\S]*?)(?=\n###\s|\n##\s|$(?![\s\S]))/g;
-  const faqSection = body.match(/(?:^|\n)##\s+(?:Questions|FAQ|Frequently[^\n]*)\n([\s\S]*?)(?=\n##\s|$(?![\s\S]))/);
+  const clean = (t: string) =>
+    t.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_`>]/g, "").replace(/\s+/g, " ").trim().slice(0, 900);
+  const faqSection = body.match(/(?:^|\n)##\s+(?:Questions|FAQ|Frequently)[^\n]*\n([\s\S]*?)(?=\n##\s|$(?![\s\S]))/);
   if (faqSection) {
+    const sec = faqSection[1];
+    // H3 question + answer paragraphs. Note the end-of-string lookahead: with
+    // the m flag a bare $ matched the first line break (fixed 17 Sept 2026).
+    const rxH3 = /(?:^|\n)###\s+(.+?)\s*\n+([^#][\s\S]*?)(?=\n###\s|\n##\s|$(?![\s\S]))/g;
     let m: RegExpExecArray | null;
-    while ((m = rx.exec(faqSection[1])) !== null && faqPairs.length < 12) {
-      faqPairs.push({ q: m[1].trim(), a: m[2].replace(/[*_`>\[\]]|\(https?:[^)]*\)/g, "").trim().slice(0, 900) });
+    while ((m = rxH3.exec(sec)) !== null && faqPairs.length < 12) {
+      faqPairs.push({ q: clean(m[1]), a: clean(m[2]) });
+    }
+    if (faqPairs.length === 0) {
+      // Bold question + answer in the same paragraph.
+      const rxBold = /(?:^|\n)\*\*([^*\n]+?\?)\*\*\s*([^\n]+(?:\n(?!\n|\*\*|#)[^\n]+)*)/g;
+      while ((m = rxBold.exec(sec)) !== null && faqPairs.length < 12) {
+        faqPairs.push({ q: clean(m[1]), a: clean(m[2]) });
+      }
     }
   }
 }
@@ -100,7 +113,8 @@ const graph: any[] = [
     ],
   },
 ];
-if (faqPairs.length >= 2) {
+// Skip when the article carries its own inline FAQPage JSON-LD (one FAQPage per URL).
+if (faqPairs.length >= 2 && !/"@type":\s*"FAQPage"/.test(post.body ?? "")) {
   graph.push({
     "@type": "FAQPage",
     mainEntity: faqPairs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),

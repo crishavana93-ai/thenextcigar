@@ -6,3 +6,11 @@
 
 /fonts/*
   Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
+# Keep the Cloudflare Pages copies (thenextcigar.pages.dev and preview builds)
+# out of search results; only thenextcigar.com should be indexed.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
