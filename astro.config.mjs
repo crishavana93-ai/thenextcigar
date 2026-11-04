@@ -20,9 +20,29 @@ try {
   }
 } catch {}
 
+
+// Affiliate links: every Amazon link written in Markdown/MDX gets
+// rel="sponsored nofollow noopener", as Google asks for paid/affiliate links.
+function rehypeAffiliateRel() {
+  const AMAZON = /^https?:\/\/(www\.)?(amazon\.[a-z.]+|amzn\.to)\//;
+  return (tree) => {
+    const walk = (node) => {
+      if (node.type === "element" && node.tagName === "a") {
+        const href = node.properties && node.properties.href;
+        if (typeof href === "string" && AMAZON.test(href)) {
+          node.properties.rel = ["sponsored", "nofollow", "noopener"];
+        }
+      }
+      if (node.children) node.children.forEach(walk);
+    };
+    walk(tree);
+  };
+}
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://thenextcigar.com",
+  markdown: { rehypePlugins: [rehypeAffiliateRel] },
   trailingSlash: "always",
   // React integration enables React islands inside .astro pages — used for
   // the magazine redesign + interactive Lounge surfaces (Framer Motion,
