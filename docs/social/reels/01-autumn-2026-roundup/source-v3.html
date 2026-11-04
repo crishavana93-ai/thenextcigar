@@ -1,0 +1,217 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(../../../../public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(../../../../public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(../../../../public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Plex';font-weight:400;src:url(../../../../public/fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2')}
+:root{--bg:#121110;--ink:#F2F0EA;--mute:#9A958A;--dim:#5E5A53;--line:#2E2B28;--ox:#C24A44;--oxd:#7B2622;--gold:#C9A36A}
+html,body{margin:0;background:#000}
+#s{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);font-family:'Newsreader',serif;color:var(--ink)}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .06 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");z-index:50;pointer-events:none}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);z-index:40;pointer-events:none}
+/* persistent chrome */
+.prog{position:absolute;left:84px;right:84px;top:160px;display:flex;gap:8px;z-index:30}
+.prog i{flex:1;height:5px;background:rgba(242,240,234,.16);border-radius:3px;overflow:hidden;position:relative}
+.prog i b{position:absolute;left:0;top:0;bottom:0;background:var(--ink);width:0}
+.brand{position:absolute;left:84px;top:190px;font-family:'Plex';font-weight:500;font-size:21px;letter-spacing:.26em;text-transform:uppercase;color:var(--mute);z-index:30}
+.brand b{color:var(--ink);font-weight:500}
+.dt{position:absolute;right:140px;top:184px;font-family:'Plex';font-weight:500;font-size:19px;letter-spacing:.22em;text-transform:uppercase;background:var(--oxd);padding:7px 14px;z-index:30}
+/* scenes */
+.sc{position:absolute;inset:0;will-change:transform,opacity,clip-path;background:var(--bg)}
+.edge{position:absolute;top:0;bottom:0;width:6px;background:var(--ox);z-index:35;display:none}
+.bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(2px) saturate(.75);opacity:.22}
+.bg.strong{filter:saturate(.9) contrast(1.05);opacity:.75}
+.bg.strong:after{background:linear-gradient(180deg,rgba(18,17,16,.35) 0%,rgba(18,17,16,.25) 30%,rgba(18,17,16,.85) 62%,#121110 80%)}
+.bg.top{filter:saturate(.9);opacity:.7}
+.bg.top:after{background:linear-gradient(180deg,rgba(18,17,16,.6) 0%,rgba(18,17,16,.2) 25%,rgba(18,17,16,.55) 42%,#121110 55%)}
+.ph{position:absolute;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7);will-change:transform,opacity}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph .cr{position:absolute;left:12px;bottom:8px;font-family:'Plex';font-size:14px;color:rgba(242,240,234,.85);text-shadow:0 1px 6px #000}
+.bg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,17,16,.55),rgba(18,17,16,.92) 55%,#121110)}
+.k{position:absolute;left:84px;top:270px;font-family:'Plex';font-weight:500;font-size:24px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute)}
+.k b{color:var(--ox);font-weight:500}
+h2{position:absolute;left:84px;right:130px;top:318px;margin:0;font-size:82px;line-height:1;letter-spacing:-.03em;font-weight:500}
+h2 i{font-style:italic;font-weight:300;color:var(--gold)}
+.src{position:absolute;left:84px;right:130px;top:1545px;font-family:'Plex';font-weight:400;font-size:19px;letter-spacing:.04em;color:var(--dim)}
+.big{font-family:'Newsreader';font-weight:500;letter-spacing:-.05em;line-height:.85}
+.lbl{font-family:'Plex';font-weight:500;font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+svg text{font-family:'Plex'}
+.word{display:inline-block;will-change:transform,opacity}
+</style></head><body><div id="s">
+<div id="scenes"></div>
+<div class="prog" id="prog"></div>
+<div class="brand"><b>The Next Cigar</b> · Data</div><div class="dt">Sept–Oct 2026</div>
+<div class="edge" id="edge"></div><div class="vig"></div><div class="grain"></div>
+</div>
+<script>
+const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild};
+const cl=(x)=>x<0?0:x>1?1:x, eo=(x)=>1-Math.pow(1-cl(x),3), eio=(x)=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const seg=(p,a,b)=>cl((p-a)/(b-a));
+const fmt=(n,d=0)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+function words(el){ // wrap words in spans for staggered reveal
+ const walk=(n)=>{[...n.childNodes].forEach(c=>{if(c.nodeType===3){const f=document.createDocumentFragment();c.textContent.split(/(\s+)/).forEach(w=>{if(!w)return;if(/^\s+$/.test(w)){f.appendChild(document.createTextNode(w));return;}const s=document.createElement('span');s.className='word';s.textContent=w;f.appendChild(s)});c.replaceWith(f)}else walk(c)})};walk(el);return [...el.querySelectorAll('.word')];}
+function reveal(ws,t,start=0.05,step=0.035,dur=0.35){ws.forEach((w,i)=>{const p=eo((t-start-i*step)/dur);w.style.opacity=p;w.style.transform=`translateY(${(1-p)*40}px)`;});}
+
+/* ---------- tile map data ---------- */
+const tiles=[['IS',0,0],['NO',4,0],['SE',5,0],['FI',6,0],['IE',1,1],['GB',2,1],['DK',4,1],['EE',6,1],['NL',3,2],['DE',4,2],['PL',5,2],['LV',6,2],['BE',3,3],['CZ',4,3],['SK',5,3],['LT',6,3],['FR',2,4],['CH',3,4],['AT',4,4],['HU',5,4],['RO',6,4],['PT',0,5],['ES',1,5],['IT',4,5],['HR',5,5],['BG',6,5]];
+const nord=['IS','NO','SE','FI','DK','EE','LV','LT'], germ=['DE','AT','PL'];
+
+const S=[]; // scenes: {dur, el, draw(local t seconds, p)}
+const root=document.getElementById('scenes');
+function scene(dur,html,img,draw,bgc=''){const el=$(`<div class="sc">${img?`<div class="bg ${bgc}" style="background-image:url(img/${img})"></div>`:''}${html}</div>`);root.appendChild(el);const o={dur,el,draw};o.init&&o.init();S.push(o);return o;}
+
+/* 0 HOOK */
+{const s=scene(5.0,`<div>
+ <div class="k" style="top:300px"><b>Autumn 2026</b> · Europe</div>
+ <div id="h_n" class="big" style="position:absolute;left:70px;top:400px;font-size:620px;color:var(--ox)">0</div>
+ <div id="h_t" style="position:absolute;left:84px;right:130px;top:1000px;font-size:92px;line-height:1;letter-spacing:-.03em;font-weight:500">countries where the official <i style="font-weight:300;color:var(--gold)">Cuban cigar importer</i> has stopped.</div>
+ <div id="h_q" class="lbl" style="position:absolute;left:84px;top:1330px;color:var(--gold)">Guess which ones before the map →</div>
+ </div>`,'roller.jpg',null,'strong');
+ const ws=words(s.el.querySelector('#h_t'));
+ s.draw=(t)=>{const n=Math.round(11*eio(t/1.3));s.el.querySelector('#h_n').textContent=n;s.el.querySelector('#h_n').style.transform=`scale(${1+0.04*Math.sin(Math.min(t,1.3)*2.4)})`;reveal(ws,t,0.35,0.05);const q=s.el.querySelector('#h_q');q.style.opacity=eo((t-1.9)/0.4)*(0.6+0.4*Math.abs(Math.sin(t*3)));};}
+
+/* 1 MAP */
+{let svg='<svg id="m" width="912" height="820" viewBox="0 0 912 820" style="position:absolute;left:84px;top:640px">';
+ tiles.forEach(([c,x,y])=>{svg+=`<g data-c="${c}" transform="translate(${x*130+4},${y*130+20})"><rect width="118" height="118" rx="10" fill="#1F1D1B" stroke="#2E2B28"/><text x="59" y="70" text-anchor="middle" font-size="30" font-weight="500" fill="#5E5A53">${c}</text></g>`});svg+='</svg>';
+ const s=scene(6.8,`<div>
+ <div class="k"><b>01 / 07</b> · The map</div>
+ <h2 id="m_h">Three in the centre. <i>Eight in the north.</i></h2>
+ ${svg}
+ <div style="position:absolute;left:84px;top:1480px;display:flex;gap:40px" class="lbl"><span><b style="display:inline-block;width:22px;height:22px;background:var(--ox);vertical-align:-3px;margin-right:10px"></b>Germany importer · 3</span><span><b style="display:inline-block;width:22px;height:22px;background:var(--gold);vertical-align:-3px;margin-right:10px"></b>Nordic importer · 8</span></div>
+ <div class="src">Countries each importer supplied. Sources: Cigar Aficionado, 11 Sep 2026; Cigars Connect, 4 Jun 2026.</div></div>`,'barn.jpg');
+ const ws=words(s.el.querySelector('#m_h'));const gs=[...s.el.querySelectorAll('#m g')];
+ s.draw=(t)=>{reveal(ws,t);gs.forEach((g,i)=>{const c=g.dataset.c;const r=g.querySelector('rect'),tx=g.querySelector('text');const base=eo((t-0.1-i*0.012)/0.4);g.style.opacity=base;
+  let col=null,st=0;if(germ.includes(c)){st=0.9+germ.indexOf(c)*0.12;col='#C24A44'}if(nord.includes(c)){st=1.9+nord.indexOf(c)*0.1;col='#C9A36A'}
+  if(col){const p=eo((t-st)/0.35);r.setAttribute('fill',p>0.5?col:'#1F1D1B');tx.setAttribute('fill',p>0.5?'#121110':'#5E5A53');g.setAttribute('transform',g.getAttribute('transform').replace(/ scale\([^)]*\)/,'')+` scale(${1+0.12*Math.sin(Math.PI*p)})`);}
+ });};}
+
+/* 2 GERMANY timeline */
+{const s=scene(5.55,`<div>
+ <div class="k"><b>02 / 07</b> · Germany, Austria, Poland</div>
+ <h2 id="g_h">Deliveries stop. <i>Seven days later, insolvency.</i></h2>
+ <div id="g_n" class="big" style="position:absolute;left:70px;top:640px;font-size:400px;color:var(--ink)">0</div>
+ <div class="lbl" style="position:absolute;left:400px;top:880px;font-size:30px;color:var(--ink)">days</div>
+ <div class="ph" id="g_ph" style="left:560px;top:600px;width:436px;height:400px"><img src="img/rafters.jpg"><div class="cr">Tobacco curing, Cuba. A. Klink, CC BY 4.0</div></div>
+ <svg width="912" height="420" style="position:absolute;left:84px;top:1080px">
+  <line x1="20" y1="120" x2="892" y2="120" stroke="#2E2B28" stroke-width="4"/>
+  <line id="g_bar" x1="20" y1="120" x2="20" y2="120" stroke="#C24A44" stroke-width="10" stroke-linecap="round"/>
+  <g id="g_a"><circle cx="20" cy="120" r="16" fill="#C24A44"/><text x="0" y="60" font-size="30" font-weight="500" fill="#F2F0EA">4 SEP</text><text x="0" y="190" font-size="26" fill="#9A958A">Deliveries suspended</text><text x="0" y="226" font-size="26" fill="#9A958A">bank accounts frozen</text></g>
+  <g id="g_b"><circle cx="892" cy="120" r="16" fill="#C24A44"/><text x="892" y="60" font-size="30" font-weight="500" fill="#F2F0EA" text-anchor="end">BY 11 SEP</text><text x="892" y="190" font-size="26" fill="#9A958A" text-anchor="end">Insolvency filed,</text><text x="892" y="226" font-size="26" fill="#9A958A" text-anchor="end">administrator appointed</text></g>
+ </svg>
+ <div class="src">Importer: 5th Avenue Products Trading GmbH. Sources: Finews, 14 Sep 2026; Cigar Aficionado, 11 Sep 2026.</div></div>`,'barn.jpg');
+ const ws=words(s.el.querySelector('#g_h'));
+ s.draw=(t)=>{reveal(ws,t);const ph=s.el.querySelector('#g_ph');const q=eo((t-0.3)/0.6);ph.style.opacity=q;ph.style.transform=`translateY(${(1-q)*60}px) rotate(${1.5-0.5*q}deg)`;ph.querySelector('img').style.transform=`scale(${1.05+0.05*t/5.55})`;const p=eio((t-0.7)/1.6);s.el.querySelector('#g_n').textContent=Math.round(7*p);s.el.querySelector('#g_bar').setAttribute('x2',20+872*p);s.el.querySelector('#g_a').style.opacity=eo((t-0.5)/0.4);s.el.querySelector('#g_b').style.opacity=eo((t-2.2)/0.4);};}
+
+/* 3 SWEDEN licence */
+{const ev=[['15 Dec 2025','Gothenburg revokes the licence',0],['10 Jun 2026','Court rejects the appeal',177],['1 Jul 2026','Owners vote to liquidate',198],['11 Sep 2026','Licence gone for good',270]];
+ let g='';ev.forEach(([d,txt,day],i)=>{const y=60+i*120;g+=`<g class="ev" data-day="${day}"><circle cx="40" cy="${y}" r="14" fill="#C9A36A"/><text x="90" y="${y-6}" font-size="28" font-weight="500" fill="#F2F0EA">${d.toUpperCase()}</text><text x="90" y="${y+32}" font-size="28" fill="#9A958A">${txt}</text></g>`});
+ const s=scene(6.65,`<div>
+ <div class="k"><b>03 / 07</b> · The Nordics and Baltics</div>
+ <h2 id="w_h">A <i>270-day</i> fight for one licence.</h2>
+ <div id="w_n" class="big" style="position:absolute;left:70px;top:560px;font-size:330px;color:var(--gold)">0</div>
+ <div class="lbl" style="position:absolute;left:600px;top:760px;font-size:30px;color:var(--ink)">days</div>
+ <svg width="912" height="520" style="position:absolute;left:84px;top:960px"><line x1="40" y1="60" x2="40" y2="420" stroke="#2E2B28" stroke-width="4"/><line id="w_l" x1="40" y1="60" x2="40" y2="60" stroke="#C9A36A" stroke-width="6"/>${g}</svg>
+ <div class="src">Elite Trading Scandinavia (formerly Habanos Nordic). Source: Realtid, 22 Oct 2026.</div></div>`,'hands.jpg',null,'top');
+ const ws=words(s.el.querySelector('#w_h'));const evs=[...s.el.querySelectorAll('.ev')];
+ s.draw=(t)=>{reveal(ws,t);const p=eio((t-0.6)/2.6);s.el.querySelector('#w_n').textContent=Math.round(270*p);s.el.querySelector('#w_l').setAttribute('y2',60+360*p);evs.forEach((e,i)=>{const at=0.6+2.6*(i/3);const q=eo((t-at)/0.35);e.style.opacity=q;e.style.transform=`translateX(${(1-q)*30}px)`;});};}
+
+/* 4 MARKET SHARE donut */
+{const R=250,C=2*Math.PI*R;
+ const s=scene(4.25,`<div>
+ <div class="k"><b>04 / 07</b> · Sweden</div>
+ <h2 id="d_h">One importer. <i>Almost half</i> the market.</h2>
+ <svg width="640" height="640" style="position:absolute;left:220px;top:640px"><circle cx="320" cy="320" r="${R}" fill="none" stroke="#2A2724" stroke-width="80"/><circle id="d_c" cx="320" cy="320" r="${R}" fill="none" stroke="#C9A36A" stroke-width="80" stroke-dasharray="0 ${C}" transform="rotate(-90 320 320)"/></svg>
+ <div id="d_n" class="big" style="position:absolute;left:0;right:0;top:850px;text-align:center;font-size:190px">0%</div>
+ <div class="lbl" style="position:absolute;left:0;right:0;top:1320px;text-align:center;font-size:30px;color:var(--ink)">of Sweden's cigar market</div>
+ <div class="lbl" style="position:absolute;left:84px;right:130px;top:1375px;text-align:center;text-transform:none;letter-spacing:.02em;font-size:28px;color:var(--mute)">Estimate by the trade site Cigarrvärlden</div>
+ <div class="src">Source: Realtid, 22 Oct 2026, citing Cigarrvärlden.</div></div>`,'hands-bw.jpg');
+ const ws=words(s.el.querySelector('#d_h'));
+ s.draw=(t)=>{reveal(ws,t);const p=eio((t-0.5)/1.8);s.el.querySelector('#d_c').setAttribute('stroke-dasharray',`${C*0.45*p} ${C}`);s.el.querySelector('#d_n').textContent=Math.round(45*p)+'%';};}
+
+/* 5 THE BOOKS bars */
+{const s=scene(6.05,`<div>
+ <div class="k"><b>05 / 07</b> · The importer's books</div>
+ <h2 id="b_h">Revenue up. <i>66 million unverified.</i></h2>
+ <svg id="b_s" width="912" height="820" style="position:absolute;left:84px;top:640px">
+  <text x="0" y="40" font-size="24" font-weight="500" fill="#9A958A" letter-spacing="3">REVENUE · MILLION SEK</text>
+  <g id="b1"><rect x="0" y="80" height="90" width="0" fill="#5E5A53"/><text x="0" y="140" font-size="34" font-weight="500" fill="#F2F0EA">2024</text><text class="v" x="0" y="140" font-size="40" font-weight="500" fill="#F2F0EA">87</text></g>
+  <g id="b2"><rect x="0" y="190" height="90" width="0" fill="#C9A36A"/><text x="0" y="250" font-size="34" font-weight="500" fill="#121110">2025</text><text class="v" x="0" y="250" font-size="40" font-weight="500" fill="#F2F0EA">119</text></g>
+  <text x="0" y="380" font-size="24" font-weight="500" fill="#9A958A" letter-spacing="3">AUDITOR COULD NOT VERIFY · MILLION SEK</text>
+  <g id="b3"><rect x="0" y="420" height="90" width="0" fill="#C24A44"/><rect id="b3b" x="0" y="420" height="90" width="0" fill="#8E322E"/><text x="20" y="480" font-size="30" font-weight="500" fill="#F2F0EA">Inventory 29</text><text id="b3t" x="0" y="480" font-size="30" font-weight="500" fill="#F2F0EA">Receivables 37</text></g>
+  <text x="0" y="610" font-size="24" font-weight="500" fill="#9A958A" letter-spacing="3">CASH AT YEAR-END</text>
+  <text id="b4" x="0" y="720" font-size="110" font-weight="500" fill="#C24A44">0</text>
+ </svg>
+ <div class="src">2025 annual report of Elite Trading Scandinavia, adopted 30 Jun 2026. Profit 2025: 37.5m SEK. Source: Realtid, 22 Oct 2026.</div></div>`,'curing.jpg');
+ const ws=words(s.el.querySelector('#b_h'));const sc=6.2; // px per million
+ s.draw=(t)=>{reveal(ws,t);
+  const p1=eio((t-0.5)/0.9),p2=eio((t-0.8)/1.0),p3=eio((t-1.9)/0.9),p4=eio((t-2.5)/0.9);
+  const set=(id,w,p)=>{const g=s.el.querySelector(id);g.querySelector('rect').setAttribute('width',w*sc*p);const v=g.querySelector('.v');if(v){v.setAttribute('x',w*sc*p+18);v.style.opacity=p}};
+  set('#b1',87,p1);set('#b2',119,p2);
+  const g3=s.el.querySelector('#b3');g3.querySelector('rect').setAttribute('width',29*sc*p3*1.4);s.el.querySelector('#b3b').setAttribute('x',29*sc*1.4);s.el.querySelector('#b3b').setAttribute('width',37*sc*1.4*p4);s.el.querySelector('#b3t').setAttribute('x',29*sc*1.4+20);s.el.querySelector('#b3t').style.opacity=p4;g3.style.opacity=eo((t-1.7)/0.3);
+  const b4=s.el.querySelector('#b4');b4.style.opacity=eo((t-3.3)/0.3);b4.setAttribute('transform',`translate(0,${(1-eo((t-3.3)/0.4))*30})`);};}
+
+/* 6 OWNERSHIP + SANCTIONS */
+{const s=scene(9.6,`<div>
+ <div class="k"><b>06 / 07</b> · Why it's happening</div>
+ <h2 id="o_h">Half of Habanos is tied to a <i>sanctioned group.</i></h2>
+ <svg width="912" height="900" style="position:absolute;left:84px;top:700px">
+  <text x="0" y="30" font-size="24" font-weight="500" fill="#9A958A" letter-spacing="3">WHO OWNS HABANOS S.A.</text>
+  <rect x="0" y="60" width="912" height="120" fill="#2A2724"/>
+  <rect id="o_a" x="0" y="60" width="0" height="120" fill="#5E5A53"/><rect id="o_b" x="456" y="60" width="0" height="120" fill="#C24A44"/>
+  <text id="o_at" x="24" y="135" font-size="30" font-weight="500" fill="#F2F0EA">Cuban state 50%</text>
+  <text id="o_bt" x="480" y="135" font-size="30" font-weight="500" fill="#F2F0EA">Prince Group 50%</text>
+  <text id="o_ct" x="480" y="230" font-size="24" fill="#9A958A">via Allied Cigar Corp. · founder Chen Zhi</text>
+  <text x="0" y="350" font-size="24" font-weight="500" fill="#9A958A" letter-spacing="3">SANCTIONS ON PRINCE GROUP AND CHEN ZHI</text>
+  <g class="sx"><text x="0" y="430" font-size="34" font-weight="500" fill="#F2F0EA">14 OCT 2025</text><text x="300" y="430" font-size="30" fill="#C7C2B6">US and UK act · 146 targets</text></g>
+  <g class="sx"><text x="0" y="510" font-size="34" font-weight="500" fill="#F2F0EA">14 OCT 2025</text><text x="300" y="510" font-size="30" fill="#C7C2B6">US: ~$15 bn in bitcoin seized</text></g>
+  <g class="sx"><text x="0" y="590" font-size="34" font-weight="500" fill="#F2F0EA">JULY 2026</text><text x="300" y="590" font-size="30" fill="#C7C2B6">EU sanctions follow</text></g>
+  <g class="sx"><text x="0" y="670" font-size="34" font-weight="500" fill="#C24A44">SEPT 2026</text><text x="300" y="670" font-size="30" fill="#C7C2B6">Two importers stop</text></g>
+ </svg>
+ <div class="src">Prince Group denies the allegations. Sources: Cigar Aficionado, 11 Sep 2026; RFA, 14 Oct 2025; Realtid, 22 Oct 2026.</div></div>`,'barn.jpg');
+ const ws=words(s.el.querySelector('#o_h'));const sx=[...s.el.querySelectorAll('.sx')];
+ s.draw=(t)=>{reveal(ws,t,0.05,0.03);const pa=eio((t-0.6)/0.8),pb=eio((t-1.1)/0.8);s.el.querySelector('#o_a').setAttribute('width',456*pa);s.el.querySelector('#o_b').setAttribute('width',456*pb);s.el.querySelector('#o_at').style.opacity=pa;s.el.querySelector('#o_bt').style.opacity=pb;s.el.querySelector('#o_ct').style.opacity=eo((t-1.6)/0.4);
+  sx.forEach((g,i)=>{const q=eo((t-2.2-i*0.55)/0.35);g.style.opacity=q;g.setAttribute('transform',`translate(${(1-q)*30},0)`)});};}
+
+/* 7 EU TAX unanimity */
+{let dots='';for(let i=0;i<27;i++){const x=(i%9)*100+50,y=Math.floor(i/9)*100+50;dots+=`<circle class="dt27" cx="${x}" cy="${y}" r="36" fill="#2A2724"/>`}
+ const s=scene(6.7,`<div>
+ <div class="k"><b>07 / 07</b> · What's next · Brussels</div>
+ <h2 id="e_h">New EU tobacco taxes need <i>all 27 to agree.</i></h2>
+ <svg width="912" height="320" style="position:absolute;left:84px;top:740px">${dots}</svg>
+ <div id="e_n" class="big" style="position:absolute;left:84px;top:1100px;font-size:220px;color:var(--gold)">0<span style="font-size:100px;color:var(--dim)"> / 27</span></div>
+ <div class="lbl" style="position:absolute;left:84px;right:130px;top:1340px;line-height:1.5">Council tax experts met on new<br>compromise texts on 26 Oct. No deal yet.</div>
+ <div class="src">Tax rules need unanimity in the EU Council. Source: Austrian Parliament EU database, presidency note of 20 Oct 2026.</div></div>`,'roller.jpg');
+ const ws=words(s.el.querySelector('#e_h'));const ds=[...s.el.querySelectorAll('.dt27')];
+ s.draw=(t)=>{reveal(ws,t);const p=eio((t-0.6)/2.0);const n=Math.round(27*p);ds.forEach((d,i)=>{d.setAttribute('fill',i<n?'#C9A36A':'#2A2724')});s.el.querySelector('#e_n').firstChild.textContent=n;};}
+
+/* OUTRO / interactive */
+{const s=scene(5.4,`<div>
+ <div class="k" style="top:420px"><b>Your turn</b></div>
+ <div id="x_h" style="position:absolute;left:84px;right:130px;top:480px;font-size:120px;line-height:.95;letter-spacing:-.04em;font-weight:500">Which country <i style="font-weight:300;color:var(--gold)">is next?</i></div>
+ <div id="x_c" style="position:absolute;left:84px;right:130px;top:900px;font-family:'Plex';font-weight:500;font-size:40px;line-height:1.35;color:var(--ink)">Comment your country.<br><span style="color:var(--mute)">We'll check its supply in next month's numbers.</span></div>
+ <div id="x_f" class="lbl" style="position:absolute;left:84px;top:1240px;color:var(--gold);font-size:26px">Save this · Full timeline and sources: thenextcigar.com</div>
+ <div class="src">Images: Wikimedia Commons (CC BY / CC BY-SA). Credits in the caption.</div></div>`,'field.jpg',null,'strong');
+ const ws=words(s.el.querySelector('#x_h'));
+ s.draw=(t)=>{reveal(ws,t,0.05,0.06);s.el.querySelector('#x_c').style.opacity=eo((t-0.9)/0.4);s.el.querySelector('#x_f').style.opacity=eo((t-1.6)/0.4);};}
+
+/* ---------- timeline & transitions ---------- */
+let acc=0;S.forEach(s=>{s.start=acc;acc+=s.dur;});const TOTAL=acc;window.TOTAL=TOTAL;
+const prog=document.getElementById('prog');for(let i=0;i<7;i++)prog.appendChild($('<i><b></b></i>'));
+const TR=0.45;
+function render(t){
+ let edgeX=null;
+ S.forEach((s,i)=>{const lt=t-s.start;const next=S[i+1];
+  if(lt<-0.001||(next&&t>=next.start+TR)){s.el.style.display='none';return;}
+  s.el.style.display='block';s.el.style.zIndex=i;
+  let clip='none',x=0,sc=1,o=1;
+  if(lt<TR&&i>0){const p=eio(lt/TR);clip=`inset(0 0 0 ${(1-p)*100}%)`;x=(1-p)*120;edgeX=(1-p)*1080-3;}
+  if(next&&t>=next.start){const p=eio((t-next.start)/TR);x=-p*200;sc=1-0.04*p;o=1-0.5*p;}
+  s.el.style.clipPath=clip;s.el.style.transform=`translateX(${x}px) scale(${sc})`;s.el.style.opacity=o;
+  const bg=s.el.querySelector('.bg');if(bg)bg.style.transform=`scale(${1.06+0.06*cl(lt/s.dur)}) translateX(${-20*cl(lt/s.dur)}px)`;
+  s.draw(Math.max(0,lt),cl(lt/s.dur));
+ });
+ const e=document.getElementById('edge');if(edgeX!==null){e.style.display='block';e.style.left=edgeX+'px';}else e.style.display='none';
+ [...prog.children].forEach((g,j)=>{const s=S[j+1];const p=cl((t-s.start)/s.dur);g.firstChild.style.width=(p*100)+'%';});
+ prog.style.opacity=t<S[1].start?0.35:1;
+}
+window.render=render;window.SC=S.map(s=>({start:s.start,dur:s.dur}));
+</script></body></html>
