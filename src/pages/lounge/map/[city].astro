@@ -2,6 +2,7 @@
 import PaperLayout from "../../../layouts/PaperLayout.astro";
 import { VENUES, CITY_GROUPS, TYPE_LABEL, citySlug, type Venue } from "../../../data/lounge-venues";
 import { CITY_GUIDES } from "../../../data/city-guides";
+import { VIATOR_PID, viatorSearch } from "../../../data/viator";
 
 /** /lounge/map/<city>/ — one page per city on the map. The rooms, on a map and
  *  as a list; what a box costs delivered to that country when the board covers
@@ -111,6 +112,19 @@ const jsonLd = {
         <a class="cta" href="/lounge/signup/">Join free →</a>
       </div>
 
+      {VIATOR_PID && (
+        <div class="box viator">
+          <span class="kick">Ad · Viator</span>
+          <h3 class="head">Things to do in {city}</h3>
+          <ul class="vlinks">
+            <li><a href={viatorSearch(`${city} walking tour`)} target="_blank" rel="sponsored nofollow noopener">Walking tours</a></li>
+            <li><a href={viatorSearch(`${city} food tour`)} target="_blank" rel="sponsored nofollow noopener">Food and wine tours</a></li>
+            <li><a href={viatorSearch(`${city} day trip`)} target="_blank" rel="sponsored nofollow noopener">Day trips</a></li>
+          </ul>
+          <p class="note">We earn a commission if you book through these links. It doesn't change the price you pay.</p>
+        </div>
+      )}
+
       {siblings.length > 0 && (
         <>
           <div class="rulehead" style="margin-top:26px"><h2>Elsewhere in {country}</h2></div>
@@ -145,6 +159,10 @@ const jsonLd = {
   .cityguide .prose h3{font-size:19px;font-weight:500;margin:18px 0 4px}
   .cityguide .prose a{border-bottom:1px solid var(--ox)}
   .cityguide .srcs{margin-top:22px}
+  .viator{margin-top:22px}
+  .viator .vlinks{list-style:none;margin:10px 0;padding:0}
+  .viator .vlinks li{margin:6px 0}
+  .viator .vlinks a{border-bottom:1px solid var(--ox)}
   .citymap{height:min(56vh,520px);min-height:360px;background:#EAE7E0}
   .legend{display:inline-flex;align-items:center;gap:4px 6px;margin-left:8px;font-style:normal;text-transform:none;color:var(--ink-2)}
   .pl{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-family:var(--serif);font-style:normal;font-size:10px;font-weight:500;border:1px solid var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.35);margin-left:6px}
