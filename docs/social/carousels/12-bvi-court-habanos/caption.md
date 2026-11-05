@@ -7,13 +7,13 @@ Company and court news only. No cigar brands or products, no prices, no shops or
 
 ## Caption (paste)
 
-A judge in the British Virgin Islands says he will end the court-run liquidation of 30 companies linked to Chen Zhi. One of them holds his indirect 28.55% stake in Habanos S.A., the company that sells every Cuban cigar exported.
+A judge in the British Virgin Islands says he will end the court-run provisional liquidation of 30 companies linked to Chen Zhi. No order has been made yet. One of the companies holds his indirect 28.55% stake in Habanos S.A., the company that sells and distributes Cuban cigars worldwide.
 
-The sanctions on him stay. Europe's importers are watching: Germany has had no deliveries since September, and trade press warns banks may become more cautious, not less. Next hearing: 8–9 December.
+The sanctions on him stay. Europe's importers are watching: Germany has had no deliveries since September, and trade press warns banks may become more cautious, not less. Next hearing, provisionally: 8–9 December.
 
 Swipe for who owns what, what the judge said, and what happens next. Full report with every source: link in bio.
 
-Chen Zhi and the Prince Group deny the allegations against them.
+The Prince Group says Chen Zhi is innocent and denies the allegations.
 
 The Next Cigar is an independent paper published from Sweden. We don't sell tobacco, and no tobacco company pays us.
 
@@ -28,6 +28,9 @@ The Next Cigar is an independent paper published from Sweden. We don't sell toba
 4. The fear — Germany (insolvency opened 1 Nov), Spain (Treasury clearance), UK·US licences; Mimouni quote.
 5. What happens next — stay? control to Borrelli; sale?; 8–9 December.
 6. Full report — link in bio; independence line.
+
+## Double-check
+Independent fact-check on 5 Nov 2026 (fresh agent, every source opened). Fixed: slide 1 "says he will end the provisional liquidation", no order yet; slide 4 "sanctions licences" attributed to L'Amateur de Cigare, Spain tied to the EU sanctions; slide 5 Borrelli "whom they say Chen appointed", stay "intends to seek", sale approaches dated to May, 8–9 Dec provisional; caption "sells and distributes Cuban cigars worldwide".
 
 ## Fact check
 | Slide | Claim | Source |
