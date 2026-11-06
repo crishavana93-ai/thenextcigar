@@ -3,6 +3,7 @@ import { getCollection, getEntry, render } from "astro:content";
 import { toolsFor, metaDescription, pageTitle } from "../../lib/seo";
 import BuyBox from "../../components/paper/BuyBox.astro";
 import OneToBuy from "../../components/blog/OneToBuy.astro";
+import ProductGallery from "../../components/blog/ProductGallery.astro";
 import MailBox from "../../components/blog/MailBox.astro";
 import { coverSet } from "../../lib/cover";
 import PaperLayout from "../../layouts/PaperLayout.astro";
@@ -191,6 +192,8 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
         <Content />
       </div>
     </div>
+
+    <ProductGallery products={(d as any).products} />
 
     <MailBox />
 
