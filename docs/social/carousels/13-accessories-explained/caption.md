@@ -5,7 +5,7 @@
 ## Compliance notes
 - Accessory how-it-works only, described as tools (not step-by-step cutting/lighting instructions). No cigars, no tobacco brands, prices, shops or taste verdicts.
 - The images depict the accessories the site links to with Amazon affiliate links, so the post is marked as advertising: "Reklam · Ad" on slide 1 and in the caption (Marknadsföringslagen 9 §).
-- Images are AI-generated (Google Gemini) from text descriptions only — no Amazon or brand photos used, no logos. "AI illustration" tag on every image slide (EU AI Act Art. 50) + Instagram "AI info" label on when posting.
+- Images are AI-generated (Google Gemini). Xi2, V-Cut, ELX, Verano and Cigar Caddy were generated with the maker's own website photo (xikar.com, colibri.com) as a shape reference, new scene/light/angle, logos removed; torch, humidor, hygrometer and pack from text descriptions. No Amazon images used. "AI illustration" tag on every image slide (EU AI Act Art. 50) + Instagram "AI info" label on when posting.
 - Habanos is not named (tobacco company); its storage figures are cited only here.
 
 ## Caption (paste)
@@ -27,7 +27,7 @@ Full guides: link in bio. The Next Cigar is independent and published from Swede
 |---|---|---|
 | 02 | Single- and double-bladed cutters | Cigar Aficionado, How to cut a cigar |
 | 03, 06, 11 | Tool mechanics | Our explanation (labelled) |
-| 04 | Xikar ELX has a 9 mm punch | Retailer listings (Neptune; Amazon B01MRLC3R2 title) |
+| 04 | Xikar ELX has a 9 mm punch (image shows the ELX) | Retailer listings (Neptune; Amazon B01MRLC3R2 title) |
 | 05 | n-butane boils ~272.7 K (−0.5 °C) at 1 atm | NIST WebBook |
 | 07 | "a strip of cedar" | Cigar Aficionado, How to light a cigar |
 | 08 | 65–70% RH, 16–18 °C; keep temperature constant | habanos.com, Keeping Habanos |
@@ -36,3 +36,5 @@ Full guides: link in bio. The Next Cigar is independent and published from Swede
 
 ## Double-check
 v1 checked 6 Nov (6 fixes). v2 independent check 6 Nov 2026: fixed "some torch lighters" → ELX; butane at sea-level pressure; hygrometer error "near 75%"; travel case wording; "Tested, photographed" → "Researched and sourced"; slides 2–7 reworded from cutting/lighting instructions to tool descriptions (KOVFS risk). Double-checked on 6 Nov 2026: ready to post.
+
+v3 (6 Nov): five images regenerated from maker reference photos after Cris flagged inaccurate products; punch slide text now 'the punch built into this lighter, the Xikar ELX.'
