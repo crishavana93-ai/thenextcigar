@@ -40,3 +40,4 @@ v1 checked 6 Nov (6 fixes). v2 independent check 6 Nov 2026: fixed "some torch l
 v3 (6 Nov): five images regenerated from maker reference photos after Cris flagged inaccurate products; punch slide text now 'the punch built into this lighter, the Xikar ELX.'
 
 v4 (6 Nov): cover hook "How many of these do you own?" with a 2x2 grid of four product images; Reklam label kept.
+v5 (6 Nov): cover image is a 3x3 grid of the nine linked products (whole, uncropped).
