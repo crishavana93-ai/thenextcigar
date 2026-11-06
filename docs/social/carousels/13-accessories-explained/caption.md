@@ -38,3 +38,5 @@ Full guides: link in bio. The Next Cigar is independent and published from Swede
 v1 checked 6 Nov (6 fixes). v2 independent check 6 Nov 2026: fixed "some torch lighters" → ELX; butane at sea-level pressure; hygrometer error "near 75%"; travel case wording; "Tested, photographed" → "Researched and sourced"; slides 2–7 reworded from cutting/lighting instructions to tool descriptions (KOVFS risk). Double-checked on 6 Nov 2026: ready to post.
 
 v3 (6 Nov): five images regenerated from maker reference photos after Cris flagged inaccurate products; punch slide text now 'the punch built into this lighter, the Xikar ELX.'
+
+v4 (6 Nov): cover hook "How many of these do you own?" with a 2x2 grid of four product images; Reklam label kept.
