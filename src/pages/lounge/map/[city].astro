@@ -30,14 +30,17 @@ const slug = citySlug(city, country);
 const guide = CITY_GUIDES[slug];
 const fmtDate = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-const payload = rooms.map((v) => [v.slug, v.name, v.address || "", v.lat, v.lng, v.type, v.website || ""]);
+// Safe mode (6 Nov 2026, KOVFS 2024:2 5.1): no outbound links to venues that sell tobacco.
+const SELLS = new Set<Venue["type"]>(["retailer", "casadelhabano"]);
+const site = (v: Venue) => (SELLS.has(v.type) ? "" : v.website || "");
+const payload = rooms.map((v) => [v.slug, v.name, v.address || "", v.lat, v.lng, v.type, site(v)]);
 const title = `Cigar lounges and shops in ${city} — ${rooms.length} rooms on the Lounge map · The Next Cigar`;
-const desc = `Where to smoke and buy Cuban cigars in ${city}, ${country}: ${nCdh ? `${nCdh} Casa${nCdh > 1 ? "s" : ""} del Habano, ` : ""}${nLounge} lounge${nLounge === 1 ? "" : "s"} and ${nShop} shop${nShop === 1 ? "" : "s"}, with addresses and directions. Members see who is smoking there tonight.`;
+const desc = `Cigar lounges and venues in ${city}, ${country}: ${nCdh ? `${nCdh} Casa${nCdh > 1 ? "s" : ""} del Habano, ` : ""}${nLounge} lounge${nLounge === 1 ? "" : "s"} and ${nShop} shop${nShop === 1 ? "" : "s"}, with addresses and directions. Members see who is smoking there tonight.`;
 const itemList = {
   "@type": "ItemList",
   name: `Cigar lounges and shops in ${city}`, url: `https://thenextcigar.com/lounge/map/${citySlug(city, country)}/`,
   numberOfItems: rooms.length,
-  itemListElement: rooms.map((v, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "LocalBusiness", name: v.name, address: v.address || undefined, url: v.website || undefined, geo: { "@type": "GeoCoordinates", latitude: v.lat, longitude: v.lng } } })),
+  itemListElement: rooms.map((v, i) => ({ "@type": "ListItem", position: i + 1, item: { "@type": "LocalBusiness", name: v.name, address: v.address || undefined, url: site(v) || undefined, geo: { "@type": "GeoCoordinates", latitude: v.lat, longitude: v.lng } } })),
 };
 const jsonLd = {
   "@context": "https://schema.org",
@@ -72,9 +75,9 @@ const jsonLd = {
               <li id={v.slug}>
                 <span class:list={["pin", `pin--${v.type}`]}>{(v.name.replace(/^(the|la|le|el|casa del habano|lcdh)\s+/i, "").match(/[A-Za-zÀ-ÿ0-9]/) || ["·"])[0].toUpperCase()}</span>
                 <div>
-                  <a class="head" href={v.website || `https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}`} target="_blank" rel="noopener">{v.name}</a>
+                  <a class="head" href={site(v) || `https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}`} target="_blank" rel="noopener">{v.name}</a>
                   {v.address && <p class="by">{v.address}</p>}
-                  <p class="links"><a href={`https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}`} target="_blank" rel="noopener">Directions →</a>{v.website && <a href={v.website} target="_blank" rel="noopener">Website →</a>}<a href="/lounge/signup/">Who's there tonight →</a></p>
+                  <p class="links"><a href={`https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}`} target="_blank" rel="noopener">Directions →</a>{site(v) && <a href={site(v)} target="_blank" rel="noopener">Website →</a>}<a href="/lounge/signup/">Who's there tonight →</a></p>
                 </div>
               </li>
             ))}
@@ -108,7 +111,7 @@ const jsonLd = {
       <div class="box" style="margin-top:0">
         <span class="kick">The Lounge · members</span>
         <h3 class="head">Who is smoking in {city} tonight?</h3>
-        <p>Members check in at these rooms, declare trips, and get an email when a box they want drops. Free, no card.</p>
+        <p>Members check in at these rooms and declare trips, so you can see who is around. Free, no card.</p>
         <a class="cta" href="/lounge/signup/">Join free →</a>
       </div>
 
