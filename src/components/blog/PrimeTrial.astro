@@ -1,0 +1,22 @@
+---
+/**
+ * <PrimeTrial /> — a one-line Amazon Prime free-trial note for gift season.
+ * Shown on buying guides (posts with a oneToBuy box) during the window in
+ * src/lib/prime-season.ts.
+ * Prime sign-ups through this link pay a fixed bounty (US rate card, Nov 2026).
+ * Offer text checked on amazon.com/prime on 8 November 2026.
+ */
+const URL = "https://www.amazon.com/prime?tag=thenextcigar-20";
+---
+<aside class="pt" data-out="prime" aria-label="Advertising: Amazon Prime">
+  <span class="pt__ad">Advertising</span>
+  <p class="pt__txt"><strong>Buying a gift in the US?</strong> Amazon Prime's 30-day free trial gives fast, free delivery on eligible items, then costs $14.99 a month unless you cancel.</p>
+  <a class="pt__btn" href={URL} rel="sponsored nofollow noopener" target="_blank">Try Prime free <span aria-hidden="true">→</span></a>
+</aside>
+<style>
+  .pt{display:grid;grid-template-columns:auto 1fr auto;gap:6px 14px;align-items:center;margin:-14px 0 26px;padding:10px 14px;border:1px solid var(--rule, #d8d4cc);background:var(--paper, #F2F0EA)}
+  .pt__ad{font:600 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+  .pt__txt{margin:0;font:400 13.5px/1.45 var(--sans);color:var(--ink)}
+  .pt__btn{white-space:nowrap;font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--paper, #fff);background:var(--ink);padding:10px 14px;text-decoration:none}
+  @media (max-width:640px){.pt{grid-template-columns:1fr}.pt__btn{text-align:center}}
+</style>
