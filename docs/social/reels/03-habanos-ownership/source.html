@@ -1,0 +1,159 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Plex';font-weight:400;src:url(fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2')}
+:root{--bg:#121110;--ink:#F2F0EA;--mute:#9A958A;--dim:#5E5A53;--line:#2E2B28;--ox:#C24A44;--oxd:#7B2622;--gold:#C9A36A}
+html,body{margin:0;background:#000}
+#s{width:1080px;height:1920px;position:relative;overflow:hidden;background:var(--bg);font-family:'Newsreader',serif;color:var(--ink)}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .06 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");z-index:50;pointer-events:none}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%);z-index:40;pointer-events:none}
+/* persistent chrome */
+.prog{position:absolute;left:84px;right:84px;top:160px;display:flex;gap:8px;z-index:30}
+.prog i{flex:1;height:5px;background:rgba(242,240,234,.16);border-radius:3px;overflow:hidden;position:relative}
+.prog i b{position:absolute;left:0;top:0;bottom:0;background:var(--ink);width:0}
+.brand{position:absolute;left:84px;top:190px;font-family:'Plex';font-weight:500;font-size:21px;letter-spacing:.26em;text-transform:uppercase;color:var(--mute);z-index:30}
+.brand b{color:var(--ink);font-weight:500}
+.dt{position:absolute;right:140px;top:184px;font-family:'Plex';font-weight:500;font-size:19px;letter-spacing:.22em;text-transform:uppercase;background:var(--oxd);padding:7px 14px;z-index:30}
+/* scenes */
+.sc{position:absolute;inset:0;will-change:transform,opacity,clip-path;background:var(--bg)}
+.edge{position:absolute;top:0;bottom:0;width:6px;background:var(--ox);z-index:35;display:none}
+.bg{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(2px) saturate(.75);opacity:.22}
+.bg.strong{filter:saturate(.9) contrast(1.05);opacity:.75}
+.bg.strong:after{background:linear-gradient(180deg,rgba(18,17,16,.35) 0%,rgba(18,17,16,.25) 30%,rgba(18,17,16,.85) 62%,#121110 80%)}
+.bg.top{filter:saturate(.9);opacity:.7}
+.bg.top:after{background:linear-gradient(180deg,rgba(18,17,16,.6) 0%,rgba(18,17,16,.2) 25%,rgba(18,17,16,.55) 42%,#121110 55%)}
+.ph{position:absolute;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7);will-change:transform,opacity}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph .cr{position:absolute;left:12px;bottom:8px;font-family:'Plex';font-size:14px;color:rgba(242,240,234,.85);text-shadow:0 1px 6px #000}
+.bg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,17,16,.55),rgba(18,17,16,.92) 55%,#121110)}
+.k{position:absolute;left:84px;top:270px;font-family:'Plex';font-weight:500;font-size:24px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute)}
+.k b{color:var(--ox);font-weight:500}
+h2{position:absolute;left:84px;right:130px;top:318px;margin:0;font-size:82px;line-height:1;letter-spacing:-.03em;font-weight:500}
+h2 i{font-style:italic;font-weight:300;color:var(--gold)}
+.src{position:absolute;left:84px;right:130px;top:1545px;font-family:'Plex';font-weight:400;font-size:19px;letter-spacing:.04em;color:var(--dim)}
+.big{font-family:'Newsreader';font-weight:500;letter-spacing:-.05em;line-height:.85}
+.lbl{font-family:'Plex';font-weight:500;font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+svg text{font-family:'Plex'}
+.word{display:inline-block;will-change:transform,opacity}
+</style></head><body><div id="s">
+<div id="scenes"></div>
+<div class="prog" id="prog"></div>
+<div class="brand"><b>The Next Cigar</b> · Explained</div><div class="dt">Ownership · Nov 2026</div>
+<div class="edge" id="edge"></div><div class="vig"></div><div class="grain"></div>
+</div>
+<script>
+const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild};
+const cl=(x)=>x<0?0:x>1?1:x, eo=(x)=>1-Math.pow(1-cl(x),3), eio=(x)=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const seg=(p,a,b)=>cl((p-a)/(b-a));
+const fmt=(n,d=0)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+function words(el){ // wrap words in spans for staggered reveal
+ const walk=(n)=>{[...n.childNodes].forEach(c=>{if(c.nodeType===3){const f=document.createDocumentFragment();c.textContent.split(/(\s+)/).forEach(w=>{if(!w)return;if(/^\s+$/.test(w)){f.appendChild(document.createTextNode(w));return;}const s=document.createElement('span');s.className='word';s.textContent=w;f.appendChild(s)});c.replaceWith(f)}else walk(c)})};walk(el);return [...el.querySelectorAll('.word')];}
+function reveal(ws,t,start=0.05,step=0.035,dur=0.35){ws.forEach((w,i)=>{const p=eo((t-start-i*step)/dur);w.style.opacity=p;w.style.transform=`translateY(${(1-p)*40}px)`;});}
+
+
+const S=[];const root=document.getElementById('scenes');
+function scene(dur,html,img,draw,bgc=''){const el=$(`<div class="sc">${img?`<div class="bg ${bgc}" style="background-image:url(img/${img})"></div>`:''}${html}</div>`);root.appendChild(el);const o={dur,el,draw};S.push(o);return o;}
+
+/* 0 HOOK */
+{const s=scene(4.4,`<div>
+ <div class="k" style="top:300px"><b>Ownership</b> · Habanos S.A.</div>
+ <div id="h_t" style="position:absolute;left:84px;right:130px;top:400px;font-size:112px;line-height:.98;letter-spacing:-.04em;font-weight:500">Who owns the company behind <i style="font-weight:300;color:var(--gold)">Cuba's cigar exports?</i></div>
+ <div id="h_n" class="big" style="position:absolute;left:76px;top:1010px;font-size:250px;color:var(--ox)">28.55%</div>
+ <div id="h_l" class="lbl" style="position:absolute;left:84px;top:1270px;font-size:30px;color:var(--ink)">is reported to belong, indirectly, to one man</div>
+ </div>`,'field.jpg',null,'strong');
+ const ws=words(s.el.querySelector('#h_t'));
+ s.draw=(t)=>{reveal(ws,t,0.1,0.06);const n=s.el.querySelector('#h_n');const p=eo((t-2.2)/0.35);n.style.opacity=p;n.style.transform=`scale(${1.25-0.25*p})`;n.style.transformOrigin='10% 60%';s.el.querySelector('#h_l').style.opacity=eo((t-2.8)/0.4);};}
+
+/* 1 OWNERSHIP BAR */
+{const s=scene(11,`<div>
+ <div class="k"><b>01 / 04</b> · Who owns Habanos S.A.</div>
+ <h2 id="a_h">Half is Cuba's. <i>Most of the other half is reported to be one man's.</i></h2>
+ <div style="position:absolute;left:84px;top:760px;width:912px">
+  <div class="lbl" id="a_l0">Habanos S.A. · shareholders</div>
+  <div style="display:flex;height:150px;margin-top:22px">
+   <div id="a_cu" style="width:50%;background:#2A2724;display:flex;flex-direction:column;justify-content:center;padding-left:28px;box-sizing:border-box"><div class="big" style="font-size:86px">50%</div><div class="lbl" style="margin-top:8px;font-size:20px">Cuban state</div></div>
+   <div id="a_al" style="width:50%;background:#1C1A18;border-left:4px solid var(--bg);display:flex;flex-direction:column;justify-content:center;padding-left:28px;box-sizing:border-box"><div class="big" style="font-size:86px">50%</div><div class="lbl" style="margin-top:8px;font-size:20px">Allied Cigar Corp.</div></div>
+  </div>
+  <div class="lbl" id="a_l1" style="margin-top:70px">Inside Allied Cigar's half</div>
+  <div style="position:relative;height:190px;margin-top:22px;margin-left:456px;width:456px;background:#1C1A18">
+   <div id="a_cz" style="position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ox)"></div>
+   <div id="a_czt" style="position:absolute;left:22px;top:26px"><div class="big" style="font-size:92px" id="a_czn">0%</div><div class="lbl" style="margin-top:10px;font-size:20px;color:var(--ink)">Chen Zhi · indirectly, of all Habanos</div></div>
+  </div>
+  <div id="a_rv" class="lbl" style="margin-top:26px;margin-left:456px;font-size:20px;line-height:1.5">He indirectly holds 57.1% of Allied Cigar.<br>The other 42.9% is reported to belong to<br>Renovaire Group Holding (unconfirmed)</div>
+ </div>
+ <div class="src">Reported by halfwheel, Cigars-connect and Tobacco Reporter (2026). Habanos S.A. has not commented on the figure.</div></div>`,'barn.jpg');
+ const ws=words(s.el.querySelector('#a_h'));
+ s.draw=(t)=>{reveal(ws,t,0.05,0.03);const f=(id,at,d=0.5)=>{const e=s.el.querySelector(id);const q=eo((t-at)/d);e.style.opacity=q;return q;};
+  f('#a_l0',0.8);f('#a_cu',1.0);f('#a_al',2.2);f('#a_l1',4.6);f('#a_czt',5.0);
+  const p=eio((t-5.2)/1.4);s.el.querySelector('#a_cz').style.width=(57.1*p)+'%';s.el.querySelector('#a_czn').textContent=(28.55*p).toFixed(2)+'%';f('#a_rv',7.4);};}
+
+/* 2 TIMELINE */
+{const rows=[['Oct 2025','US indictment. US and UK sanctions.'],['Jan 2026','Arrested in Cambodia and sent to China.'],['Jan 2026','A BVI court places 30 companies linked to him under provisional liquidators.'],['30 Jul 2026','EU sanctions.']];
+ let h='';rows.forEach((r,i)=>{h+=`<div class="tr" style="display:flex;gap:34px;padding:30px 0;border-bottom:1px solid #2E2B28"><div style="width:230px;flex:none;font-size:46px;font-weight:500;color:var(--gold);line-height:1.05">${r[0]}</div><div style="font-size:46px;line-height:1.1;font-weight:400">${r[1]}</div></div>`});
+ const s=scene(10.5,`<div>
+ <div class="k"><b>02 / 04</b> · Chen Zhi</div>
+ <h2 id="b_h">Then came <i>the sanctions.</i></h2>
+ <div style="position:absolute;left:84px;right:84px;top:600px;border-top:2px solid var(--ink)">${h}</div>
+ <div id="b_d" class="lbl" style="position:absolute;left:84px;right:84px;top:1400px;font-size:26px;line-height:1.5;color:var(--ink)">He denies the allegations, <span style="color:var(--mute)">according to a Prince Group spokesperson.</span></div>
+ <div class="src">Sources: US Treasury and Justice Department, Oct 2025; Council Implementing Regulation (EU) 2026/1895; Cigars-connect; Tobacco Reporter, 6 Nov 2026.</div></div>`,'rafters.jpg',null,'top');
+ const ws=words(s.el.querySelector('#b_h'));const tr=[...s.el.querySelectorAll('.tr')];
+ s.draw=(t)=>{reveal(ws,t);tr.forEach((r,i)=>{const q=eo((t-0.9-i*1.9)/0.45);r.style.opacity=q;r.style.transform=`translateX(${(1-q)*-50}px)`;});s.el.querySelector('#b_d').style.opacity=eo((t-8.2)/0.5);};}
+
+/* 3 GERMANY */
+{const s=scene(10.5,`<div>
+ <div class="k"><b>03 / 04</b> · Germany, Austria, Poland</div>
+ <h2 id="c_h">The importer has the money. <i>It isn't allowed to use it.</i></h2>
+ <div id="c_n" class="big" style="position:absolute;left:76px;top:770px;font-size:330px;color:var(--ox)">0</div>
+ <div id="c_l" class="lbl" style="position:absolute;left:84px;top:1075px;font-size:30px;color:var(--ink)">days without deliveries · 4 Sep to 3 Nov</div>
+ <div id="c_1" style="position:absolute;left:84px;right:84px;top:1170px;background:#1C1A18;padding:30px 34px;box-sizing:border-box;border-left:8px solid var(--gold)"><div class="lbl" style="color:var(--gold)">1 Nov 2026</div><div style="font-size:46px;line-height:1.08;margin-top:10px">Formal insolvency proceedings open</div></div>
+ <div id="c_q" style="position:absolute;left:84px;right:110px;top:1385px;font-size:36px;line-height:1.2;font-style:italic;font-weight:300;color:var(--ink)">“Insolvent, not because it cannot pay, but because it is not allowed to.”<span style="display:block;font-style:normal;font-family:Plex;font-size:20px;letter-spacing:.06em;color:var(--mute);margin-top:12px">The insolvency administrator's statement, translated</span></div>
+ <div class="src">5th Avenue Products Trading, exclusive importer for the three countries. Sources: finews, 14 Sep 2026; Cigars-connect, 3 Nov 2026 (the administrator's latest statement).</div></div>`,'curing.jpg');
+ const ws=words(s.el.querySelector('#c_h'));
+ s.draw=(t)=>{reveal(ws,t,0.05,0.03);const n=s.el.querySelector('#c_n');const p=eio((t-1.6)/1.6);n.style.opacity=eo((t-1.5)/0.3);n.textContent=Math.round(60*p);
+  [['#c_l',1.8],['#c_1',4.6],['#c_q',6.6]].forEach(([id,at])=>{const el=s.el.querySelector(id);const q=eo((t-at)/0.5);el.style.opacity=q;el.style.transform=`translateY(${(1-q)*30}px)`;});};}
+
+/* 4 COURT */
+{const s=scene(10.5,`<div>
+ <div class="k"><b>04 / 04</b> · BVI High Court, 21 Oct 2026</div>
+ <h2 id="d_h">Now a judge says the liquidation <i>should end.</i></h2>
+ <div id="d_1" style="position:absolute;left:84px;right:84px;top:740px;background:#1C1A18;padding:34px;box-sizing:border-box;border-top:8px solid var(--gold)"><div class="lbl" style="color:var(--gold)">The ruling</div><div style="font-size:52px;line-height:1.06;margin-top:14px">Not enough admissible evidence to wind up 30 companies linked to him</div></div>
+ <div id="d_2" style="position:absolute;left:84px;width:440px;top:1085px;height:250px;background:#1C1A18;padding:30px;box-sizing:border-box;border-top:8px solid var(--ox)"><div class="lbl" style="color:var(--ox)">Sanctions</div><div style="font-size:60px;line-height:1;margin-top:16px;font-weight:500">Unchanged</div></div>
+ <div id="d_3" style="position:absolute;left:556px;width:440px;top:1085px;height:250px;background:#1C1A18;padding:30px;box-sizing:border-box;border-top:8px solid #5E5A53"><div class="lbl">Next hearing</div><div style="font-size:60px;line-height:1;margin-top:16px;font-weight:500">8–9 Dec</div><div class="lbl" style="font-size:18px;margin-top:12px">provisional</div></div>
+ <div id="d_4" class="lbl" style="position:absolute;left:84px;right:84px;top:1390px;font-size:26px;line-height:1.5;color:var(--ink)">No order has been made yet. Further court steps in the US and the BVI could still change the outcome.</div>
+ <div class="src">Justice Gerhard Wallbank. Sources: Cigars-connect, 4 Nov 2026; Global Restructuring Review, 23 Oct 2026; Tobacco Reporter, 6 Nov 2026.</div></div>`,'hands-bw.jpg');
+ const ws=words(s.el.querySelector('#d_h'));
+ s.draw=(t)=>{reveal(ws,t,0.05,0.03);[['#d_1',1.2],['#d_2',4.6],['#d_3',6.2],['#d_4',8.0]].forEach(([id,at])=>{const el=s.el.querySelector(id);const q=eo((t-at)/0.5);el.style.opacity=q;el.style.transform=`translateY(${(1-q)*40}px)`;});};}
+
+/* OUTRO */
+{const s=scene(4.6,`<div>
+ <div class="k" style="top:420px"><b>What to watch</b></div>
+ <div id="x_h" style="position:absolute;left:84px;right:130px;top:480px;font-size:112px;line-height:.95;letter-spacing:-.04em;font-weight:500">Who controls the stake <i style="font-weight:300;color:var(--gold)">after December?</i></div>
+ <div id="x_c" style="position:absolute;left:84px;right:130px;top:960px;font-family:'Plex';font-weight:500;font-size:40px;line-height:1.35;color:var(--ink)">Follow for the next hearing.<br><span style="color:var(--mute)">We report it with the sources.</span></div>
+ <div id="x_f" class="lbl" style="position:absolute;left:84px;top:1250px;color:var(--gold);font-size:26px">The full story: thenextcigar.com</div>
+ <div class="src">News, not advice. Checked 10 Nov 2026. Images: Wikimedia Commons, credits in caption.</div></div>`,'roller.jpg',null,'strong');
+ const ws=words(s.el.querySelector('#x_h'));
+ s.draw=(t)=>{reveal(ws,t,0.05,0.06);s.el.querySelector('#x_c').style.opacity=eo((t-1.0)/0.4);s.el.querySelector('#x_f').style.opacity=eo((t-1.7)/0.4);};}
+
+/* ---------- timeline & transitions ---------- */
+let acc=0;S.forEach(s=>{s.start=acc;acc+=s.dur;});const TOTAL=acc;window.TOTAL=TOTAL;
+const prog=document.getElementById('prog');for(let i=0;i<S.length-1;i++)prog.appendChild($('<i><b></b></i>'));
+const TR=0.45;
+function render(t){
+ let edgeX=null;
+ S.forEach((s,i)=>{const lt=t-s.start;const next=S[i+1];
+  if(lt<-0.001||(next&&t>=next.start+TR)){s.el.style.display='none';return;}
+  s.el.style.display='block';s.el.style.zIndex=i;
+  let clip='none',x=0,sc=1,o=1;
+  if(lt<TR&&i>0){const p=eio(lt/TR);clip=`inset(0 0 0 ${(1-p)*100}%)`;x=(1-p)*120;edgeX=(1-p)*1080-3;}
+  if(next&&t>=next.start){const p=eio((t-next.start)/TR);x=-p*200;sc=1-0.04*p;o=1-0.5*p;}
+  s.el.style.clipPath=clip;s.el.style.transform=`translateX(${x}px) scale(${sc})`;s.el.style.opacity=o;
+  const bg=s.el.querySelector('.bg');if(bg)bg.style.transform=`scale(${1.06+0.06*cl(lt/s.dur)}) translateX(${-20*cl(lt/s.dur)}px)`;
+  s.draw(Math.max(0,lt),cl(lt/s.dur));
+ });
+ const e=document.getElementById('edge');if(edgeX!==null){e.style.display='block';e.style.left=edgeX+'px';}else e.style.display='none';
+ [...prog.children].forEach((g,j)=>{const s=S[j+1];const p=cl((t-s.start)/s.dur);g.firstChild.style.width=(p*100)+'%';});
+ prog.style.opacity=t<S[1].start?0.35:1;
+}
+window.render=render;window.SC=S.map(s=>({start:s.start,dur:s.dur}));
+</script></body></html>
