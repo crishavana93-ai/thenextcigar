@@ -110,21 +110,43 @@ html{overflow-x:clip}
 /* ---- fix: clip reveals need a block box (the magazine photo links are inline) */
 .four article a[data-clip]{display:block}
 
-/* ---- the premise · drifting disc ------------------------------------------
-   A second, outlined copy of the sentence sits in a layer clipped to a circle.
-   The circle carries a photo, so where it passes the filled type turns to
-   outline over the leaf. Position comes from --x/--y (set on scroll + pointer).
-   Without JS or with reduced motion it rests top right, clear of the text.   */
-.stmt{position:relative;overflow:clip}
-.stmt > .aw-lab,.stmt > .say,.stmt > .sub{position:relative;z-index:1}
-.orb{--r:clamp(120px,19vw,300px);--x:86%;--y:22%;position:absolute;inset:0;z-index:2;pointer-events:none;
-  padding:inherit;clip-path:circle(var(--r) at var(--x) var(--y));opacity:0;transition:opacity 1.2s var(--e-out) .5s}
-.orb.on,html:not(.aw) .orb{opacity:1}
-.orb .aw-lab{visibility:hidden}
-.orb .say{color:transparent;-webkit-text-stroke:1.5px var(--paper);position:relative}
-.orb .say em{color:transparent;-webkit-text-stroke:1.5px var(--gold)}
-.orb-disc{position:absolute;left:calc(var(--x) - var(--r));top:calc(var(--y) - var(--r));width:calc(var(--r) * 2);height:calc(var(--r) * 2);border-radius:50%;overflow:hidden;background:#241d16}
-.orb-disc img{width:100%;height:100%;object-fit:cover;filter:saturate(.75) brightness(.62) contrast(1.08);transform:scale(1.15)}
-.orb-disc::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(201,163,106,.55),inset 0 0 90px rgba(0,0,0,.65)}
-@media (prefers-reduced-motion:reduce){.orb{opacity:1;--r:clamp(90px,13vw,200px)}}
-@media (max-width:860px){.orb{--r:clamp(96px,30vw,150px)}.orb .say,.orb .say em{-webkit-text-stroke-width:1px}.orb-disc img{filter:saturate(.7) brightness(.45) contrast(1.08)}}
+/* ---- the premise · giant words + crossing cigar ---------------------------
+   "Cuban cigars" is set huge. Each word is outline that fills left to right
+   from --p (0 to 1, set on scroll). A cut-out cigar slides across the words on
+   --cx/--cy/--cr. On motion-capable screens the block pins for a moment.
+   Without JS or with reduced motion: words filled, cigar resting, no pin.    */
+.stmt{position:relative;overflow:clip;padding-block:0;background:radial-gradient(60% 55% at 50% 52%,#2a221a 0,var(--ink) 70%)}
+.stmt-pin{position:relative;box-sizing:border-box;padding-block:clamp(48px,7vh,96px);display:flex;flex-direction:column;justify-content:center}
+.stmt .say{max-width:none;margin:22px 0 0;font-size:clamp(19px,2vw,30px);line-height:1.25;letter-spacing:-.01em;text-wrap:initial}
+.stmt .say .lead{display:block;color:#CFCABF;font-style:italic;font-weight:300}
+.stmt .say .rest{display:block;max-width:34ch;margin-left:auto;color:#CFCABF}
+.stmt .say .c{position:absolute;opacity:0}
+.stmt .big{position:relative;display:block;margin:.08em 0 .16em -.03em;font-size:clamp(72px,min(20vw,26vh),320px);line-height:.84;letter-spacing:-.045em;font-weight:500}
+.stmt .bw{display:block;width:max-content;color:transparent;-webkit-text-stroke:1.5px var(--paper);padding:.06em .1em .1em 0;margin-bottom:-.16em;
+  background:linear-gradient(var(--paper),var(--paper)) left/clamp(0%,calc(var(--p,1) * 160%),100%) 100% no-repeat;-webkit-background-clip:text;background-clip:text}
+.stmt .say em.bw{color:transparent;margin-left:auto;font-style:italic;font-weight:300;-webkit-text-stroke-color:var(--gold);
+  background-image:linear-gradient(var(--gold),var(--gold));background-size:clamp(0%,calc((var(--p,1) - .3) * 200%),100%) 100%}
+.stmt .cig{position:absolute;left:50%;top:50%;z-index:2;width:clamp(300px,66vw,1040px);max-width:none;height:auto;pointer-events:none;will-change:transform;
+  transform:translate(calc(-50% + var(--cx,0px)),calc(-50% + var(--cy,0px))) rotate(var(--cr,-10deg));
+  filter:brightness(1.22) saturate(1.1) drop-shadow(0 28px 26px rgba(0,0,0,.6))}
+@media (prefers-reduced-motion:no-preference){
+  .aw .stmt{height:185vh}
+  .aw .stmt-pin{position:sticky;top:0;min-height:100vh;min-height:100svh}
+}
+@media (max-width:860px){
+  .stmt .bw{-webkit-text-stroke-width:1px}
+  .stmt .say .rest{margin-left:0}
+  .stmt .cig{width:92vw}
+}
+@media (prefers-reduced-motion:no-preference) and (max-width:860px){.aw .stmt{height:165vh}}
+
+/* ---- numbers as an oxblood band ------------------------------------------- */
+.nums.bleed{background:var(--ox);color:var(--paper);padding-block:clamp(44px,6vw,96px)}
+.nums.bleed .rulehead{border-color:rgba(242,240,234,.45)}
+.nums.bleed .rulehead h2,.nums.bleed .rulehead h2 em{color:var(--paper)}
+.nums.bleed .nums-grid{border-top-color:var(--paper)}
+.nums.bleed .nums-grid > div + div{border-left-color:rgba(242,240,234,.28)}
+.nums.bleed b,.nums.bleed span{color:var(--paper)}
+.nums.bleed small{color:#E6CFC6}
+@media (max-width:860px){.nums.bleed .nums-grid > div{border-bottom-color:rgba(242,240,234,.28)}}
+.stmt .stmt-pin .sub{margin-top:clamp(20px,3.5vh,44px)}

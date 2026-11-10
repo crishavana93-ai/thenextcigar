@@ -111,8 +111,6 @@ const figures = [
   { n: new Set(RETAILERS.map((r) => r.country)).size, label: "Countries", note: "with shops on the board" },
   { n: SKUS.length, label: "Vitolas", note: "tracked box by box" },
 ];
-const orbPost = posts.find((p) => p.data.slug === "books-about-cuba-havana-and-cigars") ?? lead;
-const orbImg = thumbs.get(orbPost.id);
 const SECTIONS = [
   ["Markets", "/finder/"], ["Magazine", "/blog/"], ["Accessories", "/category/cigar-accessories/"],
   ["Diary", "/category/cigar-events/"], ["The Lounge", "/lounge/"], ["Tools", "/tools/"],
@@ -240,16 +238,15 @@ const jsonLd = {
   <!-- STATEMENT -->
   <script is:inline>document.documentElement.classList.add("aw");</script>
   <section class="stmt bleed" aria-label="What this paper is">
-    <span class="aw-lab" data-rv>The premise</span>
-    <p class="say" data-words>An independent paper on <em>Cuban cigars</em>: what a box costs across Europe, what is happening to the trade, and the few things worth owning.</p>
-    {orbImg && (
-      <div class="orb" aria-hidden="true">
-        <div class="orb-disc"><img src={orbImg.src} srcset={orbImg.srcset} sizes="(max-width: 860px) 70vw, 40vw" alt="" loading="lazy" decoding="async" /></div>
-        <span class="aw-lab">The premise</span>
-        <p class="say">An independent paper on <em>Cuban cigars</em>: what a box costs across Europe, what is happening to the trade, and the few things worth owning.</p>
-      </div>
-    )}
-    <p class="sub" data-rv><span>No tobacco sold here</span><span>No tobacco company pays us</span><span>Published from Sweden</span></p>
+    <div class="stmt-pin">
+      <span class="aw-lab" data-rv>The premise</span>
+      <p class="say">
+        <span class="lead" data-rv>An independent paper on</span>
+        <span class="big"><span class="bw">Cuban</span> <em class="bw">cigars</em><span class="c">: </span><img class="cig" src="/hero/cigar-cutout.webp" width="1600" height="232" alt="" aria-hidden="true" decoding="async" /></span>
+        <span class="rest" data-rv>what a box costs across Europe, what is happening to the trade, and the few things worth owning.</span>
+      </p>
+      <p class="sub"><span>No tobacco sold here</span><span>No tobacco company pays us</span><span>Published from Sweden</span></p>
+    </div>
   </section>
 
   <!-- MAGAZINE -->
@@ -316,11 +313,11 @@ const jsonLd = {
   </section>
 
   <!-- BY THE NUMBERS -->
-  <section class="nums" aria-label="The paper in numbers">
+  <section class="nums bleed" aria-label="The paper in numbers">
     <div class="rulehead flat"><h2>The paper <em>· in numbers</em></h2></div>
     <div class="nums-grid">
       {figures.map((f, i) => (
-        <div data-rv style={`--i:${i}`}><b>{f.n}</b><span>{f.label}</span><small>{f.note}</small></div>
+        <div data-rv style={`--i:${i}`}><b data-n={f.n}>{f.n}</b><span>{f.label}</span><small>{f.note}</small></div>
       ))}
     </div>
   </section>
@@ -371,31 +368,47 @@ const jsonLd = {
         marked.forEach(function (el) { var r = el.getBoundingClientRect(); if (r.top < innerHeight) el.classList.add("in"); });
       }, 1200); });
 
-      // The premise: a leaf-textured disc drifts across the sentence as you
-      // scroll and leans toward the pointer. Inside it the type turns to outline.
-      var st = document.querySelector(".stmt"), orb = st && st.querySelector(".orb");
-      if (orb) {
-        var ox = 0, oy = 0, mx = 0, my = 0, cx = 0, cy = 0, or = 0, live = false;
+      // The premise: two giant words start as outline and fill as you scroll,
+      // while a cigar slides in across them and leans toward the pointer.
+      var st = document.querySelector(".stmt"), cig = st && st.querySelector(".cig");
+      if (cig) {
+        var p = 0, mx = 0, my = 0, cmx = 0, cmy = 0, live = false, last = "";
+        st.style.setProperty("--p", "0");
         function place() {
           var r = st.getBoundingClientRect(), vh = innerHeight;
-          var t = Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)));   // 0 entering, 1 leaving
-          var wide = r.width > 860;
-          var bx = (wide ? 0.86 - t * 0.5 : 0.9 - t * 0.55) * r.width;
-          var by = (0.2 + t * 0.62) * r.height;
-          ox += (bx + mx - ox) * 0.09; oy += (by + my - oy) * 0.09;
-          if (Math.abs(ox - cx) + Math.abs(oy - cy) > 0.3) { cx = ox; cy = oy; orb.style.setProperty("--x", ox.toFixed(1) + "px"); orb.style.setProperty("--y", oy.toFixed(1) + "px"); }
+          var tp = Math.min(1, Math.max(0, (vh * 0.75 - r.top) / (r.height - vh * 0.25)));
+          p += (tp - p) * 0.12; cmx += (mx - cmx) * 0.08; cmy += (my - cmy) * 0.08;
+          var e = 1 - Math.pow(1 - Math.min(1, p / 0.7), 3), out = Math.max(0, p - 0.7);
+          var key = p.toFixed(3) + cmx.toFixed(0) + cmy.toFixed(0);
+          if (key !== last) {
+            last = key;
+            st.style.setProperty("--p", Math.min(1, p * 1.5).toFixed(3));
+            cig.style.setProperty("--cx", ((1 - e) * r.width * 0.9 - out * r.width * 0.3 + cmx).toFixed(1) + "px");
+            cig.style.setProperty("--cy", ((1 - e) * -50 + cmy).toFixed(1) + "px");
+            cig.style.setProperty("--cr", (-28 + e * 18 - out * 12 + cmx * 0.03).toFixed(2) + "deg");
+          }
           if (live) requestAnimationFrame(place);
         }
-        ox = st.offsetWidth * 0.86; oy = st.offsetHeight * 0.2;
         new IntersectionObserver(function (es) {
           var was = live; live = es[0].isIntersecting;
-          if (live && !was) { orb.classList.add("on"); requestAnimationFrame(place); }
+          if (live && !was) requestAnimationFrame(place);
         }, { rootMargin: "10% 0px" }).observe(st);
         if (window.matchMedia("(hover:hover) and (pointer:fine)").matches) {
-          st.addEventListener("mousemove", function (e) { var r = st.getBoundingClientRect(); mx = (e.clientX - r.left - r.width / 2) * 0.12; my = (e.clientY - r.top - r.height / 2) * 0.12; });
+          st.addEventListener("mousemove", function (ev) { var r = st.getBoundingClientRect(); mx = (ev.clientX - r.left - r.width / 2) * 0.06; my = (ev.clientY - Math.max(0, r.top) - innerHeight / 2) * 0.06; });
           st.addEventListener("mouseleave", function () { mx = 0; my = 0; });
         }
       }
+
+      // Numbers count up once when they scroll into view.
+      document.querySelectorAll(".nums b[data-n]").forEach(function (b) {
+        var n = +b.getAttribute("data-n"); if (!(n > 0)) return;
+        b.textContent = "0";
+        new IntersectionObserver(function (es, o) {
+          if (!es[0].isIntersecting) return; o.disconnect();
+          var t0 = performance.now(), d = 1400;
+          (function step(now) { var k = Math.min(1, (now - t0) / d); b.textContent = Math.round(n * (1 - Math.pow(1 - k, 4))); if (k < 1) requestAnimationFrame(step); })(t0);
+        }, { threshold: 0.4 }).observe(b);
+      });
 
       // Hover preview on the numbered index (mouse only).
       var pv = document.querySelector(".idx-pv"), img = pv && pv.querySelector("img");
