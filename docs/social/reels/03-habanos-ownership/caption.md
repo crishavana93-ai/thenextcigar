@@ -1,6 +1,6 @@
-# Reel 03: Who owns Habanos S.A.? (51.5 s) — tnc-reel-03-habanos-ownership-silent.mp4
+# Reel 03: Who owns Habanos S.A.? (64.6 s) — tnc-reel-03-habanos-ownership.mp4
 
-Built 10 Nov 2026. Silent version (text on screen). If an AI voice is added later, switch on Instagram's "AI info" label.
+Built 10 Nov 2026. Voice: AI (Gemini Flash TTS, voice Koda), synced scene by scene. **Switch on Instagram's "AI info" label when posting.** The older silent cut (51.5 s) is tnc-reel-03-habanos-ownership-silent.mp4.
 
 ## Caption (paste)
 
@@ -9,7 +9,7 @@ Who owns the company behind Cuba's cigar exports?
 1. Habanos S.A. is 50% Cuban state, 50% Allied Cigar Corporation. Chen Zhi is reported to hold 57.1% of Allied indirectly, which is 28.55% of Habanos. Habanos has not commented on the figure.
 2. October 2025: US indictment, US and UK sanctions. January 2026: arrested in Cambodia and sent to China; a BVI court placed 30 companies linked to him under provisional liquidators. 30 July 2026: EU sanctions. He denies the allegations, according to a Prince Group spokesperson.
 3. The exclusive importer for Germany, Austria and Poland has made no deliveries since early September. Formal insolvency proceedings opened on 1 November.
-4. On 21 October a BVI judge said the applications to wind up those 30 companies should be dismissed. No order has been made yet, the sanctions are unchanged, and a further hearing is provisionally set for 8–9 December.
+4. On 21 October a BVI judge said the applications to wind up those 30 companies should be dismissed. The sanctions are unchanged, and a further hearing is provisionally set for 8–9 December.
 
 What do you think happens to the stake? Tell us in the comments.
 
@@ -35,12 +35,12 @@ News, not advice. Checked 10 Nov 2026. Full story with every source: link in bio
 | 60 days without deliveries, 4 Sep to 3 Nov | 26 + 31 + 3 = 60 | finews, 14 Sep 2026 (stopped 4 Sep); Cigars-connect, 3 Nov 2026 |
 | Formal insolvency, 1 Nov 2026 | Amtsgericht Waldshut-Tiengen | Cigars-connect, 3 Nov 2026 |
 | "Insolvent, not because it cannot pay…" | Administrator's statement, translated | Cigars-connect, 3 Nov 2026 |
-| 21 Oct 2026: judge says winding-up of 30 companies should be dismissed; no order yet | Justice Gerhard Wallbank | Cigars-connect, 4 Nov 2026; Global Restructuring Review, 23 Oct 2026 |
+| 21 Oct 2026: judge says winding-up of 30 companies should be dismissed | Justice Gerhard Wallbank | Cigars-connect, 4 Nov 2026; Global Restructuring Review, 23 Oct 2026 |
 | Sanctions unchanged; hearing 8–9 Dec (provisional) | | Cigars-connect, 4 Nov 2026 |
 
 ## Double-check
 Independent check on 10 Nov 2026 (fresh agent, sources opened): 16 of 21 claims verified as written; 5 reworded before the final render ("indirectly" added to the stake; Renovaire marked unconfirmed; chart attribution dropped; "30 companies… provisional liquidators"; ruling reworded to "not enough admissible evidence… 30 companies" with "no order has been made yet"). The day counter was changed from 67 (to 10 Nov) to 60 (to 3 Nov, the administrator's latest statement). The checker could not open halfwheel's November articles or EUR-Lex directly; the EU regulation was read from the Official Journal copy at boe.es. KOVFS check: company, court and sanctions news only.
-Not re-checked after the fixes: the voiceover script (written after the check, same facts).
+Voiceover check (second independent pass, 10 Nov 2026): 12 of 15 sentences verified as written. Reworded: the denial is attributed to a Prince Group spokesperson; the court line says a judge "has said the provisional liquidation … should end". "No order has been made yet" could not be confirmed on 10 Nov, so it was removed from the voice, the screen and the caption; the line is now "The sanctions against him remain in place."
 
 ## Image credits
 
