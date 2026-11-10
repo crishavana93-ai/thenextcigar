@@ -779,6 +779,10 @@ body.leaf-in{animation:tnc-fade-in .3s ease-out both}
 
 /* ---- footer wordmark (10 Nov 2026): the nameplate, large, closing every page */
 footer.paper .wm{margin:34px 0 0;font-family:var(--serif);font-weight:700;font-size:clamp(40px,14vw,200px);line-height:.92;letter-spacing:-.045em;color:var(--ink);white-space:nowrap;text-align:center;font-variation-settings:'opsz' 72;padding-bottom:.04em}
+footer.paper .wm{color:transparent;-webkit-text-stroke:1.5px var(--ink);background:linear-gradient(var(--ink),var(--ink)) left/calc(var(--fp,1) * 100%) 100% no-repeat;-webkit-background-clip:text;background-clip:text;translate:0 calc((1 - var(--fp,1)) * 24px)}
+footer.paper li a{background:linear-gradient(currentColor,currentColor) 0 calc(100% - 3px)/0 1px no-repeat;transition:background-size .5s cubic-bezier(.19,1,.22,1),color .3s}
+footer.paper li a:hover{background-size:100% 1px;color:var(--ink);text-decoration:none}
+@media (max-width:700px){footer.paper .wm{-webkit-text-stroke-width:1px}}
 @media print{footer.paper .wm{display:none}}
 
 /* ---- articles: reading progress + cover-story mode (10 Nov 2026) ----------

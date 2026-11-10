@@ -48,3 +48,15 @@ const year = new Date().getFullYear();
     <span>Designed by <a href="https://turquinostudios.com" rel="noopener">Turquino Studios</a></span>
   </div>
 </footer>
+<script is:inline>
+  // Footer wordmark: outline that fills with ink as the footer scrolls in.
+  (function () {
+    var f = document.querySelector("footer.paper"), w = f && f.querySelector(".wm");
+    if (!w || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var t = false;
+    function go() { t = false; var r = w.getBoundingClientRect(), vh = innerHeight; var p = (vh - r.top) / (r.height * 1.05); w.style.setProperty("--fp", Math.max(0, Math.min(1, p)).toFixed(3)); }
+    w.style.setProperty("--fp", "0");
+    window.addEventListener("scroll", function () { if (!t) { t = true; requestAnimationFrame(go); } }, { passive: true });
+    window.addEventListener("resize", go); go();
+  })();
+</script>

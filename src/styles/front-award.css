@@ -150,3 +150,29 @@ html{overflow-x:clip}
 .nums.bleed small{color:#E6CFC6}
 @media (max-width:860px){.nums.bleed .nums-grid > div{border-bottom-color:rgba(242,240,234,.28)}}
 .stmt .stmt-pin .sub{margin-top:clamp(20px,3.5vh,44px)}
+
+/* ---- magazine + classifieds: display heads, column drift, hover ------------ */
+.band{border-top:0;padding-top:0;margin-top:clamp(48px,7vw,96px)}
+.band .idx-top,.class .idx-top{margin-bottom:clamp(18px,2.4vw,34px)}
+.class{border-top:0;padding-top:0;margin-top:clamp(48px,7vw,96px)}
+.four .head{background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .6s var(--e-out);text-decoration:none}
+.four a[data-clip]{overflow:hidden}
+.four a[data-clip] img{transition:scale 1.2s var(--e-out)}
+.class .tile{transition:scale .6s var(--e-out),box-shadow .6s var(--e-out)}
+.aw .class .tile[data-rv]{transition:opacity .9s var(--e-out) calc(var(--i,0) * 70ms),transform 1.1s var(--e-out) calc(var(--i,0) * 70ms),scale .6s var(--e-out),box-shadow .6s var(--e-out)}
+.class .tile .ph{overflow:hidden}
+.class .tile .ph img{transition:scale 1.2s var(--e-out)}
+.class .tile .pr span{display:inline-block;transition:translate .5s var(--e-out)}
+@media (hover:hover){
+  .four article:hover .head{background-size:100% 1px}
+  .four article:hover a[data-clip] img{scale:1.06}
+  .class .tile:hover{scale:1.02;box-shadow:0 22px 40px -22px rgba(21,20,18,.45);text-decoration:none}
+  .class .tile:hover .ph img{scale:1.06}
+  .class .tile:hover .pr span{translate:8px 0}
+}
+@media (prefers-reduced-motion:no-preference) and (min-width:861px){
+  .aw [data-par] > *{translate:0 calc(var(--par,0) * var(--k,0) * 1px)}
+  .aw [data-par] > :nth-child(4n+2){--k:46}
+  .aw [data-par] > :nth-child(4n+3){--k:92}
+  .aw [data-par] > :nth-child(4n+4){--k:46}
+}

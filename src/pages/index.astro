@@ -242,7 +242,7 @@ const jsonLd = {
       <span class="aw-lab" data-rv>The premise</span>
       <p class="say">
         <span class="lead" data-rv>An independent paper on</span>
-        <span class="big"><span class="bw">Cuban</span> <em class="bw">cigars</em><span class="c">: </span><img class="cig" src="/hero/cigar-cutout.webp" width="1600" height="232" alt="" aria-hidden="true" decoding="async" /></span>
+        <span class="big"><span class="bw">Premium</span> <em class="bw">cigars</em><span class="c">: </span><img class="cig" src="/hero/cigar-cutout.webp" width="1600" height="232" alt="" aria-hidden="true" decoding="async" /></span>
         <span class="rest" data-rv>what a box costs across Europe, what is happening to the trade, and the few things worth owning.</span>
       </p>
       <p class="sub"><span>No tobacco sold here</span><span>No tobacco company pays us</span><span>Published from Sweden</span></p>
@@ -251,8 +251,8 @@ const jsonLd = {
 
   <!-- MAGAZINE -->
   <section class="band" aria-label="Magazine">
-    <div class="rulehead flat"><h2>Magazine <em>· long reads</em></h2><a class="more" href="/blog/">{posts.length} essays in the archive →</a></div>
-    <div class="four">
+    <div class="idx-top" data-rv><h2>Magazine <em>long reads</em></h2><a href="/blog/">{posts.length} essays in the archive →</a></div>
+    <div class="four" data-par>
       {longReads.map((p, i) => (
         <article data-clipwrap style={`--i:${i}`}>
           <span class="kick mute">{String(p.data.category).replace(/-/g, " ")}</span>
@@ -295,10 +295,10 @@ const jsonLd = {
 
   <!-- CLASSIFIEDS -->
   <section class="class" aria-label="The shop">
-    <div class="rulehead flat"><h2>Classifieds <em>· the gear guides</em></h2><a class="more" href="/category/cigar-accessories/">All accessory pieces →</a></div>
-    <div class="tiles">
-      {gearGuides.map((p) => (
-        <a class="tile" href={`/blog/${p.data.slug}/`}>
+    <div class="idx-top" data-rv><h2>Classifieds <em>the gear guides</em></h2><a href="/category/cigar-accessories/">All accessory pieces →</a></div>
+    <div class="tiles" data-par>
+      {gearGuides.map((p, i) => (
+        <a class="tile" data-rv style={`--i:${i % 4}`} href={`/blog/${p.data.slug}/`}>
           <div class="ph">{thumbs.get(p.id) ? <img class="foto" src={thumbs.get(p.id)!.src} alt="" width="400" height="400" loading="lazy" /> : <span class="stamp">The guide</span>}</div>
           <div><div class="n">{p.data.title}</div><div class="m">{p.data.excerpt}</div></div>
           <div class="pr">Read the guide <span>→</span></div>
@@ -397,6 +397,16 @@ const jsonLd = {
           st.addEventListener("mousemove", function (ev) { var r = st.getBoundingClientRect(); mx = (ev.clientX - r.left - r.width / 2) * 0.06; my = (ev.clientY - Math.max(0, r.top) - innerHeight / 2) * 0.06; });
           st.addEventListener("mouseleave", function () { mx = 0; my = 0; });
         }
+      }
+
+      // Column drift: the cards in a marked row sit at slightly different
+      // heights and settle level as the row crosses the screen (desktop only).
+      var pars = document.querySelectorAll("[data-par]");
+      if (pars.length && window.matchMedia("(min-width: 861px)").matches) {
+        var pt = false;
+        function par() { pt = false; var vh = innerHeight; pars.forEach(function (el) { var r = el.getBoundingClientRect(); if (r.bottom < -100 || r.top > vh + 100) return; var v = (r.top + r.height / 2 - vh / 2) / vh; el.style.setProperty("--par", Math.max(-1, Math.min(1, v)).toFixed(3)); }); }
+        window.addEventListener("scroll", function () { if (!pt) { pt = true; requestAnimationFrame(par); } }, { passive: true });
+        par();
       }
 
       // Numbers count up once when they scroll into view.
