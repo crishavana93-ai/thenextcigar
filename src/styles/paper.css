@@ -780,3 +780,39 @@ body.leaf-in{animation:tnc-fade-in .3s ease-out both}
 /* ---- footer wordmark (10 Nov 2026): the nameplate, large, closing every page */
 footer.paper .wm{margin:34px 0 0;font-family:var(--serif);font-weight:700;font-size:clamp(40px,14vw,200px);line-height:.92;letter-spacing:-.045em;color:var(--ink);white-space:nowrap;text-align:center;font-variation-settings:'opsz' 72;padding-bottom:.04em}
 @media print{footer.paper .wm{display:none}}
+
+/* ---- articles: reading progress + cover-story mode (10 Nov 2026) ----------
+   Progress: a hairline across the top, driven by scroll in CSS only.
+   Cover story (heroBleed: true): full-screen photo, headline over it.       */
+html{overflow-x:clip}
+@supports (animation-timeline: scroll()){
+  @media (prefers-reduced-motion:no-preference){
+    .art::before{content:"";position:fixed;left:0;top:0;z-index:60;height:3px;width:100%;background:var(--ox);transform-origin:0 50%;transform:scaleX(0);animation:readbar linear both;animation-timeline:scroll(root)}
+  }
+}
+@keyframes readbar{to{transform:scaleX(1)}}
+.cs{position:relative;margin:14px calc(50% - 50vw) 30px;height:92svh;min-height:540px;background:#0B0A09;color:var(--paper);overflow:clip;display:flex;align-items:flex-end}
+.cs-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.7) brightness(.6) contrast(1.05)}
+.cs::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,10,9,.35) 0%,rgba(11,10,9,0) 30%,rgba(11,10,9,.55) 62%,rgba(11,10,9,.94) 100%)}
+.cs-in{position:relative;z-index:1;width:100%;padding:0 max(var(--pad),calc(50vw - 550px)) clamp(44px,8vh,96px)}
+.cs-k{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#C9A36A}
+.art .cs h1{margin-top:18px;max-width:13ch;font-size:clamp(42px,8.2vw,136px);font-weight:500;line-height:.92;letter-spacing:-.04em;font-variation-settings:'opsz' 72;color:var(--paper);text-wrap:balance}
+.cs-st{margin-top:clamp(18px,2.4vw,30px);max-width:54ch;font-size:clamp(17px,1.5vw,21px);line-height:1.42;color:#D8D3C8}
+.cs-cue{position:absolute;z-index:1;right:max(var(--pad),calc(50vw - 550px));bottom:clamp(44px,8vh,96px);font-family:var(--sans);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#9A958A;writing-mode:vertical-rl}
+.cs-cue::after{content:"";display:inline-block;width:1px;height:54px;margin-top:12px;background:#C9A36A;transform-origin:top;animation:cue 2.4s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes cue{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+@media (max-width:700px){.cs{height:86svh}.cs-cue{display:none}}
+@media (prefers-reduced-motion:no-preference){
+  .cs-img{animation:cs-in 2.6s cubic-bezier(.19,1,.22,1) both}
+  .cs-k,.art .cs h1,.cs-st{animation:cs-rise 1.2s cubic-bezier(.19,1,.22,1) both}
+  .art .cs h1{animation-delay:.12s}.cs-st{animation-delay:.28s}
+  @supports (animation-timeline: view()){
+    .cs-img{animation:cs-in 2.6s cubic-bezier(.19,1,.22,1) both, cs-drift linear both;animation-timeline:auto, view();animation-range:normal, exit 0% exit 100%}
+    .cs-in{animation:cs-out linear both;animation-timeline:view();animation-range:exit 10% exit 80%}
+  }
+}
+@keyframes cs-in{from{transform:scale(1.12)}to{transform:scale(1)}}
+@keyframes cs-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes cs-drift{to{transform:translateY(14%) scale(1.06)}}
+@keyframes cs-out{to{opacity:0;transform:translateY(-40px)}}
+@media print{.cs{height:auto;min-height:0;color:var(--ink);background:none}.cs-img,.cs::after,.cs-cue{display:none}.art .cs h1{color:var(--ink)}}

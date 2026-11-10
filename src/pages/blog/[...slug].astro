@@ -124,6 +124,9 @@ if (faqPairs.length >= 2 && !/"@type":\s*"FAQPage"/.test(post.body ?? "")) {
   });
 }
 const jsonLd = { "@context": "https://schema.org", "@graph": graph };
+// Cover-story mode (frontmatter heroBleed: true): a full-screen photo with the
+// headline over it, then the normal article. One <h1> either way.
+const bleed = !!(d as any).heroBleed && !!coverUrl && coverUrl !== "/og-default.jpg";
 ---
 
 <PaperLayout
@@ -137,11 +140,22 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
   modified={(modified ?? published).toISOString()}
   jsonLd={jsonLd}
 >
-  <article class="art">
+  <article class:list={["art", { "art--cs": bleed }]}>
+    {bleed && (
+      <header class="cs">
+        <img class="cs-img" src={heroCover?.src ?? coverUrl} srcset={heroCover?.srcset} sizes="100vw" alt={(d as any).coverAlt ?? ""} fetchpriority="high" />
+        <div class="cs-in">
+          <p class="cs-k">{category ? (category.data as any).name : "Report"} · Cover story</p>
+          <h1>{d.title}</h1>
+          {d.excerpt && <p class="cs-st">{d.excerpt}</p>}
+        </div>
+        <span class="cs-cue" aria-hidden="true">Read on</span>
+      </header>
+    )}
     <p class="miga"><a href="/">Front page</a> · <a href="/blog/">Magazine</a>{category && <> · <a href={`/blog/`}>{(category.data as any).name}</a></>}</p>
     {category && <p style="margin:0 0 10px"><span class="chip">{(category.data as any).name}</span></p>}
-    <h1>{d.title}</h1>
-    {d.excerpt && <p class="standfirst">{d.excerpt}</p>}
+    {!bleed && <h1>{d.title}</h1>}
+    {!bleed && d.excerpt && <p class="standfirst">{d.excerpt}</p>}
     <p class="credit">
       <span>By <b>{(author?.data as any)?.name ?? "The Next Cigar"}</b></span>
       <span>{fmt(published)}</span>
@@ -153,7 +167,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     {(d as any).oneToBuy && isPrimeSeason() && <PrimeTrial />}
     {(d as any).oneToBuy && <MailBox variant="line" />}
 
-    {coverUrl && coverUrl !== "/og-default.jpg" && (
+    {!bleed && coverUrl && coverUrl !== "/og-default.jpg" && (
       <figure class="cubierta">
         <img class="foto" src={heroCover?.src ?? coverUrl} srcset={heroCover?.srcset} sizes="(max-width: 900px) 100vw, 860px" alt={(d as any).coverAlt ?? ""} width="1600" height="800" fetchpriority="high" />
         {(d as any).coverCredit && <figcaption class="cubierta-credit">{(d as any).coverCreditUrl ? <a href={(d as any).coverCreditUrl} rel="noopener" target="_blank">{(d as any).coverCredit}</a> : (d as any).coverCredit}</figcaption>}
