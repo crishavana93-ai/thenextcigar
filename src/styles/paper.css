@@ -776,3 +776,7 @@ body.leaf-in{animation:tnc-fade-in .3s ease-out both}
 /* Cover photo credit (licensed photos) */
 .cubierta-credit{font-family:var(--sans);font-size:11px;letter-spacing:.02em;color:var(--mute);margin-top:6px;text-align:right}
 .cubierta-credit a{color:inherit;text-decoration:underline;text-decoration-color:var(--rule)}
+
+/* ---- footer wordmark (10 Nov 2026): the nameplate, large, closing every page */
+footer.paper .wm{margin:34px 0 0;font-family:var(--serif);font-weight:700;font-size:clamp(40px,14vw,200px);line-height:.92;letter-spacing:-.045em;color:var(--ink);white-space:nowrap;text-align:center;font-variation-settings:'opsz' 72;padding-bottom:.04em}
+@media print{footer.paper .wm{display:none}}

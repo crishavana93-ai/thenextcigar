@@ -5,6 +5,7 @@ import PaperLayout from "../layouts/PaperLayout.astro";
 import LivePaper from "../components/paper/LivePaper.astro";
 import { SKUS, RETAILERS, COUNTRIES, PRICE_SNAPSHOTS, bestPriceForSku, formatPrice, checkedLabel } from "../data/finder-live";
 import { events } from "../data/cigar-events";
+import "../styles/front-award.css";
 
 /**
  * Front page — the broadsheet.
@@ -100,6 +101,20 @@ const tiles = products
   .sort((a, b) => Number(b.data.inStock && !b.data.comingSoon) - Number(a.data.inStock && !a.data.comingSoon))
   .slice(0, 4);
 const money = (n: number, cur: string) => new Intl.NumberFormat("en-GB", { style: "currency", currency: cur || "USD", maximumFractionDigits: 0 }).format(n);
+
+// Showcase sections (statement, index, numbers): all figures come from the data.
+const latest = posts.slice(0, 8);
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const figures = [
+  { n: posts.length, label: "Essays and guides", note: "in the archive, free to read" },
+  { n: RETAILERS.length, label: "Retailers", note: "whose shelves the Finder reads" },
+  { n: new Set(RETAILERS.map((r) => r.country)).size, label: "Countries", note: "with shops on the board" },
+  { n: SKUS.length, label: "Vitolas", note: "tracked box by box" },
+];
+const SECTIONS = [
+  ["Markets", "/finder/"], ["Magazine", "/blog/"], ["Accessories", "/category/cigar-accessories/"],
+  ["Diary", "/category/cigar-events/"], ["The Lounge", "/lounge/"], ["Tools", "/tools/"],
+];
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -220,6 +235,14 @@ const jsonLd = {
     </aside>
   </div>
 
+  <!-- STATEMENT -->
+  <script is:inline>document.documentElement.classList.add("aw");</script>
+  <section class="stmt bleed" aria-label="What this paper is">
+    <span class="aw-lab" data-rv>The premise</span>
+    <p class="say" data-words>An independent paper on <em>Cuban cigars</em>: what a box costs across Europe, what is happening to the trade, and the few things worth owning.</p>
+    <p class="sub" data-rv><span>No tobacco sold here</span><span>No tobacco company pays us</span><span>Published from Sweden</span></p>
+  </section>
+
   <!-- MAGAZINE -->
   <section class="band" aria-label="Magazine">
     <div class="rulehead flat"><h2>Magazine <em>· long reads</em></h2><a class="more" href="/blog/">{posts.length} essays in the archive →</a></div>
@@ -227,13 +250,42 @@ const jsonLd = {
       {longReads.map((p) => (
         <article>
           <span class="kick mute">{String(p.data.category).replace(/-/g, " ")}</span>
-          {thumbs.get(p.id) && <a href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1"><img class="foto" src={thumbs.get(p.id)!.src} srcset={thumbs.get(p.id)!.srcset} sizes="(max-width: 700px) 45vw, 300px" alt="" width="640" height="480" loading="lazy" /></a>}
+          {thumbs.get(p.id) && <a href={`/blog/${p.data.slug}/`} aria-hidden="true" tabindex="-1" data-clip><img class="foto" src={thumbs.get(p.id)!.src} srcset={thumbs.get(p.id)!.srcset} sizes="(max-width: 700px) 45vw, 300px" alt="" width="640" height="480" loading="lazy" /></a>}
           <a class="head" href={`/blog/${p.data.slug}/`}>{p.data.title}</a>
           {p.data.excerpt && <p class="t">{p.data.excerpt.slice(0, 140)}{p.data.excerpt.length > 140 ? "…" : ""}</p>}
         </article>
       ))}
     </div>
   </section>
+
+  <!-- THE LATEST · numbered index -->
+  <section class="idx" aria-label="The latest">
+    <div class="idx-top" data-rv>
+      <h2>The latest, <em>in order.</em></h2>
+      <a href="/blog/">All {posts.length} pieces →</a>
+    </div>
+    <ol>
+      {latest.map((p, i) => (
+        <li data-rv style={`--i:${i % 4}`}>
+          <a href={`/blog/${p.data.slug}/`} data-pv={thumbs.get(p.id)?.src}>
+            <span class="n">{pad2(i + 1)}</span>
+            <span class="c">{String(p.data.category || "report").replace(/-/g, " ")}</span>
+            <span class="t">{p.data.title}</span>
+            <span class="d">{fmtDate(p.data.publishedAt)}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+    <div class="idx-pv" aria-hidden="true"><img alt="" width="480" height="360" /></div>
+  </section>
+
+  <!-- SECTIONS · marquee (second copy is decorative) -->
+  <nav class="mq bleed" aria-label="Sections">
+    <div class="mq-in">
+      <ul>{SECTIONS.map(([n, h]) => <li><a href={h}>{n}</a></li>)}</ul>
+      <ul aria-hidden="true">{SECTIONS.map(([n, h]) => <li><a href={h} tabindex="-1">{n}</a></li>)}</ul>
+    </div>
+  </nav>
 
   <!-- CLASSIFIEDS -->
   <section class="class" aria-label="The shop">
@@ -253,4 +305,74 @@ const jsonLd = {
       <a class="cta" href="/lounge/signup/">Tell me when</a>
     </div>
   </section>
+
+  <!-- BY THE NUMBERS -->
+  <section class="nums" aria-label="The paper in numbers">
+    <div class="rulehead flat"><h2>The paper <em>· in numbers</em></h2></div>
+    <div class="nums-grid">
+      {figures.map((f, i) => (
+        <div data-rv style={`--i:${i}`}><b>{f.n}</b><span>{f.label}</span><small>{f.note}</small></div>
+      ))}
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section class="post" aria-label="Newsletter">
+    <div>
+      <span class="aw-lab" data-rv>The paper, by email</span>
+      <h2 data-words>One email <em>when there's something to say.</em></h2>
+      <p data-rv>A new guide, an accessory deal worth knowing, the odd essay. We don't email cigar prices or offers. No fixed day, and we never sell or share the address.</p>
+    </div>
+    <a class="go" href="/subscribe/" data-out="newsletter-front" data-rv>Subscribe free <span aria-hidden="true">→</span></a>
+    <p class="fine">Free · 21+ · unsubscribe in one click</p>
+  </section>
+
+  <script is:inline>
+    // Showcase motion: one observer adds .in when a marked element scrolls into
+    // view. Headline words are wrapped for the masked rise. Skipped entirely
+    // for reduced-motion readers; without JS nothing is hidden.
+    (function () {
+      var rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var marked = document.querySelectorAll("[data-rv],[data-words],[data-clip]");
+      if (rm || !("IntersectionObserver" in window)) { document.documentElement.classList.remove("aw"); return; }
+      document.querySelectorAll("[data-words]").forEach(function (el) {
+        var i = 0;
+        (function walk(node) {
+          Array.prototype.slice.call(node.childNodes).forEach(function (c) {
+            if (c.nodeType === 3) {
+              var f = document.createDocumentFragment();
+              c.textContent.split(/(\s+)/).forEach(function (t) {
+                if (!t) return;
+                if (/^\s+$/.test(t)) { f.appendChild(document.createTextNode(" ")); return; }
+                var w = document.createElement("span"); w.className = "w";
+                var s = document.createElement("span"); s.textContent = t; s.style.setProperty("--i", i++);
+                w.appendChild(s); f.appendChild(w);
+              });
+              node.replaceChild(f, c);
+            } else if (c.nodeType === 1) walk(c);
+          });
+        })(el);
+      });
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+      }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
+      marked.forEach(function (el) { io.observe(el); });
+      // Safety net: never leave anything hidden if the observer misfires.
+      window.addEventListener("load", function () { setTimeout(function () {
+        marked.forEach(function (el) { var r = el.getBoundingClientRect(); if (r.top < innerHeight) el.classList.add("in"); });
+      }, 1200); });
+
+      // Hover preview on the numbered index (mouse only).
+      var pv = document.querySelector(".idx-pv"), img = pv && pv.querySelector("img");
+      if (pv && window.matchMedia("(hover:hover) and (pointer:fine)").matches) {
+        var x = 0, y = 0, tx = 0, ty = 0, raf = 0;
+        function tick() { x += (tx - x) * 0.16; y += (ty - y) * 0.16; pv.style.transform = "translate(" + x + "px," + y + "px)"; raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.5 ? requestAnimationFrame(tick) : 0; }
+        document.querySelectorAll(".idx li a").forEach(function (a) {
+          a.addEventListener("mouseenter", function () { var s = a.getAttribute("data-pv"); if (!s) return; img.src = s; pv.classList.add("on"); });
+          a.addEventListener("mouseleave", function () { pv.classList.remove("on"); });
+          a.addEventListener("mousemove", function (e) { tx = Math.min(e.clientX + 28, innerWidth - 330); ty = e.clientY - 120; if (!raf) raf = requestAnimationFrame(tick); });
+        });
+      }
+    })();
+  </script>
 </PaperLayout>
