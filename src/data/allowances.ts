@@ -36,6 +36,16 @@ export const ALLOWANCES: Allowance[] = [
     confidence: "official",
   },
   {
+    code: "se", name: "Sweden",
+    duty_free: { cigars: 50, unit: "cigars", basis: "From outside the EU: the standard EU choice of 50 cigars, or 100 cigarillos, or 200 cigarettes, or 250 g of smoking tobacco, or a proportional mix. For your own or your family's use, carried by you.", minAge: 18,
+      reduced: "If you live in Sweden, the allowance only applies if you arrive on a commercial flight, have been away for more than 20 hours, or bought the tobacco taxed in Åland or Norway. A day trip by car or ferry from outside the EU gets no allowance." },
+    guide: { cigars: null, note: "From another EU country there is no fixed limit: Tullverket judges case by case whether the cigars are for your own use, with \"no fixed boundary\". The EU-wide indicative level is 200 cigars. You must carry them yourself; ordered online, Swedish tobacco tax is due, and untaxed parcels are seized." },
+    over: { basis: "full", figures: "Swedish tobacco tax of SEK 1.83 per cigar (2026 rate, Skatteverket), plus customs duty from outside the EU (Tullverket lists SEK 0.86 per cigar). Tullverket's traveller page shows the tax as SEK 2.19 per cigar, which differs from Skatteverket's 2026 rate, so check before you travel." },
+    quirk: "Above the allowance you pay on the cigars over it. And a gift posted to you by a private person from outside the EU is duty-free only up to 10 cigars, with tobacco tax always payable.",
+    source: { title: "Tullverket — tobacco from a country outside the EU", url: "https://tullverket.se/en/startpage/private/travelling/travellingtosweden/tobaccofromacountryoutsidetheeu.4.422c8052175b1d827691095.html" },
+    confidence: "official",
+  },
+  {
     code: "fi", name: "Finland",
     duty_free: { cigars: 50, unit: "cigars", basis: "The standard EU choice: 50 cigars, or 100 cigarillos, or 200 cigarettes, or 250 g.", minAge: 18 },
     guide: { cigars: 50, note: "Finnish customs give 50 cigars as their reference figure for personal use even from inside the EU — unusually specific, and lower than the EU's 200. Worth knowing before you fill a case in Germany." },

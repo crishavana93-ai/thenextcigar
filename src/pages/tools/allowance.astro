@@ -103,6 +103,11 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
         verdict.textContent = okay ? "Nothing to pay." : `${count} is above the ${a.guide.cigars}-cigar guide.`;
         basis.textContent = a.guide.note;
         over.textContent = okay ? "" : "That isn't a limit — it's the point at which you may be asked to show the cigars are for you and not for resale. Keep the receipt.";
+      } else if (intraEU) {
+        label.textContent = "Inside the EU";
+        verdict.textContent = "No fixed limit for your own use.";
+        basis.textContent = a.guide.note;
+        over.textContent = "";
       } else {
         const limitC = a.duty_free.cigars;
         const grams = count * GRAMS;
@@ -118,7 +123,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": [
       }
       document.getElementById("al-quirk")!.textContent = a.quirk ?? "";
       const src = document.getElementById("al-src")!;
-      src.innerHTML = `Source: <a href="${a.source.url}" rel="noopener" target="_blank">${a.source.title}</a>${a.confidence === "secondary" ? " — read from a secondary copy of the official text." : ""} Minimum age ${a.duty_free.minAge}.${a.duty_free.reduced ? " " + a.duty_free.reduced : ""}`;
+      src.innerHTML = `Source: <a href="${a.source.url}" rel="noopener" target="_blank">${a.source.title}</a>${a.confidence === "secondary" ? " — read from a secondary copy of the official text." : ""} Minimum age ${a.duty_free.minAge}.${a.duty_free.reduced && !intraEU ? " " + a.duty_free.reduced : ""}`;
     }
     [to, from, n].forEach((el) => el.addEventListener("input", run));
     run();
