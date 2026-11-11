@@ -48,7 +48,7 @@ const id = `sf-${src}`;
         if (!r.ok || !j.success) throw new Error("rejected");
         try { localStorage.setItem(OK_KEY, String(Date.now())); } catch {}
         form.classList.add("is-done");
-        form.innerHTML = '<p class="sf-done">You’re on the list. The next email comes when there’s something worth saying.</p>';
+        form.innerHTML = '<p class="sf-done">Almost there: check your inbox and click the link to confirm. Not there? Look in spam.</p>';
         try {
           const b = JSON.stringify({ host: "signup." + (form.dataset.src || "form"), page: location.pathname });
           navigator.sendBeacon?.("/api/out", new Blob([b], { type: "application/json" }));
