@@ -1,0 +1,125 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:transparent}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:'Newsreader',serif;color:#F2F0EA}
+.scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,17,16,.72) 0,rgba(18,17,16,.3) 22%,rgba(18,17,16,.35) 36%,rgba(18,17,16,.82) 46%,rgba(18,17,16,.9) 70%,rgba(18,17,16,.96) 100%)}
+.prog{position:absolute;left:72px;right:72px;top:110px;height:4px;background:rgba(242,240,234,.2)}
+.prog b{position:absolute;left:0;top:0;bottom:0;background:#C9A36A}
+.brand{position:absolute;left:72px;top:136px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.24em;text-transform:uppercase;color:#C7C2B6}
+.brand b{color:#F2F0EA;font-weight:500}
+.sc{position:absolute;left:72px;right:72px;top:0;bottom:0;opacity:0}
+.k{position:absolute;top:900px;font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.22em;text-transform:uppercase;color:#C9A36A}
+.bot{position:absolute;left:0;right:0;top:950px}
+.h{font-size:86px;line-height:.98;letter-spacing:-.03em;font-weight:500;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+.h i{font-style:italic;font-weight:300;color:#C9A36A}
+.huge{font-size:250px;line-height:.86;letter-spacing:-.05em;font-weight:500;text-shadow:0 4px 40px rgba(0,0,0,.55)}
+.huge.ox{color:#E0635C}
+.p{margin-top:26px;font-size:38px;line-height:1.28;font-weight:300;color:#E4E0D6;text-shadow:0 2px 18px rgba(0,0,0,.7)}
+.src{position:absolute;left:0;right:0;top:1500px;font-family:'IBM Plex Sans';font-size:19px;letter-spacing:.14em;text-transform:uppercase;color:#9A958A;line-height:1.5}
+.bars{margin-top:30px;margin-right:110px}
+.row{margin:0 0 26px}
+.row .lab{display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:#C7C2B6;margin-bottom:10px}
+.row .lab b{font-family:'Newsreader';font-size:54px;letter-spacing:-.02em;text-transform:none;color:#F2F0EA;font-weight:500}
+.bar{height:34px;background:rgba(242,240,234,.14)}
+.bar i{display:block;height:100%;background:#F2F0EA}
+.bar i.g{background:#C9A36A}.bar i.ox{background:#E0635C}
+.list div{font-size:46px;line-height:1.15;font-weight:400;padding:18px 0;border-bottom:1px solid rgba(242,240,234,.22);text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.list div span{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.14em;color:#C9A36A;margin-right:22px;vertical-align:middle}
+.end{position:absolute;left:0;right:0;top:0;bottom:0;background:#121110;opacity:0}
+.end .in{position:absolute;left:72px;right:72px;top:640px}
+</style></head><body><div id="stage">
+<div class="scrim"></div>
+<div class="prog"><b id="pb"></b></div>
+<div class="brand"><b>The Next Cigar</b> · News</div>
+
+<div class="sc" id="s1"><div class="k">Cuba · tourism · Jan–Sep 2026</div><div class="bot">
+ <div class="huge ox" id="n1">−65.1%</div>
+ <div class="h" style="margin-top:20px">Cuba has lost <i style="white-space:nowrap">almost two&#8209;thirds</i> of its visitors.</div></div>
+ <div class="src">Source: ONEI, via EFE and CiberCuba · video: papegoja4 / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s2"><div class="k">International visitors · January–September</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>2025</span><b id="n2a">1,367,847</b></div><div class="bar"><i id="b2a" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>2026</span><b id="n2b">477,707</b></div><div class="bar"><i class="g" id="b2b" style="width:0"></i></div></div>
+ </div>
+ <div class="p">Same nine months, a year apart.</div></div>
+ <div class="src">Source: ONEI, via EFE and CiberCuba, 28–29 Oct 2026 · video: RG72 / Wikimedia Commons, CC BY-SA 4.0</div></div>
+
+<div class="sc" id="s3"><div class="k">The gap</div><div class="bot">
+ <div class="huge" id="n3">890,140</div>
+ <div class="h" style="margin-top:20px">fewer people <i>than a year earlier.</i></div></div>
+ <div class="src">Source: ONEI, via EFE and CiberCuba · video: RG72 / Wikimedia Commons, CC BY-SA 4.0</div></div>
+
+<div class="sc" id="s4"><div class="k">Arrivals by month · 2026</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>June</span><b>28,100</b></div><div class="bar"><i class="m" data-w="28100" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>July</span><b>32,272</b></div><div class="bar"><i class="m" data-w="32272" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>August</span><b>30,490</b></div><div class="bar"><i class="m" data-w="30490" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span style="color:#E0635C">September · lowest so far</span><b>27,354</b></div><div class="bar"><i class="m ox" data-w="27354" style="width:0"></i></div></div>
+ </div></div>
+ <div class="src">Source: ONEI, via CiberCuba and EFE · video: papegoja4 / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s5"><div class="k">Cuba's biggest market</div><div class="bot">
+ <div class="h">Canada</div>
+ <div class="huge ox" id="n5" style="margin-top:10px">−76.9%</div>
+ <div class="p">129,243 visitors this year, 430,460 fewer. More than three in four gone.</div></div>
+ <div class="src">Source: ONEI, via EFE and CiberCuba · video: papegoja4 / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s6"><div class="k">What's reported as the cause</div><div class="bot">
+ <div class="list">
+  <div data-i="0"><span>01</span>Fuel shortages and blackouts</div>
+  <div data-i="1"><span>02</span>Airlines cut or suspended routes</div>
+  <div data-i="2"><span>03</span>US sanctions</div>
+  <div data-i="3"><span>04</span>Foreign hotel groups left</div>
+ </div></div>
+ <div class="src">Sources: CiberCuba, EFE, Bloomberg Línea · video: RG72 / Wikimedia Commons, CC BY-SA 4.0</div></div>
+
+<div class="sc" id="s7"><div class="k">Why some headlines said 35%</div><div class="bot">
+ <div class="huge" style="font-size:200px">34.9%</div>
+ <div class="h" style="margin-top:14px">of last year's visitors came. <i>That's what remained.</i></div>
+ <div class="p">The fall is 65.1%.</div></div>
+ <div class="src">Source: ONEI share of 2025, as reported by EFE · video: RG72 / Wikimedia Commons, CC BY-SA 4.0</div></div>
+
+<div class="sc" id="s8"><div class="k">How far from normal</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>2018, full year (peak)</span><b>≈4.6m</b></div><div class="bar"><i id="b8a" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>2026, to September</span><b>477,707</b></div><div class="bar"><i class="g" id="b8b" style="width:0"></i></div></div>
+ </div></div>
+ <div class="src">Sources: EFE (2018), ONEI via EFE (2026) · video: Balaenicactus / Wikimedia Commons, CC BY-SA 4.0</div></div>
+
+<div class="end" id="end"><div class="in">
+ <div class="k" style="position:static;margin-bottom:30px">The Next Cigar</div>
+ <div class="h" style="font-size:96px">Full story, <i>every source.</i></div>
+ <div class="p" style="font-size:44px">Link in bio.</div>
+ <div class="p" style="font-size:30px;color:#9A958A;margin-top:60px">News, not advice. We don't sell tobacco.</div>
+</div></div>
+</div>
+<script>
+const S=[[0,4.2],[4.2,14.7],[14.7,18.0],[18.0,23.0],[23.0,28.1],[28.1,36.0],[36.0,42.8],[42.8,51.1]];
+const TOTAL=51.1, END=47.2;
+const ease=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+function render(t){
+  document.getElementById('pb').style.width=(100*t/TOTAL)+'%';
+  S.forEach(([a,b],i)=>{
+    const el=document.getElementById('s'+(i+1));
+    const fin=i===0?1:ease((t-a)/.45), fout=i===S.length-1?1:1-ease((t-(b-.25))/.25);
+    const v=Math.max(0,Math.min(fin,fout));
+    el.style.opacity=v; el.style.transform=`translateY(${(1-fin)*40}px)`;
+  });
+  const p2=ease((t-10.3)/1.4);
+  document.getElementById('b2a').style.width=(100*p2)+'%';
+  document.getElementById('b2b').style.width=(100*477707/1367847*ease((t-6.1)/1.4))+'%';
+  document.getElementById('n2a').textContent=fmt(1367847*p2);
+  document.getElementById('n2b').textContent=fmt(477707*ease((t-6.1)/1.4));
+  document.getElementById('n3').textContent=fmt(890140*ease((t-15.0)/1.3));
+  document.querySelectorAll('#s4 i.m').forEach((m,k)=>{m.style.width=(100*m.dataset.w/32272*ease((t-18.3-k*.35)/.9))+'%'});
+  document.querySelectorAll('#s6 .list div').forEach(d=>{const k=+d.dataset.i;const s=[29.3,31.3,32.5,33.8][k];d.style.opacity=ease((t-s)/.35)});
+  document.getElementById('b8a').style.width=(100*ease((t-43.1)/1.2))+'%';
+  document.getElementById('b8b').style.width=(100*477707/4600000*ease((t-44.2)/1.2))+'%';
+  const e=ease((t-END)/.5); document.getElementById('end').style.opacity=e;
+}
+render(0);
+</script></body></html>
