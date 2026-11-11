@@ -24,7 +24,7 @@ Figures: ONEI (Cuba's statistics office), as reported by EFE, CiberCuba, Bloombe
 
 Video (cropped, darkened, text added): "Driving through Matanzas 1st of May 2017" by papegoja4, CC BY 3.0; "Calzada de Managua (Havana) 02" and "Strato en El Centro (Havano)" by RG72, CC BY-SA 4.0; "Navidad La Habana 2023" by Balaenicactus, CC BY-SA 4.0. All via Wikimedia Commons (creativecommons.org/licenses/by-sa/4.0). Edited footage shared under CC BY-SA 4.0. Voice: AI.
 
-## First comment
+## Hashtags (last line of the caption)
 
 #cuba #travelnews
 

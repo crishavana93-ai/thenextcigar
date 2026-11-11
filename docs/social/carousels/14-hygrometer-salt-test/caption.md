@@ -18,7 +18,7 @@ Full guide, with the two-point check: link in bio. We don't sell tobacco.
 
 Photos (edited): Arjuncm3 (CC BY-SA 3.0), MajestyWoodworks (CC BY 4.0), Corneille (CC BY-SA 3.0), Jacek Halicki (CC BY-SA 4.0) via Wikimedia Commons; Jason Tuinstra via Unsplash.
 
-## First comment
+## Hashtags (last line of the caption)
 
 #hygrometer #humidor #humiditycontrol
 
