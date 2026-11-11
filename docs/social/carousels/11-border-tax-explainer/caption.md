@@ -13,6 +13,8 @@ What you carry in your own luggage is treated differently from what arrives by p
 
 Our allowance calculator, for the EU, the UK, Switzerland and Norway, is at the link in bio. Not legal or tax advice: check your own country's rules. We don't sell tobacco.
 
+Photos via Wikimedia Commons: Ralf Roletschek (CC BY 3.0), Per Fredrik Röding (CC BY 4.0), Otto Karikoski (CC BY-SA 4.0), Nathalie Kotlok (public domain), Calle Eklund/V-wolf (CC BY-SA 3.0).
+
 ## First comment
 
 #travel #customs #eutravel
@@ -26,3 +28,11 @@ Our allowance calculator, for the EU, the UK, Switzerland and Norway, is at the 
 
 ## Double-check
 Independent check on 11 Nov 2026 (fresh agent, TARIC, Tullverket, Tulli and the directives opened). Slides 01–05 matched source.html. Fixed before posting: 26% is the standard (third-country) rate, not universal (0% CARIFORUM/Central America/Mexico, 9.1% GSP); excise can also be per kilo; the 50-cigar allowance has age and trip conditions (Sweden 18+, residents need a flight or 20+ hours away; Finland none for short land/sea trips); Directive 2008/118 replaced by 2020/262 Art. 32; slide 5 headline "without paying more?" read as cost-saving advice and became "What are the limits when you travel?"; #thenextcigar dropped. Open for the site, not the post: the allowance calculator's Swedish tax per cigar (Tullverket shows 2.19 SEK, Skatteverket's 2026 rate is 1.83 SEK).
+
+## Photos (Wikimedia Commons)
+- 01 customs-channels.jpg: "Customs at London Stansted Airport perspective+crop", Ralf Roletschek, CC BY 3.0
+- 02 customs-1909.jpg: "At the swedish customs in 1909", Per Fredrik Röding, CC BY 4.0
+- 03 baggage-reclaim.jpg: "Kuusamo Airport baggage reclaim 2017-11-23", Otto Karikoski, CC BY-SA 4.0
+- 04 parcel-check.jpg: "Contrôle des bagages à la douane de la gare d'Hendaye (MédiHAL 682072)", Nathalie Kotlok, public domain
+- 05 arlanda.jpg: "Stockholm-Arlanda Airport Terminal 5 c", Calle Eklund/V-wolf, CC BY-SA 3.0
+No cigars, brands or logos in any photo.
