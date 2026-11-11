@@ -40,6 +40,14 @@ const ALLOWED_APEX = [
 // The page sends host "shop" for a click from an article into /shop/… — the
 // only internal link counted, because it is the shop's entire funnel.
 const INTERNAL = new Set(["shop"]);
+// Source prefixes the page adds for readers arriving from social or the
+// newsletter: "ig.amazon.com" (a click) or "ig.land" (a landing).
+const SOURCES = new Set(["ig", "tt", "nl", "rd", "pin", "yt", "li", "fb", "th", "bs"]);
+function internalOk(host: string): boolean {
+  if (INTERNAL.has(host)) return true;
+  const [src, rest] = [host.split(".")[0], host.split(".").slice(1).join(".")];
+  return SOURCES.has(src) && (rest === "land" || INTERNAL.has(rest));
+}
 function allowed(host: string): boolean {
   return ALLOWED_APEX.some((apex) => host === apex || host.endsWith("." + apex));
 }
@@ -50,7 +58,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const host = typeof body.host === "string" ? body.host.toLowerCase().slice(0, 100) : "";
   const page = typeof body.page === "string" ? body.page.slice(0, 200) : "";
-  if (!(INTERNAL.has(host) || allowed(host)) || !page.startsWith("/")) {
+  if (!(internalOk(host) || allowed(host)) || !page.startsWith("/")) {
     return new Response(null, { status: 204 }); // not ours to count; say nothing
   }
 

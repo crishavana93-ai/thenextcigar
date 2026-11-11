@@ -121,6 +121,47 @@ const ogImage = new URL(image, Astro.site).toString();
       // the reader is sent or stored. The list of hosts is enforced server
       // side; this only avoids pointless requests for links we do not count.
       (function () {
+        // Where this visit came from, read from the URL only: utm_source on
+        // this page, or the referrer of the landing page. Nothing is stored
+        // on the reader's device; the source rides along on internal links
+        // (below) so a reader who lands on the hub and then opens a guide is
+        // still counted under the same source.
+        var SRC = { instagram: "ig", ig: "ig", tiktok: "tt", tt: "tt", newsletter: "nl", mailerlite: "nl", email: "nl",
+                    reddit: "rd", pinterest: "pin", youtube: "yt", linkedin: "li", facebook: "fb", threads: "th", bluesky: "bs" };
+        var params = new URLSearchParams(location.search);
+        var src = SRC[(params.get("utm_source") || "").toLowerCase()] || "";
+        if (!src && document.referrer) {
+          var r = ""; try { r = new URL(document.referrer).hostname; } catch (_) {}
+          if (/(^|\.)instagram\.com$/.test(r)) src = "ig";
+          else if (/(^|\.)tiktok\.com$/.test(r)) src = "tt";
+          else if (/(^|\.)reddit\.com$/.test(r)) src = "rd";
+          else if (/(^|\.)pinterest\./.test(r)) src = "pin";
+          else if (/(^|\.)(youtube\.com|youtu\.be)$/.test(r)) src = "yt";
+          else if (/(^|\.)linkedin\.com$/.test(r)) src = "li";
+          else if (/(^|\.)facebook\.com$/.test(r)) src = "fb";
+        }
+        // Amazon tracking IDs per source, so Associates Central reports what
+        // each channel earns. Leave a value empty until that tracking ID has
+        // been created in Associates Central; the main tag is used until then.
+        var AMZ_TAG = { ig: "", tt: "", nl: "", rd: "", pin: "", yt: "", li: "", fb: "", th: "", bs: "" };
+        if (src && AMZ_TAG[src]) {
+          document.querySelectorAll('a[href*="tag=thenextcigar-20"]').forEach(function (a) {
+            a.href = a.href.replace("tag=thenextcigar-20", "tag=" + AMZ_TAG[src]);
+          });
+        }
+        function beacon(host) {
+          var payload = JSON.stringify({ host: host, page: location.pathname });
+          try {
+            if (navigator.sendBeacon) navigator.sendBeacon("/api/out", new Blob([payload], { type: "application/json" }));
+            else fetch("/api/out", { method: "POST", body: payload, keepalive: true, headers: { "content-type": "application/json" } });
+          } catch (_) {}
+        }
+        // One landing count per visit that arrived from a known source
+        // (counted as "<src>.land"), so we can see how many readers each
+        // channel sends and to which page.
+        var fromOutside = true;
+        try { fromOutside = !document.referrer || new URL(document.referrer).hostname !== location.hostname; } catch (_) {}
+        if (src && fromOutside) beacon(src + ".land");
         var HOSTS = /(^|\.)(cigarmust\.com|noblego\.de|cigarworld\.de|sigarietabacchi\.it|lacasadelhabano\.brussels|cigarsmokerclub\.com|cgarsltd\.co\.uk|cigarrspecialisten\.se|cigarrummet\.com|hajenius\.com|jamesfox\.ie|siglomundo\.ch|jjfox\.co\.uk|sauttercigars\.com|havanahouse\.co\.uk|egmcigars\.com|cigarrhyllan\.se|lcdhantwerp\.com|cigarsmoke\.gr|cigarmaxx\.de|cigarone\.com|puros\.se|houseofcigars\.it|bottegadelfumatore\.com|cigarsgalaxy\.gr|danishpipeshop\.com|turmeaus\.co\.uk|amazon\.com|amazon\.co\.uk|amazon\.de|amazon\.se|amazon\.fr|amazon\.it|amazon\.es|amazon\.nl|amazon\.ca|amzn\.to)$/i;
         document.addEventListener("click", function (e) {
           var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
@@ -128,6 +169,11 @@ const ogImage = new URL(image, Astro.site).toString();
           var host, u;
           try { u = new URL(a.href, location.href); host = u.hostname; } catch (_) { return; }
           if (host === location.hostname) {
+            // Carry the visit's source to the next page of ours.
+            if (src && params.get("utm_source") && !u.searchParams.get("utm_source") && !/\/(api|admin|lounge)\//.test(u.pathname)) {
+              ["utm_source", "utm_medium", "utm_campaign"].forEach(function (k) { if (params.get(k)) u.searchParams.set(k, params.get(k)); });
+              a.href = u.toString();
+            }
             // A click from an article into our own shop is the one internal
             // link worth counting: it is the shop's whole funnel.
             if (!/^\/shop\/.+/.test(u.pathname) || /^\/shop\//.test(location.pathname)) return;
@@ -139,14 +185,10 @@ const ogImage = new URL(image, Astro.site).toString();
           // already accepts subdomains, so no server change is needed.
           var tag = a.closest("[data-out]");
           if (tag && /^[a-z]{1,12}$/.test(tag.getAttribute("data-out") || "")) host = tag.getAttribute("data-out") + "." + host;
-          var payload = JSON.stringify({ host: host, page: location.pathname });
-          try {
-            if (navigator.sendBeacon) {
-              navigator.sendBeacon("/api/out", new Blob([payload], { type: "application/json" }));
-            } else {
-              fetch("/api/out", { method: "POST", body: payload, keepalive: true, headers: { "content-type": "application/json" } });
-            }
-          } catch (_) {}
+          // Clicks by readers who came from social or the newsletter are
+          // counted as "<src>.<host>", e.g. ig.amazon.com or ig.box.amazon.com.
+          if (src) host = src + "." + host;
+          beacon(host);
         }, true);
       })();
     </script>
