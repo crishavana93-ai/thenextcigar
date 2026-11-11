@@ -143,7 +143,7 @@ const ogImage = new URL(image, Astro.site).toString();
         // Amazon tracking IDs per source, so Associates Central reports what
         // each channel earns. Leave a value empty until that tracking ID has
         // been created in Associates Central; the main tag is used until then.
-        var AMZ_TAG = { ig: "", tt: "", nl: "", rd: "", pin: "", yt: "", li: "", fb: "", th: "", bs: "" };
+        var AMZ_TAG = { ig: "tncig-20", tt: "tnctt-20", nl: "tncnl-20", rd: "", pin: "", yt: "", li: "", fb: "", th: "", bs: "" };
         if (src && AMZ_TAG[src]) {
           document.querySelectorAll('a[href*="tag=thenextcigar-20"]').forEach(function (a) {
             a.href = a.href.replace("tag=thenextcigar-20", "tag=" + AMZ_TAG[src]);
