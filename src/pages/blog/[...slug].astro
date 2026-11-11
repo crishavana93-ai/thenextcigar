@@ -5,6 +5,7 @@ import BuyBox from "../../components/paper/BuyBox.astro";
 import OneToBuy from "../../components/blog/OneToBuy.astro";
 import ProductGallery from "../../components/blog/ProductGallery.astro";
 import MailBox from "../../components/blog/MailBox.astro";
+import SubscribeSlide from "../../components/blog/SubscribeSlide.astro";
 import PrimeTrial from "../../components/blog/PrimeTrial.astro";
 import { isPrimeSeason } from "../../lib/prime-season";
 import { coverSet } from "../../lib/cover";
@@ -213,6 +214,7 @@ const bleed = !!(d as any).heroBleed && !!coverUrl && coverUrl !== "/og-default.
     <ProductGallery products={(d as any).products} />
 
     <MailBox />
+    <SubscribeSlide />
 
     <BuyBox slug={d.slug} />
 

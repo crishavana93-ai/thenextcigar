@@ -1,0 +1,90 @@
+---
+/** Email signup that posts straight to MailerLite's form endpoint (the same one
+ *  the /subscribe/ embed uses), so article pages load no third-party script.
+ *  Without JavaScript the form falls back to /subscribe/.
+ *  `src` labels where the signup happened (box, slide) for the success beacon. */
+interface Props { src?: string; dark?: boolean }
+const { src = "box", dark = false } = Astro.props;
+const id = `sf-${src}`;
+---
+<form class:list={["sf", { "sf--dark": dark }]} action="/subscribe/" method="get" data-ml data-src={src} novalidate>
+  <label class="sf-sr" for={id}>Your email address</label>
+  <div class="sf-row">
+    <input id={id} class="sf-in" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="Your email" />
+    <button class="sf-btn" type="submit">Subscribe</button>
+  </div>
+  <p class="sf-msg" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  const ENDPOINT = "https://assets.mailerlite.com/jsonp/2332920/forms/187086229900100777/subscribe";
+  const OK_KEY = "tnc_subscribed";
+
+  function bind(form: HTMLFormElement) {
+    if (form.dataset.bound === "1") return;
+    form.dataset.bound = "1";
+    const input = form.querySelector<HTMLInputElement>(".sf-in")!;
+    const btn = form.querySelector<HTMLButtonElement>(".sf-btn")!;
+    const msg = form.querySelector<HTMLElement>(".sf-msg")!;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        msg.textContent = "That doesn't look like an email address.";
+        input.focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      msg.textContent = "";
+      const fd = new FormData();
+      fd.append("fields[email]", email);
+      fd.append("ml-submit", "1");
+      fd.append("anticsrf", "true");
+      try {
+        const r = await fetch(ENDPOINT, { method: "POST", body: fd });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.success) throw new Error("rejected");
+        try { localStorage.setItem(OK_KEY, String(Date.now())); } catch {}
+        form.classList.add("is-done");
+        form.innerHTML = '<p class="sf-done">You’re on the list. The next email comes when there’s something worth saying.</p>';
+        try {
+          const b = JSON.stringify({ host: "signup." + (form.dataset.src || "form"), page: location.pathname });
+          navigator.sendBeacon?.("/api/out", new Blob([b], { type: "application/json" }));
+        } catch {}
+        document.dispatchEvent(new CustomEvent("tnc:subscribed"));
+      } catch {
+        btn.disabled = false;
+        btn.textContent = "Subscribe";
+        msg.innerHTML = 'Something went wrong. Try again, or use the <a href="/subscribe/">signup page</a>.';
+      }
+    });
+  }
+
+  const run = () => document.querySelectorAll<HTMLFormElement>("form[data-ml]").forEach(bind);
+  run();
+  document.addEventListener("astro:page-load", run);
+</script>
+
+<style>
+  .sf{max-width:440px;margin:0 auto}
+  .sf-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .sf-row{display:flex;gap:0;border:1px solid var(--ink)}
+  .sf-in{flex:1;min-width:0;min-height:46px;border:0;background:transparent;padding:0 14px;font:400 16px/1 var(--serif);color:var(--ink);border-radius:0}
+  .sf-in::placeholder{color:var(--mute)}
+  .sf-in:focus{outline:2px solid var(--ox);outline-offset:-2px}
+  .sf-btn{flex:none;min-height:46px;border:0;background:var(--ink);color:var(--paper);padding:0 20px;font:600 12px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:0}
+  .sf-btn:hover{background:var(--ox)}
+  .sf-btn:disabled{opacity:.6;cursor:default}
+  .sf-msg{margin:8px 0 0;min-height:1em;font:400 13px/1.35 var(--sans);color:var(--ox)}
+  .sf-msg:empty{display:none}
+  .sf-done{margin:0;font:400 italic 17px/1.4 var(--serif);color:var(--ink)}
+  .sf--dark .sf-row{border-color:var(--paper)}
+  .sf--dark .sf-in{color:var(--paper)}
+  .sf--dark .sf-in::placeholder{color:#9A958A}
+  .sf--dark .sf-btn{background:var(--paper);color:var(--ink)}
+  .sf--dark .sf-btn:hover{background:#C9A36A}
+  .sf--dark .sf-done{color:var(--paper)}
+  .sf--dark .sf-msg{color:#E08A84}
+</style>

@@ -43,8 +43,10 @@ const INTERNAL = new Set(["shop"]);
 // Source prefixes the page adds for readers arriving from social or the
 // newsletter: "ig.amazon.com" (a click) or "ig.land" (a landing).
 const SOURCES = new Set(["ig", "tt", "nl", "rd", "pin", "yt", "li", "fb", "th", "bs"]);
+// Newsletter signups from the article box or the slide-in: "signup.box", "signup.slide".
+const SIGNUPS = new Set(["signup.box", "signup.slide"]);
 function internalOk(host: string): boolean {
-  if (INTERNAL.has(host)) return true;
+  if (INTERNAL.has(host) || SIGNUPS.has(host)) return true;
   const [src, rest] = [host.split(".")[0], host.split(".").slice(1).join(".")];
   return SOURCES.has(src) && (rest === "land" || INTERNAL.has(rest));
 }

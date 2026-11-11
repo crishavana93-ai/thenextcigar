@@ -1,0 +1,95 @@
+---
+/** A small, closable newsletter slide-in for article pages.
+ *  Rules: appears once per page view, only after the reader has scrolled past
+ *  60% of the page; never for someone who subscribed or arrived from the
+ *  newsletter; after "No thanks" it stays away for 30 days; it hides while the
+ *  end-of-article signup box is on screen. Bottom corner on desktop, a short
+ *  bottom bar on phones (well under a third of the screen), never a full-page
+ *  overlay, and it never takes focus. */
+import SubscribeForm from "../SubscribeForm.astro";
+---
+<aside id="tnc-slide" class="sl" aria-label="Newsletter" hidden>
+  <button class="sl-x" type="button" aria-label="Close">×</button>
+  <p class="sl-k">The paper, by email</p>
+  <p class="sl-h">One email when there's something worth knowing.</p>
+  <SubscribeForm src="slide" dark />
+  <p class="sl-f">Free · 21+ · no fixed schedule · <button class="sl-no" type="button">No thanks</button></p>
+</aside>
+
+<script>
+  const DISMISS_KEY = "tnc_slide_dismissed";
+  const OK_KEY = "tnc_subscribed";
+  const QUIET_DAYS = 30;
+
+  function get(k: string) { try { return localStorage.getItem(k); } catch { return null; } }
+  function set(k: string, v: string) { try { localStorage.setItem(k, v); } catch {} }
+
+  function setup() {
+    const el = document.getElementById("tnc-slide");
+    if (!el || el.dataset.bound === "1") return;
+    el.dataset.bound = "1";
+
+    if (get(OK_KEY)) return;
+    const d = Number(get(DISMISS_KEY) || 0);
+    if (d && Date.now() - d < QUIET_DAYS * 864e5) return;
+    const q = new URLSearchParams(location.search);
+    const src = (q.get("utm_source") || "").toLowerCase();
+    if (src === "newsletter" || src === "mailerlite" || src === "email") return;
+    if (/mailerlite|mlsend/.test(document.referrer)) return;
+
+    let shown = false, endBoxVisible = false;
+    const endBox = document.querySelector(".mbx");
+    if (endBox && "IntersectionObserver" in window) {
+      new IntersectionObserver(([e]) => {
+        endBoxVisible = e.isIntersecting;
+        el.classList.toggle("is-tucked", endBoxVisible);
+      }).observe(endBox);
+    }
+
+    const close = (remember: boolean) => {
+      el.classList.remove("is-open");
+      if (remember) set(DISMISS_KEY, String(Date.now()));
+      window.removeEventListener("scroll", onScroll);
+      setTimeout(() => el.setAttribute("hidden", ""), 300);
+    };
+
+    const onScroll = () => {
+      if (shown) return;
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      if (max <= 0) return;
+      if (h.scrollTop / max < 0.6 || endBoxVisible) return;
+      shown = true;
+      el.removeAttribute("hidden");
+      requestAnimationFrame(() => el.classList.add("is-open"));
+    };
+
+    el.querySelector(".sl-x")?.addEventListener("click", () => close(true));
+    el.querySelector(".sl-no")?.addEventListener("click", () => close(true));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el.classList.contains("is-open")) close(true); });
+    document.addEventListener("tnc:subscribed", () => setTimeout(() => close(false), 2600));
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  setup();
+  document.addEventListener("astro:page-load", setup);
+</script>
+
+<style>
+  .sl{position:fixed;right:24px;bottom:24px;z-index:60;width:380px;box-sizing:border-box;background:#151412;color:var(--paper);padding:22px 24px 16px;border-top:3px solid var(--ox);box-shadow:0 18px 50px rgba(0,0,0,.35);transform:translateY(24px);opacity:0;transition:transform .35s ease,opacity .35s ease}
+  .sl.is-open{transform:none;opacity:1}
+  .sl.is-open.is-tucked{transform:translateY(24px);opacity:0;pointer-events:none}
+  .sl-x{position:absolute;top:6px;right:8px;width:40px;height:40px;border:0;background:none;color:#9A958A;font:300 28px/1 var(--sans);cursor:pointer}
+  .sl-x:hover{color:var(--paper)}
+  .sl-k{margin:0 0 8px;font:600 10.5px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#C9A36A}
+  .sl-h{margin:0 32px 14px 0;font:500 22px/1.15 var(--serif);color:var(--paper)}
+  .sl :global(.sf){margin:0;max-width:none}
+  .sl-f{margin:10px 0 0;font:400 12px/1.4 var(--sans);color:#9A958A}
+  .sl-no{border:0;background:none;padding:0;font:inherit;color:#C7C2B6;text-decoration:underline;cursor:pointer;min-height:24px}
+  @media (max-width:700px){
+    .sl{left:0;right:0;bottom:0;width:auto;padding:16px 16px 12px;border-top-width:2px}
+    .sl-h{font-size:18px;margin-bottom:10px}
+    .sl-k{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){.sl{transition:none}}
+</style>

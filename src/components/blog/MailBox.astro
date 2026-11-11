@@ -1,8 +1,9 @@
 ---
-/** In-article newsletter prompt. No third-party script: it links to /subscribe/,
- *  the only page that loads the MailerLite form, so article pages stay fast.
+/** In-article newsletter prompt. No third-party script: the box variant posts
+ *  straight to MailerLite's form endpoint (SubscribeForm), the line links to /subscribe/.
  *  variant "line": one quiet line (under the one-to-buy box).
  *  variant "box": the end-of-article panel. */
+import SubscribeForm from "../SubscribeForm.astro";
 interface Props { variant?: "line" | "box" }
 const { variant = "box" } = Astro.props;
 ---
@@ -17,7 +18,7 @@ const { variant = "box" } = Astro.props;
     <p class="mbx-k">The paper, by email</p>
     <p class="mbx-h">One email when there's something worth knowing.</p>
     <p class="mbx-t">A new guide, an accessory deal worth knowing, the Black Friday deals list once we've checked it. We don't email cigar prices or offers. No fixed schedule, no nagging, and we never sell your address.</p>
-    <a class="mbx-btn" href="/subscribe/" data-out="newsletter-box">Subscribe free <span aria-hidden="true">→</span></a>
+    <SubscribeForm src="box" />
     <p class="mbx-f">Free · 21+ · unsubscribe in one click</p>
   </aside>
 )}
