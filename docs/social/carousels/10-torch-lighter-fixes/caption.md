@@ -9,7 +9,7 @@ Accessory care only. No cigars, cigar brands, prices or shops. Lighter makers na
 
 A torch lighter that clicks and does nothing is rarely broken. Most of the time it's one of five things: air in the tank, lighting it too soon after a refill, a flame set too low, a dirty jet, or the cold.
 
-Swipe for the fix for each, straight from Xikar's, Colibri's and Vector's own instructions, including how long each maker says to wait after refilling.
+Swipe for the fix for each, from the makers' own instructions, including how long each maker says to wait after refilling.
 
 Save it for the next time yours won't catch. The full guide, with all seven causes and what each maker's warranty covers, is at the link in bio.
 
@@ -22,7 +22,7 @@ Save it for the next time yours won't catch. The full guide, with all seven caus
 1. Cover: our article page — "Clicks but won't light? It's usually one of five things."
 2. Quick diagnosis — symptom → cause.
 3. Fix 1 — bleed the tank, 4 steps.
-4. Fix 2 — wait after refilling: Colibri 2 min, Zippo inserts 2, Xikar 3–4, Vector 5–10.
+4. Fix 2 — wait after refilling: Colibri 2 min, Zippo inserts 2, Xikar 3–4. (Vector's 5–10 min removed 11 Nov 2026: not on Vector's own pages.)
 5. Fixes 3 & 4 — flame too low/high; clean the jet.
 6. Fix 5 — the cold: butane boils at −0.5 °C (NIST).
 7. Full guide, link in bio; safety: never refill near a flame, leaking valve → service.
