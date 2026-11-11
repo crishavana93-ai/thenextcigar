@@ -1,0 +1,112 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(../../../../public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(../../../../public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(../../../../public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+.band{position:absolute;left:0;right:0;bottom:0;height:480px;box-sizing:border-box;background:#0B0A09;padding:40px 72px 0;z-index:4}
+.band h2,.band p,.band .tag{position:relative}
+.slide.over .band{background:transparent}
+.slide.over .band:before{content:"";position:absolute;left:0;right:0;top:-40px;bottom:0;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 25%)}
+.slide.over .band .tag{position:absolute;top:-250px;left:72px;z-index:2}
+.slide.over .band h2{margin-top:-190px}
+.tag{display:inline-block;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.24em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:8px 16px;margin-bottom:26px}
+.band h2{margin:0;font-size:92px;line-height:.95;letter-spacing:-.035em;font-weight:500;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.band h2 i{font-style:italic;font-weight:300;color:#C9A36A}
+.band p{margin:24px 0 0;font-size:30px;line-height:1.3;color:#C7C2B6;font-weight:300}
+.meta{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;white-space:nowrap;font-family:'IBM Plex Sans';font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:#6A665E;z-index:6}
+.meta b{color:#9A958A;font-weight:500}
+.photo{position:absolute;left:0;top:0;width:1080px;height:1000px;overflow:hidden;background:#000}
+.photo img{width:100%;height:100%;object-fit:cover;filter:saturate(.9) contrast(1.05)}
+.photo:after{content:"";position:absolute;left:0;right:0;bottom:0;height:460px;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 85%)}
+.bgp{position:absolute;left:0;top:0;width:1080px;height:900px;background-size:cover;background-position:center;opacity:.3;filter:saturate(.75)}
+.bgp:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,20,18,.35),rgba(21,20,18,.55) 45%,#151412 92%)}
+.top{position:absolute;left:72px;right:72px;top:80px;z-index:3}
+.k{font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;margin-bottom:28px}
+.k b{color:#F2F0EA;font-weight:500}
+.big{font-size:150px;line-height:.92;letter-spacing:-.045em;font-weight:500;color:#F2F0EA;margin-top:10px}
+.big i{font-style:italic;font-weight:300;color:#C9A36A}
+.big small{display:block;font-size:32px;letter-spacing:0;font-weight:300;color:#D2CDC2;margin-top:26px;line-height:1.3}
+table{border-collapse:collapse;width:100%}
+td{padding:14px 0;border-bottom:1px solid #3A3733;font-size:32px;font-weight:300;color:#D2CDC2;vertical-align:top;line-height:1.28}
+td.n{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:#C9A36A;width:96px;padding-top:22px}
+.cov .photo{height:1350px}.cov .photo:after{height:820px;background:linear-gradient(180deg,rgba(11,10,9,0),rgba(11,10,9,.85) 45%,#0B0A09 80%)}.cov .band{background:transparent}.cov .band:before{display:none}.cov .band .tag{position:relative;top:auto;left:auto}.cov .band h2{margin-top:0;font-size:104px}
+</style></head><body>
+
+<div class="slide over cov">
+ <div class="photo"><img src="img/dial.jpg" style="object-position:center 8%;transform:scale(1.12);transform-origin:center top"></div>
+ <div class="grain"></div>
+ <div class="band"><span class="tag">Fix it · save this</span><h2>Is your hygrometer <i>lying?</i></h2><p>The 12-hour salt test. A bag, a capful of salt, and by morning you know if the number on your humidor is real →</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · photo: Arjuncm3, CC BY-SA 3.0</span><span>1 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/humidor.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The problem</b> · hygrometers drift</div>
+  <div class="big">±3–5<i>%</i><small>How far off even a freshly calibrated hygrometer can be, says Boveda. And every hygrometer falls out of calibration over time.</small></div></div>
+ <div class="band"><span class="tag">The problem</span><h2>Wrong number, <i>wrong decisions.</i></h2><p>Read 5 points low and you add water to a box that's already wet. Read high and the humidor dries out while the dial looks fine.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Boveda · photo: MajestyWoodworks, CC BY 4.0</span><span>2 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/salt.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Why it works</b> · published in 1977</div>
+  <div class="big">75<i>%</i><small>Damp table salt sealed in a small space holds the air at 75% relative humidity: 75.3–75.6% between 15 and 25 °C. That is your reference.</small></div></div>
+ <div class="band"><span class="tag">The reference</span><h2>Salt <i>doesn't drift.</i></h2><p>The figure comes from the US National Bureau of Standards, now NIST. Normal room temperature barely moves it.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: NBS, Greenspan 1977 · photo: J. Tuinstra / Unsplash</span><span>3 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/bag.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>You need</b> · four things</div>
+  <table>
+   <tr><td class="n">01</td><td>Table salt</td></tr>
+   <tr><td class="n">02</td><td>A little water</td></tr>
+   <tr><td class="n">03</td><td>A bottle cap</td></tr>
+   <tr><td class="n">04</td><td>A resealable freezer bag</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Step 1</span><h2>Wet sand, <i>not salty water.</i></h2><p>Fill the cap with salt and dampen it until it looks like wet sand. The salt shouldn't dissolve, and no water should pool on top.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · photo: Corneille, CC BY-SA 3.0</span><span>4 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/digital.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Steps 2–4</b> · bag it and leave it</div>
+  <table>
+   <tr><td class="n">02</td><td>Cap and hygrometer in the bag, side by side. The salt must not touch the hygrometer.</td></tr>
+   <tr><td class="n">03</td><td>Seal the bag along its full length. A leaky bag won't hold 75.</td></tr>
+   <tr><td class="n">04</td><td>Leave it at a steady room temperature, away from radiators, sun and draughts.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Then wait</span><h2>8–12 hours. <i>Overnight is safest.</i></h2><p>Humidor set-up guides say 8–12 hours; Boveda says at least 24 for its own kit. Waiting longer does no harm.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: set-up guides, Boveda · photo: J. Halicki, CC BY-SA 4.0</span><span>5 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/dial.jpg);background-position:center 40%"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Step 5</b> · read it through the bag</div>
+  <div class="big">72 → <i>+3</i><small>It should read 75. If it reads 72, add 3 to every reading from now on: when it shows 62, your humidor is really at 65.</small></div></div>
+ <div class="band"><span class="tag">Correct it</span><h2>Don't open <i>the bag to look.</i></h2><p>Dry room air changes the reading quickly. If the dial has an adjustment screw, set it to 75. If not, write the offset on tape on the back.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · photo: Arjuncm3, CC BY-SA 3.0</span><span>6 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/humidor.jpg);background-position:center 30%"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>What ruins the test</b> · five mistakes</div>
+  <table>
+   <tr><td class="n">✕</td><td>Too much water: salty puddle, not wet sand</td></tr>
+   <tr><td class="n">✕</td><td>Salt touching the hygrometer</td></tr>
+   <tr><td class="n">✕</td><td>A bag that isn't sealed all the way</td></tr>
+   <tr><td class="n">✕</td><td>A spot by a window, radiator or vent</td></tr>
+   <tr><td class="n">✕</td><td>Reading it too soon, or outside the bag</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Repeat it</span><h2>Every new gauge, <i>then every six months.</i></h2><p>Boveda's advice. Full guide, with the two-point check: link in bio. We don't sell tobacco.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Boveda · photo: MajestyWoodworks, CC BY 4.0</span><span>7 / 7</span></div>
+</div>
+</body></html>
