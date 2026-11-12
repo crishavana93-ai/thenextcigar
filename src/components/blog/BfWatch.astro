@@ -1,0 +1,34 @@
+---
+/**
+ * <BfWatch /> — short Black Friday price-watch box for accessory buying guides.
+ * Data comes from src/data/bf-watch.ts, updated at every price check.
+ * A product is listed only when Amazon's price is at least 5% below the price
+ * we recorded before the sale (8 November 2026). No deal, no list.
+ */
+import { BF_WATCH } from "../../data/bf-watch";
+const w = BF_WATCH;
+const deals = w.deals.slice(0, 3);
+---
+<aside class="bfw" aria-label={deals.length > 0 ? "Advertising: Black Friday price watch" : "Black Friday price watch"}>
+  <p class="bfw__kick">Black Friday price watch{deals.length > 0 && <span class="bfw__ad">Advertising · affiliate links</span>}</p>
+  <p class="bfw__txt"><strong>Checked {w.checked}:</strong> {w.summary}</p>
+  {deals.length > 0 && (
+    <ul class="bfw__list">
+      {deals.map((p) => (
+        <li><a href={p.url} rel="sponsored nofollow noopener" target="_blank" data-out="bfwatch">{p.name}</a> <span>{p.now}, was {p.before} on 8 Nov</span></li>
+      ))}
+    </ul>
+  )}
+  <a class="bfw__btn" href="/blog/black-friday-cigar-accessory-deals-2026/">All 22 prices, before and now <span aria-hidden="true">→</span></a>
+</aside>
+<style>
+  .bfw{margin:-14px 0 26px;padding:12px 14px;border:1px solid var(--ink);border-left:4px solid var(--ox);background:var(--paper-2, #F2F0EA)}
+  .bfw__kick{margin:0 0 6px;font:600 11px/1.2 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ox)}
+  .bfw__ad{float:right;font-weight:500;letter-spacing:.08em;color:var(--mute)}
+  .bfw__txt{margin:0 0 8px;font:400 14px/1.45 var(--sans);color:var(--ink)}
+  .bfw__list{margin:0 0 10px;padding:0;list-style:none;font:400 13.5px/1.45 var(--sans)}
+  .bfw__list li{padding:4px 0;border-top:1px solid var(--rule, #d8d4cc)}
+  .bfw__list span{color:var(--mute)}
+  .bfw__btn{display:inline-block;font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+  @media (max-width:640px){.bfw__ad{float:none;display:block;margin-top:4px}}
+</style>

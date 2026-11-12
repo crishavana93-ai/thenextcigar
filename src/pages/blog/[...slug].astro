@@ -8,6 +8,8 @@ import MailBox from "../../components/blog/MailBox.astro";
 import SubscribeSlide from "../../components/blog/SubscribeSlide.astro";
 import PrimeTrial from "../../components/blog/PrimeTrial.astro";
 import { isPrimeSeason } from "../../lib/prime-season";
+import BfWatch from "../../components/blog/BfWatch.astro";
+import { isBfSeason } from "../../lib/bf-season";
 import { coverSet } from "../../lib/cover";
 import PaperLayout from "../../layouts/PaperLayout.astro";
 import { SKUS, RETAILERS, bestPriceForSku, formatPrice, checkedLabel } from "../../data/finder-live";
@@ -165,6 +167,7 @@ const bleed = !!(d as any).heroBleed && !!coverUrl && coverUrl !== "/og-default.
     </p>
 
     {(d as any).oneToBuy && <OneToBuy {...(d as any).oneToBuy} />}
+    {(d as any).oneToBuy && isBfSeason() && d.slug !== "black-friday-cigar-accessory-deals-2026" && <BfWatch />}
     {(d as any).oneToBuy && isPrimeSeason() && <PrimeTrial />}
     {(d as any).oneToBuy && <MailBox variant="line" />}
 
