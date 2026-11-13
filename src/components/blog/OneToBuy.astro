@@ -3,8 +3,9 @@
  * <OneToBuy picks={[…]} checked="19 October 2026" />
  *
  * The first-screen answer in a buying guide: one to three picks, each with
- * why, the Amazon rating, the US price when Amazon shows one, and a single
- * button. Clicks inside the box are counted separately from the rest of the
+ * why, the Amazon rating and a single button. No prices: Amazon's Associates
+ * policy allows only prices Amazon serves or that come live from its API.
+ * Clicks inside the box are counted separately from the rest of the
  * page (data-out="box" → host "box.amazon.com" in retailer_clicks), so we
  * can see whether the box earns its place.
  */
@@ -25,12 +26,12 @@ const { picks, checked, title = "The one to buy" } = Astro.props;
             <p class="otb__why">{p.why}</p>
           </div>
         </div>
-        <p class="otb__meta"><span>{p.rating}</span>{p.price && <b>{p.price}</b>}</p>
+        <p class="otb__meta"><span>{p.rating}</span></p>
         <a class="otb__btn" href={p.url} rel="sponsored nofollow noopener" target="_blank">See it on Amazon <span aria-hidden="true">→</span></a>
       </div>
     ))}
   </div>
-  <p class="otb__fine">Amazon.com ratings and US prices checked {checked}. Affiliate links: we earn a small commission at no cost to you.</p>
+  <p class="otb__fine">Amazon.com ratings checked {checked}. See today's price on Amazon. Affiliate links: we earn a small commission at no cost to you.</p>
 </aside>
 
 <style>

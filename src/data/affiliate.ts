@@ -128,7 +128,7 @@ export const PICKS: Record<string, Pick[]> = {
     {
       label: "XIKAR ELX double-jet with 9mm punch",
       asin: "B01MRLC3R2",
-      note: "4.4 from Amazon buyers, which is about as good as this category gets. The reason to pay $85 for a lighter that does the same job as a $20 one is Xikar's warranty department — they repair rather than replace, and they have been doing it for thirty years. Buy this instead of ours if you want a lighter you will still own in ten years.",
+      note: "4.4 from Amazon buyers, which is about as good as this category gets. The reason to pay more for a lighter that does the same job as a cheap one is Xikar's warranty department — they repair rather than replace, and they have been doing it for thirty years. Buy this instead of ours if you want a lighter you will still own in ten years.",
     },
   ],
   "best-cigar-cutters-2026": [

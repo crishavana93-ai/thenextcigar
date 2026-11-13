@@ -24,7 +24,7 @@ const money = (p: Product) => {
 {items.length > 0 && (
   <section class="pg" data-out="gallery" aria-label={title}>
     <div class="rulehead flat"><h2>{title}</h2></div>
-    <p class="pg__note">Photos and US prices from Amazon.com at the time of writing. Affiliate links: we earn a small commission at no cost to you.</p>
+    <p class="pg__note">Photos from Amazon.com. See today's price on Amazon. Affiliate links: we earn a small commission at no cost to you.</p>
     <ul class="pg__grid">
       {items.map((p) => (
         <li class="pg__card">
@@ -37,7 +37,6 @@ const money = (p: Product) => {
           {p.description && <p class="pg__desc">{p.description}</p>}
           <p class="pg__meta">
             {p.rating && <span>{p.rating.toFixed(1)}{p.reviewCount ? ` · ${p.reviewCount.toLocaleString("en-US")} ratings` : ""}</span>}
-            {money(p) && <b>{money(p)}</b>}
           </p>
           <a class="pg__btn" href={p.url} rel="sponsored nofollow noopener" target="_blank">See it on Amazon <span aria-hidden="true">→</span></a>
         </li>
