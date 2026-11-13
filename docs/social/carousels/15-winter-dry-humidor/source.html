@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(../../../../public/fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(../../../../public/fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(../../../../public/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#000}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:#151412;font-family:'Newsreader',serif;color:#F2F0EA}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");pointer-events:none;z-index:5}
+.band{position:absolute;left:0;right:0;bottom:0;height:480px;box-sizing:border-box;background:#0B0A09;padding:40px 72px 0;z-index:4}
+.band h2,.band p,.band .tag{position:relative}
+.slide.over .band{background:transparent}
+.slide.over .band:before{content:"";position:absolute;left:0;right:0;top:-40px;bottom:0;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 25%)}
+.slide.over .band .tag{position:absolute;top:-250px;left:72px;z-index:2}
+.slide.over .band h2{margin-top:-190px}
+.tag{display:inline-block;font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.24em;text-transform:uppercase;color:#F2F0EA;background:#7B2622;padding:8px 16px;margin-bottom:26px}
+.band h2{margin:0;font-size:92px;line-height:.95;letter-spacing:-.035em;font-weight:500;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.band h2 i{font-style:italic;font-weight:300;color:#C9A36A}
+.band p{margin:24px 0 0;font-size:30px;line-height:1.3;color:#C7C2B6;font-weight:300}
+.meta{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;white-space:nowrap;font-family:'IBM Plex Sans';font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:#6A665E;z-index:6}
+.meta b{color:#9A958A;font-weight:500}
+.photo{position:absolute;left:0;top:0;width:1080px;height:1000px;overflow:hidden;background:#000}
+.photo img{width:100%;height:100%;object-fit:cover;filter:saturate(.9) contrast(1.05)}
+.photo:after{content:"";position:absolute;left:0;right:0;bottom:0;height:460px;background:linear-gradient(180deg,rgba(11,10,9,0),#0B0A09 85%)}
+.bgp{position:absolute;left:0;top:0;width:1080px;height:900px;background-size:cover;background-position:center;opacity:.3;filter:saturate(.75)}
+.bgp:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,20,18,.35),rgba(21,20,18,.55) 45%,#151412 92%)}
+.top{position:absolute;left:72px;right:72px;top:80px;z-index:3}
+.k{font-family:'IBM Plex Sans';font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:#9A958A;margin-bottom:28px}
+.k b{color:#F2F0EA;font-weight:500}
+.big{font-size:150px;line-height:.92;letter-spacing:-.045em;font-weight:500;color:#F2F0EA;margin-top:10px}
+.big i{font-style:italic;font-weight:300;color:#C9A36A}
+.big small{display:block;font-size:32px;letter-spacing:0;font-weight:300;color:#D2CDC2;margin-top:26px;line-height:1.3}
+table{border-collapse:collapse;width:100%}
+td{padding:14px 0;border-bottom:1px solid #3A3733;font-size:32px;font-weight:300;color:#D2CDC2;vertical-align:top;line-height:1.28}
+td.n{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:#C9A36A;width:96px;padding-top:22px}
+.cov .photo{height:1350px}.cov .photo:after{height:820px;background:linear-gradient(180deg,rgba(11,10,9,0),rgba(11,10,9,.85) 45%,#0B0A09 80%)}.cov .band{background:transparent}.cov .band:before{display:none}.cov .band .tag{position:relative;top:auto;left:auto}.cov .band h2{margin-top:0;font-size:104px}
+</style></head><body>
+
+<div class="slide over cov">
+ <div class="photo"><img src="img/frost.jpg" style="object-position:center 40%"></div>
+ <div class="grain"></div>
+ <div class="band"><span class="tag">Fix it · save this</span><h2>Humidor dropping <i>since the heating came on?</i></h2><p>It's probably not broken. Heated Swedish homes often get very dry in winter. Why it happens, and the fixes →</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · photo: Jojoo64, CC BY-SA 4.0</span><span>1 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/malmo.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The problem</b> · winter air indoors</div>
+  <div class="big">&lt;20<i>%</i><small>Most readings in the driest group of homes were below 20% humidity. The study: 678 Swedish homes, heating season 2007–08. About 37% fell in the two driest groups.</small></div></div>
+ <div class="band"><span class="tag">The cause</span><h2>Dry room, <i>thirsty box.</i></h2><p>A wooden humidor isn't sealed tight, so it trades moisture with the room around it. When the room is dry, the box loses moisture.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: REHVA Journal 6/2021 · photo: Maria Eklind, CC BY-SA 2.0</span><span>2 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/humidor.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Where it leaks</b> · the box itself</div>
+  <div class="big">2–5 <i>points</i><small>How far below its humidity pack's level a porous wooden humidor can sit, in percentage points, says Boveda. Leaky seals drain it too, and Boveda calls glass tops "drafty".</small></div></div>
+ <div class="band"><span class="tag">Why</span><h2>Wood breathes, <i>seals wear.</i></h2><p>Nothing has to be broken. The box is simply losing moisture faster than the pack gives it back.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Boveda · photo: MajestyWoodworks, CC BY 4.0</span><span>3 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/bag.jpg);opacity:.5;filter:brightness(1.4) saturate(.75)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Step 1</b> · check the gauge first</div>
+  <div class="big">6 <i>months</i><small>Boveda's advice: recalibrate a hygrometer every six months. If yours reads low, test it before you change anything else.</small></div></div>
+ <div class="band"><span class="tag">Check first</span><h2>Is it the box, <i>or the gauge?</i></h2><p>The salt test: damp table salt sealed in a bag holds the air at 75%. Our post from 11 November shows it step by step.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: Boveda, NBS 1977 · photo: Corneille, CC BY-SA 3.0</span><span>4 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/valve.jpg);opacity:.14"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Step 2</b> · one step up for winter</div>
+  <table>
+   <tr><td class="n">69</td><td>Want 69%? Use a 72% pack.</td></tr>
+   <tr><td class="n">72</td><td>Want 72%? Use a 75% pack.</td></tr>
+   <tr><td class="n">75</td><td>Glass-top humidor? Go to 75%.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Fix it</span><h2>Raise the pack <i>one level.</i></h2><p>Boveda's own advice for a humidor that runs low: a pack one step higher than the humidity you want.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Boveda · photo: T.Voekler, CC BY-SA 3.0</span><span>5 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/humidor.jpg);background-position:center 30%"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>Steps 3 and 4</b> · if it still won't hold</div>
+  <table>
+   <tr><td class="n">03</td><td>Worn or leaky seal? Double the number of packs.</td></tr>
+   <tr><td class="n">04</td><td>Very dry room? Move to something airtight: a sealed humidor bag, a tupperdor (a sealed plastic box) or an acrylic humidor.</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Fix it</span><h2>More packs, <i>or a tighter box.</i></h2><p>Boveda's fixes for a leaky seal and for a dry climate.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · source: Boveda · photo: MajestyWoodworks, CC BY 4.0</span><span>6 / 7</span></div>
+</div>
+
+<div class="slide">
+ <div class="bgp" style="background-image:url(img/frost2.jpg)"></div>
+ <div class="grain"></div>
+ <div class="top"><div class="k"><b>The winter checklist</b> · save this</div>
+  <table>
+   <tr><td class="n">✓</td><td>Test the hygrometer with salt</td></tr>
+   <tr><td class="n">✓</td><td>Pack one step higher</td></tr>
+   <tr><td class="n">✓</td><td>Double the packs if the seal is worn</td></tr>
+   <tr><td class="n">✓</td><td>Airtight box if the room stays very dry</td></tr>
+   <tr><td class="n">✓</td><td>Recalibrate every six months</td></tr>
+  </table></div>
+ <div class="band"><span class="tag">Save it</span><h2>Check it now, <i>not in February.</i></h2><p>More on humidity and the salt test at thenextcigar.com, link in bio. We don't sell tobacco.</p></div>
+ <div class="meta"><span><b>The Next Cigar</b> · sources: Boveda, REHVA · photo: ITookSomePhotos, CC BY-SA 4.0</span><span>7 / 7</span></div>
+</div>
+</body></html>
