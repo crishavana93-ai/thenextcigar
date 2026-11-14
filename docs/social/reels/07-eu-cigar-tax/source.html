@@ -1,0 +1,134 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:transparent}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:'Newsreader',serif;color:#F2F0EA}
+.scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,17,16,.72) 0,rgba(18,17,16,.3) 22%,rgba(18,17,16,.35) 36%,rgba(18,17,16,.82) 46%,rgba(18,17,16,.9) 70%,rgba(18,17,16,.96) 100%)}
+.prog{position:absolute;left:72px;right:72px;top:110px;height:4px;background:rgba(242,240,234,.2)}
+.prog b{position:absolute;left:0;top:0;bottom:0;background:#C9A36A}
+.brand{position:absolute;left:72px;top:136px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.24em;text-transform:uppercase;color:#C7C2B6}
+.brand b{color:#F2F0EA;font-weight:500}
+.sc{position:absolute;left:72px;right:72px;top:0;bottom:0;opacity:0}
+.k{position:absolute;top:900px;text-shadow:0 2px 14px rgba(0,0,0,.8);font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.22em;text-transform:uppercase;color:#C9A36A}
+.bot{position:absolute;left:0;right:0;top:950px}
+.h{font-size:86px;line-height:.98;letter-spacing:-.03em;font-weight:500;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+.h i{font-style:italic;font-weight:300;color:#C9A36A}
+.huge{font-size:250px;line-height:.86;letter-spacing:-.05em;font-weight:500;text-shadow:0 4px 40px rgba(0,0,0,.55)}
+.huge.ox{color:#E0635C}
+.p{margin-top:26px;font-size:38px;line-height:1.28;font-weight:300;color:#E4E0D6;text-shadow:0 2px 18px rgba(0,0,0,.7)}
+.src{position:absolute;left:0;right:0;top:1500px;font-family:'IBM Plex Sans';font-size:19px;letter-spacing:.14em;text-transform:uppercase;color:#9A958A;line-height:1.5}
+.bars{margin-top:30px;margin-right:110px}
+.row{margin:0 0 26px}
+.row .lab{display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:#C7C2B6;margin-bottom:10px}
+.row .lab b{font-family:'Newsreader';font-size:54px;letter-spacing:-.02em;text-transform:none;color:#F2F0EA;font-weight:500}
+.bar{height:34px;background:rgba(242,240,234,.14)}
+.bar i{display:block;height:100%;background:#F2F0EA}
+.bar i.g{background:#C9A36A}.bar i.ox{background:#E0635C}
+.list div{font-size:46px;line-height:1.15;font-weight:400;padding:18px 0;border-bottom:1px solid rgba(242,240,234,.22);text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.list div span{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.14em;color:#C9A36A;margin-right:22px;vertical-align:middle}
+.end{position:absolute;left:0;right:0;top:0;bottom:0;background:#121110;opacity:0}
+.end .in{position:absolute;left:72px;right:72px;top:640px}
+.tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:34px;margin-right:40px}
+.tiles div{font-family:'IBM Plex Sans';font-size:26px;letter-spacing:.08em;text-align:center;padding:18px 0;background:rgba(242,240,234,.1);color:#C7C2B6;border:1px solid rgba(242,240,234,.18)}
+.tiles div.on{background:#C9A36A;color:#151412;border-color:#C9A36A}
+.tiles div.mt{background:#E0635C;color:#151412;border-color:#E0635C}
+.note{margin-top:22px;font-family:'IBM Plex Sans';font-size:21px;letter-spacing:.06em;color:#9A958A;line-height:1.45}
+.cal{display:inline-block;margin-top:24px;border:2px solid #C9A36A;padding:22px 40px;text-align:center}
+.cal .m{font-family:'IBM Plex Sans';font-size:28px;letter-spacing:.3em;color:#C9A36A}
+.cal .d{font-size:220px;line-height:.9;font-weight:500}
+.phase{display:flex;gap:14px;margin-top:6px;margin-right:110px}
+.phase div{flex:1;border-top:3px solid #C9A36A;padding-top:12px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.08em;color:#C7C2B6;text-transform:uppercase}
+.phase div b{display:block;font-family:'Newsreader';font-size:52px;letter-spacing:-.02em;text-transform:none;color:#F2F0EA;font-weight:500;margin-top:4px}
+</style></head><body><div id="stage">
+<div class="scrim"></div>
+<div class="prog"><b id="pb"></b></div>
+<div class="brand"><b>The Next Cigar</b> · News</div>
+
+<div class="sc" id="s1"><div class="k">EU tax law · cigars</div><div class="bot">
+ <div class="huge" id="n1">×12</div>
+ <div class="h" style="margin-top:20px">The Commission proposed raising the minimum <i>tax on cigars almost twelve times.</i></div></div>
+ <div class="src">Source: European Commission proposal COM(2025) 580 · video: © European Union, CC BY 4.0</div></div>
+
+<div class="sc" id="s2"><div class="k">The EU minimum today</div><div class="bot">
+ <div class="huge" id="n2">€12</div>
+ <div class="h" style="margin-top:14px">per 1,000 cigars, <i>or 5% of the price.</i></div>
+ <div class="p">The lowest excise duty any EU country may charge.</div></div>
+ <div class="src">Source: EU Directive 2011/64, Article 14 · video: © European Union, CC BY 4.0</div></div>
+
+<div class="sc" id="s3"><div class="k">The Commission's proposal · 16 July 2025</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>Today</span><b>€12</b></div><div class="bar"><i id="b3a" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>Proposed</span><b id="n3">€12</b></div><div class="bar"><i class="g" id="b3b" style="width:0"></i></div></div>
+ </div>
+ <div class="p">Minimum per 1,000 cigars, or 40% of the price. The same for cigarillos.</div></div>
+ <div class="src">Source: European Commission proposal, via the Swedish government's fact memo · video: © European Union, CC BY 4.0</div></div>
+
+<div class="sc" id="s4"><div class="k">The compromise · 6 Nov 2026</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>Commission</span><b>€143</b></div><div class="bar"><i class="g" style="width:100%"></i></div></div>
+  <div class="row"><div class="lab"><span>Compromise</span><b id="n4">€143</b></div><div class="bar"><i class="ox" id="b4" style="width:100%"></i></div></div>
+ </div>
+ <div class="p" style="margin-bottom:26px">per 1,000 cigars, or 30% of the price. Phased in:</div>
+ <div class="phase" id="ph"><div>2028–29<b>€12</b></div><div>2030–31<b>€50</b></div><div>From 2032<b>€80</b></div></div></div>
+ <div class="src">Source: Council of the EU, presidency compromise text ST 15388/26, 6 Nov 2026 · video: © European Union, CC BY 4.0</div></div>
+
+<div class="sc" id="s5"><div class="k" style="top:700px">Brussels · 9 November 2026</div><div class="bot" style="top:750px">
+ <div class="h">26 of 27 countries <i>backed the compromise.</i></div>
+ <div class="tiles" id="tiles"></div>
+ <div class="note">EU finance ministers (Ecofin). Tax rules need all 27.</div></div>
+ <div class="src">Sources: Brussels Signal, Tobacco Reporter, 10–13 Nov 2026 · video: © European Union, CC BY 4.0</div></div>
+
+<div class="sc" id="s6"><div class="k">One country said no</div><div class="bot">
+ <div class="huge ox" style="font-size:210px">Malta</div>
+ <div class="h" style="margin-top:14px">Tax changes need <i>every country.</i></div>
+ <div class="p">So the reform stalled.</div></div>
+ <div class="src">Sources: Brussels Signal, Tobacco Reporter · video: Frank Vincentz / Wikimedia Commons, CC BY-SA 3.0</div></div>
+
+<div class="sc" id="s7"><div class="k">Next attempt</div><div class="bot">
+ <div class="cal"><div class="m">DECEMBER</div><div class="d">11</div></div>
+ <div class="p">EU finance ministers are scheduled to try again.</div></div>
+ <div class="src">Source: Brussels Signal, 13 Nov 2026 · photo: TerryDOtt / Wikimedia Commons, CC BY 4.0</div></div>
+
+<div class="sc" id="s8"><div class="k">And in Sweden?</div><div class="bot">
+ <div class="huge" style="font-size:200px">1.83 <i style="font-size:90px">kr</i></div>
+ <div class="h" style="margin-top:14px">tax per cigar in 2026, <i>already above both figures.</i></div>
+ <div class="p">The Commission's €143 would be about 1.70 kr, as the government converted it in 2025.</div></div>
+ <div class="src">Sources: Skatteverket; Regeringskansliet fact memo on COM(2025) 580 · video: © European Union, CC BY 4.0</div></div>
+
+<div class="end" id="end"><div class="in">
+ <div class="k" style="position:static;margin-bottom:30px">The Next Cigar</div>
+ <div class="h" style="font-size:96px">Full story, <i>every source.</i></div>
+ <div class="p" style="font-size:44px">Link in bio.</div>
+ <div class="p" style="font-size:30px;color:#9A958A;margin-top:60px">News, not advice. We don't sell tobacco.</div>
+</div></div>
+</div>
+<script>
+const S=[[0,6.1],[6.1,11.55],[11.55,16.8],[16.8,24.45],[24.45,31.55],[31.55,35.75],[35.75,38.95],[38.95,47.0]];
+const TOTAL=47.0, END=42.6;
+const ease=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const C=['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','EL','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+const T=document.getElementById('tiles'); C.forEach(c=>{const d=document.createElement('div');d.textContent=c;T.appendChild(d)});
+const tiles=[...T.children];
+const ph=[...document.getElementById('ph').children];
+function render(t){
+  document.getElementById('pb').style.width=(100*t/TOTAL)+'%';
+  S.forEach(([a,b],i)=>{
+    const el=document.getElementById('s'+(i+1));
+    const fin=i===0?1:ease((t-a)/.45), fout=i===S.length-1?1:1-ease((t-(b-.25))/.25);
+    el.style.opacity=Math.max(0,Math.min(fin,fout)); el.style.transform=`translateY(${(1-fin)*40}px)`;
+  });
+  document.getElementById('n1').textContent='×'+Math.max(1,Math.round(12*ease((t-0.3)/2.2)));
+  const p3=ease((t-14.0)/1.6);
+  document.getElementById('b3a').style.width=(100*12/143*ease((t-11.9)/0.8))+'%';
+  document.getElementById('b3b').style.width=(100*(12+131*p3)/143)+'%';
+  document.getElementById('n3').textContent='€'+Math.round(12+131*p3);
+  const p4=ease((t-18.6)/1.4);
+  document.getElementById('b4').style.width=(100*(143-63*p4)/143)+'%';
+  document.getElementById('n4').textContent='€'+Math.round(143-63*p4);
+  ph.forEach((d,k)=>{d.style.opacity=ease((t-(21.0+k*0.5))/.4)});
+  tiles.forEach((d,k)=>{d.className=(C[k]==='MT')?(t>29.25?'mt':''):(t>26.6+k*0.05?'on':'');});
+  document.getElementById('end').style.opacity=ease((t-END)/.5);
+}
+render(0);
+</script></body></html>
