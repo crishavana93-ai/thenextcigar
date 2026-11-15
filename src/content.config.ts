@@ -80,7 +80,7 @@ const blog = defineCollection({
         .object({
           title: z.string().optional(),
           checked: z.string(),
-          picks: z.array(z.object({ label: z.string(), name: z.string(), url: z.string(), why: z.string(), rating: z.string(), price: z.string().optional(), image: z.string().optional() })).max(3),
+          picks: z.array(z.object({ label: z.string(), name: z.string(), url: z.string(), why: z.string(), rating: z.string().optional(), price: z.string().optional(), image: z.string().optional() })).max(3),
         })
         .optional(),
       seo: z

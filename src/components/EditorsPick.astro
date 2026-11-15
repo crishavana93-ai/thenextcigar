@@ -55,7 +55,7 @@ const {
 } = Astro.props as Props;
 
 // Render the star row. Half-stars rounded to nearest 0.5.
-const r = rating ? Math.max(0, Math.min(5, rating)) : null;
+const r = null; // Amazon star ratings may only be shown via the API (Associates policy (t))
 const full = r ? Math.floor(r) : 0;
 const half = r ? r - full >= 0.5 : false;
 const stars = r
