@@ -21,7 +21,7 @@ const { picks, checked, title = "The one to buy" } = Astro.props;
       <div class="otb__pick">
         <span class="otb__label">{p.label}</span>
         <div class="otb__row">
-          {p.image && <img src={p.image} alt="" width="72" height="72" loading="eager" />}
+          {p.image && !/media-amazon\.com|images-amazon\.com/.test(p.image) && <img src={p.image} alt="" width="72" height="72" loading="eager" />}
           <div>
             <a class="otb__name" href={p.url} rel="sponsored nofollow noopener" target="_blank">{p.name}</a>
             <p class="otb__why">{p.why}</p>

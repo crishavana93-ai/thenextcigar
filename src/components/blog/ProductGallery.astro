@@ -15,6 +15,10 @@ interface Product { name: string; image: string; url: string; priceLow?: number;
 interface Props { products?: Product[]; title?: string }
 const { products = [], title = "Every product in this guide" } = Astro.props;
 const NO_PHOTO = new Set<string>([]);
+// Amazon product images may only be shown via the Creators/PA API as a link
+// refreshed within 24 h (Associates Program Policies, Product Advertising
+// Content (h)). Until we have API access, Amazon-hosted images are not shown.
+const AMZ = /media-amazon\.com|images-amazon\.com|ssl-images-amazon/;
 const items = products.filter((p) => /amazon\./.test(p.url));
 const money = (p: Product) => {
   const v = p.priceLow ?? (typeof p.price === "number" ? p.price : undefined);
@@ -24,15 +28,15 @@ const money = (p: Product) => {
 {items.length > 0 && (
   <section class="pg" data-out="gallery" aria-label={title}>
     <div class="rulehead flat"><h2>{title}</h2></div>
-    <p class="pg__note">Photos from Amazon.com. See today's price on Amazon. Affiliate links: we earn a small commission at no cost to you.</p>
+    <p class="pg__note">See photos, reviews and today's price on Amazon. Affiliate links: we earn a small commission at no cost to you.</p>
     <ul class="pg__grid">
       {items.map((p) => (
         <li class="pg__card">
-          <a class="pg__img" href={p.url} rel="sponsored nofollow noopener" target="_blank" aria-label={p.name}>
-            {p.sku && NO_PHOTO.has(p.sku)
-              ? <span class="pg__nophoto">Photo on Amazon</span>
-              : <img src={p.image} alt={p.name} width="400" height="400" loading="lazy" decoding="async" />}
-          </a>
+          {!AMZ.test(p.image) && !(p.sku && NO_PHOTO.has(p.sku)) && (
+            <a class="pg__img" href={p.url} rel="sponsored nofollow noopener" target="_blank" aria-label={p.name}>
+              <img src={p.image} alt={p.name} width="400" height="400" loading="lazy" decoding="async" />
+            </a>
+          )}
           <a class="pg__name" href={p.url} rel="sponsored nofollow noopener" target="_blank">{p.name}</a>
           {p.description && <p class="pg__desc">{p.description}</p>}
           <p class="pg__meta">
