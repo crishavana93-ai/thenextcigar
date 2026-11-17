@@ -1,6 +1,6 @@
 # Reel 09 · Germany will more than double its cigar tax (motion graphics, 4:5)
 
-31 s, 1080×1350 (fits Instagram feed and Facebook). Cover: reel-09-cover-1080x1350.jpg.
+31 s, 1080×1350 (fits Instagram feed and Facebook). Cover: reel-09-cover-1080x1920.jpg (upload as the Reel cover; reel-09-cover-1080x1350-safe.jpg if a 4:5 is needed). Do not use the old reel-09-cover-1080x1350.jpg.
 **Bio link:** Home page. **Story link sticker:** https://thenextcigar.com/blog/germany-cigar-tax-2027/?utm_source=instagram&utm_medium=story&utm_campaign=reel09 (news page: no "Reklam" needed)
 **Switch on Instagram's "AI info" label. The voice is AI (Google Gemini TTS, voice Koda).** The graphics are original; the map is from Natural Earth (public domain) via world-atlas.
 
