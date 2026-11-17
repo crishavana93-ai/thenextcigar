@@ -1,0 +1,143 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:#F2EEE5}
+#st{position:relative;width:1080px;height:1350px;overflow:hidden;background:#F2EEE5;font-family:'Newsreader',serif;color:#151412}
+.grid{position:absolute;inset:-60px;background-image:linear-gradient(#e2dccf 1px,transparent 1px),linear-gradient(90deg,#e2dccf 1px,transparent 1px);background-size:60px 60px;opacity:.55}
+.top{position:absolute;left:64px;right:64px;top:48px;display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.22em;text-transform:uppercase;color:#6A665E;z-index:9}
+.top b{color:#151412;font-weight:500}
+.prog{position:absolute;left:64px;right:64px;top:94px;height:5px;background:#dcd5c6;z-index:9}.prog i{position:absolute;left:0;top:0;bottom:0;background:#9E2B25}
+.src{position:absolute;left:64px;right:64px;bottom:40px;font-family:'IBM Plex Sans';font-size:21px;letter-spacing:.12em;text-transform:uppercase;color:#7a7568;z-index:9}
+.sc{position:absolute;inset:0;opacity:0}
+.tag{position:absolute;left:64px;top:150px;font-family:'IBM Plex Sans';font-size:28px;letter-spacing:.22em;text-transform:uppercase;color:#F2EEE5;background:#9E2B25;padding:12px 22px}
+.hl{position:absolute;left:64px;right:64px;font-size:104px;line-height:.98;letter-spacing:-.035em;font-weight:600}
+.hl i{font-style:italic;font-weight:400;color:#9E2B25}
+.w{display:inline-block;opacity:0;transform:translateY(40px)}
+.big{position:absolute;left:58px;font-weight:600;letter-spacing:-.05em;line-height:.85}
+.cap{position:absolute;left:64px;right:64px;font-size:44px;line-height:1.2;color:#3d3a34;font-weight:400}
+.lab{font-family:'IBM Plex Sans';font-size:28px;letter-spacing:.16em;text-transform:uppercase;color:#6A665E}
+.bar{position:absolute;left:64px;height:70px;background:#e2dccf;width:952px}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:#151412}
+.bar i.r{background:#9E2B25}
+.col{position:absolute;bottom:330px;width:150px;background:#151412;transform-origin:bottom}
+.col.r{background:#9E2B25}
+.clab{position:absolute;bottom:270px;width:150px;text-align:center;font-family:'IBM Plex Sans';font-size:28px;letter-spacing:.08em;color:#6A665E}
+.cval{position:absolute;width:150px;text-align:center;font-size:56px;font-weight:600}
+.circ{position:absolute;border-radius:50%}
+.dot{position:absolute;width:62px;height:62px;border-radius:50%;background:#151412}
+#end{position:absolute;inset:0;background:#9E2B25;color:#F2EEE5;opacity:0;z-index:20}
+#wipe{position:absolute;top:0;bottom:0;width:1300px;left:-1400px;background:#9E2B25;z-index:15}
+
+.card{position:absolute;top:360px;width:440px;height:440px;border:4px solid #151412;background:#FBF8F1}
+.card .lab{position:absolute;left:30px;top:28px}
+.card .x{position:absolute;left:0;right:0;top:90px;text-align:center;font-family:'IBM Plex Sans';font-weight:500;font-size:300px;line-height:1;color:#9E2B25}
+.row{position:absolute;left:64px;right:64px;display:flex;align-items:center;gap:34px;font-size:64px;font-weight:500;letter-spacing:-.02em;border-top:3px solid #151412;padding-top:26px}
+.row b{font-family:'IBM Plex Sans';font-weight:500;width:90px;text-align:center;font-size:70px}
+.row b.ok{color:#2E6B3A}.row b.no{color:#9E2B25}
+.arc{position:absolute;left:0;top:0}
+</style></head><body><div id="st">
+<div class="grid" id="grid"></div>
+<div class="top"><span><b>The Next Cigar</b> · Travel</span><span>Before you fly</span></div>
+<div class="prog"><i id="pb"></i></div>
+
+<div class="sc" id="s1">
+ <svg class="arc" width="1080" height="1350"><path id="fl" d="M90 760 C 330 300, 760 280, 1000 560" fill="none" stroke="#9E2B25" stroke-width="8" stroke-dasharray="22 18"/><circle id="pl" r="20" fill="#151412"/></svg>
+ <div class="tag">Holiday travel</div>
+ <div class="hl" id="h1" style="top:820px;font-size:118px"></div>
+</div>
+
+<div class="sc" id="s2">
+ <div class="tag">To, from or within the US · torch lighters</div>
+ <div class="card" style="left:64px"><div class="lab">In the cabin</div><div class="x" id="x2a">✕</div></div>
+ <div class="card" style="left:576px"><div class="lab">Checked bag</div><div class="x" id="x2b">✕</div></div>
+ <div class="hl" id="h2" style="top:880px;font-size:110px">Banned <i>in both.</i></div>
+ <div class="cap" id="c2" style="top:1030px;font-size:38px;color:#6A665E">Torch lighters make a thin, needle-like jet flame, TSA says.</div>
+</div>
+
+<div class="sc" id="s3">
+ <div class="tag">Flying from Sweden</div>
+ <div class="big" id="n3" style="top:250px;font-size:400px">1</div>
+ <div class="cap" id="c3" style="top:280px;left:330px;font-size:50px">disposable lighter <span style="color:#6A665E">or</span> a small box of matches</div>
+ <div class="row" id="r3a" style="top:700px"><b class="ok">✓</b>On your body</div>
+ <div class="row" id="r3b" style="top:850px"><b class="no">✕</b>Hand luggage</div>
+ <div class="row" id="r3c" style="top:1000px"><b class="no">✕</b>Checked bag</div>
+</div>
+
+<div class="sc" id="s4">
+ <div class="tag">Lighter fuel and refills</div>
+ <div class="big" id="n4" style="top:280px;font-size:520px;color:#9E2B25">0</div>
+ <div class="hl" id="h4" style="top:820px;font-size:118px">Leave it <i>at home.</i></div>
+ <div class="cap" style="top:1000px;font-size:38px;color:#6A665E">Not on you, not in hand luggage, not in checked bags.</div>
+</div>
+
+<div class="sc" id="s5">
+ <div class="tag">Electric lighters · US rules</div>
+ <div class="row" id="r5a" style="top:330px"><b class="ok">✓</b>Cabin only</div>
+ <div class="row" id="r5b" style="top:500px"><b class="no">✕</b>Checked bag</div>
+ <div class="row" id="r5c" style="top:670px"><b class="no">✕</b>Charging on board</div>
+ <div class="cap" id="c5" style="top:880px;font-size:44px">Plasma, arc and coil lighters run on lithium batteries. Protect the switch so it can't turn on by accident.</div>
+</div>
+
+<div class="sc" id="s6">
+ <div class="tag">Cigar cutters · TSA</div>
+ <div class="hl" id="h6a" style="top:330px;font-size:118px">Generally <i>allowed.</i></div>
+ <div class="hl" id="h6b" style="top:640px;font-size:118px">TSA suggests a <i>checked bag.</i></div>
+ <div class="cap" id="c6" style="top:1000px;font-size:38px;color:#6A665E">In the EU, the cabin ban list names knives and scissors with blades over 6 cm.</div>
+</div>
+
+<div class="sc" id="s7">
+ <div class="tag">Last check</div>
+ <div class="hl" id="h7a" style="top:380px;font-size:130px">Check your <i>airline.</i></div>
+ <div class="hl" id="h7b" style="top:720px;font-size:96px;color:#6A665E">Its rules can be stricter.</div>
+</div>
+
+<div id="wipe"></div>
+<div id="end">
+ <div class="lab" style="position:absolute;left:64px;top:380px;color:#F2EEE5">The Next Cigar</div>
+ <div class="hl" style="top:440px;color:#F2EEE5;font-size:120px">Save this <i style="color:#F2D7A6">before you pack.</i></div>
+ <div class="cap" style="top:760px;color:#F2EEE5;font-size:56px">More at thenextcigar.com · link in bio.</div>
+ <div class="cap" style="top:1100px;color:#F2D7A6;font-size:34px">Information, not advice. We don't sell tobacco.</div>
+</div>
+<div class="src" id="src"></div>
+</div>
+<script>
+const S=[[0,3.4],[3.4,8.9],[8.9,14.6],[14.6,18.7],[18.7,22.95],[22.95,27.25],[27.25,30.0]];
+const TOTAL=32.2, END=30.0;
+const SRC=['','Sources: FAA PackSafe; TSA','Source: Transportstyrelsen (Swedish Transport Agency)','Sources: Transportstyrelsen; IATA','Source: FAA PackSafe (49 CFR 175.10)','Sources: TSA; EU Regulation 2015/1998','Source: Transportstyrelsen'];
+const E=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const B=x=>{if(x<=0)return 0;if(x>=1)return 1;const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);
+const W1=[['Flying',0],['with',1.08],['a',1.36],['lighter?',1.42],['Check',2.16],['first.',2.66]];
+$('h1').innerHTML=W1.map(([w],i)=>`<span class="w" id="w${i}">${i>=4?'<i>'+w+'</i>':w}</span>`).join(' ');
+const fl=$('fl');const FL=fl.getTotalLength();
+function pop(id,t0,t,d=.35){const p=B((t-t0)/d);const e=$(id);e.style.opacity=Math.min(1,p*1.6);e.style.transform=`translateY(${(1-p)*40}px)`;}
+function stamp(id,t0,t){const p=B((t-t0)/.3);const e=$(id);e.style.opacity=Math.min(1,p*2);e.style.transform=`scale(${2.2-1.2*p}) rotate(${(1-p)*-20}deg)`;}
+function scen(t,i){const [a,b]=S[i];const fin=i==0?1:E((t-a)/.35),fout=1-E((t-(b-.2))/.2);return Math.max(0,Math.min(fin,fout));}
+function render(t){
+ $('pb').style.width=(100*Math.min(1,t/TOTAL))+'%';
+ $('grid').style.transform=`translate(${-(t*12)%60}px,${-(t*8)%60}px)`;
+ for(let i=0;i<S.length;i++){const o=scen(t,i);const el=$('s'+(i+1));el.style.opacity=t>=S[i][0]&&t<S[i][1]?o:0;el.style.transform=`translateY(${(1-E((t-S[i][0])/.35))*50}px)`;}
+ let si=S.findIndex(([a,b])=>t>=a&&t<b);$('src').textContent=si>=0?SRC[si]:'';
+ let wx=-1400;for(let i=1;i<S.length;i++){const d=t-S[i][0]+0.18;if(d>=0&&d<0.45)wx=-1400+(d/0.45)*(1080+2800);}{const d=t-END+0.18;if(d>=0&&d<0.45)wx=-1400+(d/0.45)*(1080+2800);}$('wipe').style.left=wx+'px';
+ // s1
+ const pf=E(t/2.4);fl.style.strokeDashoffset=0;fl.setAttribute('stroke-dasharray',`${FL*pf} ${FL}`);const pt=fl.getPointAtLength(FL*pf);$('pl').setAttribute('cx',pt.x);$('pl').setAttribute('cy',pt.y);
+ W1.forEach(([w,tt],i)=>pop('w'+i,tt-0.05,t,.3));
+ // s2
+ stamp('x2a',7.3,t);stamp('x2b',8.0,t);pop('h2',8.25,t);pop('c2',8.45,t);
+ // s3
+ {const p=B((t-10.1)/.4);$('n3').style.opacity=Math.min(1,p*2);$('n3').style.transform=`scale(${.4+.6*p})`;$('n3').style.transformOrigin='left center';}
+ pop('c3',10.35,t);pop('r3a',12.75,t);pop('r3b',13.4,t);pop('r3c',13.85,t);
+ // s4
+ {const p=B((t-14.8)/.45);$('n4').style.opacity=Math.min(1,p*2);$('n4').style.transform=`scale(${.3+.7*p}) rotate(${(1-p)*30}deg)`;$('n4').style.transformOrigin='left center';}
+ pop('h4',15.85,t);
+ // s5
+ pop('r5a',20.5,t);pop('r5b',20.95,t);pop('r5c',21.55,t);pop('c5',22.0,t);
+ // s6
+ pop('h6a',24.0,t);pop('h6b',25.45,t);pop('c6',26.3,t);
+ // s7
+ pop('h7a',27.4,t);pop('h7b',28.4,t);
+ $('end').style.opacity=E((t-END)/.3);
+}
+render(0);
+</script></body></html>
