@@ -15,7 +15,7 @@ The Bundestag passed the law on 15 October. For cigars and cigarillos, the new r
 • The share of the retail price goes from 1.47% to 3.83%.
 • The minimum per piece rises from 7.504 to 13.964 cents by 2030.
 
-Cigars escaped worse. According to the German cigar makers' association, a late coalition amendment would have raised the price-based part to 21.05%. The final law kept the government draft's 3.83%, but set higher minimums than the draft.
+Cigars escaped worse. According to the German cigar makers' association, an early draft of the coalition's amendment would have raised the price-based part to 21.05%. The amendment as passed kept the government draft's 3.83%, but set higher minimums than the draft.
 
 The association says 2.1 billion cigars and cigarillos were taxed in Germany in 2025, down from 6.5 billion in 2007.
 
@@ -34,7 +34,7 @@ Photos (edited): Christian David (CC BY-SA 4.0), Steffen Prößdorf (CC BY-SA 4.
 | Final minimums higher than the draft (draft: 7.28 / 8.00 / 8.81 / 9.69 ct) | Drucksache 21/7859, https://dserver.bundestag.de/btd/21/078/2107859.pdf |
 | Old rates until 31 Dec 2026, for cigars until 28 Feb 2027, despite the entry-into-force error | beck-aktuell, 21 Oct 2026 (Generalzolldirektion), https://www.beck-aktuell.de/heute-im-recht/rechtspolitik-gesetzgebung/tabaksteuergesetz-bundesfinanzministerium-inkrafttreten-patzer-2026-10-21 |
 | Published 20 Oct 2026, BGBl. 2026 I Nr. 309 | buzer.de (law of 19 Oct 2026, in effect from 21 Oct); nexvyra.de summary |
-| Coalition amendment: price-based share 1.47% to 21.05%; up to 20-fold | BdZ statement, 1 Oct 2026 |
+| Early draft of the coalition amendment (Formulierungshilfe): price-based share 1.47% to 21.05%; up to 20-fold. The amendment as adopted (Drucksache 21/8605) kept 3.83% and raised the minimum to 13.964 ct | BdZ statement, 1 Oct 2026 ("Die uns vorliegende Fassung der Formulierungshilfe"); Drucksache 21/8605 |
 | 2.1 billion taxed in 2025 vs 6.5 billion in 2007; ~1,600 employees; mostly medium-sized family firms | BdZ statement, 1 Oct 2026 |
 | "Double": 2.85 / 1.4 = 2.04; 13.964 / 7.504 = 1.86; 2.1 / 6.5 = 0.32 | arithmetic |
 
@@ -51,3 +51,5 @@ Photos (edited): Christian David (CC BY-SA 4.0), Steffen Prößdorf (CC BY-SA 4.
 
 ## Independent check
 Checked on 16 Nov 2026 by a separate agent that did not build the post. Every rate, date and BdZ figure was VERIFIED. Fixes applied: slide 4 dates, slide 5 (minimums above the draft, replacing the unsourced "bigger rises hit cigarettes"), slide 7 kicker ("save this" → "key dates", to avoid a stock-up cue), slide 6 wording on employees, caption wording, and the article (21.05% framing, entry-into-force note, committee paragraph). The checker could not find the €80 cigar figure in a November source; it is in the Council presidency compromise text ST 15388/26 of 6 Nov 2026, Art. 20(2)(a), verified 14 Nov.
+
+Corrected 16 Nov 2026 (Reel 08 check): "late amendment" is now "an early draft of the coalition's amendment", because the amendment itself passed and only the 21.05% from its draft wording is not in the law.

@@ -1,0 +1,152 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+html,body{margin:0;background:transparent}
+#stage{position:relative;width:1080px;height:1350px;overflow:hidden;font-family:'Newsreader',serif;color:#F2F0EA}
+.scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,17,16,.72) 0,rgba(18,17,16,.3) 22%,rgba(18,17,16,.35) 36%,rgba(18,17,16,.82) 46%,rgba(18,17,16,.9) 70%,rgba(18,17,16,.96) 100%)}
+.prog{position:absolute;left:72px;right:72px;top:110px;height:4px;background:rgba(242,240,234,.2)}
+.prog b{position:absolute;left:0;top:0;bottom:0;background:#C9A36A}
+.brand{position:absolute;left:72px;top:136px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.24em;text-transform:uppercase;color:#C7C2B6}
+.brand b{color:#F2F0EA;font-weight:500}
+.sc{position:absolute;left:72px;right:72px;top:0;bottom:0;opacity:0}
+.k{position:absolute;top:900px;text-shadow:0 2px 14px rgba(0,0,0,.8);font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.22em;text-transform:uppercase;color:#C9A36A}
+.bot{position:absolute;left:0;right:0;top:950px}
+.h{font-size:86px;line-height:.98;letter-spacing:-.03em;font-weight:500;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+.h i{font-style:italic;font-weight:300;color:#C9A36A}
+.huge{font-size:250px;line-height:.86;letter-spacing:-.05em;font-weight:500;text-shadow:0 4px 40px rgba(0,0,0,.55)}
+.huge.ox{color:#E0635C}
+.p{margin-top:26px;font-size:38px;line-height:1.28;font-weight:300;color:#E4E0D6;text-shadow:0 2px 18px rgba(0,0,0,.7)}
+.src{position:absolute;left:0;right:0;top:1500px;font-family:'IBM Plex Sans';font-size:19px;letter-spacing:.14em;text-transform:uppercase;color:#9A958A;line-height:1.5}
+.bars{margin-top:30px;margin-right:110px}
+.row{margin:0 0 26px}
+.row .lab{display:flex;justify-content:space-between;font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:#C7C2B6;margin-bottom:10px}
+.row .lab b{font-family:'Newsreader';font-size:54px;letter-spacing:-.02em;text-transform:none;color:#F2F0EA;font-weight:500}
+.bar{height:34px;background:rgba(242,240,234,.14)}
+.bar i{display:block;height:100%;background:#F2F0EA}
+.bar i.g{background:#C9A36A}.bar i.ox{background:#E0635C}
+.list div{font-size:46px;line-height:1.15;font-weight:400;padding:18px 0;border-bottom:1px solid rgba(242,240,234,.22);text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.list div span{font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.14em;color:#C9A36A;margin-right:22px;vertical-align:middle}
+.end{position:absolute;left:0;right:0;top:0;bottom:0;background:#121110;opacity:0}
+.end .in{position:absolute;left:72px;right:72px;top:640px}
+.tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-top:34px;margin-right:40px}
+.tiles div{font-family:'IBM Plex Sans';font-size:26px;letter-spacing:.08em;text-align:center;padding:18px 0;background:rgba(242,240,234,.1);color:#C7C2B6;border:1px solid rgba(242,240,234,.18)}
+.tiles div.on{background:#C9A36A;color:#151412;border-color:#C9A36A}
+.tiles div.mt{background:#E0635C;color:#151412;border-color:#E0635C}
+.note{margin-top:22px;font-family:'IBM Plex Sans';font-size:21px;letter-spacing:.06em;color:#9A958A;line-height:1.45}
+.cal{display:inline-block;margin-top:24px;border:2px solid #C9A36A;padding:22px 40px;text-align:center}
+.cal .m{font-family:'IBM Plex Sans';font-size:28px;letter-spacing:.3em;color:#C9A36A}
+.cal .d{font-size:220px;line-height:.9;font-weight:500}
+.phase{display:flex;gap:14px;margin-top:6px;margin-right:110px}
+.phase div{flex:1;border-top:3px solid #C9A36A;padding-top:12px;font-family:'IBM Plex Sans';font-size:22px;letter-spacing:.08em;color:#C7C2B6;text-transform:uppercase}
+.phase div b{display:block;font-family:'Newsreader';font-size:52px;letter-spacing:-.02em;text-transform:none;color:#F2F0EA;font-weight:500;margin-top:4px}
+.phase div{flex:1;border-top:3px solid #C9A36A;padding-top:12px;font-family:'IBM Plex Sans';font-size:24px;letter-spacing:.08em;color:#C7C2B6;text-transform:uppercase}
+.phase div b{display:block;font-family:'Newsreader';font-size:64px;letter-spacing:-.02em;text-transform:none;color:#F2F0EA;font-weight:500;margin-top:4px}
+.strike{position:relative;display:inline-block}
+.strike:after{content:"";position:absolute;left:-10px;top:48%;height:14px;width:var(--w,0%);background:#E0635C;transform:rotate(-8deg);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.k,.p,.note,.src{text-shadow:0 2px 14px rgba(0,0,0,.85)}
+.src{right:140px}
+.sc .p{margin-right:60px}
+
+/* 4:5 layout */
+.prog{top:56px}.brand{top:80px}
+.k{top:520px}.bot{top:568px}
+.src{top:1236px;font-size:17px}
+.huge{font-size:210px}
+.h{font-size:72px}
+.p{font-size:34px;margin-top:20px}
+.cal .d{font-size:180px}
+.row{margin:0 0 18px}.row .lab b{font-size:48px}.bar{height:28px}
+.phase div b{font-size:58px}
+.end .in{top:400px}
+.scrim{background:linear-gradient(180deg,rgba(18,17,16,.7) 0,rgba(18,17,16,.28) 18%,rgba(18,17,16,.4) 32%,rgba(18,17,16,.85) 44%,rgba(18,17,16,.93) 70%,rgba(18,17,16,.97) 100%)}
+</style></head><body><div id="stage">
+<div class="scrim"></div>
+<div class="prog"><b id="pb"></b></div>
+<div class="brand"><b>The Next Cigar</b> · News</div>
+
+<div class="sc" id="s1"><div class="k">Cigar news · Germany</div><div class="bot">
+ <div class="huge" id="n1">×1</div>
+ <div class="h" style="margin-top:20px">Germany will double <i>its tax on cigars.</i></div></div>
+ <div class="src">Source: Tabaksteuergesetz, BGBl. 2026 I Nr. 309 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s2"><div class="k">Today · per cigar or cigarillo</div><div class="bot">
+ <div class="huge">1.4<i style="font-size:120px;font-style:normal;color:#C9A36A"> cents</i></div>
+ <div class="h" style="margin-top:14px">+ 1.47% <i>of the price.</i></div>
+ <div class="p">Minimum: 7.504 cents a piece, less the VAT in the price.</div></div>
+ <div class="src">Source: Tabaksteuergesetz § 2 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s3"><div class="k">Berlin · the Bundestag</div><div class="bot">
+ <div class="cal"><div class="m">OCTOBER</div><div class="d">15</div></div>
+ <div class="p">The Bundestag passed the new tobacco tax law. Published 20 October 2026.</div></div>
+ <div class="src">Sources: Deutscher Bundestag; BGBl. 2026 I Nr. 309 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s4"><div class="k">From 1 March 2027 · per cigar</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>Fixed part</span><b id="n4a">1.4 cents</b></div><div class="bar"><i class="g" id="b4a" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>Share of the price</span><b id="n4b">1.47%</b></div><div class="bar"><i class="g" id="b4b" style="width:0"></i></div></div>
+ </div>
+ <div class="p">Up from 1.4 cents and 1.47% today.</div></div>
+ <div class="src">Source: Tabaksteuergesetz § 2 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s5"><div class="k">Then every January</div><div class="bot">
+ <div class="phase" id="ph"><div>2028<b>2.35¢</b></div><div>2029<b>2.59¢</b></div><div>2030<b>2.85¢</b></div></div>
+ <div class="h" style="margin-top:40px">2.85 cents in 2030. <i>Double today.</i></div></div>
+ <div class="src">Source: Tabaksteuergesetz § 2 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s6"><div class="k">The minimum per cigar</div><div class="bot">
+ <div class="huge" id="n6">7.50</div>
+ <div class="h" id="h6" style="margin-top:14px">cents from 2030, up from 7.50. <i>Nearly double.</i></div>
+ <div class="p">7.504 cents today, 13.964 from 2030, each less the VAT in the price.</div></div>
+ <div class="src">Source: Tabaksteuergesetz § 2 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s7"><div class="k" style="top:440px">What cigars avoided</div><div class="bot" style="top:515px">
+ <div class="huge ox"><span class="strike" id="st">21%</span></div>
+ <div class="h" style="margin-top:14px">A draft amendment's price share. <i>Not in the law.</i></div>
+ <div class="p">An early draft would have set 21.05%, the cigar makers' association says. The law kept 3.83%, but with higher minimums than the government draft.</div></div>
+ <div class="src">Sources: BdZ statement, 1 Oct 2026; Tabaksteuergesetz § 2 · video: Kauko Helavuo / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="sc" id="s8"><div class="k">The market · cigars and cigarillos taxed</div><div class="bot">
+ <div class="bars">
+  <div class="row"><div class="lab"><span>2007</span><b>6.5 billion</b></div><div class="bar"><i id="b8a" style="width:0"></i></div></div>
+  <div class="row"><div class="lab"><span>2025</span><b>2.1 billion</b></div><div class="bar"><i class="g" id="b8b" style="width:0"></i></div></div>
+ </div>
+ <div class="p">A third of the 2007 figure, according to the cigar makers' association.</div></div>
+ <div class="src">Source: BdZ statement, 1 Oct 2026 · photo (edited): Dguendel / Wikimedia Commons, CC BY 3.0</div></div>
+
+<div class="end" id="end"><div class="in">
+ <div class="k" style="position:static;margin-bottom:30px">The Next Cigar</div>
+ <div class="h" style="font-size:96px">Full story, <i>every source.</i></div>
+ <div class="p" style="font-size:44px">Link in bio.</div>
+ <div class="p" style="font-size:30px;color:#C7C2B6;margin-top:60px">News, not advice. We don't sell tobacco.</div>
+</div></div>
+</div>
+<script>
+const S=[[0,3.27],[3.27,10.97],[10.97,15.13],[15.13,23.6],[23.6,29.27],[29.27,36.67],[36.67,48.17],[48.17,59.6]];
+const TOTAL=59.6, END=55.55;
+const ease=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const ph=[...document.getElementById('ph').children];
+function render(t){
+  document.getElementById('pb').style.width=(100*t/TOTAL)+'%';
+  S.forEach(([a,b],i)=>{
+    const el=document.getElementById('s'+(i+1));
+    const fin=i===0?1:ease((t-a)/.45), fout=i===S.length-1?1:1-ease((t-(b-.25))/.25);
+    el.style.opacity=Math.max(0,Math.min(fin,fout)); el.style.transform=`translateY(${(1-fin)*40}px)`;
+  });
+  document.getElementById('n1').textContent='×'+(ease((t-0.4)/1.6)>0.5?2:1);
+  const p4a=ease((t-16.3)/1.4), p4b=ease((t-20.5)/1.4);
+  document.getElementById('b4a').style.width=(100*(1.4+0.74*p4a)/2.85)+'%';
+  document.getElementById('n4a').textContent=(1.4+0.74*p4a).toFixed(2).replace(/0$/,'')+' cents';
+  document.getElementById('b4b').style.width=(100*(1.47+2.36*p4b)/3.83)+'%';
+  document.getElementById('n4b').textContent=(1.47+2.36*p4b).toFixed(2)+'%';
+  ph.forEach((d,k)=>{d.style.opacity=ease((t-(24.4+k*0.9))/.4)});
+  const p6=ease((t-31.6)/2.0);
+  document.getElementById('n6').textContent=(7.504+6.46*p6).toFixed(2);
+  document.getElementById('h6').style.opacity=ease((t-33.5)/0.4);
+  document.getElementById('st').style.setProperty('--w',(110*ease((t-45.1)/0.6))+'%');
+  document.getElementById('b8a').style.width=(100*ease((t-48.7)/0.9))+'%';
+  document.getElementById('b8b').style.width=(100*2.1/6.5*ease((t-49.9)/0.9))+'%';
+  document.getElementById('end').style.opacity=ease((t-END)/.5);
+}
+render(0);
+</script></body></html>
