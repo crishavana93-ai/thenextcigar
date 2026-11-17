@@ -1,0 +1,29 @@
+name: Rebuild site (Amazon images)
+
+# Amazon product images may only be shown for 24 h after the API fetch
+# (Associates policy, Product Advertising Content (h)). The finder-scrape
+# workflow also triggers rebuilds, but only after its scrapes, so this job
+# guarantees a rebuild twice a day regardless. Uses the same CF_DEPLOY_HOOK
+# secret (Settings → Secrets and variables → Actions).
+
+on:
+  schedule:
+    - cron: "41 4,16 * * *"   # 05:41 and 17:41 Swedish winter time
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages rebuild
+        env:
+          CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CF_DEPLOY_HOOK:-}" ]; then
+            echo "::error::CF_DEPLOY_HOOK secret is not set"
+            exit 1
+          fi
+          code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$CF_DEPLOY_HOOK")
+          echo "Deploy hook → HTTP $code"
+          [ "$code" -lt 300 ]
