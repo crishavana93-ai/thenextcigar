@@ -12,6 +12,7 @@
  */
 interface Pick { label: string; name: string; url: string; why: string; rating?: string; price?: string; image?: string }
 interface Props { picks: Pick[]; checked: string; title?: string }
+import { amzImage, AMZ_EXPIRY_SCRIPT } from "../../lib/amazon-image";
 const { picks, checked, title = "The one to buy" } = Astro.props;
 ---
 <aside class="otb" data-out="box" aria-label={title}>
@@ -21,7 +22,12 @@ const { picks, checked, title = "The one to buy" } = Astro.props;
       <div class="otb__pick">
         <span class="otb__label">{p.label}</span>
         <div class="otb__row">
-          {p.image && !/media-amazon\.com|images-amazon\.com/.test(p.image) && <img src={p.image} alt="" width="72" height="72" loading="eager" />}
+          {(() => {
+            const api = amzImage(p.url);
+            if (api) return <a class="otb__img" href={p.url} rel="sponsored nofollow noopener" target="_blank" aria-hidden="true" tabindex="-1" data-amz-exp={api.exp}><img src={api.url} alt="" width="72" height="72" loading="eager" /></a>;
+            if (p.image && !/media-amazon\.com|images-amazon\.com/.test(p.image)) return <img src={p.image} alt="" width="72" height="72" loading="eager" />;
+            return null;
+          })()}
           <div>
             <a class="otb__name" href={p.url} rel="sponsored nofollow noopener" target="_blank">{p.name}</a>
             <p class="otb__why">{p.why}</p>
@@ -31,6 +37,7 @@ const { picks, checked, title = "The one to buy" } = Astro.props;
       </div>
     ))}
   </div>
+  <script is:inline set:html={AMZ_EXPIRY_SCRIPT}></script>
   <p class="otb__fine">Listings checked {checked}. See today's price and reviews on Amazon. Affiliate links: we earn a small commission at no cost to you.</p>
 </aside>
 
@@ -46,6 +53,7 @@ const { picks, checked, title = "The one to buy" } = Astro.props;
   .otb__pick{display:flex;flex-direction:column;gap:8px;min-width:0;border-top:1px solid var(--ink);padding-top:10px}
   .otb__label{font:600 10.5px/1.2 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
   .otb__row{display:flex;gap:12px;align-items:flex-start}
+  .otb__img{flex:none;display:block;line-height:0}
   .otb__row img{width:72px;height:72px;object-fit:contain;background:#fff;border:1px solid var(--rule-2);flex:none}
   .otb__name{font:600 19px/1.15 var(--serif);color:var(--ink);text-decoration:none}
   .otb__name:hover{text-decoration:underline}

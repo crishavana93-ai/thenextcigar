@@ -13,11 +13,13 @@
  */
 interface Product { name: string; image: string; url: string; priceLow?: number; price?: number | string; currency?: string; sku?: string; description?: string; rating?: number; reviewCount?: number }
 interface Props { products?: Product[]; title?: string }
+import { amzImage, AMZ_EXPIRY_SCRIPT } from "../../lib/amazon-image";
 const { products = [], title = "Every product in this guide" } = Astro.props;
 const NO_PHOTO = new Set<string>([]);
 // Amazon product images may only be shown via the Creators/PA API as a link
 // refreshed within 24 h (Associates Program Policies, Product Advertising
-// Content (h)). Until we have API access, Amazon-hosted images are not shown.
+// Content (h)). Amazon images now come only from the Creators API at build
+// time (scripts/amazon-images.mjs); frontmatter Amazon image URLs are never shown.
 const AMZ = /media-amazon\.com|images-amazon\.com|ssl-images-amazon/;
 const items = products.filter((p) => /amazon\./.test(p.url));
 const money = (p: Product) => {
@@ -32,11 +34,21 @@ const money = (p: Product) => {
     <ul class="pg__grid">
       {items.map((p) => (
         <li class="pg__card">
-          {!AMZ.test(p.image) && !(p.sku && NO_PHOTO.has(p.sku)) && (
-            <a class="pg__img" href={p.url} rel="sponsored nofollow noopener" target="_blank" aria-label={p.name}>
-              <img src={p.image} alt={p.name} width="400" height="400" loading="lazy" decoding="async" />
-            </a>
-          )}
+          {(() => {
+            if (p.sku && NO_PHOTO.has(p.sku)) return null;
+            const api = amzImage(p.url);
+            if (api) return (
+              <a class="pg__img" href={p.url} rel="sponsored nofollow noopener" target="_blank" aria-label={p.name} data-amz-exp={api.exp}>
+                <img src={api.url} alt={p.name} width={api.w || 400} height={api.h || 400} loading="lazy" decoding="async" />
+              </a>
+            );
+            if (!AMZ.test(p.image)) return (
+              <a class="pg__img" href={p.url} rel="sponsored nofollow noopener" target="_blank" aria-label={p.name}>
+                <img src={p.image} alt={p.name} width="400" height="400" loading="lazy" decoding="async" />
+              </a>
+            );
+            return null;
+          })()}
           <a class="pg__name" href={p.url} rel="sponsored nofollow noopener" target="_blank">{p.name}</a>
           {p.description && <p class="pg__desc">{p.description}</p>}
           <p class="pg__meta">
@@ -45,6 +57,7 @@ const money = (p: Product) => {
         </li>
       ))}
     </ul>
+    <script is:inline set:html={AMZ_EXPIRY_SCRIPT}></script>
   </section>
 )}
 
