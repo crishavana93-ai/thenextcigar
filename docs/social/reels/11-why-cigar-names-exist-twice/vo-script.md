@@ -1,0 +1,4 @@
+# Reel 11 voiceover (AI: Google Gemini 3.8 Flash TTS, voice Koda)
+Style: "Curious history storyteller for a viral short video. Brisk, warm and intriguing, with a little suspense on the questions."
+
+Why do some famous cigar names exist twice? One made in Cuba, and one made somewhere else. In 1960, Cuba's new government began taking over the cigar factories. Many owners left, and started again abroad. Then in 1962, the US embargo banned Cuban cigars. In the US, courts ruled that many exiled owners still owned their old brand names. So today, at least eight classic names come in two versions. What makes the Cuban one Cuban? A protected name: Habano. Tobacco grown in Cuba. Made totally by hand. And a warranty seal, first used in 1889. And the rest? Nicaragua, the Dominican Republic and Honduras make over ninety-nine percent of the handmade cigars the US imports. Follow for more cigar history.
