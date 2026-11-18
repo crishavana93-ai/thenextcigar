@@ -1,11 +1,16 @@
-# Reel 12 · Twin Names, part 1: why some cigar names exist twice — caption
+# Twin Names, part 1 (1960s poster style, v3): caption
 
-54 s, 1080×1920 (Reel). Cover: reel-12-cover-1080x1920.jpg. Replaces Reel 11 (don't post 11).
-**Bio link:** Home page. **Story link sticker:** https://thenextcigar.com/blog/cigar-names-that-exist-twice/?utm_source=instagram&utm_medium=story&utm_campaign=reel12 (history article, no shopping links, so no "Reklam").
-**Switch on Instagram's "AI info" label: the voice is AI (Google Gemini TTS, voice Koda).** Graphics original; map data Natural Earth (public domain).
+Two versions:
+- **twin-names-ep1-NO-BRANDS**: post this one.
+- **twin-names-ep1-WITH-BRANDS-HOLD**: don't post it until the lawyer or Konsumentverket says brand names in history reels are OK. It has a red HOLD band burned in, which comes out once it's cleared.
+
+52 s, 1080×1920. Cover: cover-no-brands.jpg. This replaces Reel 11 and the navy Reel 12; don't post either of those.
+**Bio link:** Home page. **Story link sticker:** https://thenextcigar.com/blog/cigar-names-that-exist-twice/?utm_source=instagram&utm_medium=story&utm_campaign=twin1
+**Switch on Instagram's AI label.** The voice is AI (Gemini TTS, Koda). The illustrations are AI too (Google Flow, Nano Banana 2.1), with no cigars, smoking or real faces. Map data is from Natural Earth (public domain).
+**On the day you post:** check whether the 4th Circuit has ruled in the Cohiba appeal (General Cigar v. Cubatabaco). If it has, the 1966 card needs updating.
 
 ## Compliance (KOVFS 2024:2)
-History only. No brand names in the reel or caption (they're in the website article), no cigars, packaging, prices, shops, taste or quality claims. People named are historical owners; the court case is named.
+The NO-BRANDS version is history only. The reel and caption name no brands (those are in the website article). There are no cigars, packaging, prices, shops, or taste or quality claims. The people named are historical owners, and the court case is named.
 
 ## Caption (paste)
 
@@ -13,31 +18,44 @@ Why do some famous cigar names exist twice? Part 1 of 5.
 
 In 1960, Cuba's new government seized the five leading cigar makers. Most of their owners fled.
 • Alonso Menéndez and Pepe García started again in the Canary Islands.
-• Fernando Palicio reached the US and sold his names to a Tampa company. By 1965 they were being made in Honduras.
-In 1972 a New York court ruled that the exiled owners of five Cuban firms still owned their US trademarks.
-• Later (from 1977), Ramón Cifuentes oversaw one of his old names being made again, in Jamaica. So today the same names come in two versions: one from Cuba, sold everywhere except the US, and one from the Dominican Republic, Honduras or Nicaragua, sold in the US.
+• Fernando Palicio reached the US and sold his names to a Tampa company. By 1965 the first of them was being made in Honduras.
+• In 1972 a New York court ruled that the owners of five Cuban firms, most of them in exile, had not lost their US trademarks.
+• From 1977, Ramón Cifuentes oversaw one of his old names being made again, in Jamaica.
 
-The twist: one name was created in Cuba in 1966. It was never seized from anyone. A US company registered it in the US anyway, in 1981. US courts have since ordered that registration cancelled; the company is appealing.
+So the same names came to exist in two versions. One is from Cuba, kept out of the US by the embargo. The other is from the Dominican Republic, Honduras or Nicaragua, and is the one found in the US (as of 2018).
+
+The twist: one name was created in Cuba in 1966 and was never seized from a private owner. A US company registered the same name in the US in 1981. A US trademark board ordered that registration cancelled in 2022, and a federal court upheld the decision in 2025. The company is appealing.
 
 Which 10 names? The list, owner by owner, is on our site. Link in bio.
 
 Next: the families who left. History, not advice. We don't sell tobacco.
 
-Sources: US Supreme Court, 425 U.S. 682 (1976); Menendez v. Faber, Coe & Gregg, 345 F.Supp. 527 (S.D.N.Y. 1972); Gregory Mottola, "What's in a Brand Name?", Cigar Aficionado (2018).
+Sources: US Supreme Court, 425 U.S. 682 (1976); Menendez v. Faber, Coe & Gregg, 345 F.Supp. 527 (S.D.N.Y. 1972); Gregory Mottola, "What's in a Brand Name?", Cigar Aficionado (2018); E.D. Va. ruling, 7 May 2025.
 
 #cigarhistory #history #didyouknow
 
 ## Fact check
 | Claim | Source |
 |---|---|
-| 1960: "the Cuban Government confiscated the business and assets of the five leading manufacturers of Havana cigars"; owners "most of whom had fled to the United States" | https://www.law.cornell.edu/supremecourt/text/425/682 |
-| Menéndez & García (Menendez, Garcia y Cia.) restarted in the Canary Islands | CA: "They started with Montecruz… made in the Canary Islands"; "They produced H. Upmanns in the Canary Islands" https://www.cigaraficionado.com/article/what-s-in-a-brand-name |
-| Palicio fled to the US, sold trademarks to Villazon & Co. (Tampa); Hoyos produced in Honduras by 1965; Punch production began in Tampa | CA same |
-| One name (Partagás) "first produced in Jamaica under the supervision of Cifuentes"; first non-Cuban Partagás in the US in 1977 | CA same |
-| 1972 New York court (S.D.N.Y.): five firms still owned US registered trademarks, "did not lose their rights" | https://law.justia.com/cases/federal/district-courts/FSupp/345/527/1891218/ |
-| Parallel brands only sold in the US; Cubans shipped everywhere except the US | CA same |
-| Non-Cuban versions made in DR, Honduras, Nicaragua | CA same (brand-by-brand "today") |
-| Name created in Cuba 1966, never seized; General Cigar filed 1978, registered 1981; cancellation ordered by the TTAB, upheld by E.D. Va. 7 May 2025, appeal to the 4th Circuit | CA same (Cohiba); https://www.finnegan.com/en/insights/blogs/incontestable/edva-confirms-cancellation-of-general-cigars-cohiba-marks-under-inter-american-convention.html |
+| 1960: "confiscated the business and assets of the five leading manufacturers"; owners "most of whom had fled" | https://www.law.cornell.edu/supremecourt/text/425/682 |
+| Menéndez & García restarted production in the Canary Islands (the ticket says "New start", not that they moved there) | CA: "made in the Canary Islands"; "They produced H. Upmanns in the Canary Islands" https://www.cigaraficionado.com/article/what-s-in-a-brand-name |
+| Palicio in Tampa, sold to Villazon (Tampa); "By 1965, Hoyos were being produced in Honduras" (Punch went to Honduras later) | CA |
+| 1972 S.D.N.Y. (14 June 1972): owners of five firms, "most of those who" fled, "did not lose their rights" | https://law.justia.com/cases/federal/district-courts/FSupp/345/527/1891218/ |
+| Partagás first non-Cuban in 1977, "first produced in Jamaica under the supervision of Cifuentes" | CA |
+| Cuban versions go everywhere except the US; non-Cuban versions are made in the DR, Honduras and Nicaragua (2018) | CA |
+| Name created in Cuba in 1966; General filed 1978, registered 1981; TTAB cancelled 2022; E.D. Va. upheld 7 May 2025; 4th Circuit appeal filed June 2025 (opening brief 2 Oct 2025; oral argument held), no ruling found as of 18 Nov 2026 | CA; https://www.finnegan.com/en/insights/blogs/incontestable/edva-confirms-cancellation-of-general-cigars-cohiba-marks-under-inter-american-convention.html; https://www.law360.com/articles/2395895 |
+| WITH-BRANDS pairings: Menéndez & García → Montecristo, H. Upmann; Palicio → Hoyo de Monterrey, Punch; Cifuentes → Partagás; Cohiba 1966; the 10 names on the end card | CA |
 
 ## Independent check
-Checked 18 Nov 2026 by a separate agent that did not build the reel. Dates, the 1960 seizures, the 1972 ruling (S.D.N.Y., 14 June 1972), the routes and the 1966/1981 facts VERIFIED. FIX NEEDED v1, all applied: voice re-recorded ("one of his old names" in Jamaica, moved after 1972 since it began in 1977; "Nobody owned it in the US"; "most famous" dropped); "Dunhill" (a live tobacco brand) removed from the source line and caption; court card says the exiled owners of five Cuban firms; caption adds the Cohiba cancellation and appeal; article fixes (title "10 famous names", 2018 caveat, Romeo y Julieta, La Gloria Cubana, Trinidad dispute, Cohiba cancellation, "How the two versions are labelled").
+**First check, 18 Nov 2026:** a separate agent that hadn't seen the build checked v3. Its findings, all now applied:
+- **Wrong:** "Nobody owned it in the US" (cut from the voice), "they were made in Honduras by 1965" (now "the first of them", re-recorded).
+- **Overstated:**
+  - "exiled owners of five firms" → "most of them in exile"
+  - "US courts ordered cancelled" → board 2022, court 2025, under appeal
+  - "today" → "as of 2018" on screen and in the caption
+  - the Canary "passenger" ticket → "New start"
+- **Layout:** source and header contrast on cream scenes; the end-card overlap in the brands version; the AI credit now names the voice too; HOLD band on the brands version.
+
+
+
+**Second check, 18 Nov 2026:** a fresh agent verified every claim. These fixes were applied: the 1966 card's source line now cites TTAB 2022 and E.D. Va. 2025; the tag reads "MADE / ELSEWHERE"; the transcript is lowercase after the colon; the end-card text is in cream; and the source lines got a dark backing. Not blocking: the voice says "registered it there anyway", and the on-screen box makes clear that means the US. **Double-checked on 18 Nov 2026: the NO-BRANDS version is ready to post. The WITH-BRANDS version stays on hold until legal clears it. The 4th Circuit has heard argument in the Cohiba appeal, so check for a ruling on the day you post.**

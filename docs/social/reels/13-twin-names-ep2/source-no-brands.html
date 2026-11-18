@@ -1,0 +1,127 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Abril';src:url(fonts/abril.woff2) format('woff2')}
+@font-face{font-family:'Bebas';src:url(fonts/bebas.woff2) format('woff2')}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+:root{--cream:#F1E6CF;--red:#B8322A;--navy:#1E2A44;--mus:#E3A23B;--ink:#1B1612}
+html,body{margin:0;background:var(--cream)}
+#st{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--cream);font-family:'Bebas',sans-serif;color:var(--ink)}
+.paper{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .15  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>")}
+.frame{position:absolute;inset:26px;border:6px solid var(--ink);z-index:39;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0;overflow:hidden}
+.scene img.bg{position:absolute;left:0;top:-8px;width:1080px;height:1935px;object-fit:cover}
+.shade{position:absolute;left:0;right:0;top:0;height:560px;background:linear-gradient(180deg,rgba(20,16,12,.78),rgba(20,16,12,0))}
+#brand{position:absolute;left:70px;top:78px;font-size:32px;letter-spacing:.2em;color:var(--cream);z-index:45;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#brand b{color:var(--mus);font-weight:400}
+#ep{position:absolute;right:70px;top:66px;z-index:45;background:var(--red);color:var(--cream);font-size:34px;letter-spacing:.12em;padding:6px 18px 2px}
+#cap{position:absolute;left:60px;right:60px;top:170px;text-align:center;font-size:96px;line-height:.98;letter-spacing:.01em;z-index:45;color:var(--cream);text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.45);text-transform:uppercase}
+#cap span{display:inline-block;margin:0 .12em}
+#cap span.k{color:var(--mus)}
+#src{position:absolute;left:70px;right:70px;bottom:70px;font-family:'Plex';font-size:21px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);z-index:45;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.ticket{position:absolute;left:80px;right:80px;top:1180px;background:var(--cream);color:var(--ink);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);display:flex;opacity:0}
+.ticket .l{flex:1;padding:24px 30px}
+.ticket .r{width:190px;border-left:5px dashed var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--red);color:var(--cream)}
+.ticket .r b{font-family:'Abril';font-size:64px;line-height:1;font-weight:400}
+.ticket .r i{font-style:normal;font-size:28px;letter-spacing:.12em}
+.ticket .kick{font-size:28px;letter-spacing:.2em;color:var(--red)}
+.ticket .who{font-family:'Abril';font-size:56px;line-height:1.02;margin:6px 0 8px}
+.ticket .route{font-size:42px;letter-spacing:.06em}
+.ticket .names{font-family:'Plex';font-size:26px;margin-top:10px;color:#5a4b3a}
+.stamp{position:absolute;width:250px;height:250px;border:10px solid var(--red);border-radius:50%;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:96px;line-height:.9;opacity:0;background:rgba(241,230,207,.92);z-index:30}
+.stamp small{font-size:26px;letter-spacing:.14em}
+.banner{position:absolute;left:0;right:0;background:var(--red);color:var(--cream);font-size:64px;letter-spacing:.06em;text-align:center;padding:18px 0 10px;opacity:0;border-top:6px solid var(--ink);border-bottom:6px solid var(--ink)}
+.case{position:absolute;left:90px;right:90px;top:1060px;background:var(--cream);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);padding:34px 40px;opacity:0;font-family:'Newsreader',serif;color:var(--ink)}
+.case h3{margin:0;font-family:'Bebas';font-weight:400;font-size:58px;letter-spacing:.04em;line-height:1}
+.case .sub{font-family:'Plex';font-size:24px;color:#6b5a46;margin:8px 0 18px;letter-spacing:.04em}
+.case p{margin:0;font-size:42px;line-height:1.3}
+.case u{text-decoration:none;background:linear-gradient(transparent 80%,var(--mus) 80%);background-size:0% 100%;background-repeat:no-repeat}
+#mapwrap{position:absolute;left:0;top:470px;width:1080px;height:980px}
+#mapwrap svg{width:1080px;height:980px;overflow:visible}
+.mapbg{position:absolute;inset:0;background:var(--navy)}
+.mapbg:after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(241,230,207,.10) 2px,transparent 2.5px);background-size:16px 16px}
+.land{fill:#E9DCC0;stroke:var(--ink);stroke-width:1.4}
+#cuba{fill:var(--red);stroke:var(--ink);stroke-width:2}
+.arrow{fill:none;stroke:var(--mus);stroke-width:5;stroke-linecap:round;stroke-dasharray:1 0}
+.lbl{font-family:'Bebas';font-size:26px;fill:var(--cream);letter-spacing:.06em}
+.duo{position:absolute;left:70px;right:70px;top:1140px;display:flex;gap:28px;opacity:0}
+.duo div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:22px 20px;text-align:center}
+.duo b{display:block;font-family:'Abril';font-weight:400;font-size:62px;color:var(--red)}
+.duo span{font-size:36px;letter-spacing:.04em}
+.duo em{display:block;font-style:normal;font-family:'Plex';font-size:22px;color:#5a4b3a;margin-top:8px}
+.big{position:absolute;left:0;right:0;text-align:center;font-family:'Abril';color:var(--red);opacity:0}
+.tagc{position:absolute;width:400px;height:540px;background:var(--cream);border:6px solid var(--ink);box-shadow:14px 14px 0 var(--ink);opacity:0;text-align:center}
+.tagc .t1{margin-top:60px;font-size:34px;letter-spacing:.2em;color:var(--red)}
+.tagc .t2{margin-top:30px;font-family:'Abril';font-size:84px;line-height:1}
+.tagc .t3{position:absolute;left:0;right:0;bottom:40px;font-size:40px;letter-spacing:.12em}
+.tagc .bar{margin:28px auto 0;width:240px;height:10px;background:var(--ink)}
+#end{position:absolute;inset:0;background:var(--red);opacity:0;z-index:35}
+#end .h{position:absolute;left:80px;right:80px;top:520px;font-family:'Abril';font-size:150px;line-height:.95;color:var(--cream)}
+#end .s{position:absolute;left:80px;right:80px;top:870px;font-family:'Newsreader',serif;font-style:italic;font-size:62px;line-height:1.15;color:var(--mus)}
+#end .l{position:absolute;left:80px;top:1130px;font-size:72px;letter-spacing:.08em;color:var(--cream);border:5px solid var(--cream);padding:10px 26px 2px}
+#end .n{position:absolute;left:80px;right:80px;top:1320px;font-size:40px;letter-spacing:.12em;color:var(--cream)}
+#end .d{position:absolute;left:80px;right:80px;top:1500px;font-family:'Plex';font-size:24px;color:var(--cream);opacity:.85}
+#brand.lt{color:var(--ink);text-shadow:none}#brand.lt b{color:var(--red)}#src.lt{color:var(--ink);text-shadow:none}#end .s{color:var(--cream)!important}#src{background:rgba(20,16,12,.6);padding:8px 14px;left:90px;right:90px;border-radius:4px}#src:empty{display:none}#src.lt{background:none}#hold{position:absolute;left:0;right:0;top:1640px;text-align:center;z-index:60;font-family:Plex;font-size:30px;letter-spacing:.2em;color:#fff;background:rgba(200,0,0,.85);padding:10px 0}</style></head><body><div id="st">
+
+<div class="scene" id="s1"><img class="bg" src="img/harbour.jpg"><div class="shade" style="height:900px"></div>
+ <div class="big" id="ttl" style="top:560px;font-size:150px;line-height:.95;color:var(--cream);text-shadow:6px 6px 0 var(--ink)">The families<br>who left</div></div>
+<div class="scene" id="s2"><img class="bg" src="img/street-a.jpg"><div class="shade"></div>
+ <div class="stamp" id="st60" style="left:720px;top:560px">1960<small>SEPTEMBER</small></div></div>
+<div class="scene" id="s3"><img class="bg" src="img/street-a.jpg" style="filter:brightness(.55)"><div class="shade"></div>
+ <div class="case" id="q1" style="top:760px;text-align:center"><p style="font-size:66px;line-height:1.1"><i>“They asked me to stay.”</i></p></div>
+ <div class="case" id="q2" style="top:1060px;text-align:center;background:var(--red);color:var(--cream)"><p style="font-size:80px;line-height:1.1"><i>“I said no.”</i></p><div class="sub" style="color:var(--cream);margin:14px 0 0">RAMÓN CIFUENTES, TO CIGAR AFICIONADO, 1991</div></div></div>
+<div class="scene" id="s4" style="background:var(--navy)"><div class="mapbg"></div>
+ <div class="ticket" id="tk1" style="top:820px"><div class="l"><div class="kick">PASSENGER · SEPT 1960</div><div class="who">Ramón Cifuentes</div><div class="route">HAVANA → UNITED STATES</div></div><div class="r"><b>→</b><i>ONE WAY</i></div></div>
+ <div class="stamp" id="st75" style="left:720px;top:1220px">1975<small>THE DEAL</small></div></div>
+<div class="scene" id="s4b"><img class="bg" src="img/jamaica.jpg"><div class="shade"></div>
+ <div class="banner" id="bn77" style="top:1290px">1977 · ONE OF HIS NAMES · JAMAICA</div></div>
+<div class="scene" id="s5"><img class="bg" src="img/canary.jpg"><div class="shade"></div>
+ <div class="stamp" id="st35" style="left:720px;top:520px">1935<small>NAME IS BORN</small></div>
+ <div class="ticket" id="tk2"><div class="l"><div class="kick">NEW START · IN EXILE</div><div class="who">Alonso Menéndez &amp; Pepe García</div><div class="route">CANARY ISLANDS</div><div class="names">Started again with a spin-off of their 1935 name</div></div><div class="r"><b>→</b><i>RESTART</i></div></div></div>
+<div class="scene" id="s6"><img class="bg" src="img/miami.jpg"><div class="shade"></div>
+ <div class="ticket" id="tk3"><div class="l"><div class="kick">PASSENGER</div><div class="who">Fernando Palicio</div><div class="route">HAVANA → FLORIDA</div><div class="names">Made a deal on two names in Hialeah</div></div><div class="r"><b>→</b><i>ONE WAY</i></div></div>
+ <div class="big" id="usd" style="top:640px;font-size:170px;color:var(--mus);text-shadow:6px 6px 0 var(--ink)"><span style="font-family:Bebas;font-size:70px;letter-spacing:.1em;display:block;color:var(--cream);text-shadow:4px 4px 0 var(--ink)">ALMOST</span>$700,000</div></div>
+<div class="scene" id="s7"><img class="bg" src="img/tampa.jpg"><div class="shade"></div>
+ <div class="stamp" id="st68" style="left:90px;top:520px">1968<small>TAMPA</small></div>
+ <div class="stamp" id="st01" style="left:720px;top:600px">2001<small>TRADEMARK WIN</small></div>
+ <div class="ticket" id="tk4"><div class="l"><div class="kick">THE TRINIDAD FAMILY</div><div class="who">A Tampa factory, then a trademark win</div><div class="route">HAVANA → UNITED STATES</div></div><div class="r"><b>→</b><i>ONE WAY</i></div></div></div>
+<div class="scene" id="s8" style="background:var(--cream)">
+ <div class="big" id="f4" style="top:520px;font-size:330px">4</div>
+ <div class="big" id="f4t" style="top:900px;font-size:110px;color:var(--ink);font-family:Bebas;letter-spacing:.04em">STORIES · SECOND LIVES</div></div>
+
+<div id="end"><div class="h" style="font-size:120px">Next: the court case that split the names</div><div class="s" style="top:960px">Every name, owner by owner, is on our site.</div><div class="l" style="top:1200px">LINK IN BIO</div><div class="n" style="top:1380px">TWIN NAMES · PART 2 OF 5</div><div class="d" style="top:1520px">History, not advice. We don't sell tobacco. Voice and illustrations made with AI (Google Gemini TTS, Google Flow).</div></div>
+<div id="brand"><b>The Next Cigar</b> · Twin Names</div>
+<div id="cap"></div><div id="src"></div>
+<div class="frame"></div><div class="paper"></div>
+</div>
+<script>
+const CH=[[[0.0, 0.34, "Part"], [0.34, 0.66, "two,"]], [[0.96, 1.12, "the"], [1.12, 1.5, "families"], [1.5, 1.9, "who"], [1.9, 2.14, "left."]], [[2.86, 3.12, "September"], [3.12, 3.86, "1960,"]], [[4.24, 4.72, "soldiers"], [4.72, 5.06, "enter"], [5.06, 5.42, "Ram\u00f3n"], [5.42, 5.94, "Cifuentes'"]], [[6.06, 6.26, "factory"], [6.26, 6.66, "in"], [6.66, 6.78, "Havana."]], [[7.44, 7.74, "He's"], [7.74, 7.82, "asked"], [7.82, 8.02, "to"], [8.02, 8.26, "stay"]], [[8.26, 8.48, "and"], [8.48, 8.66, "run"], [8.66, 9.14, "Cuba's"], [9.14, 9.46, "factories."]], [[10.06, 10.28, "He"], [10.28, 10.4, "says"], [10.4, 10.68, "no"], [10.68, 11.18, "and"]], [[11.18, 11.38, "leaves"], [11.38, 11.62, "for"], [11.62, 11.7, "the"], [11.7, 11.92, "US"]], [[11.92, 12.26, "days"], [12.26, 12.68, "later."]], [[13.24, 13.38, "He"], [13.38, 13.48, "goes"], [13.48, 13.62, "to"], [13.62, 13.76, "work"]], [[13.76, 13.9, "for"], [13.9, 13.98, "the"], [13.98, 14.06, "head"], [14.06, 14.16, "of"]], [[14.16, 14.24, "a"], [14.24, 14.42, "big"], [14.42, 14.72, "American"], [14.72, 14.98, "tobacco"], [14.98, 15.62, "company."]], [[16.04, 16.46, "After"], [16.46, 16.8, "10"], [16.8, 17.08, "years"], [17.08, 17.3, "of"], [17.3, 17.62, "offers,"]], [[17.62, 18.08, "in"], [18.08, 18.62, "1975,"]], [[18.7, 19.3, "his"], [19.3, 19.64, "family"], [19.64, 19.88, "makes"], [19.88, 20.06, "a"], [20.06, 20.3, "deal."]], [[20.86, 20.88, "And"], [20.88, 20.98, "in"], [20.98, 21.44, "1977,"]], [[21.58, 22.1, "his"], [22.1, 22.32, "name"], [22.32, 22.52, "comes"], [22.52, 22.82, "back,"]], [[23.2, 23.4, "made"], [23.4, 23.62, "in"], [23.62, 23.72, "Jamaica."]], [[24.8, 25.16, "Alonso"], [25.16, 25.44, "Men\u00e9ndez"], [25.44, 25.76, "created"], [25.76, 25.96, "a"]], [[25.96, 26.14, "name"], [26.14, 26.28, "in"], [26.28, 26.44, "Havana"], [26.44, 26.78, "in"], [26.78, 27.3, "1935."]], [[27.92, 28.32, "A"], [28.32, 28.46, "year"], [28.46, 28.66, "later,"]], [[28.98, 29.42, "Pepe Garc\u00eda"], [29.42, 29.72, "joined"], [29.72, 29.88, "him."]], [[30.42, 30.48, "In"], [30.48, 30.82, "exile,"]], [[31.06, 31.12, "they"], [31.12, 31.34, "start"], [31.34, 31.56, "again"], [31.56, 31.7, "in"]], [[31.7, 31.8, "the"], [31.8, 31.96, "Canary"], [31.96, 32.42, "Islands,"]], [[32.96, 33.06, "with"], [33.06, 33.22, "a"], [33.22, 33.64, "spin-off"], [33.64, 33.74, "of"]], [[33.74, 33.86, "that"], [33.86, 34.06, "name."]], [[34.88, 35.28, "Fernando"], [35.28, 35.68, "Palicio"], [35.68, 36.0, "ends"], [36.0, 36.14, "up"]], [[36.14, 36.24, "in"], [36.24, 36.5, "Florida."]], [[37.06, 37.14, "At"], [37.14, 37.18, "a"], [37.18, 37.38, "meeting"], [37.38, 37.56, "in"], [37.56, 37.92, "Hialeah,"]], [[38.1, 38.18, "he"], [38.18, 38.3, "makes"], [38.3, 38.44, "a"], [38.44, 38.58, "deal"]], [[38.58, 38.78, "on"], [38.78, 38.98, "two"], [38.98, 39.16, "of"], [39.16, 39.3, "his"], [39.3, 39.5, "names."]], [[40.0, 40.2, "In"], [40.2, 40.34, "all,"]], [[40.48, 40.54, "he"], [40.54, 40.68, "sells"], [40.68, 40.88, "his"], [40.88, 41.02, "names"]], [[41.02, 41.26, "for"], [41.26, 41.38, "almost"], [41.38, 42.48, "$700,000."]], [[43.26, 43.66, "And"], [43.66, 43.74, "the"], [43.74, 43.94, "Trinidad"], [43.94, 44.34, "family?"]], [[44.84, 45.04, "In"], [45.04, 45.6, "1968,"]], [[45.86, 45.92, "they"], [45.92, 46.1, "find"], [46.1, 46.22, "a"], [46.22, 46.54, "factory"]], [[46.54, 46.72, "in"], [46.72, 46.88, "Tampa"], [46.88, 47.18, "to"], [47.18, 47.34, "make"]], [[47.34, 47.54, "their"], [47.54, 47.76, "cigars."]], [[48.5, 48.58, "In"], [48.58, 48.82, "2001,"]], [[48.86, 49.32, "they"], [49.32, 49.44, "win"], [49.44, 49.56, "the"], [49.56, 49.72, "US"]], [[49.72, 50.0, "trademark"], [50.0, 50.44, "case"], [50.44, 50.72, "over"], [50.72, 50.88, "their"], [50.88, 51.14, "name."]], [[51.84, 52.02, "Four"], [52.02, 52.3, "stories."]], [[52.9, 53.02, "Four"], [53.02, 53.42, "second"], [53.42, 53.68, "lives."]], [[54.48, 54.8, "Next,"]], [[55.02, 55.1, "the"], [55.1, 55.34, "court"], [55.34, 55.58, "case"], [55.58, 55.88, "that"]], [[55.88, 56.12, "split"], [56.12, 56.38, "the"], [56.38, 56.56, "names."]], [[56.56, 57.12, "Link"], [57.12, 57.26, "in"], [57.26, 57.42, "bio."]]];const P={"havana": [408, 343], "santo": [896, 539], "danli": [244, 720], "esteli": [252, 757], "kingston": [626, 559], "tampa": [405, 134], "miami": [493, 230], "vuelta": [354, 377]};const TOTAL=60.0;
+const E=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const B=x=>{if(x<=0)return 0;if(x>=1)return 1;const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);const lerp=(a,b,x)=>a+(b-a)*x;
+const KEYW=['1960','1962','1965','1972','1977','1966','twice?','10','Canary','Tampa','Honduras','Jamaica','Miami','two'];
+function caption(t,stop){const capEl=$('cap');let ci=-1;for(let i=0;i<CH.length;i++)if(t>=CH[i][0][0]-0.05)ci=i;
+ if(ci>=0&&t<CH[ci][CH[ci].length-1][1]+0.8&&t<stop){capEl.innerHTML=CH[ci].map(([s,e,w])=>{const on=t>=s-0.03;const k=KEYW.some(x=>w.replace(/[.,?:]/g,'').startsWith(x.replace('?','')));const p=B((t-s+0.03)/.22);return `<span class="${k?'k':''}" style="opacity:${on?1:0};transform:scale(${on?(0.6+0.4*Math.min(p,1)):1})">${w}</span>`}).join(' ');}else capEl.innerHTML='';}
+function show(id,a,b,t){const e=$(id);const o=(t>=a&&t<b)?Math.min(E((t-a)/.3),1-E((t-(b-.25))/.25)):0;e.style.opacity=o;return o;}
+function kb(id,a,b,t,z0,z1,x0,x1){const e=document.querySelector('#'+id+' img.bg');if(!e)return;const p=Math.max(0,Math.min(1,(t-a)/(b-a)));e.style.transform=`scale(${lerp(z0,z1,p)}) translateX(${lerp(x0,x1,p)}px)`;}
+function pop(id,t0,t,mode,base){const e=$(id);const p=B((t-t0)/.35);const pc=Math.min(Math.max(p,0),1);e.style.opacity=Math.min(1,Math.max(0,p*1.6));
+ if(mode=='stamp')e.style.transform=`rotate(-12deg) scale(${2.4-1.4*pc})`;else if(mode=='slam')e.style.transform=`scale(${1.6-0.6*pc})`;else e.style.transform=(base||'')+` translateY(${(1-pc)*60}px) rotate(${(1-pc)*-3}deg)`;}
+function hide(...ids){ids.forEach(i=>$(i).style.opacity=0)}
+
+const SRC=[[2.74,51.64,'Source: Cigar Aficionado, "What\'s in a Brand Name?" (2018)']];
+function render(t){
+ const hideCap=(t<2.74)||(t>=41.1&&t<42.9);if(hideCap)$('cap').innerHTML='';else caption(t,54.3);const light=(t>=51.64&&t<54.3);const c=$('cap');c.style.color=light?'var(--ink)':'';c.style.textShadow=light?'none':'';$('brand').classList.toggle('lt',light);$('src').classList.toggle('lt',light);
+ const s=SRC.find(([a,b])=>t>=a&&t<b);$('src').textContent=s?s[2]:'';
+ show('s1',-1,2.74,t);kb('s1',0,2.74,t,1.15,1.05,0,0);pop('ttl',0.3,t,'slam');
+ show('s2',2.74,7.3,t);kb('s2',2.74,7.3,t,1.04,1.18,0,-30);pop('st60',3.1,t,'stamp');
+ show('s3',7.3,12.8,t);kb('s3',7.3,12.8,t,1.18,1.25,-30,-40);pop('q1',7.45,t);pop('q2',10.06,t,'slam');
+ show('s4',12.8,20.8,t);pop('tk1',13.0,t);pop('st75',18.05,t,'stamp');
+ show('s4b',20.8,24.55,t);kb('s4b',20.8,24.55,t,1.03,1.15,20,-20);pop('bn77',20.9,t,'slam');
+ show('s5',24.55,34.6,t);kb('s5',24.55,34.6,t,1.02,1.18,-20,20);pop('st35',26.75,t,'stamp');pop('tk2',30.4,t);
+ show('s6',34.6,42.9,t);kb('s6',34.6,42.9,t,1.03,1.15,20,-20);pop('tk3',34.8,t);pop('usd',41.2,t,'slam');
+ show('s7',42.9,51.64,t);kb('s7',42.9,51.64,t,1.02,1.16,0,-20);pop('tk4',43.5,t);pop('st68',45.0,t,'stamp');pop('st01',48.55,t,'stamp');
+ show('s8',51.64,54.3,t);pop('f4',51.84,t,'slam');pop('f4t',52.9,t);
+ $('end').style.opacity=E((t-54.3)/.35);
+}
+render(0);
+</script></body></html>
