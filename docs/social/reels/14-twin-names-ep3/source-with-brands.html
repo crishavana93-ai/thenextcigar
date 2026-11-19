@@ -1,0 +1,132 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Abril';src:url(fonts/abril.woff2) format('woff2')}
+@font-face{font-family:'Bebas';src:url(fonts/bebas.woff2) format('woff2')}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+:root{--cream:#F1E6CF;--red:#B8322A;--navy:#1E2A44;--mus:#E3A23B;--ink:#1B1612}
+html,body{margin:0;background:var(--cream)}
+#st{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--cream);font-family:'Bebas',sans-serif;color:var(--ink)}
+.paper{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .15  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>")}
+.frame{position:absolute;inset:26px;border:6px solid var(--ink);z-index:39;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0;overflow:hidden}
+.scene img.bg{position:absolute;left:0;top:-8px;width:1080px;height:1935px;object-fit:cover}
+.shade{position:absolute;left:0;right:0;top:0;height:560px;background:linear-gradient(180deg,rgba(20,16,12,.78),rgba(20,16,12,0))}
+#brand{position:absolute;left:70px;top:78px;font-size:32px;letter-spacing:.2em;color:var(--cream);z-index:45;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#brand b{color:var(--mus);font-weight:400}
+#ep{position:absolute;right:70px;top:66px;z-index:45;background:var(--red);color:var(--cream);font-size:34px;letter-spacing:.12em;padding:6px 18px 2px}
+#cap{position:absolute;left:60px;right:60px;top:170px;text-align:center;font-size:96px;line-height:.98;letter-spacing:.01em;z-index:45;color:var(--cream);text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.45);text-transform:uppercase}
+#cap span{display:inline-block;margin:0 .12em}
+#cap span.k{color:var(--mus)}
+#src{position:absolute;left:70px;right:70px;bottom:70px;font-family:'Plex';font-size:21px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);z-index:45;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.ticket{position:absolute;left:80px;right:80px;top:1180px;background:var(--cream);color:var(--ink);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);display:flex;opacity:0}
+.ticket .l{flex:1;padding:24px 30px}
+.ticket .r{width:190px;border-left:5px dashed var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--red);color:var(--cream)}
+.ticket .r b{font-family:'Abril';font-size:64px;line-height:1;font-weight:400}
+.ticket .r i{font-style:normal;font-size:28px;letter-spacing:.12em}
+.ticket .kick{font-size:28px;letter-spacing:.2em;color:var(--red)}
+.ticket .who{font-family:'Abril';font-size:56px;line-height:1.02;margin:6px 0 8px}
+.ticket .route{font-size:42px;letter-spacing:.06em}
+.ticket .names{font-family:'Plex';font-size:26px;margin-top:10px;color:#5a4b3a}
+.stamp{position:absolute;width:250px;height:250px;border:10px solid var(--red);border-radius:50%;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:96px;line-height:.9;opacity:0;background:rgba(241,230,207,.92);z-index:30}
+.stamp small{font-size:26px;letter-spacing:.14em}
+.banner{position:absolute;left:0;right:0;background:var(--red);color:var(--cream);font-size:64px;letter-spacing:.06em;text-align:center;padding:18px 0 10px;opacity:0;border-top:6px solid var(--ink);border-bottom:6px solid var(--ink)}
+.case{position:absolute;left:90px;right:90px;top:1060px;background:var(--cream);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);padding:34px 40px;opacity:0;font-family:'Newsreader',serif;color:var(--ink)}
+.case h3{margin:0;font-family:'Bebas';font-weight:400;font-size:58px;letter-spacing:.04em;line-height:1}
+.case .sub{font-family:'Plex';font-size:24px;color:#6b5a46;margin:8px 0 18px;letter-spacing:.04em}
+.case p{margin:0;font-size:42px;line-height:1.3}
+.case u{text-decoration:none;background:linear-gradient(transparent 80%,var(--mus) 80%);background-size:0% 100%;background-repeat:no-repeat}
+#mapwrap{position:absolute;left:0;top:470px;width:1080px;height:980px}
+#mapwrap svg{width:1080px;height:980px;overflow:visible}
+.mapbg{position:absolute;inset:0;background:var(--navy)}
+.mapbg:after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(241,230,207,.10) 2px,transparent 2.5px);background-size:16px 16px}
+.land{fill:#E9DCC0;stroke:var(--ink);stroke-width:1.4}
+#cuba{fill:var(--red);stroke:var(--ink);stroke-width:2}
+.arrow{fill:none;stroke:var(--mus);stroke-width:5;stroke-linecap:round;stroke-dasharray:1 0}
+.lbl{font-family:'Bebas';font-size:26px;fill:var(--cream);letter-spacing:.06em}
+.duo{position:absolute;left:70px;right:70px;top:1140px;display:flex;gap:28px;opacity:0}
+.duo div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:22px 20px;text-align:center}
+.duo b{display:block;font-family:'Abril';font-weight:400;font-size:62px;color:var(--red)}
+.duo span{font-size:36px;letter-spacing:.04em}
+.duo em{display:block;font-style:normal;font-family:'Plex';font-size:22px;color:#5a4b3a;margin-top:8px}
+.big{position:absolute;left:0;right:0;text-align:center;font-family:'Abril';color:var(--red);opacity:0}
+.tagc{position:absolute;width:400px;height:540px;background:var(--cream);border:6px solid var(--ink);box-shadow:14px 14px 0 var(--ink);opacity:0;text-align:center}
+.tagc .t1{margin-top:60px;font-size:34px;letter-spacing:.2em;color:var(--red)}
+.tagc .t2{margin-top:30px;font-family:'Abril';font-size:84px;line-height:1}
+.tagc .t3{position:absolute;left:0;right:0;bottom:40px;font-size:40px;letter-spacing:.12em}
+.tagc .bar{margin:28px auto 0;width:240px;height:10px;background:var(--ink)}
+#end{position:absolute;inset:0;background:var(--red);opacity:0;z-index:35}
+#end .h{position:absolute;left:80px;right:80px;top:520px;font-family:'Abril';font-size:150px;line-height:.95;color:var(--cream)}
+#end .s{position:absolute;left:80px;right:80px;top:870px;font-family:'Newsreader',serif;font-style:italic;font-size:62px;line-height:1.15;color:var(--mus)}
+#end .l{position:absolute;left:80px;top:1130px;font-size:72px;letter-spacing:.08em;color:var(--cream);border:5px solid var(--cream);padding:10px 26px 2px}
+#end .n{position:absolute;left:80px;right:80px;top:1320px;font-size:40px;letter-spacing:.12em;color:var(--cream)}
+#end .d{position:absolute;left:80px;right:80px;top:1500px;font-family:'Plex';font-size:24px;color:var(--cream);opacity:.85}
+#brand.lt{color:var(--ink);text-shadow:none}#brand.lt b{color:var(--red)}#src.lt{color:var(--ink);text-shadow:none}#end .s{color:var(--cream)!important}#src{background:rgba(20,16,12,.6);padding:8px 14px;left:90px;right:90px;border-radius:4px}#src:empty{display:none}#src.lt{background:none}.q{position:absolute;left:110px;right:110px;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);text-align:center;font-size:76px;padding:22px 0 12px;opacity:0}.q.r{background:var(--red);color:var(--cream)}.led{position:absolute;left:70px;right:70px;top:1020px;display:flex;gap:24px}.led>div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:24px 22px;opacity:0}.led .k{font-size:30px;letter-spacing:.14em;color:var(--red)}.led .h{font-family:Abril;font-size:54px;line-height:1.02;margin:10px 0}.led .w{font-size:40px;letter-spacing:.03em}</style></head><body><div id="st">
+
+<div class="scene" id="s1"><img class="bg" src="img/court.jpg"><div class="shade" style="height:1300px;background:linear-gradient(180deg,rgba(20,16,12,.92),rgba(20,16,12,.8) 60%,rgba(20,16,12,0))"></div>
+ <div class="big" id="kk" style="top:470px;font-family:Bebas;font-size:70px;letter-spacing:.06em;color:var(--cream)">TWIN NAMES · PART 3</div>
+ <div class="big" id="ttl" style="top:580px;font-size:136px;line-height:.98;color:var(--cream);text-shadow:6px 6px 0 var(--ink)">The court case<br>that split<br>the <span style="color:var(--mus)">names</span></div></div>
+<div class="scene" id="s2"><img class="bg" src="img/street-a.jpg"><div class="shade"></div>
+ <div class="stamp" id="st60" style="left:720px;top:520px">1960<small>15 SEPTEMBER</small></div>
+ <div class="banner" id="bn5" style="top:1060px">5 CIGAR COMPANIES · TAKEN OVER</div>
+ <div class="case" id="iv" style="top:1260px;text-align:center"><h3>INTERVENTORS</h3><div class="sub" style="margin:10px 0 0">THE STATE MANAGERS CUBA PUT IN CHARGE</div></div></div>
+<div class="scene" id="s3"><img class="bg" src="img/street-b.jpg" style="filter:brightness(.8)"><div class="shade"></div>
+ <div class="banner" id="bnw" style="top:1120px">THE OWNERS WALK OUT · FOR THE LAST TIME</div></div>
+<div class="scene" id="s4"><img class="bg" src="img/port.jpg"><div class="shade"></div>
+ <div class="ticket" id="tk1" style="top:1180px"><div class="l"><div class="kick">CARGO · 1960–61</div><div class="who">Same names, new managers</div><div class="route">HAVANA → USA</div></div><div class="r"><b>→</b><i>SHIPPED</i></div></div>
+ <div class="q" id="qa" style="top:560px">WHO OWNS THE NAMES?</div>
+ <div class="q r" id="qb" style="top:740px">WHO GETS THE MONEY?</div></div>
+<div class="scene" id="s5"><img class="bg" src="img/nycourt.jpg"><div class="shade"></div>
+ <div class="case" id="n3" style="top:820px;text-align:center;padding:20px 40px"><h3 style="font-size:96px"><span style="font-family:Abril;color:var(--red)">3</span> US IMPORTERS</h3><div class="sub" style="margin:6px 0 0">CAUGHT IN THE MIDDLE</div></div>
+ <div id="n3t"></div>
+ <div class="duo" id="vs" style="top:1180px"><div><b>EXILES</b><span>THE OLD OWNERS</span></div><div><b>CUBA</b><span>THE INTERVENTORS</span></div></div></div>
+<div class="scene" id="s6"><img class="bg" src="img/court.jpg" style="filter:brightness(.75)"><div class="shade"></div>
+ <div class="stamp" id="st72" style="left:720px;top:560px">1972<small>NEW YORK</small></div>
+ <div class="led"><div id="la"><div class="k">SHIPPED BEFORE THE TAKEOVER</div><div class="h">Money → the exiled owners</div><div class="w">A debt sits where the debtor is: in the US</div></div><div id="lb"><div class="k">SHIPPED AFTER</div><div class="h">Money → Cuba's interventors</div><div class="w">Paid for the cigars they sent</div></div></div></div>
+<div class="scene" id="s7" style="background:var(--cream)">
+ <div class="case" id="nm" style="top:560px;text-align:center"><h3>AND THE NAMES?</h3><p style="margin-top:16px">In the US, Cuba&rsquo;s takeover didn&rsquo;t take them from <b>the exiled owners.</b></p></div>
+ <div class="banner" id="tw" style="top:1050px">THE TWIST · NO DAMAGES</div>
+ <div class="case" id="nl" style="top:1240px;text-align:center"><p>The court found they couldn't show any loss.</p></div></div>
+<div class="scene" id="s8"><img class="bg" src="img/supreme.jpg"><div class="shade"></div>
+ <div class="stamp" id="st76" style="left:90px;top:540px">1976<small>SUPREME COURT</small></div>
+ <div class="big" id="v54" style="top:560px;left:380px;font-size:230px;color:var(--mus);text-shadow:8px 8px 0 var(--ink)">5–4</div>
+ <div class="case" id="rp" style="top:1180px;text-align:center"><h3>NOT AN ACT OF STATE</h3><p style="margin-top:10px">Refusing to repay an importer&rsquo;s mistaken payments: the importer could collect</p></div></div>
+<div class="scene" id="s9" style="background:var(--navy)"><div class="mapbg"></div>
+ <div class="duo" id="fin" style="top:700px"><div><b>CUBA</b><span>KEPT THE FACTORIES</span></div><div><b>US NAMES</b><span>NOT REACHED BY THE TAKEOVER</span></div></div></div>
+
+<div id="end"><div class="h" style="font-size:120px">Next: the name that was never seized</div><div class="s" style="top:960px">Trademarks named in the 1972 case: H. Upmann · Monte Cristo · Partagas · Ramon Allones · Por Larranaga · Hoyo de Monterey · Belinda · Punch. The story is on our site.</div><div class="l" style="top:1390px">LINK IN BIO</div><div class="n" style="top:1520px">TWIN NAMES · PART 3 OF 5</div><div class="d" style="top:1610px">History, not advice. We don't sell tobacco. Voice and illustrations made with AI (Google Gemini TTS, Google Flow).</div></div>
+<div id="brand"><b>The Next Cigar</b> · Twin Names</div>
+<div id="cap"></div><div id="src"></div>
+<div class="frame"></div><div class="paper"></div>
+</div>
+<script>
+const CH=[[[0.0, 0.3, "Part"], [0.3, 0.68, "three."]], [[1.04, 1.2, "The"], [1.2, 1.42, "court"], [1.42, 1.74, "case"], [1.74, 1.92, "that"]], [[1.92, 2.16, "split"], [2.16, 2.4, "the"], [2.4, 2.62, "names."]], [[3.14, 3.42, "September"], [3.42, 4.14, "15,"]], [[4.74, 4.74, "1960."]], [[5.26, 5.52, "Cuba"], [5.52, 5.82, "takes"], [5.82, 6.12, "over"], [6.12, 6.54, "five"]], [[6.54, 6.76, "cigar"], [6.76, 7.22, "companies"], [7.22, 7.64, "and"], [7.64, 7.88, "puts"]], [[7.88, 8.06, "in"], [8.06, 8.3, "state"], [8.3, 8.78, "managers"], [8.78, 9.26, "called"], [9.26, 10.1, "interventors."]], [[10.54, 10.8, "The"], [10.8, 11.02, "owners"], [11.02, 11.48, "walk"], [11.48, 11.74, "out"]], [[11.74, 11.82, "of"], [11.82, 11.92, "their"], [11.92, 12.22, "factories"], [12.22, 12.56, "for"]], [[12.56, 12.68, "the"], [12.68, 12.92, "last"], [12.92, 13.28, "time."]], [[13.94, 14.02, "But"], [14.02, 14.12, "the"], [14.12, 14.38, "cigars"], [14.38, 14.88, "keep"]], [[14.88, 15.16, "going"], [15.16, 15.34, "to"], [15.34, 15.44, "the"], [15.44, 16.14, "US,"]], [[16.14, 16.36, "under"], [16.36, 16.6, "the"], [16.6, 16.82, "same"], [16.82, 17.18, "names."]], [[17.86, 18.2, "So"], [18.2, 18.66, "who"], [18.66, 18.96, "owns"], [18.96, 19.16, "those"]], [[19.16, 19.44, "names"], [19.44, 19.76, "now?"]], [[20.24, 20.26, "And"], [20.26, 20.46, "who"], [20.46, 20.62, "gets"], [20.62, 20.82, "the"], [20.82, 21.04, "money?"]], [[21.9, 22.08, "Three"], [22.08, 22.56, "American"], [22.56, 23.02, "importers"], [23.02, 23.38, "end"]], [[23.38, 23.5, "up"], [23.5, 23.6, "in"], [23.6, 23.88, "court,"]], [[24.22, 24.34, "caught"], [24.34, 24.64, "between"], [24.64, 24.82, "the"], [24.82, 25.24, "exiles"]], [[25.24, 25.54, "and"], [25.54, 25.8, "Cuba."]], [[26.36, 26.64, "In"], [26.64, 27.12, "1972,"]], [[27.7, 27.74, "a"], [27.74, 27.94, "federal"], [27.94, 28.26, "judge"], [28.26, 28.48, "in"]], [[28.48, 28.6, "New"], [28.6, 28.82, "York"], [28.82, 29.1, "rules."]], [[29.76, 30.02, "Money"], [30.02, 30.2, "for"], [30.2, 30.4, "cigars"], [30.4, 30.82, "shipped"]], [[30.82, 31.18, "before"], [31.18, 31.58, "the"], [31.58, 31.88, "takeover"], [31.88, 32.28, "goes"]], [[32.28, 32.52, "to"], [32.52, 32.62, "the"], [32.62, 32.9, "exiled"], [32.9, 33.36, "owners."]], [[33.98, 34.22, "Money"], [34.22, 34.42, "for"], [34.42, 34.66, "cigars"], [34.66, 34.96, "shipped"]], [[34.96, 35.32, "after"], [35.32, 35.84, "goes"], [35.84, 36.04, "to"], [36.04, 36.42, "Cuba's"], [36.42, 37.1, "interventors."]], [[37.52, 37.86, "And"], [37.86, 37.96, "the"], [37.96, 38.12, "names?"]], [[38.64, 38.86, "In"], [38.86, 38.96, "the"], [38.96, 39.48, "US,"]], [[39.48, 39.92, "Cuba's"], [39.92, 40.32, "takeover"], [40.32, 40.86, "didn't"], [40.86, 41.06, "take"]], [[41.06, 41.26, "them"], [41.26, 41.44, "from"], [41.44, 41.54, "the"], [41.54, 41.76, "exiled"], [41.76, 42.22, "owners."]], [[42.96, 43.18, "The"], [43.18, 43.38, "twist:"]], [[43.9, 43.9, "the"], [43.9, 44.2, "owners"], [44.2, 44.5, "win"], [44.5, 44.78, "no"], [44.78, 45.1, "damages."]], [[45.78, 45.84, "The"], [45.84, 45.98, "court"], [45.98, 46.3, "found"], [46.3, 46.58, "they"]], [[46.58, 46.92, "couldn't"], [46.92, 47.16, "show"], [47.16, 47.38, "any"], [47.38, 47.68, "loss."]], [[48.74, 48.74, "Then"], [48.74, 48.98, "the"], [48.98, 49.12, "money"], [49.12, 49.34, "fight"]], [[49.34, 49.7, "reaches"], [49.7, 49.88, "the"], [49.88, 50.1, "Supreme"], [50.1, 50.52, "Court."]], [[51.04, 51.12, "In"], [51.12, 51.6, "1976,"]], [[52.28, 52.46, "five"], [52.46, 52.68, "votes"], [52.68, 52.9, "to"], [52.9, 53.12, "four:"]], [[53.12, 53.94, "refusing"], [53.94, 54.12, "to"], [54.12, 54.38, "repay"], [54.38, 54.68, "an"]], [[54.68, 55.14, "importer's"], [55.14, 55.46, "mistaken"], [55.46, 55.88, "payments"], [55.88, 56.32, "was"]], [[56.32, 56.72, "not"], [56.72, 56.9, "an"], [56.9, 57.12, "act"], [57.12, 57.28, "of"], [57.28, 57.5, "state,"]], [[57.92, 58.06, "so"], [58.06, 58.18, "the"], [58.18, 58.6, "importer"], [58.6, 58.9, "could"], [58.9, 59.28, "collect."]], [[59.94, 60.28, "Cuba"], [60.28, 60.56, "kept"], [60.56, 60.74, "the"], [60.74, 61.04, "factories,"]], [[61.46, 61.58, "but"], [61.58, 61.76, "in"], [61.76, 61.86, "the"], [61.86, 62.48, "US,"]], [[62.48, 62.52, "the"], [62.52, 62.82, "takeover"], [62.82, 63.36, "never"], [63.36, 63.7, "reached"]], [[63.7, 63.9, "the"], [63.9, 64.1, "names."]], [[64.88, 65.04, "Next:"]], [[65.32, 65.5, "the"], [65.5, 65.72, "name"], [65.72, 65.94, "that"], [65.94, 66.08, "was"]], [[66.08, 66.42, "never"], [66.42, 66.74, "seized."]], [[67.5, 67.5, "Link in"], [67.5, 67.66, "bio."]]];const P={"havana": [408, 343], "santo": [896, 539], "danli": [244, 720], "esteli": [252, 757], "kingston": [626, 559], "tampa": [405, 134], "miami": [493, 230], "vuelta": [354, 377]};const TOTAL=70.0;
+const E=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const B=x=>{if(x<=0)return 0;if(x>=1)return 1;const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);const lerp=(a,b,x)=>a+(b-a)*x;
+const KEYW=['1960','1972','1976','15,','New','York','Supreme','before','after','names?','money?','twist?','five','four'];
+function caption(t,stop){const capEl=$('cap');let ci=-1;for(let i=0;i<CH.length;i++)if(t>=CH[i][0][0]-0.05)ci=i;
+ if(ci>=0&&t<CH[ci][CH[ci].length-1][1]+0.8&&t<stop){capEl.innerHTML=CH[ci].map(([s,e,w])=>{const on=t>=s-0.03;const k=KEYW.some(x=>w.replace(/[.,?:]/g,'').startsWith(x.replace('?','')));const p=B((t-s+0.03)/.22);return `<span class="${k?'k':''}" style="opacity:${on?1:0};transform:scale(${on?(0.6+0.4*Math.min(p,1)):1})">${w}</span>`}).join(' ');}else capEl.innerHTML='';}
+function show(id,a,b,t){const e=$(id);const o=(t>=a&&t<b)?Math.min(E((t-a)/.3),1-E((t-(b-.25))/.25)):0;e.style.opacity=o;return o;}
+function kb(id,a,b,t,z0,z1,x0,x1){const e=document.querySelector('#'+id+' img.bg');if(!e)return;const p=Math.max(0,Math.min(1,(t-a)/(b-a)));e.style.transform=`scale(${lerp(z0,z1,p)}) translateX(${lerp(x0,x1,p)}px)`;}
+function pop(id,t0,t,mode,base){const e=$(id);const p=B((t-t0)/.35);const pc=Math.min(Math.max(p,0),1);e.style.opacity=Math.min(1,Math.max(0,p*1.6));
+ if(mode=='stamp')e.style.transform=`rotate(-12deg) scale(${2.4-1.4*pc})`;else if(mode=='slam')e.style.transform=`scale(${1.6-0.6*pc})`;else e.style.transform=(base||'')+` translateY(${(1-pc)*60}px) rotate(${(1-pc)*-3}deg)`;}
+function hide(...ids){ids.forEach(i=>$(i).style.opacity=0)}
+
+const SRC=[[3.1,10.4,'Sources: Menendez (S.D.N.Y. 1972); 425 U.S. 682 (1976)'],[10.4,48.6,'Source: Menendez v. Faber, Coe & Gregg (S.D.N.Y. 1972)'],[48.6,59.8,'Source: US Supreme Court, 425 U.S. 682 (1976)'],[59.8,64.7,'Sources: 345 F.Supp. 527 (1972); 425 U.S. 682 (1976)']];
+function render(t){
+ if(t<3.1)$('cap').innerHTML='';else caption(t,64.7);const light=(t>=37.4&&t<48.6);const c=$('cap');c.style.color=light?'var(--ink)':'';c.style.textShadow=light?'none':'';$('brand').classList.toggle('lt',light);$('src').classList.toggle('lt',light);
+ const s=SRC.find(([a,b])=>t>=a&&t<b);$('src').textContent=s?s[2]:'';
+ show('s1',-1,3.1,t);kb('s1',0,3.1,t,1.12,1.04,0,0);pop('kk',0.1,t);pop('ttl',1.0,t,'slam');
+ show('s2',3.1,10.4,t);kb('s2',3.1,10.4,t,1.04,1.18,0,-30);pop('st60',3.2,t,'stamp');pop('bn5',6.1,t,'slam');pop('iv',8.8,t);
+ show('s3',10.4,13.8,t);kb('s3',10.4,13.8,t,1.15,1.05,0,20);pop('bnw',10.6,t,'slam');
+ show('s4',13.8,21.8,t);kb('s4',13.8,21.8,t,1.03,1.16,20,-20);pop('tk1',14.0,t);pop('qa',17.8,t,'slam');pop('qb',20.2,t,'slam');
+ show('s5',21.8,26.2,t);kb('s5',21.8,26.2,t,1.02,1.12,0,-20);pop('n3',21.9,t,'slam');pop('vs',24.2,t);
+ show('s6',26.2,37.4,t);kb('s6',26.2,37.4,t,1.05,1.15,-20,20);pop('st72',26.5,t,'stamp');pop('la',29.7,t);pop('lb',33.9,t);
+ show('s7',37.4,48.6,t);pop('nm',37.5,t);pop('tw',42.9,t,'slam');pop('nl',45.7,t);
+ show('s8',48.6,59.8,t);kb('s8',48.6,59.8,t,1.02,1.14,0,-20);pop('st76',51.0,t,'stamp');pop('v54',52.2,t,'slam');pop('rp',53.1,t);
+ show('s9',59.8,64.7,t);pop('fin',59.9,t);
+ $('end').style.opacity=E((t-64.7)/.35);
+}
+render(0);
+</script></body></html>
