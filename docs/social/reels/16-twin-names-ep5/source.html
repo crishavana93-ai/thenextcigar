@@ -1,0 +1,139 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Abril';src:url(fonts/abril.woff2) format('woff2')}
+@font-face{font-family:'Bebas';src:url(fonts/bebas.woff2) format('woff2')}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+:root{--cream:#F1E6CF;--red:#B8322A;--navy:#1E2A44;--mus:#E3A23B;--ink:#1B1612}
+html,body{margin:0;background:var(--cream)}
+#st{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--cream);font-family:'Bebas',sans-serif;color:var(--ink)}
+.paper{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .15  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>")}
+.frame{position:absolute;inset:26px;border:6px solid var(--ink);z-index:39;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0;overflow:hidden}
+.scene img.bg{position:absolute;left:0;top:-8px;width:1080px;height:1935px;object-fit:cover}
+.shade{position:absolute;left:0;right:0;top:0;height:560px;background:linear-gradient(180deg,rgba(20,16,12,.78),rgba(20,16,12,0))}
+#brand{position:absolute;left:70px;top:78px;font-size:32px;letter-spacing:.2em;color:var(--cream);z-index:45;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#brand b{color:var(--mus);font-weight:400}
+#ep{position:absolute;right:70px;top:66px;z-index:45;background:var(--red);color:var(--cream);font-size:34px;letter-spacing:.12em;padding:6px 18px 2px}
+#cap{position:absolute;left:60px;right:60px;top:170px;text-align:center;font-size:96px;line-height:.98;letter-spacing:.01em;z-index:45;color:var(--cream);text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.45);text-transform:uppercase}
+#cap span{display:inline-block;margin:0 .12em}
+#cap span.k{color:var(--mus)}
+#src{position:absolute;left:70px;right:70px;bottom:70px;font-family:'Plex';font-size:21px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);z-index:45;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.ticket{position:absolute;left:80px;right:80px;top:1180px;background:var(--cream);color:var(--ink);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);display:flex;opacity:0}
+.ticket .l{flex:1;padding:24px 30px}
+.ticket .r{width:190px;border-left:5px dashed var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--red);color:var(--cream)}
+.ticket .r b{font-family:'Abril';font-size:64px;line-height:1;font-weight:400}
+.ticket .r i{font-style:normal;font-size:28px;letter-spacing:.12em}
+.ticket .kick{font-size:28px;letter-spacing:.2em;color:var(--red)}
+.ticket .who{font-family:'Abril';font-size:56px;line-height:1.02;margin:6px 0 8px}
+.ticket .route{font-size:42px;letter-spacing:.06em}
+.ticket .names{font-family:'Plex';font-size:26px;margin-top:10px;color:#5a4b3a}
+.stamp{position:absolute;width:250px;height:250px;border:10px solid var(--red);border-radius:50%;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:96px;line-height:.9;opacity:0;background:rgba(241,230,207,.92);z-index:30}
+.stamp small{font-size:26px;letter-spacing:.14em}
+.banner{position:absolute;left:0;right:0;background:var(--red);color:var(--cream);font-size:64px;letter-spacing:.06em;text-align:center;padding:18px 0 10px;opacity:0;border-top:6px solid var(--ink);border-bottom:6px solid var(--ink)}
+.case{position:absolute;left:90px;right:90px;top:1060px;background:var(--cream);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);padding:34px 40px;opacity:0;font-family:'Newsreader',serif;color:var(--ink)}
+.case h3{margin:0;font-family:'Bebas';font-weight:400;font-size:58px;letter-spacing:.04em;line-height:1}
+.case .sub{font-family:'Plex';font-size:24px;color:#6b5a46;margin:8px 0 18px;letter-spacing:.04em}
+.case p{margin:0;font-size:42px;line-height:1.3}
+.case u{text-decoration:none;background:linear-gradient(transparent 80%,var(--mus) 80%);background-size:0% 100%;background-repeat:no-repeat}
+#mapwrap{position:absolute;left:0;top:470px;width:1080px;height:980px}
+#mapwrap svg{width:1080px;height:980px;overflow:visible}
+.mapbg{position:absolute;inset:0;background:var(--navy)}
+.mapbg:after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(241,230,207,.10) 2px,transparent 2.5px);background-size:16px 16px}
+.land{fill:#E9DCC0;stroke:var(--ink);stroke-width:1.4}
+#cuba{fill:var(--red);stroke:var(--ink);stroke-width:2}
+.arrow{fill:none;stroke:var(--mus);stroke-width:5;stroke-linecap:round;stroke-dasharray:1 0}
+.lbl{font-family:'Bebas';font-size:26px;fill:var(--cream);letter-spacing:.06em}
+.duo{position:absolute;left:70px;right:70px;top:1140px;display:flex;gap:28px;opacity:0}
+.duo div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:22px 20px;text-align:center}
+.duo b{display:block;font-family:'Abril';font-weight:400;font-size:62px;color:var(--red)}
+.duo span{font-size:36px;letter-spacing:.04em}
+.duo em{display:block;font-style:normal;font-family:'Plex';font-size:22px;color:#5a4b3a;margin-top:8px}
+.big{position:absolute;left:0;right:0;text-align:center;font-family:'Abril';color:var(--red);opacity:0}
+.tagc{position:absolute;width:400px;height:540px;background:var(--cream);border:6px solid var(--ink);box-shadow:14px 14px 0 var(--ink);opacity:0;text-align:center}
+.tagc .t1{margin-top:60px;font-size:34px;letter-spacing:.2em;color:var(--red)}
+.tagc .t2{margin-top:30px;font-family:'Abril';font-size:84px;line-height:1}
+.tagc .t3{position:absolute;left:0;right:0;bottom:40px;font-size:40px;letter-spacing:.12em}
+.tagc .bar{margin:28px auto 0;width:240px;height:10px;background:var(--ink)}
+#end{position:absolute;inset:0;background:var(--red);opacity:0;z-index:35}
+#end .h{position:absolute;left:80px;right:80px;top:520px;font-family:'Abril';font-size:150px;line-height:.95;color:var(--cream)}
+#end .s{position:absolute;left:80px;right:80px;top:870px;font-family:'Newsreader',serif;font-style:italic;font-size:62px;line-height:1.15;color:var(--mus)}
+#end .l{position:absolute;left:80px;top:1130px;font-size:72px;letter-spacing:.08em;color:var(--cream);border:5px solid var(--cream);padding:10px 26px 2px}
+#end .n{position:absolute;left:80px;right:80px;top:1320px;font-size:40px;letter-spacing:.12em;color:var(--cream)}
+#end .d{position:absolute;left:80px;right:80px;top:1500px;font-family:'Plex';font-size:24px;color:var(--cream);opacity:.85}
+#brand.lt{color:var(--ink);text-shadow:none}#brand.lt b{color:var(--red)}#src.lt{color:var(--ink);text-shadow:none}#end .s{color:var(--cream)!important}#src{background:rgba(20,16,12,.6);padding:8px 14px;left:90px;right:90px;border-radius:4px}#src:empty{display:none}#src.lt{background:none}.q{position:absolute;left:110px;right:110px;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);text-align:center;font-size:70px;padding:22px 20px 12px;opacity:0;line-height:1.05}.q.r{background:var(--red);color:var(--cream)}.led{position:absolute;left:70px;right:70px;top:1020px;display:flex;gap:24px}.led>div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:24px 22px;opacity:0}.led .k{font-size:30px;letter-spacing:.14em;color:var(--red)}.led .h{font-family:Abril;font-size:54px;line-height:1.02;margin:10px 0}.led .w{font-size:36px;letter-spacing:.03em}.bar{position:absolute;left:90px;right:90px;height:120px;display:flex;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);opacity:0}.bar>div{display:flex;flex-direction:column;justify-content:center;padding:0 20px;font-size:34px;letter-spacing:.06em;color:var(--cream)}.bar b{font-family:Abril;font-size:52px;font-weight:400}.memo{position:absolute;left:120px;right:120px;background:#F4EEDD;border:3px solid var(--ink);padding:40px 46px;box-shadow:12px 12px 0 var(--ink);opacity:0;font-family:Courier,monospace;color:var(--ink)}.memo .m1{font-size:30px;letter-spacing:.1em;color:#6a5a48}.memo .m2{font-size:70px;margin:20px 0 10px;font-weight:700}.memo .m3{font-size:26px;color:#6a5a48}</style></head><body><div id="st">
+
+<div class="scene" id="s1"><img class="bg" src="img/boardnight.jpg"><div class="shade" style="height:1300px;background:linear-gradient(180deg,rgba(20,16,12,.92),rgba(20,16,12,.8) 60%,rgba(20,16,12,0))"></div>
+ <div class="big" id="kk" style="top:470px;font-family:Bebas;font-size:70px;letter-spacing:.06em;color:var(--cream)">TWIN NAMES · PART 5</div>
+ <div class="big" id="ttl" style="top:580px;font-size:136px;line-height:.98;color:var(--cream);text-shadow:6px 6px 0 var(--ink)">Who owns<br>the twin<br><span style="color:var(--mus)">names</span> today?</div></div>
+<div class="scene" id="s2"><img class="bg" src="img/harbour.jpg"><div class="shade"></div>
+ <div class="case" id="hab" style="top:900px;text-align:center"><h3 style="font-size:72px">HABANOS S.A.</h3><p style="margin-top:12px;font-size:44px">Sells Cuba's premium cigars worldwide</p></div>
+ <div class="bar" id="hbar" style="top:1250px"><div style="flex:1;background:var(--navy)"><b>50%</b>CUBAN STATE</div><div style="flex:1;background:var(--red)"><b>50%</b>ALLIED CIGAR</div></div></div>
+<div class="scene" id="s2b"><img class="bg" src="img/port.jpg"><div class="shade"></div>
+ <div class="banner" id="three" style="top:600px">THE OTHER HALF: THREE PRIVATE OWNERS</div>
+ <div class="case" id="o1" style="top:820px"><div class="sub" style="margin:0">c.2000</div><h3>ALTADIS</h3><p style="font-size:38px">Spanish-French tobacco group</p></div>
+ <div class="case" id="o2" style="top:1060px"><div class="sub" style="margin:0">2008</div><h3>IMPERIAL TOBACCO</h3><p style="font-size:38px">Britain; buys Altadis</p></div>
+ <div class="case" id="o3" style="top:1300px"><div class="sub" style="margin:0">2020</div><h3>ALLIED CIGAR</h3><p style="font-size:38px">Buys the Habanos half from Imperial</p></div></div>
+<div class="scene" id="s3"><img class="bg" src="img/boardnight.jpg" style="filter:brightness(.8)"><div class="shade"></div>
+ <div class="k2" id="alh" style="position:absolute;left:90px;top:848px;font-size:40px;letter-spacing:.12em;color:var(--cream);opacity:0;text-shadow:0 2px 8px rgba(0,0,0,.7)">WHO OWNS ALLIED CIGAR</div>
+ <div class="bar" id="abar" style="top:930px"><div style="flex:57.1;background:var(--red)"><b>57.1%</b>CHEN ZHI</div><div style="flex:42.9;background:var(--navy)"><b>42.9%</b>PARTNER</div></div>
+ <div id="via" style="position:absolute;left:90px;top:1088px;font-size:30px;letter-spacing:.12em;color:var(--cream);opacity:0;text-shadow:0 2px 8px rgba(0,0,0,.7)">CHEN ZHI'S SHARE IS HELD THROUGH HIS COMPANIES</div>
+ <div class="case" id="pg" style="top:1180px;text-align:center"><h3>CHEN ZHI</h3><div class="sub" style="margin:8px 0 0">FOUNDER, PRINCE GROUP · CAMBODIA</div></div></div>
+<div class="scene" id="s3b"><img class="bg" src="img/boardnight.jpg" style="filter:brightness(.6)"><div class="shade"></div>
+ <div class="led" style="top:560px"><div id="sx"><div class="k">OCT 2025</div><div class="h">Sanctioned</div><div class="w">by the US and the UK</div></div><div id="ch"><div class="k">OCT 2025</div><div class="h">Charged</div><div class="w">by US prosecutors</div></div></div>
+ <div class="led" style="top:860px"><div id="eu"><div class="k">JUL 2026</div><div class="h">EU sanctions</div><div class="w">follow</div></div><div id="cu"><div class="k">NOW</div><div class="h">In custody</div><div class="w">in China, since Jan 2026</div></div></div>
+ <div class="banner" id="nac" style="top:1170px;font-size:40px;background:var(--ink)">HE HAS DENIED WRONGDOING<br><span style="font-size:32px">THE CIGAR COMPANIES ARE NOT ACCUSED OF ANY CRIME</span></div>
+ <div class="q" id="bvi" style="top:1400px;font-size:46px">BVI COURT, OCT 2026: RULED FOR HIM<br><span style="font-size:34px">ON CONTROL OF HIS HOLDING COMPANIES · NOT SETTLED</span></div></div>
+<div class="scene" id="s4"><img class="bg" src="img/straits.jpg"><div class="shade"></div>
+ <div class="case" id="alt" style="top:820px"><h3>ALTADIS USA</h3><p style="margin-top:12px;font-size:42px">US Montecristo, H. Upmann, Romeo y Julieta</p></div>
+ <div class="case" id="gen" style="top:1180px"><h3>STG · DENMARK</h3><div class="sub" style="margin:6px 0 0">THROUGH GENERAL CIGAR AND FORGED</div><p style="margin-top:12px;font-size:42px">US Partagás, Hoyo de Monterrey, Punch</p></div>
+ <div class="q r" id="cohc" style="top:1470px;font-size:44px">THE US COHIBA: SOLD BY STG (FORGED)<br><span style="font-size:30px">A US TRADEMARK BOARD AND A FEDERAL COURT RULED TO CANCEL ITS US TRADEMARK REGISTRATIONS · GENERAL CIGAR IS APPEALING</span></div></div>
+<div class="scene" id="s5"><img class="bg" src="img/boardday.jpg"><div class="shade"></div>
+ <div class="q" id="same" style="top:1520px;font-size:52px">SAID TO BE THE SAME<br>INVESTORS · HALFWHEEL</div>
+ <div class="q r" id="tw" style="top:560px">THE TWIST</div>
+ <div class="case" id="one" style="top:900px;text-align:center"><h3 style="font-size:66px">c.2000–2020</h3><div class="sub" style="margin:6px 0 0">ALTADIS, THEN IMPERIAL (FROM 2008)</div><p style="margin-top:12px;font-size:44px">Half of Habanos and the US Montecristo: one group on both sides of the water</p></div>
+ <div class="banner" id="spl" style="top:1350px">2020: TWO DEALS, OWNERS NOT DISCLOSED</div></div>
+<div class="scene" id="s6"><img class="bg" src="img/straits2.jpg"><div class="shade"></div>
+ <div class="q" id="sold" style="top:600px;font-size:56px">THE US SIDE: SINCE SOLD ON<br><span style="font-size:34px">HALFWHEEL</span></div>
+ <div class="case" id="tie" style="top:880px;text-align:center"><h3>ALLIED'S PARTNER HAS TIES<br>TO THE US SIDE'S OWNER</h3><div class="sub" style="margin:10px 0 0">REPORTED BY HALFWHEEL</div></div>
+ </div>
+<div class="scene" id="s7"><img class="bg" src="img/street-b.jpg"><div class="shade"></div>
+ <div class="stamp" id="st66" style="left:700px;top:560px">66<small>YEARS</small></div>
+ <div class="banner" id="still" style="top:1150px">STILL SPLIT</div></div>
+
+<div id="end"><div class="h" style="font-size:120px">That's Twin Names</div><div class="s" style="top:900px">Five parts: the seizures, the exiles, the court cases, Cohiba and today's owners. The full story is on our site.</div><div class="l" style="top:1250px">LINK IN BIO</div><div class="n" style="top:1400px">TWIN NAMES · PART 5 OF 5</div><div class="d" style="top:1520px">History, not advice. We don't sell tobacco. Voice and illustrations made with AI (Google Gemini TTS, Google Flow).</div></div>
+<div id="brand"><b>The Next Cigar</b> · Twin Names</div>
+<div id="cap"></div><div id="src"></div>
+<div class="frame"></div><div class="paper"></div>
+</div>
+<script>
+const CH=[[[0.0, 0.38, "Part"], [0.38, 0.76, "five."]], [[1.28, 1.42, "Who"], [1.42, 1.76, "owns"], [1.76, 2.02, "the"], [2.02, 2.2, "twin"]], [[2.2, 2.5, "names"], [2.5, 2.9, "today?"]], [[3.92, 3.92, "Start"], [3.92, 4.16, "in"], [4.16, 4.46, "Havana."]], [[5.18, 5.5, "Every"], [5.5, 5.82, "Cuban"], [5.82, 6.4, "Cohiba,"]], [[6.74, 7.36, "Montecristo"], [7.42, 7.6, "and"], [7.6, 8.06, "Partag\u00e1s"], [8.06, 8.5, "is"]], [[8.5, 8.78, "sold"], [8.78, 9.32, "worldwide"], [9.32, 9.62, "through"], [9.62, 9.9, "one"], [9.9, 10.28, "company,"]], [[10.62, 10.86, "Habanos."]], [[11.64, 11.76, "Half"], [11.76, 11.92, "of"], [11.92, 12.06, "it"], [12.06, 12.36, "belongs"]], [[12.36, 12.6, "to"], [12.6, 12.7, "the"], [12.7, 12.9, "Cuban"], [12.9, 13.18, "state."]], [[13.88, 14.04, "The"], [14.04, 14.22, "other"], [14.22, 14.48, "half"], [14.48, 14.7, "has"]], [[14.7, 14.92, "had"], [14.92, 15.24, "three"], [15.24, 15.62, "private"], [15.62, 15.92, "owners"]], [[15.92, 16.2, "since"], [16.2, 16.7, "2000."]], [[17.54, 17.72, "Around"], [17.72, 18.12, "2000,"]], [[18.42, 18.48, "it"], [18.48, 18.68, "went"], [18.68, 18.92, "to"], [18.92, 19.46, "Altadis,"]], [[19.68, 19.78, "the"], [19.78, 20.3, "Spanish-French"], [20.3, 20.66, "tobacco"], [20.66, 21.0, "group."]], [[21.6, 21.78, "In"], [21.78, 22.4, "2008,"]], [[22.82, 23.12, "Britain's"], [23.12, 23.46, "Imperial"], [23.46, 24.02, "Tobacco"], [24.02, 24.32, "bought"], [24.32, 24.92, "Altadis."]], [[25.44, 25.54, "And"], [25.54, 25.64, "in"], [25.64, 26.26, "2020,"]], [[26.66, 26.7, "Imperial"], [26.7, 27.16, "sold"], [27.16, 27.42, "that"], [27.42, 27.66, "half"]], [[27.66, 27.86, "to"], [27.86, 27.98, "a"], [27.98, 28.12, "firm"], [28.12, 28.48, "called"]], [[28.48, 28.88, "Allied"], [28.88, 29.34, "Cigar."]], [[30.08, 30.64, "Allied's"], [30.64, 30.8, "biggest"], [30.8, 31.16, "owner,"]], [[31.32, 31.5, "through"], [31.5, 31.84, "companies"], [31.84, 32.02, "he"], [32.02, 32.26, "owns,"]], [[32.58, 32.94, "is"], [32.94, 33.02, "Chen"], [33.02, 33.28, "Zhi,"]], [[33.68, 33.84, "founder"], [33.84, 34.18, "of"], [34.18, 34.68, "Cambodia's"], [34.68, 34.84, "Prince"], [34.84, 35.1, "Group."]], [[35.64, 35.86, "In"], [35.86, 36.2, "October"], [36.2, 36.92, "2025,"]], [[37.5, 37.58, "the"], [37.58, 37.9, "US"], [37.9, 38.1, "and"], [38.1, 38.22, "the"]], [[38.22, 38.52, "UK"], [38.52, 38.92, "sanctioned"], [38.92, 39.14, "him,"]], [[39.42, 39.56, "and"], [39.56, 39.8, "US"], [39.8, 40.22, "prosecutors"], [40.22, 40.66, "charged"], [40.66, 40.9, "him."]], [[41.46, 41.62, "The"], [41.62, 41.86, "EU"], [41.86, 42.2, "followed"], [42.2, 42.52, "in"]], [[42.52, 42.8, "July"], [42.8, 43.56, "2026."]], [[44.2, 44.34, "He"], [44.34, 44.44, "is"], [44.44, 44.66, "now"], [44.66, 44.86, "in"]], [[44.86, 45.12, "custody"], [45.12, 45.48, "in"], [45.48, 45.76, "China."]], [[46.32, 46.58, "He"], [46.58, 46.76, "has"], [46.76, 47.14, "denied"], [47.14, 47.52, "wrongdoing,"]], [[47.84, 48.0, "and"], [48.0, 48.14, "the"], [48.14, 48.36, "cigar"], [48.36, 48.7, "companies"]], [[48.7, 48.88, "have"], [48.88, 49.08, "not"], [49.08, 49.24, "been"], [49.24, 49.5, "accused"]], [[49.5, 49.66, "of"], [49.66, 49.82, "any"], [49.82, 50.1, "crime."]], [[51.1, 51.3, "In"], [51.3, 51.78, "October,"]], [[52.46, 52.56, "a"], [52.56, 52.82, "court"], [52.82, 53.08, "in"], [53.08, 53.2, "the"]], [[53.2, 53.6, "British"], [53.6, 54.06, "Virgin"], [54.06, 54.6, "Islands"], [54.6, 55.24, "ruled"]], [[55.24, 55.64, "for"], [55.64, 56.04, "him"], [56.04, 56.56, "over"], [56.56, 57.04, "control"]], [[57.04, 57.28, "of"], [57.28, 57.44, "his"], [57.44, 57.8, "holding"], [57.8, 58.28, "companies"], [58.28, 58.74, "there."]], [[59.44, 59.66, "That"], [59.66, 59.96, "case"], [59.96, 60.64, "isn't"], [60.64, 61.06, "over."]], [[62.26, 62.38, "Across"], [62.38, 62.62, "the"], [62.62, 62.92, "water,"]], [[63.4, 63.5, "the"], [63.5, 63.96, "American"], [63.96, 64.34, "twins"], [64.34, 64.92, "belong"]], [[64.92, 65.38, "to"], [65.38, 65.78, "others."]], [[66.6, 67.24, "Montecristo,"]], [[67.72, 68.3, "H. Upmann,"]], [[68.46, 68.62, "and"], [68.62, 69.04, "Romeo"], [69.04, 69.86, "y Julieta"], [69.86, 70.24, "are"]], [[70.24, 70.54, "sold"], [70.54, 70.84, "by"], [70.84, 71.42, "Altadis"], [71.42, 72.0, "USA."]], [[72.76, 73.46, "Partag\u00e1s,"]], [[73.96, 74.08, "Hoyo"], [74.08, 74.28, "de"], [74.28, 74.72, "Monterrey,"]], [[75.34, 75.5, "and"], [75.5, 75.8, "Punch"], [75.8, 76.4, "are"], [76.4, 76.7, "owned"]], [[76.7, 76.94, "by"], [76.94, 77.54, "Scandinavian"], [77.54, 78.1, "Tobacco"], [78.1, 78.58, "Group,"]], [[78.96, 79.06, "the"], [79.06, 79.28, "Danish"], [79.28, 79.66, "company,"]], [[80.1, 80.26, "which"], [80.26, 80.6, "also"], [80.6, 80.92, "sells"], [80.92, 81.18, "the"]], [[81.18, 81.68, "American"], [81.68, 82.26, "Cohiba."]], [[82.74, 83.34, "A"], [83.34, 83.68, "US"], [83.68, 84.14, "trademark"], [84.14, 84.58, "board"]], [[84.58, 84.8, "and"], [84.8, 84.96, "a"], [84.96, 85.14, "federal"], [85.14, 85.6, "court"]], [[85.6, 86.08, "have"], [86.08, 86.32, "ruled"], [86.32, 86.56, "to"], [86.56, 86.94, "cancel"]], [[86.94, 87.24, "that"], [87.24, 87.68, "Cohiba"], [87.68, 88.14, "trademark."]], [[88.8, 89.2, "General"], [89.2, 89.66, "Cigar,"]], [[90.1, 90.24, "part"], [90.24, 90.36, "of"], [90.36, 90.46, "the"], [90.46, 90.66, "same"], [90.66, 90.92, "group,"]], [[91.24, 91.44, "is"], [91.44, 91.88, "appealing."]], [[92.66, 93.04, "Here's"], [93.04, 93.16, "the"], [93.16, 93.42, "twist."]], [[94.06, 94.18, "For"], [94.18, 94.34, "about"], [94.34, 94.7, "twenty"], [94.7, 95.06, "years"]], [[95.06, 95.46, "until"], [95.46, 95.96, "2020,"]], [[96.48, 96.72, "one"], [96.72, 96.92, "group"], [96.92, 97.16, "owned"], [97.16, 97.48, "half"]], [[97.48, 97.68, "of"], [97.68, 98.02, "Habanos"], [98.02, 98.34, "and"], [98.34, 98.46, "the"]], [[98.46, 98.86, "American"], [98.86, 99.44, "Montecristo"], [99.44, 99.72, "too."]], [[100.32, 100.56, "One"], [100.56, 100.8, "group"], [100.8, 101.14, "on"], [101.14, 101.32, "both"]], [[101.32, 101.62, "sides"], [101.62, 101.78, "of"], [101.78, 101.88, "the"], [101.88, 102.1, "water."]], [[102.82, 103.1, "Then"], [103.1, 103.3, "it"], [103.3, 103.48, "was"], [103.48, 103.7, "sold"]], [[103.7, 103.94, "in"], [103.94, 104.1, "two"], [104.1, 104.36, "separate"], [104.36, 104.7, "deals,"]], [[105.02, 105.2, "to"], [105.2, 105.46, "holding"], [105.46, 105.82, "companies"], [105.82, 106.06, "whose"]], [[106.06, 106.38, "owners"], [106.38, 106.7, "weren't"], [106.7, 107.14, "disclosed."]], [[107.9, 108.2, "Halfwheel"], [108.2, 108.58, "reported"], [108.58, 108.8, "the"], [108.8, 109.02, "same"]], [[109.02, 109.44, "investors"], [109.44, 109.7, "were"], [109.7, 109.88, "said"], [109.88, 110.0, "to"]], [[110.0, 110.1, "be"], [110.1, 110.36, "behind"], [110.36, 110.64, "both,"]], [[110.96, 111.16, "and"], [111.16, 111.26, "that"], [111.26, 111.38, "the"], [111.38, 111.72, "American"]], [[111.72, 111.98, "side"], [111.98, 112.22, "has"], [112.22, 112.42, "since"], [112.42, 112.64, "been"]], [[112.64, 112.82, "sold"], [112.82, 113.12, "on."]], [[113.9, 114.28, "Today,"]], [[114.5, 114.68, "according"], [114.68, 114.88, "to"], [114.88, 115.24, "halfwheel,"]], [[115.66, 115.7, "the"], [115.7, 115.9, "partner"], [115.9, 116.12, "that"], [116.12, 116.36, "owns"]], [[116.36, 116.54, "the"], [116.54, 116.78, "rest"], [116.78, 116.92, "of"], [116.92, 117.22, "Allied"]], [[117.22, 117.52, "has"], [117.52, 117.8, "ties"], [117.8, 118.02, "to"], [118.02, 118.14, "the"]], [[118.14, 118.28, "firm"], [118.28, 118.44, "that"], [118.44, 118.6, "owns"], [118.6, 118.76, "the"]], [[118.76, 119.12, "American"], [119.12, 119.44, "side."]], [[120.28, 120.74, "Sixty-six"], [120.74, 121.24, "years"], [121.24, 121.6, "after"], [121.6, 121.78, "the"], [121.78, 122.0, "seizures,"]], [[122.42, 122.52, "the"], [122.52, 122.74, "names"], [122.74, 122.94, "are"], [122.94, 123.24, "still"], [123.24, 123.6, "split,"]], [[124.18, 124.4, "and"], [124.4, 124.5, "the"], [124.5, 124.78, "story"], [124.78, 125.12, "isn't"], [125.12, 125.36, "over."]], [[126.06, 126.4, "That's"], [126.4, 126.7, "Twin"], [126.7, 127.04, "Names."]], [[127.62, 127.62, "The"], [127.62, 127.8, "whole"], [127.8, 128.02, "story"], [128.02, 128.2, "is"]], [[128.2, 128.3, "on"], [128.3, 128.42, "our"], [128.42, 128.64, "site."]], [[129.12, 129.24, "Link in"], [129.24, 129.46, "bio."]]];const P={"havana": [408, 343], "santo": [896, 539], "danli": [244, 720], "esteli": [252, 757], "kingston": [626, 559], "tampa": [405, 134], "miami": [493, 230], "vuelta": [354, 377]};const TOTAL=131.5;
+const E=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const B=x=>{if(x<=0)return 0;if(x>=1)return 1;const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);const lerp=(a,b,x)=>a+(b-a)*x;
+const KEYW=['1960','1966','1968','1977','1981','1982','1929','1997','2005','2020','2022','2025','2026','Cohiba','Habanos','Allied','twist','Sixty'];
+function caption(t,stop){const capEl=$('cap');let ci=-1;for(let i=0;i<CH.length;i++)if(t>=CH[i][0][0]-0.05)ci=i;
+ if(ci>=0&&t<CH[ci][CH[ci].length-1][1]+0.8&&t<stop){capEl.innerHTML=CH[ci].map(([s,e,w])=>{const on=t>=s-0.03;const k=KEYW.some(x=>w.replace(/[.,?:]/g,'').startsWith(x.replace('?','')));const p=B((t-s+0.03)/.22);return `<span class="${k?'k':''}" style="opacity:${on?1:0};transform:scale(${on?(0.6+0.4*Math.min(p,1)):1})">${w}</span>`}).join(' ');}else capEl.innerHTML='';}
+function show(id,a,b,t){const e=$(id);const o=(t>=a&&t<b)?Math.min(E((t-a)/.3),1-E((t-(b-.25))/.25)):0;e.style.opacity=o;return o;}
+function kb(id,a,b,t,z0,z1,x0,x1){const e=document.querySelector('#'+id+' img.bg');if(!e)return;const p=Math.max(0,Math.min(1,(t-a)/(b-a)));e.style.transform=`scale(${lerp(z0,z1,p)}) translateX(${lerp(x0,x1,p)}px)`;}
+function pop(id,t0,t,mode,base){const e=$(id);const p=B((t-t0)/.35);const pc=Math.min(Math.max(p,0),1);e.style.opacity=Math.min(1,Math.max(0,p*1.6));
+ if(mode=='stamp')e.style.transform=`rotate(-12deg) scale(${2.4-1.4*pc})`;else if(mode=='slam')e.style.transform=`scale(${1.6-0.6*pc})`;else e.style.transform=(base||'')+` translateY(${(1-pc)*60}px) rotate(${(1-pc)*-3}deg)`;}
+function hide(...ids){ids.forEach(i=>$(i).style.opacity=0)}
+
+const SRC=[[3.8,13.8,'Sources: Habanos S.A.; Cigar Aficionado (27 Apr 2020)'],[13.8,29.9,'Sources: Cigar Aficionado (27 Apr 2020); Imperial Brands; Altadis'],[29.9,35.5,'Sources: halfwheel (2026); US Dept of Justice (14 Oct 2025)'],[35.5,61.6,'Sources: US Treasury, US DOJ (14 Oct 2025); OCCRP (Jul 2026); AP (8 Jan 2026); halfwheel (Nov 2026)'],[61.6,92.4,'Sources: Cigar Aficionado; Tobacco Reporter (Jan 2026); TTAB (2022); E.D. Va. (2025)'],[92.4,110.9,'Sources: Cigar Aficionado (2020); halfwheel (Dec 2025)'],[110.9,120.0,'Source: halfwheel (Nov 2026)'],[120.0,125.8,'Sources: Twin Names parts 1–4']];
+function render(t){
+ if(t<3.8)$('cap').innerHTML='';else caption(t,125.8);
+ const s=SRC.find(([a,b])=>t>=a&&t<b);$('src').textContent=s?s[2]:'';
+ show('s1',-1,3.8,t);kb('s1',0,3.8,t,1.12,1.04,0,0);pop('kk',0.1,t);pop('ttl',0.9,t,'slam');
+ show('s2',3.8,13.8,t);kb('s2',3.8,13.8,t,1.04,1.16,0,-30);pop('hab',9.9,t,'slam');pop('hbar',11.6,t);
+ show('s2b',13.8,29.9,t);kb('s2b',13.8,29.9,t,1.03,1.16,0,-20);pop('three',14.9,t,'slam');pop('o1',17.5,t);pop('o2',21.6,t);pop('o3',25.4,t);
+ show('s3',29.9,35.5,t);kb('s3',29.9,35.5,t,1.03,1.1,0,-20);pop('alh',30.1,t);pop('abar',30.8,t,'slam');pop('via',31.3,t);pop('pg',33.7,t);
+ show('s3b',35.5,61.6,t);kb('s3b',35.5,61.6,t,1.03,1.16,0,-20);pop('sx',37.5,t);pop('ch',39.4,t);pop('eu',41.5,t);pop('cu',44.2,t);pop('nac',46.4,t,'slam');pop('bvi',51.1,t);
+ show('s4',61.6,92.4,t);kb('s4',61.6,92.4,t,1.03,1.16,-20,0);pop('alt',66.6,t,'slam');pop('gen',72.8,t,'slam');pop('cohc',82.7,t);
+ show('s5',92.4,110.9,t);kb('s5',92.4,110.9,t,1.02,1.14,0,-20);pop('tw',92.7,t,'slam');pop('one',96.5,t);pop('spl',102.8,t,'slam');pop('same',107.9,t);
+ show('s6',110.9,120.0,t);kb('s6',110.9,120.0,t,1.03,1.14,0,-20);pop('sold',111.0,t,'slam');pop('tie',114.5,t);
+ show('s7',120.0,125.8,t);kb('s7',120.0,125.8,t,1.02,1.12,0,-20);pop('st66',120.3,t,'stamp');pop('still',122.4,t,'slam');
+ $('end').style.opacity=E((t-125.8)/.35);
+}
+render(0);
+</script></body></html>
