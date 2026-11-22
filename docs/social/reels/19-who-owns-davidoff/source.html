@@ -1,0 +1,124 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Abril';src:url(fonts/abril.woff2) format('woff2')}
+@font-face{font-family:'Bebas';src:url(fonts/bebas.woff2) format('woff2')}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+:root{--cream:#F1E6CF;--red:#B8322A;--navy:#1E2A44;--mus:#E3A23B;--ink:#1B1612}
+html,body{margin:0;background:var(--cream)}
+#st{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--cream);font-family:'Bebas',sans-serif;color:var(--ink)}
+.paper{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .15  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>")}
+.frame{position:absolute;inset:26px;border:6px solid var(--ink);z-index:39;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0;overflow:hidden}
+.scene img.bg{position:absolute;left:0;top:-8px;width:1080px;height:1935px;object-fit:cover}
+.shade{position:absolute;left:0;right:0;top:0;height:560px;background:linear-gradient(180deg,rgba(20,16,12,.78),rgba(20,16,12,0))}
+#brand{position:absolute;left:70px;top:78px;font-size:32px;letter-spacing:.2em;color:var(--cream);z-index:45;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#brand b{color:var(--mus);font-weight:400}
+#ep{position:absolute;right:70px;top:66px;z-index:45;background:var(--red);color:var(--cream);font-size:34px;letter-spacing:.12em;padding:6px 18px 2px}
+#cap{position:absolute;left:60px;right:60px;top:170px;text-align:center;font-size:96px;line-height:.98;letter-spacing:.01em;z-index:45;color:var(--cream);text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.45);text-transform:uppercase}
+#cap span{display:inline-block;margin:0 .12em}
+#cap span.k{color:var(--mus)}
+#src{position:absolute;left:70px;right:70px;bottom:70px;font-family:'Plex';font-size:21px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);z-index:45;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.ticket{position:absolute;left:80px;right:80px;top:1180px;background:var(--cream);color:var(--ink);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);display:flex;opacity:0}
+.ticket .l{flex:1;padding:24px 30px}
+.ticket .r{width:190px;border-left:5px dashed var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--red);color:var(--cream)}
+.ticket .r b{font-family:'Abril';font-size:64px;line-height:1;font-weight:400}
+.ticket .r i{font-style:normal;font-size:28px;letter-spacing:.12em}
+.ticket .kick{font-size:28px;letter-spacing:.2em;color:var(--red)}
+.ticket .who{font-family:'Abril';font-size:56px;line-height:1.02;margin:6px 0 8px}
+.ticket .route{font-size:42px;letter-spacing:.06em}
+.ticket .names{font-family:'Plex';font-size:26px;margin-top:10px;color:#5a4b3a}
+.stamp{position:absolute;width:250px;height:250px;border:10px solid var(--red);border-radius:50%;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:96px;line-height:.9;opacity:0;background:rgba(241,230,207,.92);z-index:30}
+.stamp small{font-size:26px;letter-spacing:.14em}
+.banner{position:absolute;left:0;right:0;background:var(--red);color:var(--cream);font-size:64px;letter-spacing:.06em;text-align:center;padding:18px 0 10px;opacity:0;border-top:6px solid var(--ink);border-bottom:6px solid var(--ink)}
+.case{position:absolute;left:90px;right:90px;top:1060px;background:var(--cream);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);padding:34px 40px;opacity:0;font-family:'Newsreader',serif;color:var(--ink)}
+.case h3{margin:0;font-family:'Bebas';font-weight:400;font-size:58px;letter-spacing:.04em;line-height:1}
+.case .sub{font-family:'Plex';font-size:24px;color:#6b5a46;margin:8px 0 18px;letter-spacing:.04em}
+.case p{margin:0;font-size:42px;line-height:1.3}
+.case u{text-decoration:none;background:linear-gradient(transparent 80%,var(--mus) 80%);background-size:0% 100%;background-repeat:no-repeat}
+#mapwrap{position:absolute;left:0;top:470px;width:1080px;height:980px}
+#mapwrap svg{width:1080px;height:980px;overflow:visible}
+.mapbg{position:absolute;inset:0;background:var(--navy)}
+.mapbg:after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(241,230,207,.10) 2px,transparent 2.5px);background-size:16px 16px}
+.land{fill:#E9DCC0;stroke:var(--ink);stroke-width:1.4}
+#cuba{fill:var(--red);stroke:var(--ink);stroke-width:2}
+.arrow{fill:none;stroke:var(--mus);stroke-width:5;stroke-linecap:round;stroke-dasharray:1 0}
+.lbl{font-family:'Bebas';font-size:26px;fill:var(--cream);letter-spacing:.06em}
+.duo{position:absolute;left:70px;right:70px;top:1140px;display:flex;gap:28px;opacity:0}
+.duo div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:22px 20px;text-align:center}
+.duo b{display:block;font-family:'Abril';font-weight:400;font-size:62px;color:var(--red)}
+.duo span{font-size:36px;letter-spacing:.04em}
+.duo em{display:block;font-style:normal;font-family:'Plex';font-size:22px;color:#5a4b3a;margin-top:8px}
+.big{position:absolute;left:0;right:0;text-align:center;font-family:'Abril';color:var(--red);opacity:0}
+.tagc{position:absolute;width:400px;height:540px;background:var(--cream);border:6px solid var(--ink);box-shadow:14px 14px 0 var(--ink);opacity:0;text-align:center}
+.tagc .t1{margin-top:60px;font-size:34px;letter-spacing:.2em;color:var(--red)}
+.tagc .t2{margin-top:30px;font-family:'Abril';font-size:84px;line-height:1}
+.tagc .t3{position:absolute;left:0;right:0;bottom:40px;font-size:40px;letter-spacing:.12em}
+.tagc .bar{margin:28px auto 0;width:240px;height:10px;background:var(--ink)}
+#end{position:absolute;inset:0;background:var(--red);opacity:0;z-index:35}
+#end .h{position:absolute;left:80px;right:80px;top:520px;font-family:'Abril';font-size:150px;line-height:.95;color:var(--cream)}
+#end .s{position:absolute;left:80px;right:80px;top:870px;font-family:'Newsreader',serif;font-style:italic;font-size:62px;line-height:1.15;color:var(--mus)}
+#end .l{position:absolute;left:80px;top:1130px;font-size:72px;letter-spacing:.08em;color:var(--cream);border:5px solid var(--cream);padding:10px 26px 2px}
+#end .n{position:absolute;left:80px;right:80px;top:1320px;font-size:40px;letter-spacing:.12em;color:var(--cream)}
+#end .d{position:absolute;left:80px;right:80px;top:1500px;font-family:'Plex';font-size:24px;color:var(--cream);opacity:.85}
+#brand.lt{color:var(--ink);text-shadow:none}#brand.lt b{color:var(--red)}#src.lt{color:var(--ink);text-shadow:none}#end .s{color:var(--cream)!important}#src{background:rgba(20,16,12,.6);padding:8px 14px;left:90px;right:90px;border-radius:4px}#src:empty{display:none}#src.lt{background:none}.q{position:absolute;left:110px;right:110px;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);text-align:center;font-size:70px;padding:22px 20px 12px;opacity:0;line-height:1.05}.q.r{background:var(--red);color:var(--cream)}.led{position:absolute;left:70px;right:70px;top:1020px;display:flex;gap:24px}.led>div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:24px 22px;opacity:0}.led .k{font-size:30px;letter-spacing:.14em;color:var(--red)}.led .h{font-family:Abril;font-size:54px;line-height:1.02;margin:10px 0}.led .w{font-size:36px;letter-spacing:.03em}.bar{position:absolute;left:90px;right:90px;height:120px;display:flex;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);opacity:0}.bar>div{display:flex;flex-direction:column;justify-content:center;padding:0 20px;font-size:34px;letter-spacing:.06em;color:var(--cream)}.bar b{font-family:Abril;font-size:52px;font-weight:400}.memo{position:absolute;left:120px;right:120px;background:#F4EEDD;border:3px solid var(--ink);padding:40px 46px;box-shadow:12px 12px 0 var(--ink);opacity:0;font-family:Courier,monospace;color:var(--ink)}.memo .m1{font-size:30px;letter-spacing:.1em;color:#6a5a48}.memo .m2{font-size:70px;margin:20px 0 10px;font-weight:700}.memo .m3{font-size:26px;color:#6a5a48}</style></head><body><div id="st">
+
+<div class="scene" id="s1"><img class="bg" src="img/basel.jpg"><div class="shade" style="height:1300px;background:linear-gradient(180deg,rgba(20,16,12,.92),rgba(20,16,12,.8) 60%,rgba(20,16,12,0))"></div>
+ <div class="big" id="kk" style="top:470px;font-family:Bebas;font-size:70px;letter-spacing:.06em;color:var(--cream)">WHO OWNS IT?</div>
+ <div class="big" id="ttl" style="top:580px;font-size:150px;line-height:.98;color:var(--cream);text-shadow:6px 6px 0 var(--ink)">Who owns<br><span style="color:var(--mus)">Davidoff?</span></div></div>
+<div class="scene" id="s2"><img class="bg" src="img/basel.jpg"><div class="shade"></div>
+ <div class="case" id="od" style="top:620px"><h3>OETTINGER DAVIDOFF AG · BASEL</h3><p style="margin-top:12px;font-size:44px">Family company, owned by the Schneider family</p></div>
+ <div class="case" id="rev" style="top:980px;text-align:center"><div class="sub" style="margin:0">SALES, 2025</div><p style="margin-top:8px;font-family:Abril;font-size:110px">CHF 545.3M</p></div></div>
+<div class="scene" id="s3"><img class="bg" src="img/boardday.jpg"><div class="shade"></div>
+ <div class="stamp" id="j26" style="left:690px;top:500px">2026<small>JANUARY</small></div>
+ <div class="case" id="gen" style="top:900px"><h3>THE NEXT GENERATION</h3><p style="margin-top:12px;font-size:44px">Ernst Schneider's daughters hand the entire share capital to their descendants</p></div></div>
+<div class="scene" id="s4"><img class="bg" src="img/office.jpg"><div class="shade"></div>
+ <div class="q r" id="split" style="top:500px">BUT THE NAME<br>IS SPLIT</div>
+ <div class="case" id="imp" style="top:800px"><div class="sub" style="margin:0">2006 · IMPERIAL TOBACCO (NOW IMPERIAL BRANDS)</div><p style="margin-top:8px;font-family:Abril;font-size:80px">€540M</p><p style="font-size:40px">for the worldwide Davidoff cigarette trademark</p></div>
+ <div class="case" id="list" style="top:1230px"><p style="font-size:38px;line-height:1.35"><b>Cigars:</b> Oettinger Davidoff<br><b>Cigarettes:</b> Imperial Brands<br><b>Fragrances:</b> Coty, under licence<br><b>Coffee:</b> sold by Tchibo</p></div></div>
+<div class="scene" id="s5"><img class="bg" src="img/geneva.jpg"><div class="shade"></div>
+ <div class="case" id="zino" style="top:760px;text-align:center"><h3 style="font-size:72px">ZINO DAVIDOFF</h3><p style="margin-top:10px;font-size:48px">1906–1994</p></div>
+ <div class="banner" id="shop" style="top:1100px">HIS FATHER'S TOBACCO SHOP · GENEVA</div></div>
+<div class="scene" id="s6"><img class="bg" src="img/basel.jpg" style="filter:brightness(.85)"><div class="shade"></div>
+ <div class="stamp" id="st70" style="left:690px;top:520px">1970<small>SOLD</small></div>
+ <div class="case" id="oet" style="top:900px;text-align:center"><h3>TO OETTINGER</h3><p style="margin-top:10px;font-size:44px">run by Ernst Schneider</p></div></div>
+<div class="scene" id="s7"><img class="bg" src="img/cibao.jpg"><div class="shade"></div>
+ <div class="stamp" id="st89" style="left:690px;top:480px">1989<small>BREAK WITH CUBA</small></div>
+ <div class="case" id="burn" style="top:860px;text-align:center"><p style="font-size:46px">About 130,000 cigars reportedly burned</p></div>
+ <div class="banner" id="dr" style="top:1160px">BY 1991: PRODUCTION IN THE DOMINICAN REPUBLIC</div>
+ <div class="q r" id="one" style="top:1380px;font-size:60px">ONE FOUNDER.<br>SEVERAL OWNERS.</div></div>
+
+<div id="end"><div class="h" style="font-size:118px">Who owns it? Follow the names.</div><div class="s" style="top:960px">Every source is listed in the caption. More cigar history on our site.</div><div class="l" style="top:1250px">LINK IN BIO</div><div class="d" style="top:1420px">Business history, not advice. We don't sell tobacco. Voice and illustrations made with AI (Google Gemini TTS, Google Flow).</div></div>
+<div id="brand"><b>The Next Cigar</b> · Who owns it?</div>
+<div id="cap"></div><div id="src"></div>
+<div class="frame"></div><div class="paper"></div>
+</div>
+<script>
+const CH=[[[0.0, 0.32, "Who"], [0.32, 0.8, "owns"], [0.8, 1.54, "Davidoff?"]], [[2.12, 2.32, "The"], [2.32, 2.62, "cigars"], [2.62, 3.1, "belong"], [3.1, 3.32, "to"]], [[3.32, 3.5, "a"], [3.5, 3.76, "Basel"], [3.76, 4.12, "family"], [4.12, 4.5, "company,"]], [[4.86, 5.06, "Oettinger"], [5.06, 5.68, "Davidoff,"]], [[5.9, 6.26, "owned"], [6.26, 6.48, "by"], [6.48, 6.62, "the"], [6.62, 6.82, "Schneider"], [6.82, 7.22, "family."]], [[7.7, 7.88, "It"], [7.88, 8.24, "reported"], [8.24, 10.08, "545.3"], [10.08, 10.46, "million"]], [[10.46, 10.86, "Swiss"], [10.86, 11.3, "francs"], [11.3, 11.42, "in"], [11.42, 11.68, "sales"]], [[11.68, 11.96, "for"], [11.96, 12.54, "2025."]], [[13.46, 13.64, "In"], [13.64, 13.98, "January"], [13.98, 14.9, "2026,"]], [[15.4, 15.48, "Ernst"], [15.48, 16.14, "Schneider's"], [16.14, 16.38, "daughters"], [16.38, 16.86, "handed"]], [[16.86, 17.04, "the"], [17.04, 17.54, "entire"], [17.54, 17.86, "share"], [17.86, 18.22, "capital"]], [[18.22, 18.5, "to"], [18.5, 18.62, "the"], [18.62, 18.86, "next"], [18.86, 19.34, "generation."]], [[19.96, 20.34, "But"], [20.34, 20.5, "the"], [20.5, 20.72, "name"], [20.72, 21.26, "itself"]], [[21.26, 21.66, "is"], [21.66, 22.04, "split."]], [[22.68, 22.82, "In"], [22.82, 23.52, "2006,"]], [[23.9, 24.22, "Imperial"], [24.22, 24.64, "Tobacco,"]], [[24.64, 25.12, "now"], [25.12, 25.58, "Imperial"], [25.58, 26.0, "Brands,"]], [[26.38, 26.56, "paid"], [26.56, 27.26, "540"], [27.26, 28.04, "million"], [28.04, 28.4, "euros"]], [[28.4, 28.72, "for"], [28.72, 28.86, "the"], [28.86, 29.34, "worldwide"], [29.34, 29.84, "Davidoff"]], [[29.84, 30.16, "cigarette"], [30.16, 30.72, "trademark."]], [[31.46, 31.72, "Davidoff"], [31.72, 32.16, "fragrances"], [32.16, 32.4, "are"], [32.4, 32.52, "made"]], [[32.52, 32.88, "by"], [32.88, 32.98, "Coty,"]], [[33.28, 33.4, "under"], [33.4, 33.7, "licence."]], [[34.48, 34.74, "Davidoff"], [34.74, 35.1, "coffee"], [35.1, 35.36, "is"], [35.36, 35.54, "sold"]], [[35.54, 35.78, "by"], [35.78, 36.06, "Tchibo."]], [[36.76, 36.84, "It"], [36.84, 37.16, "started"], [37.16, 37.46, "with"], [37.46, 37.78, "one"], [37.78, 38.16, "man."]], [[38.94, 39.14, "Zino"], [39.14, 39.6, "Davidoff,"]], [[39.82, 40.04, "born"], [40.04, 40.2, "in"], [40.2, 40.78, "1906"], [40.78, 41.08, "in"]], [[41.08, 41.16, "what"], [41.16, 41.28, "is"], [41.28, 41.44, "now"], [41.44, 41.88, "Ukraine,"]], [[42.34, 42.44, "grew"], [42.44, 42.6, "up"], [42.6, 42.84, "around"], [42.84, 43.04, "his"]], [[43.04, 43.48, "father's"], [43.48, 43.72, "tobacco"], [43.72, 44.08, "shop"], [44.08, 44.24, "in"], [44.24, 44.52, "Geneva."]], [[45.16, 45.28, "In"], [45.28, 45.8, "1970,"]], [[46.2, 46.26, "he"], [46.26, 46.54, "sold"], [46.54, 46.72, "the"], [46.72, 47.0, "business"]], [[47.0, 47.22, "to"], [47.22, 47.52, "Oettinger,"]], [[47.8, 47.94, "run"], [47.94, 48.12, "by"], [48.12, 48.36, "Ernst"], [48.36, 48.72, "Schneider."]], [[49.23, 49.58, "In"], [49.58, 50.08, "1989,"]], [[50.62, 50.66, "he"], [50.66, 50.96, "broke"], [50.96, 51.22, "with"], [51.22, 51.58, "Cuba,"]], [[52.08, 52.2, "reportedly"], [52.2, 52.54, "burning"], [52.54, 52.8, "around"], [52.8, 54.36, "130,000"], [54.36, 54.76, "cigars."]], [[55.54, 55.64, "Production"], [55.64, 55.94, "moved"], [55.94, 56.14, "to"], [56.14, 56.22, "the"]], [[56.22, 56.48, "Dominican"], [56.48, 56.96, "Republic."]], [[57.62, 57.82, "One"], [57.82, 58.14, "founder."]], [[58.7, 58.82, "Several"], [58.82, 59.3, "owners."]], [[60.0, 60.4, "Link"], [60.4, 60.6, "in"], [60.6, 60.9, "bio."]]];const P={"havana": [408, 343], "santo": [896, 539], "danli": [244, 720], "esteli": [252, 757], "kingston": [626, 559], "tampa": [405, 134], "miami": [493, 230], "vuelta": [354, 377]};const TOTAL=64.5;
+const E=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const B=x=>{if(x<=0)return 0;if(x>=1)return 1;const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);const lerp=(a,b,x)=>a+(b-a)*x;
+const KEYW=["545.3", "2025", "2026", "2006", "540", "1906", "1970", "1989", "130,000", "Davidoff", "Davidoff?"];
+function caption(t,stop){const capEl=$('cap');let ci=-1;for(let i=0;i<CH.length;i++)if(t>=CH[i][0][0]-0.05)ci=i;
+ if(ci>=0&&t<CH[ci][CH[ci].length-1][1]+0.8&&t<stop){capEl.innerHTML=CH[ci].map(([s,e,w])=>{const on=t>=s-0.03;const k=KEYW.some(x=>w.replace(/[.,?:]/g,'').startsWith(x.replace('?','')));const p=B((t-s+0.03)/.22);return `<span class="${k?'k':''}" style="opacity:${on?1:0};transform:scale(${on?(0.6+0.4*Math.min(p,1)):1})">${w}</span>`}).join(' ');}else capEl.innerHTML='';}
+function show(id,a,b,t){const e=$(id);const o=(t>=a&&t<b)?Math.min(E((t-a)/.3),1-E((t-(b-.25))/.25)):0;e.style.opacity=o;return o;}
+function kb(id,a,b,t,z0,z1,x0,x1){const e=document.querySelector('#'+id+' img.bg');if(!e)return;const p=Math.max(0,Math.min(1,(t-a)/(b-a)));e.style.transform=`scale(${lerp(z0,z1,p)}) translateX(${lerp(x0,x1,p)}px)`;}
+function pop(id,t0,t,mode,base){const e=$(id);const p=B((t-t0)/.35);const pc=Math.min(Math.max(p,0),1);e.style.opacity=Math.min(1,Math.max(0,p*1.6));
+ if(mode=='stamp')e.style.transform=`rotate(-12deg) scale(${2.4-1.4*pc})`;else if(mode=='slam')e.style.transform=`scale(${1.6-0.6*pc})`;else e.style.transform=(base||'')+` translateY(${(1-pc)*60}px) rotate(${(1-pc)*-3}deg)`;}
+function hide(...ids){ids.forEach(i=>$(i).style.opacity=0)}
+
+const SRC=[[2.0,13.3,'Sources: Swiss commercial register (Zefix); Oettinger Davidoff media release (1 Jul 2026)'],[13.3,19.9,'Source: Tobacco Reporter (28 Jan 2026)'],[19.9,36.6,'Sources: Horizont (23 Aug 2006); Coty (3 May 2023); Tchibo'],[36.6,45.0,'Source: swissinfo.ch (2006)'],[45.0,49.2,'Sources: swissinfo.ch (2006); Oettinger Davidoff history'],[49.2,59.4,'Sources: TIME (9 Apr 1990); Cigar Aficionado (2005); Oettinger Davidoff history']];
+function render(t){
+ if(t<2.0)$('cap').innerHTML='';else caption(t,59.4);
+ const s=SRC.find(([a,b])=>t>=a&&t<b);$('src').textContent=s?s[2]:'';
+ show('s1',-1,2.0,t);kb('s1',0,2.0,t,1.12,1.04,0,0);pop('kk',0.05,t);pop('ttl',0.3,t,'slam');
+ show('s2',2.0,13.3,t);kb('s2',2.0,13.3,t,1.04,1.16,0,-20);pop('od',3.3,t,'slam');pop('rev',8.2,t,'slam');
+ show('s3',13.3,19.9,t);kb('s3',13.3,19.9,t,1.03,1.12,0,-20);pop('j26',13.6,t,'stamp');pop('gen',15.4,t);
+ show('s4',19.9,36.6,t);kb('s4',19.9,36.6,t,1.03,1.16,-20,0);pop('split',20.0,t,'slam');pop('imp',22.8,t);pop('list',31.5,t);
+ show('s5',36.6,45.0,t);kb('s5',36.6,45.0,t,1.03,1.14,0,-20);pop('zino',38.9,t,'slam');pop('shop',42.3,t,'slam');
+ show('s6',45.0,49.2,t);kb('s6',45.0,49.2,t,1.02,1.1,0,-20);pop('st70',45.3,t,'stamp');pop('oet',46.3,t);
+ show('s7',49.2,59.4,t);kb('s7',49.2,59.4,t,1.02,1.14,0,-20);pop('st89',49.6,t,'stamp');pop('burn',51.2,t);pop('dr',55.5,t,'slam');pop('one',57.6,t,'slam');
+ $('end').style.opacity=E((t-59.4)/.35);
+}
+render(0);
+</script></body></html>
