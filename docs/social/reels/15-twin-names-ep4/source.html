@@ -1,0 +1,148 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Abril';src:url(fonts/abril.woff2) format('woff2')}
+@font-face{font-family:'Bebas';src:url(fonts/bebas.woff2) format('woff2')}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 700;src:url(fonts/newsreader-normal.woff2) format('woff2-variations')}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 700;src:url(fonts/newsreader-italic.woff2) format('woff2-variations')}
+@font-face{font-family:'Plex';font-weight:500;src:url(fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+:root{--cream:#F1E6CF;--red:#B8322A;--navy:#1E2A44;--mus:#E3A23B;--ink:#1B1612}
+html,body{margin:0;background:var(--cream)}
+#st{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--cream);font-family:'Bebas',sans-serif;color:var(--ink)}
+.paper{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:.22;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .25  0 0 0 0 .15  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>")}
+.frame{position:absolute;inset:26px;border:6px solid var(--ink);z-index:39;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0;overflow:hidden}
+.scene img.bg{position:absolute;left:0;top:-8px;width:1080px;height:1935px;object-fit:cover}
+.shade{position:absolute;left:0;right:0;top:0;height:560px;background:linear-gradient(180deg,rgba(20,16,12,.78),rgba(20,16,12,0))}
+#brand{position:absolute;left:70px;top:78px;font-size:32px;letter-spacing:.2em;color:var(--cream);z-index:45;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#brand b{color:var(--mus);font-weight:400}
+#ep{position:absolute;right:70px;top:66px;z-index:45;background:var(--red);color:var(--cream);font-size:34px;letter-spacing:.12em;padding:6px 18px 2px}
+#cap{position:absolute;left:60px;right:60px;top:170px;text-align:center;font-size:96px;line-height:.98;letter-spacing:.01em;z-index:45;color:var(--cream);text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 30px rgba(0,0,0,.45);text-transform:uppercase}
+#cap span{display:inline-block;margin:0 .12em}
+#cap span.k{color:var(--mus)}
+#src{position:absolute;left:70px;right:70px;bottom:70px;font-family:'Plex';font-size:21px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);z-index:45;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.ticket{position:absolute;left:80px;right:80px;top:1180px;background:var(--cream);color:var(--ink);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);display:flex;opacity:0}
+.ticket .l{flex:1;padding:24px 30px}
+.ticket .r{width:190px;border-left:5px dashed var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--red);color:var(--cream)}
+.ticket .r b{font-family:'Abril';font-size:64px;line-height:1;font-weight:400}
+.ticket .r i{font-style:normal;font-size:28px;letter-spacing:.12em}
+.ticket .kick{font-size:28px;letter-spacing:.2em;color:var(--red)}
+.ticket .who{font-family:'Abril';font-size:56px;line-height:1.02;margin:6px 0 8px}
+.ticket .route{font-size:42px;letter-spacing:.06em}
+.ticket .names{font-family:'Plex';font-size:26px;margin-top:10px;color:#5a4b3a}
+.stamp{position:absolute;width:250px;height:250px;border:10px solid var(--red);border-radius:50%;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:96px;line-height:.9;opacity:0;background:rgba(241,230,207,.92);z-index:30}
+.stamp small{font-size:26px;letter-spacing:.14em}
+.banner{position:absolute;left:0;right:0;background:var(--red);color:var(--cream);font-size:64px;letter-spacing:.06em;text-align:center;padding:18px 0 10px;opacity:0;border-top:6px solid var(--ink);border-bottom:6px solid var(--ink)}
+.case{position:absolute;left:90px;right:90px;top:1060px;background:var(--cream);border:5px solid var(--ink);box-shadow:12px 12px 0 var(--ink);padding:34px 40px;opacity:0;font-family:'Newsreader',serif;color:var(--ink)}
+.case h3{margin:0;font-family:'Bebas';font-weight:400;font-size:58px;letter-spacing:.04em;line-height:1}
+.case .sub{font-family:'Plex';font-size:24px;color:#6b5a46;margin:8px 0 18px;letter-spacing:.04em}
+.case p{margin:0;font-size:42px;line-height:1.3}
+.case u{text-decoration:none;background:linear-gradient(transparent 80%,var(--mus) 80%);background-size:0% 100%;background-repeat:no-repeat}
+#mapwrap{position:absolute;left:0;top:470px;width:1080px;height:980px}
+#mapwrap svg{width:1080px;height:980px;overflow:visible}
+.mapbg{position:absolute;inset:0;background:var(--navy)}
+.mapbg:after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(241,230,207,.10) 2px,transparent 2.5px);background-size:16px 16px}
+.land{fill:#E9DCC0;stroke:var(--ink);stroke-width:1.4}
+#cuba{fill:var(--red);stroke:var(--ink);stroke-width:2}
+.arrow{fill:none;stroke:var(--mus);stroke-width:5;stroke-linecap:round;stroke-dasharray:1 0}
+.lbl{font-family:'Bebas';font-size:26px;fill:var(--cream);letter-spacing:.06em}
+.duo{position:absolute;left:70px;right:70px;top:1140px;display:flex;gap:28px;opacity:0}
+.duo div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:22px 20px;text-align:center}
+.duo b{display:block;font-family:'Abril';font-weight:400;font-size:62px;color:var(--red)}
+.duo span{font-size:36px;letter-spacing:.04em}
+.duo em{display:block;font-style:normal;font-family:'Plex';font-size:22px;color:#5a4b3a;margin-top:8px}
+.big{position:absolute;left:0;right:0;text-align:center;font-family:'Abril';color:var(--red);opacity:0}
+.tagc{position:absolute;width:400px;height:540px;background:var(--cream);border:6px solid var(--ink);box-shadow:14px 14px 0 var(--ink);opacity:0;text-align:center}
+.tagc .t1{margin-top:60px;font-size:34px;letter-spacing:.2em;color:var(--red)}
+.tagc .t2{margin-top:30px;font-family:'Abril';font-size:84px;line-height:1}
+.tagc .t3{position:absolute;left:0;right:0;bottom:40px;font-size:40px;letter-spacing:.12em}
+.tagc .bar{margin:28px auto 0;width:240px;height:10px;background:var(--ink)}
+#end{position:absolute;inset:0;background:var(--red);opacity:0;z-index:35}
+#end .h{position:absolute;left:80px;right:80px;top:520px;font-family:'Abril';font-size:150px;line-height:.95;color:var(--cream)}
+#end .s{position:absolute;left:80px;right:80px;top:870px;font-family:'Newsreader',serif;font-style:italic;font-size:62px;line-height:1.15;color:var(--mus)}
+#end .l{position:absolute;left:80px;top:1130px;font-size:72px;letter-spacing:.08em;color:var(--cream);border:5px solid var(--cream);padding:10px 26px 2px}
+#end .n{position:absolute;left:80px;right:80px;top:1320px;font-size:40px;letter-spacing:.12em;color:var(--cream)}
+#end .d{position:absolute;left:80px;right:80px;top:1500px;font-family:'Plex';font-size:24px;color:var(--cream);opacity:.85}
+#brand.lt{color:var(--ink);text-shadow:none}#brand.lt b{color:var(--red)}#src.lt{color:var(--ink);text-shadow:none}#end .s{color:var(--cream)!important}#src{background:rgba(20,16,12,.6);padding:8px 14px;left:90px;right:90px;border-radius:4px}#src:empty{display:none}#src.lt{background:none}.q{position:absolute;left:110px;right:110px;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);text-align:center;font-size:70px;padding:22px 20px 12px;opacity:0;line-height:1.05}.q.r{background:var(--red);color:var(--cream)}.led{position:absolute;left:70px;right:70px;top:1020px;display:flex;gap:24px}.led>div{flex:1;background:var(--cream);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:24px 22px;opacity:0}.led .k{font-size:30px;letter-spacing:.14em;color:var(--red)}.led .h{font-family:Abril;font-size:54px;line-height:1.02;margin:10px 0}.led .w{font-size:36px;letter-spacing:.03em}.bar{position:absolute;left:90px;right:90px;height:120px;display:flex;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);opacity:0}.bar>div{display:flex;flex-direction:column;justify-content:center;padding:0 20px;font-size:34px;letter-spacing:.06em;color:var(--cream)}.bar b{font-family:Abril;font-size:52px;font-weight:400}.memo{position:absolute;left:120px;right:120px;background:#F4EEDD;border:3px solid var(--ink);padding:40px 46px;box-shadow:12px 12px 0 var(--ink);opacity:0;font-family:Courier,monospace;color:var(--ink)}.memo .m1{font-size:30px;letter-spacing:.1em;color:#6a5a48}.memo .m2{font-size:70px;margin:20px 0 10px;font-weight:700}.memo .m3{font-size:26px;color:#6a5a48}</style></head><body><div id="st">
+
+<div class="scene" id="s1"><img class="bg" src="img/laguito.jpg"><div class="shade" style="height:1300px;background:linear-gradient(180deg,rgba(20,16,12,.92),rgba(20,16,12,.8) 60%,rgba(20,16,12,0))"></div>
+ <div class="big" id="kk" style="top:470px;font-family:Bebas;font-size:70px;letter-spacing:.06em;color:var(--cream)">TWIN NAMES · PART 4</div>
+ <div class="big" id="ttl" style="top:580px;font-size:136px;line-height:.98;color:var(--cream);text-shadow:6px 6px 0 var(--ink)">The name<br>that was<br>never <span style="color:var(--mus)">seized</span></div></div>
+<div class="scene" id="s2"><img class="bg" src="img/street-a.jpg"><div class="shade"></div>
+ <div class="stamp" id="st60" style="left:720px;top:520px">1960<small>TAKEOVER</small></div>
+ <div class="banner" id="bn1" style="top:1040px">CUBA TAKES OVER ITS LEADING CIGAR MAKERS</div>
+ <div class="q r" id="q1" style="top:1230px">ONE NAME IT NEVER<br>HAD TO TAKE</div></div>
+<div class="scene" id="s3"><img class="bg" src="img/laguito.jpg"><div class="shade"></div>
+ <div class="big" id="coh" style="top:560px;left:150px;right:150px;font-family:Bebas;font-size:200px;letter-spacing:.08em;color:var(--cream);background:var(--ink);border:5px solid var(--mus);padding:10px 0 0">COHIBA</div>
+ <div class="case" id="cas" style="top:860px"><div class="sub" style="margin:0 0 8px">CIGAR AFICIONADO · 1994 · FIDEL CASTRO</div><p style="font-size:44px">A bodyguard knew a man who made cigars Castro liked.</p><p style="margin-top:12px;font-size:54px;font-style:italic">"We set up the house."</p></div>
+ <div class="banner" id="lag" style="top:1330px">THE HOUSE: EL LAGUITO · HAVANA</div></div>
+<div class="scene" id="s4" style="background:var(--cream)">
+ <div class="case" id="two" style="top:540px;font-size:48px;line-height:1.25"><h3 style="font-size:72px">TWO VERSIONS</h3><p style="margin-top:18px;font-size:48px"><b>Cigar Aficionado, 1992:</b> Avelino Lara, 1968.</p><p style="margin-top:14px;font-size:48px"><b>Cigar Aficionado, 1995:</b> Eduardo Rivera, early 1960s (name first used 1966).</p></div>
+ <div class="banner" id="gift" style="top:1080px">FOR YEARS: OFFICIAL GIFTS<br><span style="font-size:40px">SOLD ONLY INSIDE CUBA</span></div>
+ <div class="stamp" id="st82" style="left:700px;top:1250px">1982<small>WORLD LAUNCH</small></div></div>
+<div class="scene" id="s5"><img class="bg" src="img/office.jpg"><div class="shade"></div>
+ <div class="stamp" id="st77" style="left:720px;top:500px">1977<small>12 DECEMBER</small></div>
+ <div class="memo" id="memo" style="top:820px"><div class="m1">INTERNAL MEMOS · GENERAL CIGAR</div><div class="m2">"Castro's brand cigar"</div><div class="m3">Notes on its memos, 12 Dec 1977 (TTAB record)</div></div>
+ <div class="led" style="top:1200px"><div id="ap"><div class="k">13 MAR 1978</div><div class="h">Applied</div><div class="w">for the name in the US</div></div><div id="rg"><div class="k">17 FEB 1981</div><div class="h">Registered</div><div class="w">US trademark</div></div></div></div>
+<div class="scene" id="s5b"><img class="bg" src="img/office2.jpg"><div class="shade"></div>
+ <div class="stamp" id="st92" style="left:700px;top:520px">1992<small>20 NOVEMBER</small></div>
+ <div class="banner" id="boom" style="top:1000px">THE CIGAR BOOM BEGINS</div>
+ <div class="q r" id="rel" style="top:1200px">GENERAL CIGAR RELAUNCHES<br>ITS OWN COHIBA</div></div>
+<div class="scene" id="s6"><img class="bg" src="img/nycourt.jpg"><div class="shade"></div>
+ <div class="stamp" id="st97" style="left:720px;top:500px">1997<small>CUBA FIGHTS BACK</small></div>
+ <div class="led" style="top:880px"><div id="j97"><div class="k">JAN 1997</div><div class="h">Trademark board</div><div class="w">petition to cancel</div></div><div id="n97"><div class="k">NOV 1997</div><div class="h">New York court</div><div class="w">lawsuit filed</div></div></div>
+ <div class="case" id="c04" style="top:1260px;text-align:center"><h3>2004 · NEW YORK JUDGE</h3><p style="margin-top:12px;font-size:48px">Sides with Cuba.</p></div></div>
+<div class="scene" id="s6c"><img class="bg" src="img/supreme.jpg"><div class="shade"></div>
+ <div class="case" id="c05" style="top:820px;text-align:center"><h3>2005 · US APPEALS COURT</h3><p style="margin-top:12px;font-size:48px">The embargo blocks Cuba's claim.</p></div>
+ <div class="banner" id="sc" style="top:1200px">US SUPREME COURT: WON'T HEAR IT</div></div>
+<div class="scene" id="s6b"><img class="bg" src="img/treaty.jpg"><div class="shade"></div>
+ <div class="stamp" id="st29" style="left:700px;top:540px">1929<small>A TREATY</small></div>
+ <div class="q" id="bk" style="top:820px">BACK AT THE<br>TRADEMARK BOARD</div><div class="banner" id="pac" style="top:1100px">THE PAN AMERICAN CONVENTION</div>
+ <div class="case" id="c14" style="top:1290px;text-align:center"><h3>2014 · FEDERAL APPEALS COURT</h3><p style="margin-top:10px;font-size:44px">Cuba's treaty claim can go ahead.</p></div></div>
+<div class="scene" id="s7"><img class="bg" src="img/court.jpg" style="filter:brightness(.75)"><div class="shade"></div>
+ <div class="led"><div id="l22"><div class="k">2022 · TRADEMARK BOARD</div><div class="h">Ordered</div><div class="w">the US company's Cohiba registrations cancelled</div></div><div id="l25"><div class="k">2025 · FEDERAL JUDGE</div><div class="h">Same result</div><div class="w">Virginia; fresh review, challenge dismissed</div></div></div></div>
+<div class="scene" id="s8"><img class="bg" src="img/straits.jpg"><div class="shade"></div>
+ <div class="q" id="qa" style="top:600px">CUBAN COHIBAS:<br>STILL BANNED IN THE US</div>
+ <div class="q r" id="qb" style="top:880px">THE AMERICAN COHIBA:<br>STILL ON SALE</div></div>
+<div class="scene" id="s9"><img class="bg" src="img/nycourt.jpg" style="filter:brightness(.7)"><div class="shade"></div>
+ <div class="stamp" id="st26" style="left:700px;top:520px">2026<small>16 SEPTEMBER</small></div>
+ <div class="case" id="ap4" style="top:1050px;text-align:center"><h3>APPEAL HEARD</h3><div class="sub" style="margin:10px 0 0">THREE JUDGES · US 4TH CIRCUIT</div></div>
+ <div class="banner" id="pend" style="top:1300px">RULING PENDING<br><span style="font-size:36px">AS OF 20 NOV 2026</span></div></div>
+
+<div id="end"><div class="h" style="font-size:120px">Next: who owns the twin names today</div><div class="s" style="top:960px">More on Cohiba and the other twin names on our site.</div><div class="l" style="top:1250px">LINK IN BIO</div><div class="n" style="top:1400px">TWIN NAMES · PART 4 OF 5</div><div class="d" style="top:1520px">History, not advice. We don't sell tobacco. Voice and illustrations made with AI (Google Gemini TTS, Google Flow).</div></div>
+<div id="brand"><b>The Next Cigar</b> · Twin Names</div>
+<div id="cap"></div><div id="src"></div>
+<div class="frame"></div><div class="paper"></div>
+</div>
+<script>
+const CH=[[[0.0, 0.36, "Part"], [0.36, 0.78, "four."]], [[1.32, 1.42, "The"], [1.42, 1.66, "name"], [1.66, 1.94, "that"], [1.94, 2.06, "was"]], [[2.06, 2.34, "never"], [2.34, 2.82, "seized."]], [[3.82, 3.84, "In"], [3.84, 4.4, "1960,"]], [[5.24, 5.24, "Cuba"], [5.24, 5.5, "took"], [5.5, 5.8, "over"], [5.8, 6.0, "its"]], [[6.0, 6.34, "leading"], [6.34, 6.68, "cigar"], [6.68, 6.96, "makers."]], [[7.7, 7.78, "But"], [7.78, 8.06, "one"], [8.06, 8.36, "name,"]], [[8.36, 8.8, "Cuba"], [8.8, 9.14, "never"], [9.14, 9.44, "had"], [9.44, 9.58, "to"], [9.58, 9.82, "take,"]], [[10.3, 10.4, "because"], [10.4, 10.88, "Cuba"], [10.88, 11.18, "made"], [11.18, 11.76, "it."]], [[11.96, 12.46, "Cohiba."]], [[13.54, 13.54, "Fidel"], [13.54, 13.98, "Castro"], [13.98, 14.3, "told"], [14.3, 14.5, "the"]], [[14.5, 14.76, "story"], [14.76, 15.06, "to"], [15.06, 15.4, "Cigar"], [15.4, 16.02, "Aficionado"]], [[16.02, 16.32, "in"], [16.32, 16.92, "1994."]], [[17.86, 17.94, "A"], [17.94, 18.4, "bodyguard"], [18.4, 18.68, "knew"], [18.68, 18.88, "a"]], [[18.88, 19.06, "man"], [19.06, 19.28, "who"], [19.28, 19.46, "made"], [19.46, 19.84, "cigars"]], [[19.84, 20.4, "Castro"], [20.4, 20.74, "liked."]], [[21.3, 21.5, "So,"]], [[21.72, 21.82, "he"], [21.82, 22.02, "said,"]], [[22.38, 22.5, "we"], [22.5, 22.76, "set"], [22.76, 22.9, "up"], [22.9, 23.04, "the"], [23.04, 23.32, "house."]], [[24.02, 24.16, "That"], [24.16, 24.48, "house"], [24.48, 24.98, "became"], [24.98, 25.32, "El"], [25.32, 25.72, "Laguito,"]], [[26.22, 26.38, "a"], [26.38, 26.68, "factory"], [26.68, 26.92, "in"], [26.92, 27.18, "Havana."]], [[27.89, 28.22, "Who"], [28.22, 28.46, "rolled"], [28.46, 28.6, "the"], [28.6, 28.78, "first"], [28.78, 29.04, "one?"]], [[29.58, 29.84, "Even"], [29.84, 30.28, "Cigar"], [30.28, 30.9, "Aficionado"], [30.9, 31.1, "has"]], [[31.1, 31.4, "printed"], [31.4, 31.76, "two"], [31.76, 32.24, "versions:"]], [[32.96, 33.32, "Avelino"], [33.32, 33.56, "Lara"], [33.56, 34.06, "in"], [34.06, 34.86, "1968,"]], [[35.22, 35.48, "or"], [35.48, 36.1, "Eduardo"], [36.1, 36.38, "Rivera"], [36.38, 36.88, "in"]], [[36.88, 37.0, "the"], [37.0, 37.28, "early"], [37.28, 38.18, "1960s,"]], [[38.34, 38.62, "with"], [38.62, 38.74, "the"], [38.74, 38.92, "name"], [38.92, 39.26, "first"]], [[39.26, 39.6, "used"], [39.6, 39.82, "in"], [39.82, 40.72, "1966."]], [[41.68, 41.82, "For"], [41.82, 42.22, "years,"]], [[42.5, 42.88, "Cohibas"], [42.88, 43.08, "were"], [43.08, 43.28, "best"], [43.28, 43.48, "known"]], [[43.48, 43.74, "as"], [43.74, 44.14, "official"], [44.14, 44.54, "gifts"], [44.54, 45.16, "for"]], [[45.16, 45.36, "heads"], [45.36, 45.48, "of"], [45.48, 45.84, "state"], [45.84, 46.32, "and"], [46.32, 46.8, "diplomats,"]], [[47.46, 47.52, "and"], [47.52, 47.64, "were"], [47.64, 47.84, "sold"], [47.84, 48.3, "only"]], [[48.3, 48.68, "inside"], [48.68, 49.0, "Cuba."]], [[49.64, 49.8, "The"], [49.8, 50.04, "world"], [50.04, 50.42, "launch"], [50.42, 50.72, "came"]], [[50.72, 50.9, "in"], [50.9, 51.66, "1982."]], [[52.66, 52.92, "Meanwhile,"]], [[53.32, 53.56, "in"], [53.56, 53.86, "December"], [53.86, 54.88, "1977,"]], [[54.88, 55.5, "inside"], [55.5, 55.76, "an"], [55.76, 56.2, "American"], [56.2, 56.52, "cigar"], [56.52, 57.0, "company,"]], [[57.34, 57.54, "General"], [57.54, 58.02, "Cigar,"]], [[58.38, 58.8, "notes"], [58.8, 59.04, "on"], [59.04, 59.18, "its"], [59.18, 59.62, "internal"]], [[59.62, 59.96, "memos"], [59.96, 60.3, "called"], [60.3, 60.56, "it"], [60.56, 61.2, "Castro's"]], [[61.2, 61.46, "brand"], [61.46, 62.04, "cigar."]], [[62.6, 62.98, "Three"], [62.98, 63.14, "months"], [63.14, 63.44, "later,"]], [[63.76, 63.8, "the"], [63.8, 64.02, "company"], [64.02, 64.46, "applied"], [64.46, 64.64, "for"]], [[64.64, 64.74, "the"], [64.74, 64.88, "name"], [64.88, 65.08, "in"], [65.08, 65.22, "the"], [65.22, 65.44, "US."]], [[66.14, 66.3, "It"], [66.3, 66.42, "was"], [66.42, 66.9, "registered"], [66.9, 67.24, "in"], [67.24, 67.92, "1981."]], [[68.96, 69.08, "In"], [69.08, 69.38, "November"], [69.38, 70.14, "1992,"]], [[70.64, 70.68, "as"], [70.68, 70.84, "the"], [70.84, 71.12, "cigar"], [71.12, 71.32, "boom"], [71.32, 71.76, "began,"]], [[72.58, 72.58, "General"], [72.58, 73.28, "relaunched"], [73.28, 73.46, "its"], [73.46, 73.78, "own"], [73.78, 74.2, "Cohiba."]], [[74.86, 75.04, "In"], [75.04, 75.62, "1997,"]], [[76.36, 76.62, "Cuba's"], [76.62, 76.8, "state"], [76.8, 77.18, "cigar"], [77.18, 77.56, "company"]], [[77.56, 77.88, "fought"], [77.88, 78.26, "back:"]], [[78.58, 78.94, "first"], [78.94, 79.14, "at"], [79.14, 79.28, "the"], [79.28, 79.52, "US"]], [[79.52, 79.88, "trademark"], [79.88, 80.3, "board,"]], [[80.6, 80.78, "then"], [80.78, 80.98, "in"], [80.98, 81.08, "a"], [81.08, 81.18, "New"]], [[81.18, 81.4, "York"], [81.4, 81.68, "court."]], [[82.36, 82.5, "In"], [82.5, 83.1, "2004,"]], [[83.44, 83.64, "a"], [83.64, 83.76, "New"], [83.76, 83.98, "York"], [83.98, 84.22, "judge"]], [[84.22, 84.6, "sided"], [84.6, 84.92, "with"], [84.92, 85.2, "Cuba."]], [[85.78, 85.92, "But"], [85.92, 86.02, "in"], [86.02, 86.7, "2005,"]], [[87.16, 87.24, "an"], [87.24, 87.6, "appeals"], [87.6, 87.88, "court"], [87.88, 88.12, "said"]], [[88.12, 88.3, "the"], [88.3, 88.66, "embargo"], [88.66, 89.12, "blocked"], [89.12, 89.54, "Cuba's"], [89.54, 89.82, "claim."]], [[90.14, 90.68, "And"], [90.68, 90.86, "the"], [90.86, 91.12, "US"], [91.12, 91.4, "Supreme"]], [[91.4, 91.74, "Court"], [91.74, 92.1, "declined"], [92.1, 92.32, "to"], [92.32, 92.42, "hear"], [92.42, 92.66, "it."]], [[93.36, 93.54, "So"], [93.54, 93.98, "Cuba"], [93.98, 94.32, "pressed"], [94.32, 94.6, "on"]], [[94.6, 94.76, "at"], [94.76, 94.9, "the"], [94.9, 95.22, "trademark"], [95.22, 95.58, "board,"]], [[95.96, 96.1, "with"], [96.1, 96.26, "a"], [96.26, 96.46, "treaty"], [96.46, 96.74, "from"], [96.74, 97.6, "1929,"]], [[98.16, 98.24, "the"], [98.24, 98.48, "Pan"], [98.48, 98.84, "American"], [98.84, 99.28, "Convention."]], [[100.04, 100.3, "In"], [100.3, 100.82, "2014,"]], [[101.28, 101.4, "a"], [101.4, 101.68, "federal"], [101.68, 102.04, "appeals"], [102.04, 102.26, "court"]], [[102.26, 102.54, "said"], [102.54, 103.0, "Cuba's"], [103.0, 103.22, "treaty"], [103.22, 103.56, "claim"]], [[103.56, 103.76, "could"], [103.76, 103.92, "go"], [103.92, 104.16, "ahead"], [104.16, 104.28, "at"]], [[104.28, 104.4, "the"], [104.4, 104.64, "board."]], [[105.28, 105.52, "In"], [105.52, 106.06, "2022,"]], [[106.62, 106.76, "the"], [106.76, 106.96, "board"], [106.96, 107.34, "ordered"], [107.34, 107.54, "the"]], [[107.54, 107.96, "American"], [107.96, 108.44, "registrations"], [108.44, 109.06, "cancelled."]], [[109.78, 109.96, "In"], [109.96, 110.5, "2025,"]], [[110.94, 111.18, "a"], [111.18, 111.44, "federal"], [111.44, 111.7, "judge"], [111.7, 111.9, "in"]], [[111.9, 112.28, "Virginia"], [112.28, 112.68, "reviewed"], [112.68, 112.9, "the"], [112.9, 113.08, "case"]], [[113.08, 113.48, "afresh"], [113.48, 113.8, "and"], [113.8, 114.06, "reached"], [114.06, 114.32, "the"]], [[114.32, 114.54, "same"], [114.54, 114.88, "result."]], [[115.62, 115.78, "The"], [115.78, 116.06, "twist:"]], [[116.88, 116.88, "Cuban"], [116.88, 117.48, "Cohibas"], [117.48, 117.86, "still"], [117.86, 118.26, "can't"]], [[118.26, 118.4, "be"], [118.4, 118.58, "sold"], [118.58, 118.78, "in"], [118.78, 118.9, "the"], [118.9, 119.12, "US."]], [[119.84, 119.94, "And"], [119.94, 120.04, "the"], [120.04, 120.48, "American"], [120.48, 120.9, "Cohiba"]], [[120.9, 121.22, "is"], [121.22, 121.5, "still"], [121.5, 121.7, "on"], [121.7, 122.02, "sale."]], [[122.94, 123.06, "In"], [123.06, 123.4, "September"], [123.4, 124.28, "2026,"]], [[124.64, 124.84, "three"], [124.84, 125.2, "appeals"], [125.2, 125.46, "judges"], [125.46, 125.76, "heard"]], [[125.76, 125.94, "the"], [125.94, 126.14, "case."]], [[126.78, 126.88, "Their"], [126.88, 127.2, "ruling"], [127.2, 127.52, "is"], [127.52, 127.74, "still"], [127.74, 128.0, "pending."]], [[129.0, 129.16, "Next:"]], [[129.78, 129.88, "who"], [129.88, 130.18, "owns"], [130.18, 130.34, "the"], [130.34, 130.56, "twin"]], [[130.56, 130.86, "names"], [130.86, 131.24, "today?"]], [[131.98, 132.16, "Link in"], [132.16, 132.4, "bio."]]];const P={"havana": [408, 343], "santo": [896, 539], "danli": [244, 720], "esteli": [252, 757], "kingston": [626, 559], "tampa": [405, 134], "miami": [493, 230], "vuelta": [354, 377]};const TOTAL=134.5;
+const E=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
+const B=x=>{if(x<=0)return 0;if(x>=1)return 1;const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);const lerp=(a,b,x)=>a+(b-a)*x;
+const KEYW=['1960','1966','1968','1977','1981','1982','1929','1997','2005','2020','2022','2025','2026','Cohiba','Habanos','Allied','twist','Sixty'];
+function caption(t,stop){const capEl=$('cap');let ci=-1;for(let i=0;i<CH.length;i++)if(t>=CH[i][0][0]-0.05)ci=i;
+ if(ci>=0&&t<CH[ci][CH[ci].length-1][1]+0.8&&t<stop){capEl.innerHTML=CH[ci].map(([s,e,w])=>{const on=t>=s-0.03;const k=KEYW.some(x=>w.replace(/[.,?:]/g,'').startsWith(x.replace('?','')));const p=B((t-s+0.03)/.22);return `<span class="${k?'k':''}" style="opacity:${on?1:0};transform:scale(${on?(0.6+0.4*Math.min(p,1)):1})">${w}</span>`}).join(' ');}else capEl.innerHTML='';}
+function show(id,a,b,t){const e=$(id);const o=(t>=a&&t<b)?Math.min(E((t-a)/.3),1-E((t-(b-.25))/.25)):0;e.style.opacity=o;return o;}
+function kb(id,a,b,t,z0,z1,x0,x1){const e=document.querySelector('#'+id+' img.bg');if(!e)return;const p=Math.max(0,Math.min(1,(t-a)/(b-a)));e.style.transform=`scale(${lerp(z0,z1,p)}) translateX(${lerp(x0,x1,p)}px)`;}
+function pop(id,t0,t,mode,base){const e=$(id);const p=B((t-t0)/.35);const pc=Math.min(Math.max(p,0),1);e.style.opacity=Math.min(1,Math.max(0,p*1.6));
+ if(mode=='stamp')e.style.transform=`rotate(-12deg) scale(${2.4-1.4*pc})`;else if(mode=='slam')e.style.transform=`scale(${1.6-0.6*pc})`;else e.style.transform=(base||'')+` translateY(${(1-pc)*60}px) rotate(${(1-pc)*-3}deg)`;}
+function hide(...ids){ids.forEach(i=>$(i).style.opacity=0)}
+
+const SRC=[[3.6,11.9,'Source: US Supreme Court, 425 U.S. 682 (1976)'],[11.9,27.7,'Source: Cigar Aficionado, interview with Fidel Castro (Summer 1994)'],[27.7,52.4,'Sources: Cigar Aficionado (1992, 1995); Habanos S.A.; 2d Cir. (2005)'],[52.4,68.6,'Sources: TTAB decision (20 Dec 2022); USPTO'],[68.6,74.6,'Source: Empresa Cubana del Tabaco v. Culbro, 399 F.3d 462 (2d Cir. 2005)'],[74.6,93.2,'Sources: 399 F.3d 462 (2d Cir. 2005); US Supreme Court No. 05-417 (2006)'],[93.2,105.0,'Sources: TTAB (2022); US Court of Appeals, Federal Circuit (4 Jun 2014)'],[105.0,115.4,'Sources: TTAB (2022); E.D. Va. No. 1:23-cv-227 (7 May 2025)'],[115.4,122.6,'Sources: Cigar Aficionado (2025); USPTO'],[122.6,128.6,'Source: US 4th Circuit, No. 25-1645, oral argument 16 Sep 2026']];
+function render(t){
+ if(t<3.6)$('cap').innerHTML='';else caption(t,128.8);const light=(t>=27.7&&t<52.4);const c=$('cap');c.style.color=light?'var(--ink)':'';c.style.textShadow=light?'none':'';$('brand').classList.toggle('lt',light);$('src').classList.toggle('lt',light);
+ const s=SRC.find(([a,b])=>t>=a&&t<b);$('src').textContent=s?s[2]:'';
+ show('s1',-1,3.6,t);kb('s1',0,3.6,t,1.12,1.04,0,0);pop('kk',0.1,t);pop('ttl',0.9,t,'slam');
+ show('s2',3.6,11.9,t);kb('s2',3.6,11.9,t,1.04,1.18,0,-30);pop('st60',3.8,t,'stamp');pop('bn1',5.2,t,'slam');pop('q1',7.7,t,'slam');
+ show('s3',11.9,27.7,t);kb('s3',11.9,27.7,t,1.03,1.18,0,-20);pop('coh',12.0,t,'slam');pop('cas',13.5,t);pop('lag',24.0,t,'slam');
+ show('s4',27.7,52.4,t);pop('two',29.6,t);pop('gift',41.7,t,'slam');pop('st82',50.7,t,'stamp');
+ show('s5',52.4,68.6,t);kb('s5',52.4,68.6,t,1.03,1.16,-20,0);pop('st77',53.6,t,'stamp');pop('memo',58.4,t,'slam');pop('ap',62.6,t);pop('rg',66.1,t);
+ show('s5b',68.6,74.6,t);kb('s5b',68.6,74.6,t,1.03,1.12,0,-20);pop('st92',69.0,t,'stamp');pop('boom',70.6,t,'slam');pop('rel',72.6,t,'slam');
+ show('s6',74.6,85.6,t);kb('s6',74.6,85.6,t,1.02,1.14,0,-20);pop('st97',75.0,t,'stamp');pop('j97',78.6,t);pop('n97',80.6,t);pop('c04',82.4,t,'slam');
+ show('s6c',85.6,93.2,t);kb('s6c',85.6,93.2,t,1.03,1.12,0,-20);pop('c05',86.0,t);pop('sc',90.9,t,'slam');
+ show('s6b',93.2,105.0,t);kb('s6b',93.2,105.0,t,1.02,1.14,0,0);pop('bk',93.4,t,'slam');pop('st29',96.5,t,'stamp');pop('pac',98.2,t);pop('c14',100.0,t);
+ show('s7',105.0,115.4,t);kb('s7',105.0,115.4,t,1.05,1.16,-20,20);pop('l22',105.3,t);pop('l25',109.8,t);
+ show('s8',115.4,122.6,t);kb('s8',115.4,122.6,t,1.03,1.12,0,-20);pop('qa',116.9,t,'slam');pop('qb',119.8,t,'slam');
+ show('s9',122.6,128.6,t);kb('s9',122.6,128.6,t,1.02,1.12,0,-20);pop('st26',123.1,t,'stamp');pop('ap4',124.6,t);pop('pend',126.8,t,'slam');
+ $('end').style.opacity=E((t-128.8)/.35);
+}
+render(0);
+</script></body></html>
