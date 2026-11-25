@@ -1,6 +1,6 @@
 # Who owns Padrón? (caption)
 
-**Specs:** about 85 s, 1080×1920. AI label on. Company names only: no product names, no ratings, no brand hashtags, no tagging company accounts, no boosting. Post as a trial reel first.
+**File:** who-owns-padron-9x16-v2.mp4 (25 Nov 2026: ending A with the page address; replaces the first cut). **Specs:** about 85 s, 1080×1920. AI label on. Company names only: no product names, no ratings, no brand hashtags, no tagging company accounts, no boosting. Post as a trial reel first.
 
 ## Caption (paste)
 
@@ -13,6 +13,8 @@ Who owns Padrón? A hammer, three countries and one family.
 • In 1979 and 1980 Omega 7, a militant anti-Castro exile group, claimed bombings of his Miami factory. Reports at the time, in the Miami Herald and New York magazine, noted his part in the Havana talks. The company's own biography blames "a small group of local extortionists".
 • 1985: a US embargo bans all imports from Nicaragua. For a time in the 1980s the company rolled its cigars in Honduras.
 • He died in 2017, aged 91. Today the company is still run by his family, led by his son Jorge.
+
+Full timeline and every source: thenextcigar.com/padron
 
 Business history, not advice. We don't sell tobacco.
 

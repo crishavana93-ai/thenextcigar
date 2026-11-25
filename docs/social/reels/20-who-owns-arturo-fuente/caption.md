@@ -1,6 +1,6 @@
 # Who owns Arturo Fuente? (caption)
 
-**Specs:** about 76 s, 1080×1920. AI label on. Company names only: no product names, no brand hashtags, no tagging company accounts, no boosting. Post as a trial reel first.
+**File:** who-owns-fuente-9x16-v2.mp4 (25 Nov 2026: ending A with the page address; replaces the first cut). **Specs:** about 76 s, 1080×1920. AI label on. Company names only: no product names, no brand hashtags, no tagging company accounts, no boosting. Post as a trial reel first.
 
 ## Caption (paste)
 
@@ -13,6 +13,8 @@ Who owns Arturo Fuente? Fire after fire, four generations, and, according to the
 • 1980: the family starts again in Santiago, in the Dominican Republic.
 • The industry said quality wrapper leaf couldn't be grown there. In 1991 the family planted it anyway, near Bonao.
 • Today, the company says, it is still family-owned. It is run by Carlos Fuente Jr. Since 1986 it has worked with another family firm, J.C. Newman. In 2001 the two families set up a charity that runs a school and a health centre in the Dominican Republic.
+
+Full timeline and every source: thenextcigar.com/fuente
 
 Business history, not advice. We don't sell tobacco.
 
