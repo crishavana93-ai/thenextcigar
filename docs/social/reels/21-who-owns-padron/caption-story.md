@@ -1,6 +1,6 @@
 # Padrón: the story cut (caption)
 
-File: who-owns-padron-story-v3.mp4 (about 66 s; 2 s hook, 1.5 s Archivist, 1.5 s file drop). AI label on. Company names only: no product names, no brand hashtags, no tags, no boosting. Script independently fact-checked 26 Nov 2026 (all fixes applied).
+File: who-owns-padron-story-v4.mp4 (about 67 s; 3 s hook, 2.2 s Archivist, 2.9 s file, natural pauses). AI label on. Company names only: no product names, no brand hashtags, no tags, no boosting. Script independently fact-checked 26 Nov 2026 (all fixes applied).
 
 ## Caption (paste)
 
